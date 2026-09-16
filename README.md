@@ -98,7 +98,8 @@ los formatea siempre con `formatPrecio()` de `src/lib/precio.ts`.
 
 ## Stack
 
-- Next.js 16 (App Router, `output: 'standalone'`) + TypeScript
+- Next.js 16 (App Router) + TypeScript — deploy en Vercel; `output: 'standalone'`
+  solo opt-in para self-hosting (`npm run build:standalone`)
 - next-intl (`es` canónico, `en` sin indexar)
 - Supabase (Postgres + Auth + Storage + Realtime)
 - Tailwind CSS 3 — paleta: grafito `#0F172A` / pizarra `#1E293B`,
@@ -121,7 +122,8 @@ páginas públicas se renderizan vacías (sin datos) en lugar de fallar.
 | Comando | Descripción |
 |---|---|
 | `npm run dev` | Servidor de desarrollo |
-| `npm run build` | Build de producción (standalone) |
+| `npm run build` | Build de producción (la que usa Vercel) |
+| `npm run build:standalone` | Build autoalojada (`.next/standalone` + `server.js`) |
 | `npm start` | Servidor de producción |
 | `npm test` | Tests unitarios (Jest) |
 | `npx tsc --noEmit` | Comprobación de tipos |
@@ -160,3 +162,27 @@ public/                        # Logo, iconos PWA, og-image, manifest
 Publicar es gratis. Opcionalmente, los vendedores compran **créditos**
 (boost al #1 y destacados) por **Bizum, transferencia o PayPal**, con
 comprobante y aprobación. Paquetes: 2 / 15 / 40 / 100 créditos.
+
+## Despliegue en Vercel
+
+La build es *zero-config*: Vercel detecta Next.js por `package.json` y usa
+`next build` / `.next`. Aun así hay cuatro cosas que hay que tocar a mano.
+
+1. **Importar el repo** (`gtrespana-bit/camperocasion`) y dejar
+   *Production Branch* en `main`. Si el proyecto se crea **sin** conectar el
+   repo, o se conecta después del último push, no existe ningún despliegue:
+   Vercel muestra *«No Production Deployment — Your Production Domain is not
+   serving traffic»*. Se dispara desde
+   *Project → Deployments → ⋯ → Deploy* o con un push nuevo a `main`.
+2. **Variables de entorno** — `.env.example` es la lista completa.
+   Imprescindibles: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY`. Las `NEXT_PUBLIC_*` se **incrustan en el bundle
+   en build time**: cambiarlas obliga a redeployar.
+3. **NO definir `NEXT_OUTPUT=standalone`** en el proyecto: `output: 'standalone'`
+   rompe la build de Vercel (`ENOENT .next/next-server.js.nft.json` con Next 16).
+4. **Crons**: las 4 rutas de `vercel.json` exigen `CRON_SECRET`; sin ella
+   responden 401. En el plan Hobby Vercel limita las ejecuciones de cron al día.
+
+`camperocasion.es` (y el alterna `vendet.online`, que redirige 301 vía
+`next.config.js`) se añade en *Project → Settings → Domains* con el registro
+`A 76.76.21.21` o el `CNAME cname.vercel-dns.com`.

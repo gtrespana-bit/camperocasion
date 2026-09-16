@@ -5,16 +5,21 @@
 > reiniciarse el entorno, así que ahora está versionado aquí. El resumen corto
 > también está en la descripción del PR #3.
 
-> **Estado a 2026-09-16:** el usuario ya ejecutó `setup-camperocasion.sql` y la
-> verificación pasó **20/20** con `scripts/verificar_despliegue.sql`. Quedan la CI
-> (§4) y las variables de Vercel (§1.3).
+> **Estado a 2026-09-16 (tarde):** `setup-camperocasion.sql` aplicado y verificado
+> **20/20** con `scripts/verificar_despliegue.sql`. CI activada y en verde.
+> Quedan las variables de entorno de Vercel (§1.3) y, sobre todo, **conseguir el
+> primer despliegue** (§6): el proyecto existe pero no tiene producción.
 
-## 0. Resumen en tres líneas
+## 0. Resumen en cuatro líneas
 
 1. ~~Aplicar **dos migraciones** en Supabase~~ ✅ **hecho**: `setup-camperocasion.sql`
-   completo, verificado con `scripts/verificar_despliegue.sql` (20/20).
-2. Revisar las **variables de entorno** en Vercel (§1.3).
-3. Activar la **CI** creando `.github/workflows/ci.yml` con `docs/ci/ci.yml` (§4).
+   completo, verificado con `scripts/verificar_despliegue.sql` (20/20 ✅).
+2. Revisar las **variables de entorno** en Vercel (§1.3) — **PENDIENTE**.
+3. ~~Activar la **CI**~~ ✅ **hecho** el 2026-09-16: el workflow ya vive en
+   `.github/workflows/ci.yml` y los dos jobs pasan en `main`.
+4. Que Vercel tenga **un despliegue de producción** (§6) — **PENDIENTE**: hoy no
+   existe ninguno (`gh api repos/.../deployments` devuelve la lista vacía), por
+   eso el panel dice *«No Production Deployment»*.
 
 ---
 
@@ -147,7 +152,23 @@ tipos cada año (la constante `REVISADO_EN` indica de cuándo son los datos).
 
 ---
 
-## 4. Activar la CI (GitHub) — PENDIENTE
+## 4. Activar la CI (GitHub) — ✅ HECHO el 2026-09-16
+
+El workflow está en `.github/workflows/ci.yml`, se ejecuta en cada push y PR
+(los dos jobs pasan en `main`). Las instrucciones para moverlo desde
+`docs/ci/ci.yml` ya no hacen falta y se borraron.
+
+⚠️ Los **26 primeros comentarios de `.github/workflows/ci.yml`** siguen
+diciendo «ESTE ARCHIVO TODAVÍA NO SE EJECUTA»: son obsoletos, la CI sí se
+ejecuta. No se pueden borrar desde Arena (GitHub rechaza el push de cualquier
+fichero en `.github/workflows/` hecho por una GitHub App sin permiso
+`workflows`). Se quitan en 20 s desde la web:
+[editar el workflow](https://github.com/gtrespana-bit/camperocasion/edit/main/.github/workflows/ci.yml)
+y borrar el bloque de comentarios hasta `name: CI`.
+
+<details><summary>Historial: cómo se activó</summary>
+
+El repositorio **no tenía `.github/workflows/`** y el agente no podía crearlo:
 
 El repositorio **no tiene `.github/workflows/`** y el agente no puede crearlo:
 GitHub rechaza el push de un workflow hecho por una GitHub App sin el permiso
@@ -167,6 +188,8 @@ y **sql** (Python 3.12 → `pgserver`, `psycopg2-binary`, `pglast` → valida el
 `setup-camperocasion.sql` completo + RLS de documentos + garantías de reservas +
 las 20 comprobaciones de despliegue). Los cuatro scripts ya pasan en local.
 
+</details>
+
 ---
 
 ## 5. Pendientes de producto (sin fecha, sin SQL)
@@ -176,3 +199,91 @@ las 20 comprobaciones de despliegue). Los cuatro scripts ya pasan en local.
 - Normalizar las claves del JSONB a slugs (`plazas_dormir`) — necesita backfill.
 - Fase 1 restante: inspección precompra, contrato de compraventa descargable y
   gestoría del cambio de nombre.
+
+---
+
+## 6. Vercel: «No Production Deployment» — el proyecto existe pero no despliega
+
+Síntoma visto el 2026-09-16: proyecto creado en el dashboard, y la página pone
+**«No Production Deployment — Your Production Domain is not serving traffic»**,
+sin rastro de build ni log.
+
+### 6.1 Diagnóstico (dato duro, no intuición)
+
+```bash
+gh api repos/gtrespana-bit/camperocasion/deployments --jq '.[].environment'
+# → (vacío)
+```
+
+En GitHub no hay **ningún** deployment ni check de "Vercel" en `main`. Vercel,
+cuando intenta compilar, siempre publica un deployment + un commit status,
+**aunque la build falle**. Lista vacía ⇒ Vercel **nunca llegó a lanzar una
+build**: el proyecto no está importando este repo (o no se ha disparado desde
+que se importó). No es un error de compilación, es que no hay nada compilado.
+
+Dato de descarte: `npm ci && npm run build` **pasa en local en ~35 s sin
+ninguna variable de entorno** ( Next 16 + next-intl + Supabase). El código está
+sano; lo que falta es la conexión y las env vars.
+
+### 6.2 Causas posibles, de más a menos probable
+
+1. **Proyecto creado vacío** (sin *Import Git Repository*), a veces desde la
+   pantalla de templates. No hay repo vinculado ⇒ cero deployments.
+   → *Project → Settings → Git → Linked Git Repository*. Si dice *No
+   repository connected*, hay que conectar el repo desde
+   [vercel.com/new](https://vercel.com/new) eligiendo `gtrespana-bit/camperocasion`.
+2. **Se importó después del último push.** Vercel solo compila los pushes
+   *posteriores* a vincular el repo; si el repo ya estaba en su última commit,
+   no se dispara nada. → *Project → Deployments → ⋯ (menú) → Deploy…* sobre el
+   último commit de `main`, o un push vacío:
+   `git commit --allow-empty -m "chore: trigger deploy" && git push origin main`.
+3. **La app de GitHub de Vercel no tiene acceso a este repo.** Si al instalar
+   Vercel se eligió *Only select repositories* y `camperocasion` no está en la
+   lista, Vercel crea el proyecto pero no puede clonar. →
+   [github.com/settings/installations](https://github.com/settings/installations)
+   → Vercel → *Repository access* → añadir el repo → *Deploy*.
+4. **Production Branch mal escrita.** En *Settings → Environments → Production
+   branch* debe poner `main` (el repo solo tiene `main`). Si apunta a `master`,
+   no hay producción.
+5. **Desplegaste con la CLI sin `--prod`.** `vercel` a secas sube una *preview*
+   con URL `*.vercel.app` de entorno; el dominio de producción sigue vacío.
+   → `vercel --prod`.
+6. **La build falló** (en este caso sí verías el despliegue en rojo en
+   *Deployments*). Pásame el log y lo arreglo.
+
+### 6.3 Antes del primer deploy: variables en Vercel
+
+Settings → Environment Variables → Production (y Preview). Sin las dos primeras
+la build pasa pero el sitio sale **vacío**, que es peor que un error porque
+parece que funciona:
+
+| Variable | Obligatoria | Nota |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | idem |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | server-side; **nunca** con prefijo `NEXT_PUBLIC_` |
+| `CRON_SECRET` | ✅ para los 4 crons | sin ella `/api/cron/*` responde 401 |
+| `NEXT_PUBLIC_URL` | ✅ | `https://camperocasion.es` (emails, OG, sitemap) |
+| `ADMIN_EMAILS`, `RESEND_API_KEY`, `EMAIL_FROM` | opcional | panel y emails |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | opcional | avisos de reservas |
+
+Lista completa y comentada en **`.env.example`** (ahora sí está versionado;
+`.gitignore` lo excluye con `.env*`, se añadió la excepción `!.env.example`).
+
+### 6.4 Ya corregido en el código para que Vercel no falle
+
+- **`output: 'standalone'`** estaba fijo en `next.config.js`. Vercel no lo
+  necesita (tiene su propio builder) y con Next 16 rompe la build con
+  `ENOENT: .next/next-server.js.nft.json`. Ahora es **opt-in**:
+  `NEXT_OUTPUT=standalone npm run build` (`npm run build:standalone`) solo para
+  self-hosting/Docker. Idéntico en `next.config.optimized.js`.
+  → No definas `NEXT_OUTPUT` en Vercel.
+- Verificado: `npm run build` sigue pasando tras el cambio.
+
+### 6.5 Crons y plan
+
+`vercel.json` declara 4 crons (`17 3 * * *`, `23 */6 * * *`, `5 13 * * 1`,
+`41 14 * * *`). Rutas existentes ✅. Ojo: en el plan **Hobby** Vercel limita las
+ejecuciones diarias de cron (y cobra las que se pasan); los digests semanales y
+diarios entran sin problema, pero conviene mirar *Settings → Cron Jobs* tras el
+primer deploy para confirmar que los 4 aparecen activos.

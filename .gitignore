@@ -62,3 +62,6 @@ convert-to-webp.ps1
 # python (scripts de validación SQL)
 __pycache__/
 *.pyc
+
+# .env.example SÍ se versiona (plantilla sin secretos)
+!.env.example
