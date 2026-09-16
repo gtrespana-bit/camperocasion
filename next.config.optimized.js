@@ -102,8 +102,8 @@ const nextConfig = withNextIntl({
 
 // Configuración de Sentry
 module.exports = withSentryConfig(nextConfig, {
-  org: 'vendet-venezuela',
-  project: 'vendet-venezuela',
+  org: 'camperocasion',
+  project: 'camperocasion',
   silent: true,
   hideSourceMaps: true,
   widenClientFileUpload: true,

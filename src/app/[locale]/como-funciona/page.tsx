@@ -43,7 +43,7 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
     { pregunta: t('faq6q'), respuesta: t('faq6a') },
   ]
 
-  const vendetItems = ['vendet1','vendet2','vendet3','vendet4','vendet5'] as const
+  const camperItems = ['vendet1','vendet2','vendet3','vendet4','vendet5'] as const
   const othersItems = ['others1','others2','others3','others4','others5'] as const
 
   return (
@@ -80,7 +80,7 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
               <div className="bg-green-50 border border-green-200 rounded-xl p-6">
                 <h3 className="font-bold text-green-800 text-lg mb-3">✅ {t('vendetTitle')}</h3>
                 <ul className="space-y-2 text-sm text-green-700">
-                  {vendetItems.map(k => (
+                  {camperItems.map(k => (
                     <li key={k} className="flex items-center gap-2"><CheckCircle size={14} /> {t(k)}</li>
                   ))}
                 </ul>
