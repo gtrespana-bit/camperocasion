@@ -375,8 +375,4 @@ begin
 end $$;
 
 
--- ── 6. Vistas de compatibilidad (opcional, lectura) ────────────────────────
--- Vista `productos_con_alias` no es necesaria: los triggers mantienen columnas.
--- Se documenta que `precio` es el campo a usar en consultas nuevas:
---   select id, titulo, precio, precio_eur, precio_usd ...  -- los tres valen lo mismo
--- Código nuevo: usar `precio` (o `precio_eur` si se quiere ser explícito).
+-- ── 6. Vistas de compatibilidad ── `precio` es canónico (ver triggers arriba).
