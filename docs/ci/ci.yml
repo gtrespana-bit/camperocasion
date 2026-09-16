@@ -1,0 +1,92 @@
+# ⚠️ ESTE ARCHIVO NO SE EJECUTA TODAVÍA — hay que ACTIVARLO.
+#
+# Para que GitHub lo ejecute, cópialo a `.github/workflows/ci.yml` (mismo
+# contenido). Aquí está porque el agente que prepara los cambios no tiene el
+# permiso `workflows` y GitHub rechaza el push de `.github/workflows/*`.
+#
+# Tres formas de activarlo:
+#  1. Web de GitHub → "Add file" → "Create new file" → ruta
+#     `.github/workflows/ci.yml` → pegar este contenido → commit.
+#  2. Desde tu máquina: `mkdir -p .github/workflows && git mv docs/ci/ci.yml
+#     .github/workflows/ci.yml && git commit -m 'ci: activar workflow'`.
+#  3. Reconectar GitHub en Arena con permiso de workflows.
+#
+# Una vez activo, cada push y cada PR ejecutan los dos jobs.
+#
+name: CI
+
+# Comprobación de calidad en cada push y en cada PR.
+#
+# El repo no tenía CI: un PR podía mergearse con tipos rotos, lint sucio o tests
+# en rojo y nadie se enteraba hasta producción. Estos tres pasos (tipos, lint y
+# tests unitarios) son los que se ejecutan a mano antes de cada commit; hacerlos
+# automáticos es lo que evita que se olviden.
+#
+# Nota sobre el build: `next build` necesita Supabase configurado y tarda
+# minutos, así que NO está aquí. El paso que sí protege las migraciones es el
+# job `sql`, que aplica `setup-camperocasion.sql` en un Postgres de verdad.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Un push nuevo sobre la misma rama cancela la ejecución anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  calidad:
+    name: Tipos, lint y tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci --no-audit --no-fund
+
+      - name: Tipos (tsc --noEmit)
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npx eslint .
+        # El lint está a cero errores: si aparece un error (los warnings no
+        # cuentan), el job falla.
+
+      - name: Tests unitarios
+        run: npm test -- --ci
+
+  sql:
+    name: Migraciones en un Postgres real
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar el arnés de validación
+        # pgserver descarga un Postgres embebido: es lo que permite aplicar el
+        # setup completo (y sus políticas RLS) sin una base de datos externa.
+        run: pip install --no-cache-dir pgserver psycopg2-binary pglast
+
+      - name: Aplicar setup-camperocasion.sql completo
+        run: python3 scripts/validate_setup_sql.py
+
+      - name: Garantías de RLS del expediente del vehículo
+        run: python3 scripts/verify_rls_documentos_vehiculo.py
