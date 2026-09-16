@@ -109,6 +109,17 @@ export const metadata: Metadata = {
   category: 'marketplace',
 }
 
+/**
+ * Origen de Supabase para el preconnect del <head>.
+ *
+ * Se lee de la MISMA variable que usan los clientes (NEXT_PUBLIC_SUPABASE_URL)
+ * en lugar de fijarlo a mano: durante el relanzamiento apuntaba al proyecto
+ * viejo de marketplace-vzla mientras las claves eran del de CamperOcasión, y
+ * eso produjo el `401 Invalid API key` en todo el sitio.
+ */
+const SUPABASE_ORIGIN =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hbiywrddxrsidniwxuhe.supabase.co'
+
 // IMPORTANTE — LAYOUT RAÍZ 100% ESTÁTICO. (ver comentario original)
 export default async function RootLayout({
   children,
@@ -118,8 +129,8 @@ export default async function RootLayout({
   return (
     <html lang="es" className={inter.variable} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://jmbkqelkusxjebsdnjoc.supabase.co" />
-        <link rel="dns-prefetch" href="https://jmbkqelkusxjebsdnjoc.supabase.co" />
+        <link rel="preconnect" href={SUPABASE_ORIGIN} />
+        <link rel="dns-prefetch" href={SUPABASE_ORIGIN} />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

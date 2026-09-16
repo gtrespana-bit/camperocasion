@@ -3,6 +3,20 @@ const createNextIntlPlugin = require('next-intl/plugin');
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request-config.ts');
 
+/**
+ * Host del proyecto Supabase para next/image (mismo criterio que next.config.js):
+ * sale de NEXT_PUBLIC_SUPABASE_URL, con el proyecto de CamperOcasión como reserva.
+ */
+function supabaseHost() {
+  const fallback = 'hbiywrddxrsidniwxuhe.supabase.co';
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return url ? new URL(url).hostname : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = withNextIntl({
   compiler: {
@@ -36,7 +50,7 @@ const nextConfig = withNextIntl({
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'jmbkqelkusxjebsdnjoc.supabase.co',
+        hostname: supabaseHost(),
         pathname: '/storage/v1/object/public/**',
       },
       {

@@ -2,6 +2,27 @@ const createNextIntlPlugin = require('next-intl/plugin');
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request-config.ts');
 
+/**
+ * Host del proyecto Supabase para next/image.
+ *
+ * ⚠️ NO volver a fijarlo a mano: estuvo apuntando al proyecto viejo de
+ * marketplace-vzla (`jmbkqelkusxjebsdnjoc`) mientras las claves eran del de
+ * CamperOcasión (`hbiywrddxrsidniwxuhe`). Resultado: `401 Invalid API key` en
+ * todo el sitio y, de paso, imágenes rechazadas por next/image al cambiar la
+ * URL. Ahora sale de NEXT_PUBLIC_SUPABASE_URL (la misma variable que usan los
+ * clientes de Supabase), con el proyecto correcto como reserva si la variable
+ * no llegara a la build.
+ */
+function supabaseHost() {
+  const fallback = 'hbiywrddxrsidniwxuhe.supabase.co';
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return url ? new URL(url).hostname : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = withNextIntl({
   compiler: {
@@ -27,7 +48,7 @@ const nextConfig = withNextIntl({
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'jmbkqelkusxjebsdnjoc.supabase.co',
+        hostname: supabaseHost(),
         pathname: '/storage/v1/object/public/**',
       },
       {

@@ -52,11 +52,11 @@ describe('creditos - paquetes servidor (Fase 3 D)', () => {
   })
 
   test('comprobanteUrl validacion', () => {
-    const validSupabase = 'https://jmbkqelkusxjebsdnjoc.supabase.co/storage/v1/object/public/comprobantes/comprobante_123_abc.jpg'
+    const validSupabase = 'https://hbiywrddxrsidniwxuhe.supabase.co/storage/v1/object/public/comprobantes/comprobante_123_abc.jpg'
     const validR2 = 'https://pub-d212837165c545e3956251da001fa37a.r2.dev/comprobantes/xyz.png'
     const invalidExternal = 'https://evil.com/comprobantes/fake.jpg'
-    const invalidNoComprobantes = 'https://jmbkqelkusxjebsdnjoc.supabase.co/storage/v1/object/public/avatars/user.jpg'
-    const invalidHttp = 'http://jmbkqelkusxjebsdnjoc.supabase.co/storage/v1/object/public/comprobantes/x.jpg'
+    const invalidNoComprobantes = 'https://hbiywrddxrsidniwxuhe.supabase.co/storage/v1/object/public/avatars/user.jpg'
+    const invalidHttp = 'http://hbiywrddxrsidniwxuhe.supabase.co/storage/v1/object/public/comprobantes/x.jpg'
 
     expect(isValidComprobanteUrl(validSupabase)).toBe(true)
     expect(isValidComprobanteUrl(validR2)).toBe(true)

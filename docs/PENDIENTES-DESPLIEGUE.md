@@ -118,7 +118,7 @@ a la build.
 
 | Variable | Valor | Consecuencia de no ponerla |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://jmbkqelkusxjebsdnjoc.supabase.co` | sitio vacío; es el proyecto que ya está fijado en `next.config.js` (imágenes) y en el `preconnect` de `layout.tsx` |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://hbiywrddxrsidniwxuhe.supabase.co` | **cuidado**: el proyecto de marketplace-vzla es `jmbkqelkusxjebsdnjoc`. Con esa URL y estas claves, Supabase responde `401 Invalid API key` en todo el sitio (incluido el login). `next.config.js` (imágenes) y el `preconnect` de `layout.tsx` ya la leen de esta variable, así que basta con cambiarla aquí y redeployar. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → *Project Settings → Data API (legacy)* → `anon` / `publishable` | `getSupabaseServerClient()` devuelve `null` → home, catálogo y landings salen sin anuncios |
 | `SUPABASE_SERVICE_ROLE_KEY` | la `service_role` (server-side **solo**) | todo `/api/admin/*`, reservas y expediente de homologación sin funcionar |
 | `CRON_SECRET` | un string aleatorio propio (p. ej. `openssl rand -hex 32`) | **los 4 crons devuelven 401**: el guard es `if (!secret \|\| auth !== Bearer) → 401`, o sea que sin la variable ni Vercel puede llamarlos |

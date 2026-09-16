@@ -7,6 +7,36 @@
 
 ---
 
+## 0. La causa nº 1 en este repo: la URL es de OTRO proyecto
+
+CamperOcasión vive en `https://hbiywrddxrsidniwxuhe.supabase.co`. El proyecto
+viejo de marketplace-vzla es `https://jmbkqelkusxjebsdnjoc.supabase.co`, y esa
+URL quedó escrita en la documentación y en `next.config.js` durante el
+relanzamiento.
+
+Si `NEXT_PUBLIC_SUPABASE_URL` apunta a un proyecto y las claves son de otro,
+Supabase responde **`401 Invalid API key`** a absolutamente todo —datos, storage
+y login— porque el `ref` del JWT no coincide con el host.
+
+Qué mirar primero:
+
+```
+https://<dominio>/api/diagnostico/supabase?token=<CRON_SECRET>
+```
+
+```jsonc
+"proyecto":  { "ref": "jmbkqelkusxjebsdnjoc" },
+"claves.publica": { "ref": "hbiywrddxrsidniwxuhe", "refCoincide": false }
+// → "La URL apunta al proyecto \"jmbkqelkusxjebsdnjoc\" pero la clave pública
+//    pertenece a \"hbiywrddxrsidniwxuhe\"."
+```
+
+Arreglo: `NEXT_PUBLIC_SUPABASE_URL=https://hbiywrddxrsidniwxuhe.supabase.co` en
+Vercel y **redeploy**. `next.config.js` (host de imágenes) y el `preconnect` de
+`layout.tsx` ya la leen de esa variable, así que no hay que tocar nada más.
+
+---
+
 ## 1. Síntomas (todos a la vez)
 
 | Dónde | Qué se ve |
@@ -48,16 +78,17 @@ Ejemplo de respuesta (recortada):
     "SUPABASE_SERVICE_ROLE_KEY": true
   },
   "claves": {
-    "publica": { "tipo": "jwt", "role": "anon", "ref": "proyectofake00000000",
+    "publica": { "tipo": "jwt", "role": "anon", "ref": "hbiywrddxrsidniwxuhe",
                  "refCoincide": false, "expirada": false, "tieneEspacios": false,
-                 "problemas": ["La clave pertenece a OTRO proyecto (ref \"proyectofake00000000\")…"] },
-    "privada": { "tipo": "jwt", "role": "service_role", "ref": "proyectofake00000000", "refCoincide": false }
+                 "problemas": ["La clave pertenece a OTRO proyecto…"] },
+    "privada": { "tipo": "jwt", "role": "service_role", "ref": "hbiywrddxrsidniwxuhe", "refCoincide": false }
   },
   "pruebas": {
     "publica": { "status": 401, "mensaje": "Invalid API key", "ms": 120 },
     "privada": { "status": 401, "mensaje": "Invalid API key", "ms": 95 }
   },
-  "diagnostico": ["Las DOS claves son rechazadas por Supabase: …"],
+  "diagnostico": ["Las DOS claves son rechazadas por Supabase…",
+                 "La URL apunta al proyecto \"jmbkqelkusxjebsdnjoc\" pero la clave pública pertenece a \"hbiywrddxrsidniwxuhe\"."],
   "pasos": ["Supabase → Settings → API Keys → copia la clave pública…", "…"]
 }
 ```
@@ -98,7 +129,7 @@ Ejemplo de respuesta (recortada):
 | Causa | Pista en el informe |
 |---|---|
 | Claves **rotadas o desactivadas** en el panel | `status: 401` en las dos pruebas, `refCoincide: true` |
-| Claves copiadas de **otro proyecto** | `refCoincide: false` |
+| Claves copiadas de **otro proyecto** (o URL de otro proyecto) | `refCoincide: false` |
 | Se pegó el **JWT Secret** (Settings → API → *JWT Settings*) | `role: null` → «has pegado el JWT Secret…» |
 | Espacio / salto de línea al copiar | `tieneEspacios: true` |
 | Clave recortada por el portapapeles | `longitud` sospechosa (un anon JWT mide ~200; `sb_publishable_…` ~50) |

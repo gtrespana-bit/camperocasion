@@ -20,7 +20,7 @@ function jwt(payload: Record<string, unknown>): string {
   return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.firma-falsa`
 }
 
-const REF = 'jmbkqelkusxjebsdnjoc'
+const REF = 'hbiywrddxrsidniwxuhe'
 
 // Los prefijos se construyen por partes a propósito: GitHub bloquea el push si
 // un literal del test se parece a una clave real (secret scanning).
@@ -32,7 +32,7 @@ const PASADO = Math.floor(Date.now() / 1000) - 60 * 60 * 24
 
 describe('extraerRefDeUrl', () => {
   it('saca el ref del host de Supabase', () => {
-    expect(extraerRefDeUrl('https://jmbkqelkusxjebsdnjoc.supabase.co')).toBe(REF)
+    expect(extraerRefDeUrl('https://hbiywrddxrsidniwxuhe.supabase.co')).toBe(REF)
   })
 
   it('devuelve null con URLs ausentes o inválidas', () => {
