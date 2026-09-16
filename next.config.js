@@ -215,17 +215,8 @@ const nextConfig = withNextIntl({
   },
 });
 
-// Configuración de Sentry - DESHABILITADO completamente para evitar problemas de Lighthouse
-// module.exports = withSentryConfig(nextConfig, {
-//   org: 'vendet-venezuela',
-//   project: 'vendet-venezuela',
-//   silent: true,
-//   hideSourceMaps: true,
-//   widenClientFileUpload: true,
-//   sourcemaps: { deleteSourcemapsAfterUpload: true },
-//   tunnelRoute: '/monitoring',
-//   disableServerWebpackPlugin: true,
-//   disableClientWebpackPlugin: true,
-// });
+// Sentry deshabilitado por Lighthouse. Para reactivarlo, usa:
+// const { withSentryConfig } = require('@sentry/nextjs');
+// module.exports = withSentryConfig(nextConfig, { org: 'camperocasion', project: 'camperocasion', silent: true });
 
 module.exports = nextConfig;

@@ -164,9 +164,9 @@ export default function AdminAjustes({ notify }: { notify: (msg: string) => void
 
       <Card title="Responsabilidades del panel" subtitle="Todo queda registrado en auditoría" bodyClassName="p-4">
         <div className="grid gap-2 text-sm text-gray-600 md:grid-cols-2">
-          <p>- Aprobación manual de pagos con doble verificación.</p>
-          <p>- Verificación de vendedores con cédula y datos de pago móvil.</p>
-          <p>- Moderación de contenido prohibido o sospechoso.</p>
+          <p>- Aprobación manual de pagos con doble verificación (Bizum/transferencia/PayPal).</p>
+          <p>- Verificación de vendedores con DNI/NIE y contraste de datos de pago.</p>
+          <p>- Verificación documental del vehículo (homologación) y reservas con señal.</p>
           <p>- Gestión centralizada de usuarios, productos y categorías.</p>
           <p>- Auditoría de todas las operaciones administrativas.</p>
           <p>- Comunicación global mediante banners y push.</p>

@@ -110,7 +110,7 @@ export function AuthProvider({ children, initialUser }: { children: React.ReactN
               if (typeof window !== 'undefined' && 'caches' in window) {
                 caches.keys().then(keys => {
                   keys.forEach(k => {
-                    if (k.startsWith('vendet-')) {
+                    if (k.startsWith('vendet-') || k.startsWith('camperocasion-')) {
                       caches.delete(k)
                     }
                   })

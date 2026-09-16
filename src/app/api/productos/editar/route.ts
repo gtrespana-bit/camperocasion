@@ -13,6 +13,9 @@ const PRODUCT_COLUMNS = [
   'user_id',
   'titulo',
   'descripcion',
+  // Canónico: precio (euros). Aliases legados precio_eur / precio_usd se leen por compatibilidad
+  'precio',
+  'precio_eur',
   'precio_usd',
   'estado',
   'categoria_id',
@@ -35,6 +38,9 @@ const PRODUCT_COLUMNS = [
 const ALLOWED_FIELDS = new Set([
   'titulo',
   'descripcion',
+  // precio canónico ES + aliases
+  'precio',
+  'precio_eur',
   'precio_usd',
   'estado',
   'categoria',
@@ -265,7 +271,9 @@ export async function PATCH(request: NextRequest) {
   if (!isValidLength(descripcion, 1, 5000)) {
     return NextResponse.json({ error: 'Descripción requerida' }, { status: 400 })
   }
-  if (candidate.precio_usd !== null && candidate.precio_usd !== undefined && !isValidPrice(candidate.precio_usd)) {
+  // Precio canónico: aceptar precio / precio_eur / precio_usd (legado) y sincronizar
+  const precioInput = candidate.precio ?? candidate.precio_eur ?? candidate.precio_usd
+  if (precioInput !== null && precioInput !== undefined && !isValidPrice(precioInput)) {
     return NextResponse.json({ error: 'Precio inválido' }, { status: 400 })
   }
   if (!isValidProductState(String(candidate.estado || ''))) {
@@ -326,7 +334,8 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Un producto rechazado requiere revisión administrativa' }, { status: 409 })
   }
 
-  const updateData = {
+  const precioEur = precioInput == null ? null : Number(precioInput)
+  const updateData: Record<string, unknown> = {
     titulo,
     descripcion,
     categoria_id: categoriaId,
@@ -335,7 +344,10 @@ export async function PATCH(request: NextRequest) {
     modelo: candidate.modelo == null ? null : sanitizeString(String(candidate.modelo), 150),
     especificaciones: specs,
     estado: String(candidate.estado),
-    precio_usd: candidate.precio_usd == null ? null : Number(candidate.precio_usd),
+    // Escribir en canónico y en aliases para compatibilidad (trigger los mantiene sincronizados, pero escribir explícito es más claro)
+    precio: precioEur,
+    precio_eur: precioEur,
+    precio_usd: precioEur,
     ubicacion_estado: ubicacionEstado,
     ubicacion_ciudad: ubicacionCiudad,
     imagen_url: nextImageUrl,

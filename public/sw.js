@@ -1,18 +1,18 @@
 /*
- * VendeT Service Worker v15
+ * CamperOcasión Service Worker v16
  *
  * This worker intentionally does NOT proxy assets, APIs or every request.
  * It only provides:
  *   - Web Push notifications;
  *   - notification click handling;
  *   - a small offline fallback for public navigations;
- *   - cleanup of caches left by retired VendeT workers.
+ *   - cleanup of caches left by retired workers.
  *
  * Keeping the fetch handler limited to document navigations avoids the global
  * retry/timeout proxy that previously sat in front of Next.js chunks and APIs.
  */
 
-const CACHE_NAME = 'vendet-offline-v15'
+const CACHE_NAME = 'camperocasion-offline-v16'
 const OFFLINE_URLS = ['/offline', '/en/offline']
 const PRIVATE_PREFIXES = [
   '/admin',
@@ -71,7 +71,8 @@ self.addEventListener('activate', (event) => {
     const names = await caches.keys()
     await Promise.all(
       names
-        .filter((name) => name.startsWith('vendet-') && name !== CACHE_NAME)
+        // Borra cachés legacy (vendet-*) y versiones antiguas camperocasion-*
+        .filter((name) => (name.startsWith('vendet-') || name.startsWith('camperocasion-')) && name !== CACHE_NAME)
         .map((name) => caches.delete(name))
     )
     await self.clients.claim()
@@ -115,12 +116,12 @@ self.addEventListener('push', (event) => {
 
   const title = typeof data.title === 'string' && data.title.trim()
     ? data.title.slice(0, 120)
-    : 'VendeT'
+    : 'CamperOcasión'
   const options = {
-    body: typeof data.body === 'string' ? data.body.slice(0, 500) : 'Tienes una novedad en VendeT.',
+    body: typeof data.body === 'string' ? data.body.slice(0, 500) : 'Tienes una novedad en CamperOcasión.',
     icon: typeof data.icon === 'string' ? data.icon : '/icon-192.png',
     badge: '/icon-192.png',
-    tag: typeof data.tag === 'string' ? data.tag.slice(0, 100) : 'vendet-notification',
+    tag: typeof data.tag === 'string' ? data.tag.slice(0, 100) : 'camperocasion-notification',
     data: { click_url: safeSameOriginUrl(data.click_url || data.url || '/chat') },
   }
 

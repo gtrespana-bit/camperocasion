@@ -117,7 +117,7 @@ export default function AdminTransacciones({
   async function enviarRecordatorio(t: Transaccion) {
     setEnviando(t.id)
     try {
-      if (t.metodo_pago && /(binance|pago|transfer)/i.test(t.metodo_pago)) {
+      if (t.metodo_pago && /(bizum|transfer|paypal)/i.test(t.metodo_pago)) {
         await fetch('/api/push/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -195,7 +195,7 @@ export default function AdminTransacciones({
                       <span className="text-xs">{formatDateTime(t.creado_en)}</span>
                     </div>
                     <div className="mt-1.5 flex flex-wrap items-center gap-3">
-                      <span className="text-xs font-bold text-emerald-600">{formatMoney(t.precio_usd)} USD</span>
+                      <span className="text-xs font-bold text-emerald-600">{formatMoney(t.precio_usd)} €</span>
                       {t.comprobante_url && (
                         <a href={`/api/admin/comprobante?url=${encodeURIComponent(t.comprobante_url)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline"><Eye size={13} /> Ver comprobante</a>
                       )}

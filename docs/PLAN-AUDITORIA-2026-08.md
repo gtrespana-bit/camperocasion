@@ -1,7 +1,7 @@
-# Plan de corrección y verificación — VendeT
+# Plan de corrección y verificación — CamperOcasión
 
 **Última actualización:** 2026-08-01
-**Rama de trabajo:** `arena/019fbf3f-marketplace-vzla`
+**Rama de trabajo:** `arena/019fbf3f-camperocasion`
 **Estado:** código preparado para revisión; todavía no se ha abierto PR hacia `main`.
 
 Este documento es la fuente de verdad de la auditoría. Separa lo que ya está
@@ -345,4 +345,4 @@ No se abre el PR hasta que se cumpla todo esto:
 - [ ] Build exitoso o bloqueo documentado y resuelto.
 - [ ] Working tree limpio.
 - [ ] Revisión final del diff.
-- [ ] PR abierto desde `arena/019fbedd-marketplace-vzla` hacia `main`.
+- [ ] PR abierto desde `arena/019fbedd-camperocasion` hacia `main`.

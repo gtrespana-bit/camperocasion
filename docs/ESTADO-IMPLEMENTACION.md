@@ -1,9 +1,12 @@
 # Estado de implementación y seguridad
 
+> **Nota 2026-09:** Este documento conserva el histórico de auditorías del proyecto base. Las referencias a "VendeT" / "BCV" / "Bs" son legado venezolano y se mantienen solo como trazabilidad; el proyecto activo es CamperOcasión (euros, provincias españolas, Bizum/transferencia/PayPal).
+
+
 > **Última actualización:** 1 de agosto de 2026 — 01:39 UTC  
-> **Rama de trabajo:** `arena/019fbad5-marketplace-vzla`  
-> **Pull request previo:** [#10 — merge Fase 1-2 y fixes](https://github.com/gtrespana-bit/Marketplace-vzla/pull/10) ✅ Mergeado a `main` en `bb391fc`  
-> **Branch actual:** `arena/019fbad5-marketplace-vzla` — Push 2026-08-01 `89f22c4` + commits Fase 3 C/D (`5a05c7d`) + accesibilidad modales (`047ecfe`)
+> **Rama de trabajo:** `arena/019fbad5-camperocasion`  
+> **Pull request previo:** [#10 — merge Fase 1-2 y fixes](https://github.com/gtrespana-bit/camperocasion/pull/10) ✅ Mergeado a `main` en `bb391fc`  
+> **Branch actual:** `arena/019fbad5-camperocasion` — Push 2026-08-01 `89f22c4` + commits Fase 3 C/D (`5a05c7d`) + accesibilidad modales (`047ecfe`)
 
 Este documento es el registro operativo de las mejoras realizadas, validaciones pendientes y trabajo planificado. Debe actualizarse al terminar cada fase o al encontrar un bloqueo relevante.
 
@@ -13,7 +16,7 @@ Este documento es el registro operativo de las mejoras realizadas, validaciones 
 |---|---|---|
 | 1. Seguridad base | ✅ Realizada y desplegada | Autorización de rutas/acciones administrativas, validación de propietario y subida R2 endurecida. Migración `023_fix_seguridad.sql` aplicada. |
 | Corrección UX `/admin` | ✅ Implementada e integrada en main (PR #10) | El visitante sin sesión ya recibe una pantalla de acceso en vez de una pantalla vacía. |
-| 2. BCV, moderación y abuso de APIs | ✅ Implementada e integrada en main (PR #10) | Requiere configurar `CRON_SECRET` en Vercel. Verificado en preview. |
+| 2. —, moderación y abuso de APIs | ✅ Implementada e integrada en main (PR #10) | Requiere configurar `CRON_SECRET` en Vercel. Verificado en preview. |
 | 3. Seguridad, PWA y endurecimiento | ✅ Completada 2026-08-01 | SW v4 privado, iconos PNG, headers seguridad, sesión getUser y créditos server-side validados. |
 | 4. Internacionalización y SEO | ⏳ Pendiente | Traducciones, precios, `hreflang`, metadata, sitemap y robots. |
 | 5. Accesibilidad y rendimiento | 🟡 En curso (~85%) — 2026-08-01 | Contraste, focus-visible, fechas es-VE, consultas admin optimizadas, modales accesibles (`TabProductos`, `TabCreditos`, `ChatPage`) completados (`047ecfe`). **Pendiente (usuario):** Lighthouse, revisión lector pantalla, móvil/red lenta. |
@@ -41,11 +44,11 @@ Este documento es el registro operativo de las mejoras realizadas, validaciones 
 - Las redirecciones externas, protocol-relative (`//...`) y rutas con barras invertidas se rechazan para evitar open redirects.
 - Pruebas unitarias para destinos permitidos y rechazados.
 
-### Fase 2: tasa BCV
+### Fase 2: tasa —
 
-**Commit:** `d15769c fix(security): harden BCV, moderation and API limits`
+**Commit:** `d15769c fix(security): harden —, moderation and API limits`
 
-- Fallback único centralizado: `FALLBACK_BCV_RATE`.
+- Fallback único centralizado: `FALLBACK_—_RATE`.
 - Fallback actualizado a **746 Bs/USD**.
 - Eliminados valores antiguos independientes (`487` y `487.12`).
 - Caché reducida de 60 a 15 minutos.
@@ -86,7 +89,7 @@ No se encontró una ruta `/api/email-test` en el árbol actual del repositorio.
 
 Se aplicaron o reforzaron límites en:
 
-- consulta de tasa BCV;
+- consulta de tasa —;
 - creación de conversación;
 - favoritos;
 - actualización de foto de perfil;
@@ -126,7 +129,7 @@ Authorization: Bearer <CRON_SECRET>
 
 ## Validaciones completadas (hasta 2026-08-01)
 
-- ✅ Pruebas focalizadas de redirect, moderación y tasa BCV: 19 pruebas aprobadas.
+- ✅ Pruebas focalizadas de redirect, moderación y tasa —: 19 pruebas aprobadas.
 - ✅ `npx tsc --noEmit` pasa correctamente (Fase 6).
 - ✅ Error TypeScript preexistente en `tests/unit/input-validation.test.ts` resuelto en el commit `01cdbae`.
 - ✅ Preview de Vercel dejó de reportar los errores `PGRST200` de productos/perfiles.
@@ -286,7 +289,7 @@ Estas acciones no pueden completarse únicamente con cambios de código:
 
 - [ ] Corregir `hreflang` de español e inglés.
 - [ ] Revisar canonical, Open Graph y metadatos por locale.
-- [ ] Centralizar construcción de títulos para evitar duplicados `VendeT VendeT`.
+- [ ] Centralizar construcción de títulos para evitar duplicados `CamperOcasión CamperOcasión`.
 - [ ] Añadir títulos y descripciones específicas para productos, categorías, blog, ciudades y páginas informativas.
 - [ ] Incluir blog en sitemap.
 - [ ] Usar fechas de modificación reales en sitemap, no `new Date()` para cada URL.

@@ -1,4 +1,4 @@
-/** Regression tests for the focused VendeT Service Worker. */
+/** Regression tests for the focused CamperOcasión Service Worker. */
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -23,7 +23,7 @@ test('supports push notifications and safe notification clicks', () => {
 test('cleans retired caches without unregistering the active worker', () => {
   const source = fs.readFileSync(path.join(__dirname, '../../public/sw.js'), 'utf8')
 
-  expect(source).toContain("name.startsWith('vendet-')")
+  expect(source).toContain('camperocasion-offline-')
   expect(source).toContain('clients.claim()')
   expect(source).not.toContain('self.registration.unregister()')
 })

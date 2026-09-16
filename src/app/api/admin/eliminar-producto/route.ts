@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Also delete images from R2
-    const R2_BUCKET = process.env.R2_BUCKET || 'vendet-fotos'
+    const R2_BUCKET = process.env.R2_BUCKET || 'camperocasion-fotos'
     const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || ''
     const r2Client = new S3Client({
       region: 'auto',

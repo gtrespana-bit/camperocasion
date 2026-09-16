@@ -13,8 +13,9 @@ import { requireUUIDs } from '@/lib/validation'
  * y escritura pasa por el service_role aquí.
  */
 
+// Canónico telefono/dni/banco + dni_foto_*; legados pago_movil_*/cedula_foto_* se mantienen sincronizados
 const SOLICITUD_COLUMNS =
-  'id, user_id, pago_movil_telefono, pago_movil_cedula, pago_movil_banco, mensaje, estado, creada_en, revisada_en, rechazo_motivo, cedula_foto_frente_url, cedula_foto_dorso_url'
+  'id, user_id, telefono, dni, banco, dni_foto_frente_url, dni_foto_dorso_url, pago_movil_telefono, pago_movil_cedula, pago_movil_banco, cedula_foto_frente_url, cedula_foto_dorso_url, mensaje, estado, creada_en, revisada_en, rechazo_motivo'
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,7 +57,11 @@ export async function POST(request: NextRequest) {
     if ('response' in auth) return auth.response
 
     const body = await request.json()
-    const { action, id, userId, motivo, pago_movil_telefono, pago_movil_cedula, pago_movil_banco } = body
+    // Aceptar tanto canónico (telefono/dni/banco) como legado (pago_movil_*)
+    const { action, id, userId, motivo } = body
+    const pago_movil_telefono = body.pago_movil_telefono ?? body.telefono
+    const pago_movil_cedula = body.pago_movil_cedula ?? body.dni
+    const pago_movil_banco = body.pago_movil_banco ?? body.banco
 
     const uuidCheck = requireUUIDs(body, ['id'])
     if (!uuidCheck.valid) {
@@ -105,18 +110,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: solError.message }, { status: 500 })
     }
 
-    // Marcar el perfil como verificado y copiar los datos de pago declarados.
+    // Marcar el perfil como verificado y copiar los datos de identidad declarados.
+    // Canónico ES: telefono/dni/banco/dni_foto_*. Legados sincronizados por trigger.
     const updateData: Record<string, any> = {
       verificado: true,
       verificado_desde: new Date().toISOString(),
     }
-    if (pago_movil_telefono) updateData.pago_movil_telefono = pago_movil_telefono
+    if (pago_movil_telefono) { updateData.telefono_verificacion = pago_movil_telefono; updateData.pago_movil_telefono = pago_movil_telefono; updateData.telefono = pago_movil_telefono }
     if (pago_movil_cedula) {
-      updateData.pago_movil_cedula = pago_movil_cedula
-      // Mantener el número de cédula histórico del perfil (como hacía verificar-venta).
-      updateData.cedula_numero = pago_movil_cedula
+      updateData.dni = pago_movil_cedula; updateData.pago_movil_cedula = pago_movil_cedula; updateData.cedula_numero = pago_movil_cedula
     }
-    if (pago_movil_banco) updateData.pago_movil_banco = pago_movil_banco
+    if (pago_movil_banco) { updateData.banco_verificacion = pago_movil_banco; updateData.pago_movil_banco = pago_movil_banco; updateData.banco = pago_movil_banco }
 
     const { error: perfilError } = await sb
       .from('perfiles')

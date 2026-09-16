@@ -1,4 +1,4 @@
-# Panel Admin — VendeT Venezuela
+# Panel Admin — CamperOcasión
 
 > Última actualización: 2026-09-15
 
@@ -17,7 +17,7 @@ Panel administrativo "centro de operaciones" para controlar el marketplace desde
 | **Publicaciones** | Buscar/filtrar/ordenar, selección masiva (activar/pausar/eliminar), destacar, boostear, detalle con imágenes, vendedor y estados. |
 | **Moderación** | Denuncias activas, cola de aprobación, rechazo con motivo, historial de denuncias resueltas. |
 | **Usuarios** | Buscar/filtrar, verificación individual o masiva, ajustar créditos (+ / −) con ledger, ver perfil público. |
-| **Verificación** | Solicitudes de vendedores, comparación de datos, visualización de cédula mediante URL firmada. |
+| **Verificación** | Solicitudes de vendedores, comparación de datos, visualización de DNI/NIE (documento de identidad) mediante URL firmada. |
 | **Homologación** | Expedientes documentales de vehículos: cola FIFO por antigüedad, apertura de cada documento con URL firmada, documentos exigidos que faltan, verificación o rechazo con motivo. |
 | **Transacciones** | Aprobar/rechazar pagos pendientes, ver comprobante firmado, recordatorios push, métricas de ingresos. |
 | **Auditoría** | Historial de cambios con resumen por tabla y limpieza de registros > 90 días. |
@@ -59,6 +59,6 @@ queda vacía y el panel avisa de que falta aplicarla.
 ## Notas de operación
 
 - Las operaciones administrativas ya existentes (`toggle-activo`, `toggle-destacado`, `boost-producto`, `eliminar-producto`, `moderar-producto`, `verificar-venta`, etc.) siguen siendo la fuente de escritura. Este panel las utiliza, no duplica lógica de negocio.
-- Los comprobantes, las cédulas y los documentos del vehículo se abren mediante URL firmada (nunca como URL pública permanente). La ruta se valida antes de firmar: `<user_id>/<archivo>` en cédulas y `<user_id>/<producto_id>/<archivo>` en el expediente.
+- Los comprobantes, las DNI/NIEs y los documentos del vehículo se abren mediante URL firmada (nunca como URL pública permanente). La ruta se valida antes de firmar: `<user_id>/<archivo>` en DNI/NIEs y `<user_id>/<producto_id>/<archivo>` en el expediente.
 - El sello de homologación acredita unos documentos concretos: **cualquier cambio en el expediente devuelve el anuncio a `pendiente`** y exige una nueva revisión.
 - Los contadores del sidebar se refrescan al cambiar de pestaña.
