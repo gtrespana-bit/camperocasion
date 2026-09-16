@@ -10,4 +10,4 @@ CREATE TABLE IF NOT EXISTS notificaciones_push (
     creado_en timestamptz DEFAULT now()
 );
 
-CREATE INDEX idx_notificaciones_push_pending ON notificaciones_push (target_user_id, procesada) WHERE procesada = false;
+CREATE INDEX IF NOT EXISTS idx_notificaciones_push_pending ON notificaciones_push (target_user_id, procesada) WHERE procesada = false;

@@ -3,6 +3,8 @@
 
 -- Allow users to INSERT their own profile
 DROP POLICY IF EXISTS "Insert propio" ON perfiles;
+DROP POLICY IF EXISTS "Insert propio" ON "perfiles";
+
 CREATE POLICY "Insert propio" ON perfiles FOR INSERT
   WITH CHECK (auth.uid() = id);
 

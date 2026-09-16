@@ -42,6 +42,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_solicitud_unica_aprobada
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('cedulas', 'cedulas', false, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp'])
 ON CONFLICT (id) DO NOTHING;
+DROP POLICY IF EXISTS "Usuarios suben sus propias cedulas" ON "storage"."objects";
+
 
 -- RLS Policies para cedulas bucket
 CREATE POLICY "Usuarios suben sus propias cedulas" ON storage.objects
@@ -49,12 +51,16 @@ CREATE POLICY "Usuarios suben sus propias cedulas" ON storage.objects
     bucket_id = 'cedulas'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
+DROP POLICY IF EXISTS "Usuarios ven sus propias cedulas" ON "storage"."objects";
+
 
 CREATE POLICY "Usuarios ven sus propias cedulas" ON storage.objects
   FOR SELECT USING (
     bucket_id = 'cedulas'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
+DROP POLICY IF EXISTS "Admin ve todas las cedulas" ON "storage"."objects";
+
 
 CREATE POLICY "Admin ve todas las cedulas" ON storage.objects
   FOR SELECT USING (bucket_id = 'cedulas');
@@ -63,17 +69,25 @@ CREATE POLICY "Admin ve todas las cedulas" ON storage.objects
 ALTER TABLE solicitudes_verificacion ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Usuarios ven sus solicitudes" ON solicitudes_verificacion;
+DROP POLICY IF EXISTS "Usuarios ven sus solicitudes" ON "solicitudes_verificacion";
+
 CREATE POLICY "Usuarios ven sus solicitudes" ON solicitudes_verificacion
   FOR SELECT USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Usuarios crean solicitudes" ON solicitudes_verificacion;
+DROP POLICY IF EXISTS "Usuarios crean solicitudes" ON "solicitudes_verificacion";
+
 CREATE POLICY "Usuarios crean solicitudes" ON solicitudes_verificacion
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Admin ve todas las solicitudes" ON solicitudes_verificacion;
+DROP POLICY IF EXISTS "Admin ve todas las solicitudes" ON "solicitudes_verificacion";
+
 CREATE POLICY "Admin ve todas las solicitudes" ON solicitudes_verificacion
   FOR ALL USING (true);
 
 DROP POLICY IF EXISTS "Admin actualiza solicitudes" ON solicitudes_verificacion;
+DROP POLICY IF EXISTS "Admin actualiza solicitudes" ON "solicitudes_verificacion";
+
 CREATE POLICY "Admin actualiza solicitudes" ON solicitudes_verificacion
   FOR UPDATE USING (true);

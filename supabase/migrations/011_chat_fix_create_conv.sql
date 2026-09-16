@@ -1,6 +1,8 @@
 -- 011_chat_fix_create_conv.sql
 -- Fix 1: RLS policy para permitir crear conversación cuando el usuario es user1 o user2
 DROP POLICY IF EXISTS "Crear conversaciones" ON conversaciones;
+DROP POLICY IF EXISTS "Crear conversaciones" ON "conversaciones";
+
 CREATE POLICY "Crear conversaciones" ON conversaciones FOR INSERT
   WITH CHECK (auth.uid() = user1_id OR auth.uid() = user2_id);
 

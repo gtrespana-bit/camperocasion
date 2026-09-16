@@ -87,6 +87,8 @@ $$ LANGUAGE plpgsql;
 
 -- Drop trigger si existe y crear nuevo
 DROP TRIGGER IF EXISTS trg_pack_emprendedor ON productos;
+DROP TRIGGER IF EXISTS "trg_pack_emprendedor" ON "productos";
+
 CREATE TRIGGER trg_pack_emprendedor
   AFTER INSERT ON productos
   FOR EACH ROW
@@ -123,6 +125,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_recalc_emprendedor ON productos;
+DROP TRIGGER IF EXISTS "trg_recalc_emprendedor" ON "productos";
+
 CREATE TRIGGER trg_recalc_emprendedor
   AFTER DELETE OR UPDATE OF activo ON productos
   FOR EACH ROW

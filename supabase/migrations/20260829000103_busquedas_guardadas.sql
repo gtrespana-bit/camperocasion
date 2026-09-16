@@ -34,13 +34,19 @@ create index if not exists idx_busquedas_guardadas_user
 alter table busquedas_guardadas enable row level security;
 
 drop policy if exists "Ver búsquedas propias" on busquedas_guardadas;
+DROP POLICY IF EXISTS "Ver búsquedas propias" ON "busquedas_guardadas";
+
 create policy "Ver búsquedas propias" on busquedas_guardadas
   for select using (auth.uid() = user_id);
 
 drop policy if exists "Crear búsquedas propias" on busquedas_guardadas;
+DROP POLICY IF EXISTS "Crear búsquedas propias" ON "busquedas_guardadas";
+
 create policy "Crear búsquedas propias" on busquedas_guardadas
   for insert with check (auth.uid() = user_id);
 
 drop policy if exists "Eliminar búsquedas propias" on busquedas_guardadas;
+DROP POLICY IF EXISTS "Eliminar búsquedas propias" ON "busquedas_guardadas";
+
 create policy "Eliminar búsquedas propias" on busquedas_guardadas
   for delete using (auth.uid() = user_id);

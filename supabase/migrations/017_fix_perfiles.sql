@@ -24,6 +24,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Recreate the trigger if it doesn't already exist
 DROP TRIGGER IF EXISTS crear_perfil_trigger ON auth.users;
+DROP TRIGGER IF EXISTS "crear_perfil_trigger" ON "auth"."users";
+
 CREATE TRIGGER crear_perfil_trigger
   AFTER INSERT ON auth.users
   FOR EACH ROW

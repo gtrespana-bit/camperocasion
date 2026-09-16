@@ -155,6 +155,8 @@ $$ LANGUAGE plpgsql;
 
 -- Después de cualquier update en perfiles
 DROP TRIGGER IF EXISTS trg_calc_reputacion ON perfiles;
+DROP TRIGGER IF EXISTS "trg_calc_reputacion" ON "perfiles";
+
 CREATE TRIGGER trg_calc_reputacion
   AFTER INSERT OR UPDATE ON perfiles
   FOR EACH ROW
@@ -162,6 +164,8 @@ CREATE TRIGGER trg_calc_reputacion
 
 -- Después de insertar/rechazar producto (cambia reputación vendedor)
 DROP TRIGGER IF EXISTS trg_calc_reputacion_prod ON productos;
+DROP TRIGGER IF EXISTS "trg_calc_reputacion_prod" ON "productos";
+
 CREATE TRIGGER trg_calc_reputacion_prod
   AFTER INSERT OR UPDATE OF activo, estado_moderacion ON productos
   FOR EACH ROW
@@ -169,6 +173,8 @@ CREATE TRIGGER trg_calc_reputacion_prod
 
 -- Después de insertar reseña
 DROP TRIGGER IF EXISTS trg_calc_reputacion_resena ON resenas;
+DROP TRIGGER IF EXISTS "trg_calc_reputacion_resena" ON "resenas";
+
 CREATE TRIGGER trg_calc_reputacion_resena
   AFTER INSERT OR UPDATE ON resenas
   FOR EACH ROW

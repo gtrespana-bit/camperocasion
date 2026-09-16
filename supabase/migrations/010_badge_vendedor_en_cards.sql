@@ -5,7 +5,7 @@
 
 -- 1. Columna
 ALTER TABLE productos
-  ADD COLUMN vendedor_verificado BOOLEAN DEFAULT false;
+  ADD COLUMN IF NOT EXISTS vendedor_verificado BOOLEAN DEFAULT false;
 
 -- 2. Sync datos existentes
 UPDATE productos p
@@ -27,6 +27,8 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS trg_propagar_verificado ON perfiles;
+DROP TRIGGER IF EXISTS "trg_propagar_verificado" ON "perfiles";
+
 CREATE TRIGGER trg_propagar_verificado
   AFTER UPDATE OF verificado ON perfiles
   FOR EACH ROW

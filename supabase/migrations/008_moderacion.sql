@@ -50,6 +50,8 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS trg_bloquear_por_denuncias ON denuncias;
+DROP TRIGGER IF EXISTS "trg_bloquear_por_denuncias" ON "denuncias";
+
 CREATE TRIGGER trg_bloquear_por_denuncias
   AFTER INSERT ON denuncias
   FOR EACH ROW
@@ -57,6 +59,8 @@ CREATE TRIGGER trg_bloquear_por_denuncias
 
 -- 4. RLS Policies para denuncias
 ALTER TABLE denuncias ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Admin ve todas las denuncias" ON "denuncias";
+
 
 -- Solo el admin puede ver todas
 CREATE POLICY "Admin ve todas las denuncias" ON denuncias
@@ -67,10 +71,14 @@ CREATE POLICY "Admin ve todas las denuncias" ON denuncias
       AND p.nombre = 'Admin' -- o validar email directamente
     )
   );
+DROP POLICY IF EXISTS "Usuarios pueden denunciar" ON "denuncias";
+
 
 -- Usuario puede crear denuncia
 CREATE POLICY "Usuarios pueden denunciar" ON denuncias
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "Usuarios ven sus denuncias" ON "denuncias";
+
 
 -- Usuario puede ver sus propias denuncias
 CREATE POLICY "Usuarios ven sus denuncias" ON denuncias

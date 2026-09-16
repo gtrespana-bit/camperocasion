@@ -18,6 +18,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_precio_history ON productos;
+DROP TRIGGER IF EXISTS "trg_precio_history" ON "productos";
+
 CREATE TRIGGER trg_precio_history
   AFTER UPDATE OF precio_usd ON productos
   FOR EACH ROW

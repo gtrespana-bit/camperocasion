@@ -92,35 +92,63 @@ create table if not exists transacciones_creditos (
 
 -- Perfiles: todos pueden ver, el dueño puede editar
 alter table perfiles enable row level security;
+DROP POLICY IF EXISTS "Ver perfiles" ON "perfiles";
+
 
 create policy "Ver perfiles" on perfiles for select using (true);
+DROP POLICY IF EXISTS "Editar propio perfil" ON "perfiles";
+
 create policy "Editar propio perfil" on perfiles for update using (auth.uid() = id);
 
 -- Productos: visibles todos, el dueño puede CRUD
 alter table productos enable row level security;
+DROP POLICY IF EXISTS "Ver productos" ON "productos";
 
-create policy "Ver productos" on productos for select using (activo = true) with check (true);
+
+create policy "Ver productos" on productos for select using (activo = true);
+DROP POLICY IF EXISTS "Ver propios" ON "productos";
+
 create policy "Ver propios" on productos for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Insert propios" ON "productos";
+
 create policy "Insert propios" on productos for insert with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Editar propios" ON "productos";
+
 create policy "Editar propios" on productos for update using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Eliminar propios" ON "productos";
+
 create policy "Eliminar propios" on productos for delete using (auth.uid() = user_id);
 
 -- Favoritos
 alter table favoritos enable row level security;
+DROP POLICY IF EXISTS "Ver favoritos propios" ON "favoritos";
+
 create policy "Ver favoritos propios" on favoritos for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Insert favoritos propios" ON "favoritos";
+
 create policy "Insert favoritos propios" on favoritos for insert with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Eliminar favoritos propios" ON "favoritos";
+
 create policy "Eliminar favoritos propios" on favoritos for delete using (auth.uid() = user_id);
 
 -- Mensajes
 alter table mensajes enable row level security;
+DROP POLICY IF EXISTS "Ver mensajes" ON "mensajes";
+
 create policy "Ver mensajes" on mensajes for select using (
   auth.uid() = remitente_id or auth.uid() = destinatario_id
 );
+DROP POLICY IF EXISTS "Enviar mensajes" ON "mensajes";
+
 create policy "Enviar mensajes" on mensajes for insert with check (auth.uid() = remitente_id);
 
 -- Transacciones créditos
 alter table transacciones_creditos enable row level security;
+DROP POLICY IF EXISTS "Ver transacciones propias" ON "transacciones_creditos";
+
 create policy "Ver transacciones propias" on transacciones_creditos for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Insert propias" ON "transacciones_creditos";
+
 create policy "Insert propias" on transacciones_creditos for insert with check (auth.uid() = user_id);
 
 -- Trigger para actualizar actualizado_en
@@ -131,9 +159,13 @@ begin
   return new;
 end;
 $$ language plpgsql;
+DROP TRIGGER IF EXISTS "actualizar_productos_ts" ON "productos";
+
 
 create trigger actualizar_productos_ts before update on productos
   for each row execute procedure actualizar_timestamp();
+DROP TRIGGER IF EXISTS "actualizar_perfiles_ts" ON "perfiles";
+
 
 create trigger actualizar_perfiles_ts before update on perfiles
   for each row execute procedure actualizar_timestamp();
@@ -153,10 +185,25 @@ begin
   return new;
 end;
 $$ language plpgsql security definer;
+DROP TRIGGER IF EXISTS "on_auth_user_created" ON "auth"."users";
+
 
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure crear_perfil();
 
 -- Habilitar Realtime para chat
-alter publication supabase_realtime add table mensajes;
+-- Habilitar Realtime para chat
+-- (crea la publication si no existe y evita error si la tabla ya fue añadida)
+do $$
+begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table mensajes;
+exception
+  when duplicate_object then null; -- ya estaba añadida
+end $$;

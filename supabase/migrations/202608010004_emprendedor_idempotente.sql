@@ -113,6 +113,8 @@ end;
 $$;
 
 drop trigger if exists trg_pack_emprendedor on public.productos;
+DROP TRIGGER IF EXISTS "trg_pack_emprendedor" ON "public"."productos";
+
 create trigger trg_pack_emprendedor
   after insert on public.productos
   for each row execute function public.trg_empaque_emprendedor();
