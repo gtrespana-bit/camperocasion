@@ -322,42 +322,57 @@ create policy "Admin ve documentos de identidad" on storage.objects
 -- debe preferir `documentos-identidad` en código nuevo.
 
 
--- ── 5. Transacciones: precio canónico ──────────────────────────────────────
--- La tabla transacciones guarda el precio del paquete de créditos pagado.
--- Antes: `precio_usd` (legado)
--- Ahora: `precio_eur` como canónico, trigger sync.
+-- ── 5. Transacciones: compatibilidad (la tabla canónica real es transacciones_creditos) ─
+-- En instalaciones antiguas pudo existir `public.transacciones` con `precio_usd`;
+-- en la base actual esa tabla no existe (el historial es transacciones_creditos
+-- con columna `monto`). Este bloque es idempotente y no falla si la tabla no existe.
 
-alter table public.transacciones
-  add column if not exists precio_eur numeric(12,2);
-
-update public.transacciones set precio_eur = coalesce(precio_eur, precio_usd)
-  where precio_eur is null and precio_usd is not null;
-update public.transacciones set precio_usd = coalesce(precio_usd, precio_eur)
-  where precio_usd is null and precio_eur is not null;
-
-comment on column public.transacciones.precio_eur is 'Canónico ES: precio en euros. Alias legado: precio_usd.';
-
-create or replace function public.fn_sync_transaccion_precio()
-returns trigger as $$
+do $$
 begin
-  if tg_op = 'INSERT' then
-    new.precio_eur := coalesce(new.precio_eur, new.precio_usd);
-    new.precio_usd := coalesce(new.precio_usd, new.precio_eur);
-    return new;
-  elsif tg_op = 'UPDATE' then
-    if new.precio_eur is distinct from old.precio_eur and new.precio_eur is not null then new.precio_usd := new.precio_eur;
-    elsif new.precio_usd is distinct from old.precio_usd and new.precio_usd is not null then new.precio_eur := new.precio_usd;
-    end if;
-    return new;
-  end if;
-  return new;
-end;
-$$ language plpgsql;
+  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'transacciones') then
 
-drop trigger if exists trg_sync_transaccion_precio on public.transacciones;
-create trigger trg_sync_transaccion_precio
-  before insert or update of precio_eur, precio_usd on public.transacciones
-  for each row execute function public.fn_sync_transaccion_precio();
+    -- Añadir columna canónica si la tabla existe
+    begin
+      execute 'alter table public.transacciones add column if not exists precio_eur numeric(12,2)';
+    exception when duplicate_column then null; end;
+
+    -- Backfill bidireccional
+    if exists (select 1 from information_schema.columns where table_schema='public' and table_name='transacciones' and column_name='precio_usd') then
+      execute 'update public.transacciones set precio_eur = coalesce(precio_eur, precio_usd) where precio_eur is null and precio_usd is not null';
+      execute 'update public.transacciones set precio_usd = coalesce(precio_usd, precio_eur) where precio_usd is null and precio_eur is not null';
+    end if;
+
+    begin
+      execute 'comment on column public.transacciones.precio_eur is ''Canónico ES: precio en euros. Alias legado: precio_usd.''';
+    exception when undefined_column then null; when undefined_object then null; end;
+
+    -- Trigger sync (solo si ambas columnas existen)
+    execute $fn$
+      create or replace function public.fn_sync_transaccion_precio()
+      returns trigger as $t$
+      begin
+        if tg_op = 'INSERT' then
+          new.precio_eur := coalesce(new.precio_eur, new.precio_usd);
+          new.precio_usd := coalesce(new.precio_usd, new.precio_eur);
+          return new;
+        elsif tg_op = 'UPDATE' then
+          if new.precio_eur is distinct from old.precio_eur and new.precio_eur is not null then new.precio_usd := new.precio_eur;
+          elsif new.precio_usd is distinct from old.precio_usd and new.precio_usd is not null then new.precio_eur := new.precio_usd;
+          end if;
+          return new;
+        end if;
+        return new;
+      end;
+      $t$ language plpgsql;
+    $fn$;
+
+    execute 'drop trigger if exists trg_sync_transaccion_precio on public.transacciones';
+    begin
+      execute 'create trigger trg_sync_transaccion_precio before insert or update of precio_eur, precio_usd on public.transacciones for each row execute function public.fn_sync_transaccion_precio()';
+    exception when undefined_column then null; when undefined_object then null; end;
+
+  end if;
+end $$;
 
 
 -- ── 6. Vistas de compatibilidad (opcional, lectura) ────────────────────────
