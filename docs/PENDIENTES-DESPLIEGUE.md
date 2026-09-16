@@ -115,6 +115,39 @@ Nota de producto: el dinero **no pasa por la plataforma**; el comprador paga la
 señal por Bizum/transferencia/en mano y el admin verifica el comprobante. No hay
 Stripe ni custodia, así que no hace falta ninguna variable nueva de pago.
 
+### 1.2-ter Aplicar la Fase §4 (inspección + gestoría) — PENDIENTE en producción
+
+```bash
+# Opción A: solo esta migración
+supabase/migrations/202609170002_inspecciones_gestoria.sql
+
+# Opción B: el setup completo (ya la incluye al final y es idempotente)
+setup-camperocasion.sql
+```
+
+Comprobación (dos valores no nulos; el resto sale con
+`scripts/verificar_despliegue.sql`, ahora **26** comprobaciones):
+
+```sql
+select to_regclass('public.solicitudes_inspeccion'),
+       to_regclass('public.solicitudes_gestoria');
+```
+
+Sin aplicarla el sitio funciona igual: el botón de inspección de la ficha no
+aparece, la pestaña *Inspecciones* del dashboard avisa de que falta y el
+formulario de la gestoría responde con un 503 amable. Cuando esté aplicada
+aparecen solas:
+
+- Ficha del anuncio → botón **Inspección precompra** (concierge: presupuesto
+  150–250 €, el comprador paga directo al taller) + CTA **Contrato de
+  compraventa** precargado con los datos del anuncio.
+- `/dashboard` → pestaña **Inspecciones** (seguimiento y cancelación).
+- `/admin` → pestañas **Inspecciones** (cola FIFO con presupuesto, pago,
+  curso, informe y cancelación, con push al comprador en cada paso) y
+  **Gestoría** (leads de la landing `/gestoria-cambio-nombre`).
+- El contrato se genera íntegro en el navegador (`/contrato-compraventa`):
+  no toca base de datos ni servers. Enlazado desde ficha, ITP y compra-segura.
+
 ### 1.3 Variables de entorno en Vercel — ✅ APLICADAS el 2026-09-16
 
 Única comprobación que queda (10 s): `/admin` → *Estado*, o abrir
@@ -256,8 +289,13 @@ las 20 comprobaciones de despliegue). Los cuatro scripts ya pasan en local.
 - Rangos numéricos en los filtros (km máximos, año mínimo, watios de placa).
 - Llevar los filtros técnicos también a `/buscar`, que tiene su propia barra.
 - Normalizar las claves del JSONB a slugs (`plazas_dormir`) — necesita backfill.
-- Fase 1 restante: inspección precompra, contrato de compraventa descargable y
-  gestoría del cambio de nombre.
+- ~~Fase 1 restante: inspección precompra, contrato de compraventa descargable
+  y gestoría del cambio de nombre~~ ✅ **hecho (2026-09-17, plan §4)**: botón
+  de inspección concierge (tabla + API + panel + dashboard), generador de
+  contrato PDF (`/contrato-compraventa`, 100% navegador) y captación de leads
+  de gestoría (`/gestoria-cambio-nombre`). Lo que queda de esa fase es el
+  **informe de 50 puntos** (columna `informe` jsonb ya espera) y el partner
+  real de gestoría — ver `docs/plan-confianza-marketplace.md` §4.
 
 ---
 

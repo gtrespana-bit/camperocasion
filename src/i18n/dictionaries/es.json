@@ -449,7 +449,9 @@
     "itpCtaTitulo": "Calcula el ITP de esta camper",
     "itpCtaDesc": "Cuánto pagarás de impuesto y de cambio de nombre según tu comunidad",
     "reservarCta": "Reservar con señal",
-    "reservadoBadge": "Reservado"
+    "reservadoBadge": "Reservado",
+    "contratoCtaTitulo": "Contrato de compraventa",
+    "contratoCtaDesc": "Modelo listo para imprimir con los datos de esta camper"
   },
   "creditos": {
     "title1": "Compra créditos y",
@@ -645,7 +647,8 @@
     "yourReputation": "Tu reputacion como vendedor",
     "reviews": "Resenas",
     "noReviews": "Aun no tienes resenas. Los compradores podran dejarte una despues de una transaccion.",
-    "tabReservations": "Reservas"
+    "tabReservations": "Reservas",
+    "tabInspecciones": "Inspecciones"
   },
   "contact": {
     "title": "Contáctanos",
@@ -1058,5 +1061,23 @@
     "iosDone": "Entendido",
     "closeBanner": "Cerrar banner",
     "close": "Cerrar"
+  },
+  "inspeccion": {
+    "ctaTitulo": "Inspección precompra",
+    "ctaLogin": "Pide una revisión por un taller colaborador antes de viajar ({min}-{max} €)",
+    "ctaDesc": "Un taller colaborador revisa el vehículo y te manda el informe ({min}-{max} €)",
+    "estadoTitulo": "Tu inspección",
+    "modalTitulo": "Inspección precompra",
+    "cerrar": "Cerrar",
+    "modalPaso1": "Pides la inspección aquí y te contactamos con el presupuesto exacto (orientativo {min}-{max} €).",
+    "modalPaso2": "Un taller colaborador revisa el vehículo (motor, humedades, gas, 12V/220V, documentación) y te entrega un informe.",
+    "modalPaso3": "Pagas directamente al taller; la plataforma no mueve dinero en ningún momento.",
+    "modalPaso4": "Con el informe en la mano, viajas solo si el vehículo está como decía el anuncio.",
+    "notaReservado": "El anuncio está reservado, pero la inspección sigue siendo buena idea: si la operación cae, el anuncio se libera.",
+    "notasLabel": "Nota para el equipo (opcional)",
+    "notasPlaceholder": "Ciudad, disponibilidad, teléfono de contacto…",
+    "confirmar": "Solicitar inspección",
+    "avisoSinPago": "No pagas nada ahora: primero te llega el presupuesto.",
+    "errorGenerico": "No se pudo enviar la solicitud. Inténtalo de nuevo."
   }
 }

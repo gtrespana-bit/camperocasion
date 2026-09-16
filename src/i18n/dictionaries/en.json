@@ -449,7 +449,9 @@
     "itpCtaTitulo": "Calculate the transfer tax for this camper",
     "itpCtaDesc": "What you will pay in tax and registration fee according to your region",
     "reservarCta": "Reserve with a deposit",
-    "reservadoBadge": "Reserved"
+    "reservadoBadge": "Reserved",
+    "contratoCtaTitulo": "Sale contract",
+    "contratoCtaDesc": "Print-ready template prefilled with this van’s details"
   },
   "creditos": {
     "title1": "Buy credits and",
@@ -645,7 +647,8 @@
     "yourReputation": "Your seller reputation",
     "reviews": "Reviews",
     "noReviews": "No reviews yet. Buyers can leave one after a transaction.",
-    "tabReservations": "Reservations"
+    "tabReservations": "Reservations",
+    "tabInspecciones": "Inspections"
   },
   "contact": {
     "title": "Contact Us",
@@ -1058,5 +1061,23 @@
     "iosDone": "Got it",
     "closeBanner": "Close banner",
     "close": "Close"
+  },
+  "inspeccion": {
+    "ctaTitulo": "Pre-purchase inspection",
+    "ctaLogin": "Get it checked by a partner workshop before you travel ({min}-{max} €)",
+    "ctaDesc": "A partner workshop inspects the van and sends you the report ({min}-{max} €)",
+    "estadoTitulo": "Your inspection",
+    "modalTitulo": "Pre-purchase inspection",
+    "cerrar": "Close",
+    "modalPaso1": "Request it here and we’ll get back to you with an exact quote (approx. {min}-{max} €).",
+    "modalPaso2": "A partner workshop checks the van (engine, damp, gas, 12V/220V, paperwork) and delivers a report.",
+    "modalPaso3": "You pay the workshop directly; the platform never handles money.",
+    "modalPaso4": "With the report in hand, you only travel if the van is as advertised.",
+    "notaReservado": "The van is reserved, but the inspection is still a good idea: if the deal falls through, the listing is released.",
+    "notasLabel": "Note for the team (optional)",
+    "notasPlaceholder": "City, availability, contact phone…",
+    "confirmar": "Request inspection",
+    "avisoSinPago": "You pay nothing now: you’ll get a quote first.",
+    "errorGenerico": "The request could not be sent. Please try again."
   }
 }
