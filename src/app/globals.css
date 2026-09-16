@@ -1,0 +1,360 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground: #333333;
+  --background: #F5F5F5;
+}
+
+html {
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
+}
+
+@media (display-mode: standalone) {
+  html, body { overflow-y: scroll !important; }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  cursor: auto;
+}
+
+/* ===== FOCUS VISIBLE - Accesibilidad Fase 5 ===== */
+:focus-visible {
+  outline: 2px solid #EA580C;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #EA580C;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.25);
+}
+
+/* Focus visible para tarjetas clicables */
+.card-hover:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  border-radius: 8px;
+}
+
+/* Evitar outline en mouse click, solo teclado */
+:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Skip link accesible */
+.sr-only:focus {
+  position: absolute;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ===== MOBILE APP-LIKE BEHAVIOR ===== */
+@media (max-width: 767px) {
+  body { overscroll-behavior-y: none; }
+  main { padding-bottom: 5.5rem; }
+  /* Extra padding en página de créditos para que el bottom nav no tape los botones */
+  .creditos-grid { padding-bottom: 2rem; }
+  /* Tap delay fix — iOS no mete delay de 300ms entre clicks */
+  a, button, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}
+
+/* PWA status bar */
+@media (display-mode: standalone) {
+  html { padding-top: env(safe-area-inset-top, 0); }
+}
+
+/* Bottom navigation safe area for PWA */
+@media (max-width: 767px) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-top: env(safe-area-inset-bottom, 0);
+  }
+}
+
+/* ===== APP-LIKE CARDS ===== */
+@media (max-width: 767px) {
+  .app-card {
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  }
+  /* Touch-friendly tap targets */
+  button, a {
+    min-height: 44px; /* Apple HIG minimum tap target */
+  }
+}
+
+/* ===== SCROLL ANIMATIONS ===== */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.animate-on-scroll.delay-1 { transition-delay: 0.1s; }
+.animate-on-scroll.delay-2 { transition-delay: 0.2s; }
+.animate-on-scroll.delay-3 { transition-delay: 0.3s; }
+.animate-on-scroll.delay-4 { transition-delay: 0.4s; }
+
+/* ===== HERO ===== */
+.hero-gradient {
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #2d1017 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-gradient::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(201,168,76,0.15) 0%, transparent 70%);
+  animation: hero-pulse 4s ease-in-out infinite;
+}
+
+.hero-gradient::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(123,45,59,0.1) 0%, transparent 70%);
+  animation: hero-pulse 3s ease-in-out infinite reverse;
+}
+
+@keyframes hero-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+/* ===== SKELETON LOADER ===== */
+.skeleton {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.skeleton-title {
+  height: 20px;
+  width: 80%;
+}
+
+.skeleton-price {
+  height: 28px;
+  width: 40%;
+}
+
+/* ===== MICRO INTERACTIONS ===== */
+.btn-primary {
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(123,45,59,0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+
+/* ===== BADGES ===== */
+.badge-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #dbeafe;
+}
+
+.badge-trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f0fdf4;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #bbf7d0;
+}
+
+/* ===== SEARCH CHIPS ===== */
+.chip-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 20px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip-search:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.5);
+}
+
+/* ===== FLOATING CHAT ===== */
+.floating-chat {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.floating-chat:hover {
+  transform: scale(1.1);
+}
+
+/* ===== DARK MODE — DISABLED ===== */
+/* Deshabilitado porque el sitio es light-mode y prefers-color-scheme dark
+   rompía todos los textos (Tailwind text-gray-* no se adapta automáticamente).
+   Si se quiere dark mode real, usar estrategia Tailwind darkMode: 'class'. */
+
+/* ===== FEATURED CARD ===== */
+.featured-card {
+  border: 2px solid #EA580C;
+  position: relative;
+}
+
+.featured-card::before {
+  content: '⭐ Destacado';
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  background: #EA580C;
+  color: #0F172A;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+/* ===== HIDE SCROLLBAR ===== */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ===== TRUST BAR ===== */
+.trust-bar {
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.dark .trust-bar {
+  border-bottom-color: #374151;
+}
+
+/* ===== PULSE ANIM FOR CTA ===== */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(252,209,22,0); }
+}
+
+.pulse-cta { animation: pulse-glow 2s infinite; }
+
+/* ===== TOOLTIP ===== */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a2e;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+}
+
+/* ===== HERO COLLAGE — flotación suave ===== */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float 8s ease-in-out 1.2s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-slow {
+    animation: none;
+  }
+}

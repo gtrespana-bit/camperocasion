@@ -1,0 +1,8 @@
+{
+  "crons": [
+    { "path": "/api/cron/clean-rate-limits", "schedule": "17 3 * * *" },
+    { "path": "/api/cron/busquedas", "schedule": "23 */6 * * *" },
+    { "path": "/api/cron/digest-vendedores", "schedule": "5 13 * * 1" },
+    { "path": "/api/cron/precios-bajaron", "schedule": "41 14 * * *" }
+  ]
+}
