@@ -160,8 +160,12 @@ const nextConfig = withNextIntl({
     ]
   },
 
-  // Configuración de salida optimizada
-  output: 'standalone',
+  // Salida standalone SOLO para self-hosting (Docker / `node server.js`).
+  // ⚠️ En Vercel hay que dejarlo desactivado: el builder de Next.js ya genera
+  // su propio artefacto y con `output: 'standalone'` activo la build revienta
+  // con `ENOENT: .next/next-server.js.nft.json` (bug conocido con Next 16).
+  // Para autoalojar: `NEXT_OUTPUT=standalone npm run build` (o `npm run build:standalone`).
+  output: process.env.NEXT_OUTPUT === 'standalone' ? 'standalone' : undefined,
 
   // Optimizaciones de webpack
   webpack: (config, { isServer, dev }) => {

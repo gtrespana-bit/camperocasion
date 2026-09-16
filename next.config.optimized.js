@@ -59,8 +59,9 @@ const nextConfig = withNextIntl({
 
   reactStrictMode: true,
 
-  // Configuración de salida optimizada
-  output: 'standalone',
+  // Configuración de salida optimizada — ver nota en next.config.js:
+  // `standalone` es solo para self-hosting; en Vercel debe ir desactivado.
+  output: process.env.NEXT_OUTPUT === 'standalone' ? 'standalone' : undefined,
 
   // Optimizaciones de webpack
   webpack: (config, { isServer, dev }) => {
