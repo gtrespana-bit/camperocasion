@@ -1,27 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/require-auth'
-import { rutaStorageValida } from '@/lib/storage-paths'
+import { rutaDocumentoVehiculoValida } from '@/lib/storage-paths'
+
+const BUCKET = 'documentos-vehiculo'
 
 /**
- * Las solicitudes almacenan la ruta del objeto (no una URL pública). Aunque
- * este endpoint solo es administrativo, validamos la ruta para que la firma
- * nunca pueda apuntar a una clave anómala: `<user_id>/<archivo>`.
- */
-const getSafeCedulaPath = (value: string | null) => rutaStorageValida(value, { minPartes: 2 })
-
-/**
- * GET /api/admin/cedula?path=<uuid>/<archivo>
+ * GET /api/admin/documentos-vehiculo/firmar?path=<user_id>/<producto_id>/<archivo>
  *
- * Devuelve una URL firmada de vida corta para que el panel admin pueda revisar
- * documentos en el bucket privado `cedulas`. La URL no se cachea ni se expone
- * como URL pública permanente.
+ * Devuelve una URL firmada de vida corta (5 min) para que el panel admin abra
+ * un documento del expediente. El bucket es privado y la ruta se valida antes
+ * de firmar, igual que en `/api/admin/cedula`.
  */
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request)
   if ('response' in auth) return auth.response
 
-  const path = getSafeCedulaPath(new URL(request.url).searchParams.get('path'))
+  const path = rutaDocumentoVehiculoValida(new URL(request.url).searchParams.get('path'))
   if (!path) {
     return NextResponse.json({ error: 'Documento no válido' }, { status: 400 })
   }
@@ -31,8 +26,8 @@ export async function GET(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false, autoRefreshToken: false } },
   )
-  const { data, error } = await sb.storage.from('cedulas').createSignedUrl(path, 300)
 
+  const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(path, 300)
   if (error || !data?.signedUrl) {
     return NextResponse.json({ error: 'No se pudo abrir el documento' }, { status: 404 })
   }

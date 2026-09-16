@@ -3,6 +3,7 @@ import { formatPrecio } from '@/lib/precio'
 
 import { useState, useRef } from 'react';
 import LocalLink from './LocalLink';
+import BadgeHomologacion from './BadgeHomologacion';
 import Image from 'next/image';
 import { productUrl } from '@/lib/product-url'
 
@@ -21,6 +22,7 @@ interface Producto {
   destacado: boolean;
   destacado_hasta: string | null;
   vendedor_verificado: boolean | null;
+  verificacion_homologacion?: string | null;
   _isFeatured?: boolean;
 }
 
@@ -87,6 +89,11 @@ export const ProductCardLazy = ({ p, t, priority = false }: ProductCardLazyProps
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 truncate group-hover:text-brand-primary transition-colors">{p.titulo}</h3>
         <p className="text-xl font-black text-brand-primary mt-1">{formatPrecio(p.precio_usd || 0)}</p>
+        {p.verificacion_homologacion === 'verificada' && (
+          <div className="mt-1">
+            <BadgeHomologacion estado={p.verificacion_homologacion} size="sm" />
+          </div>
+        )}
         {p.vendedor_verificado && (
           <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full mt-1">
             <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>

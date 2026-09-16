@@ -33,3 +33,11 @@ relanzado como vertical camper español:
    (contención `@>` con índice GIN). Registro único en
    `src/lib/filtros-tecnicos.ts`: captura en `/publicar`, filtros del catálogo,
    opciones y traducción a la consulta salen del mismo sitio.
+7. **Homologación verificada (2026-09):** expediente documental del vehículo
+   (bucket privado `documentos-vehiculo` + tabla `documentos_vehiculo` +
+   `productos.verificacion_homologacion`). El vendedor sube ficha técnica, ITV y
+   —si declara "Vehículo Vivienda (2448/3148)"— proyecto de homologación; el
+   admin lo revisa en `/admin` → *Homologación* y el anuncio recibe el sello
+   (`src/components/BadgeHomologacion.tsx`) más el filtro "solo homologación
+   verificada" del catálogo. Cualquier cambio en el expediente devuelve el
+   anuncio a revisión.

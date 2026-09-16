@@ -2,6 +2,7 @@
 import { formatPrecio } from '@/lib/precio'
 
 import LocalLink from '@/components/LocalLink'
+import BadgeHomologacion from '@/components/BadgeHomologacion'
 import { Search, ChevronRight, XCircle, Loader2, Bell, BellRing } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback, use } from 'react'
@@ -28,6 +29,7 @@ type Producto = {
   destacado: boolean | null
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
+  verificacion_homologacion?: string | null
   descripcion?: string
 }
 
@@ -89,6 +91,11 @@ function ProductCard({ p }: { p: Producto }) {
         <p className="text-xl font-black text-brand-primary mt-1">
           {formatPrecio(p.precio_usd || 0)}
         </p>
+        {p.verificacion_homologacion === 'verificada' && (
+          <div className="mt-1">
+            <BadgeHomologacion estado={p.verificacion_homologacion} size="sm" />
+          </div>
+        )}
         {p.vendedor_verificado && (
           <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full mt-1">
             <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -232,7 +239,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
     async function buscar() {
       let sq = supabase
         .from('productos')
-        .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado', { count: 'exact' })
+        .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, verificacion_homologacion', { count: 'exact' })
         .eq('activo', true)
         .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado')
 

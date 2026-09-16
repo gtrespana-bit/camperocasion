@@ -7,10 +7,10 @@ import { getCatalogPageRange } from '@/lib/catalog-pagination';
 import {
   CATALOG_PRODUCT_COLUMNS,
   CATALOG_FILTRO_MODERACION,
+  aplicarFiltrosCatalogo,
   ordenarProductosCatalogo,
   ProductoCatalogo,
 } from '@/lib/catalog-consulta';
-import { aplicarFiltrosTecnicos } from '@/lib/filtros-tecnicos';
 
 interface ProductFilter {
   categoria?: string;
@@ -107,9 +107,9 @@ export const useProductLoader = (): UseProductLoaderResult => {
         query = query.lte('precio_usd', parseFloat(filters.precioMax));
       }
 
-      // Filtros técnicos (DGT, homologación, plazas, baño, autonomía, medidas…)
-      // en una sola condición de contención JSONB cubierta por el índice GIN.
-      query = aplicarFiltrosTecnicos(query, filters);
+      // Filtros técnicos (una sola contención JSONB, índice GIN) + el filtro
+      // de homologación verificada (columna de `productos`).
+      query = aplicarFiltrosCatalogo(query, filters);
 
       // Página real desde el servidor. El mismo tamaño se comparte con el
       // SSR inicial para no dejar filas sin mostrar entre páginas.

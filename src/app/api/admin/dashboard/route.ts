@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
       verified,
       reviews,
       pendTx,
+      pendHomol,
     ] = await Promise.all([
       sb.from('perfiles').select('id', { count: 'exact', head: true }),
       sb.from('productos').select('id', { count: 'exact', head: true }),
@@ -64,6 +65,9 @@ export async function GET(request: NextRequest) {
       sb.from('perfiles').select('id', { count: 'exact', head: true }).eq('verificado', true),
       sb.from('resenas').select('id', { count: 'exact', head: true }),
       sb.from('transacciones_creditos').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente').eq('tipo', 'compra'),
+      // Expedientes de homologación esperando revisión (Fase 0.2). Si la
+      // migración no está aplicada, el contador se omite sin romper el panel.
+      sb.from('productos').select('id', { count: 'exact', head: true }).eq('verificacion_homologacion', 'pendiente'),
     ])
 
     const [recentRes, topRes, usersRes, productsAll, txAll] = await Promise.all([
@@ -106,6 +110,7 @@ export async function GET(request: NextRequest) {
         activeReports: reports.count || 0,
         pendingVerifications: pendVerif.count || 0,
         pendingTransactions: pendTx.count || 0,
+        pendingHomologaciones: pendHomol.error ? 0 : pendHomol.count || 0,
         verified: verified.count || 0,
         reviews: reviews.count || 0,
       },

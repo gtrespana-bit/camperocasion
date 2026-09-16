@@ -6,10 +6,10 @@ import { clientCache } from '@/lib/clientCache';
 import {
   CATALOG_PRODUCT_COLUMNS,
   CATALOG_FILTRO_MODERACION,
+  aplicarFiltrosCatalogo,
   ordenarProductosCatalogo,
   ProductoCatalogo,
 } from '@/lib/catalog-consulta';
-import { aplicarFiltrosTecnicos } from '@/lib/filtros-tecnicos';
 
 interface ProductFilter {
   categoria?: string;
@@ -94,8 +94,9 @@ export const usePrefetch = () => {
         query = query.lte('precio_usd', parseFloat(filters.precioMax));
       }
 
-      // Mismos filtros técnicos que el loader (contención JSONB, índice GIN).
-      query = aplicarFiltrosTecnicos(query, filters);
+      // Mismos filtros que el loader: si aquí se filtrara distinto, la caché
+      // (clave = filtros + página) serviría una página incoherente.
+      query = aplicarFiltrosCatalogo(query, filters);
 
       // Aplicar offset para la página específica
       const offset = (page - 1) * itemsPerPage;

@@ -14,6 +14,7 @@ import UbicacionSelector from '@/components/UbicacionSelector'
 import { Pagination } from '@/components/Pagination'
 import { OptimizedProductGrid } from '@/components/OptimizedProductGrid'
 import { CatalogFilters } from '@/components/CatalogFilters'
+import BadgeHomologacion from '@/components/BadgeHomologacion'
 import { useProductPagination } from '@/hooks/useProductPagination'
 import { useProductLoader } from '@/hooks/useProductLoader'
 import { CATALOG_PAGE_SIZE } from '@/lib/catalog-pagination'
@@ -22,6 +23,7 @@ import {
   hayFiltrosTecnicos,
   leerFiltrosTecnicos,
 } from '@/lib/filtros-tecnicos'
+import { FILTRO_VERIFICADA_PARAM } from '@/lib/catalog-consulta'
 import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { usePrefetch } from '@/hooks/usePrefetch'
 import { productUrl } from '@/lib/product-url'
@@ -41,6 +43,7 @@ type Producto = {
   destacado: boolean
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
+  verificacion_homologacion?: string | null
 }
 
 interface CatalogoPageProps {
@@ -120,6 +123,11 @@ const ProductCard = memo(({ p, priority = false, t }: { p: Producto; priority?: 
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 truncate group-hover:text-brand-primary transition-colors">{p.titulo}</h3>
         <p className="text-xl font-black text-brand-primary mt-1">{formatPrecio(p.precio_usd || 0)}</p>
+        {p.verificacion_homologacion === 'verificada' && (
+          <div className="mt-1">
+            <BadgeHomologacion estado={p.verificacion_homologacion} size="sm" />
+          </div>
+        )}
         {p.vendedor_verificado && (
           <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full mt-1">
             <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -172,13 +180,17 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   // Se memoiza con el string de la query (primitivo) y no con el objeto de
   // `useSearchParams`: si su identidad cambiase entre renders, los efectos que
   // dependen de los filtros se reejecutarían en bucle.
+  // Filtro "solo homologación verificada": no forma parte del registro JSONB
+  // (es una columna de `productos`), así que se lee aparte.
+  const verificada = searchParams.get(FILTRO_VERIFICADA_PARAM) || ''
+
   const queryString = searchParams.toString()
   const filtrosTecnicos = useMemo(() => leerFiltrosTecnicos(new URLSearchParams(queryString)), [queryString])
   const firmaTecnica = firmaFiltrosTecnicos(filtrosTecnicos)
 
   const hasActiveFilters = !!(
     categoria || subcategoria || marca || q || precioMin || precioMax ||
-    ubicacionEstado || ubicacionCiudad || hayFiltrosTecnicos(filtrosTecnicos)
+    ubicacionEstado || ubicacionCiudad || verificada || hayFiltrosTecnicos(filtrosTecnicos)
   )
 
   // Carga real por página desde el servidor (range()).
@@ -200,7 +212,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const totalPages = Math.max(1, Math.ceil(totalCountToUse / itemsPerPage))
 
   // Firma de filtros para detectar cambios y resetear la página.
-  const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, firmaTecnica].join('|')
+  const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, firmaTecnica, verificada].join('|')
   const prevFilterSig = useRef(filterSig)
 
   const cat = categoriasData[categoria]
@@ -242,10 +254,11 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
         precioMax,
         ubicacionEstado,
         ubicacionCiudad,
+        [FILTRO_VERIFICADA_PARAM]: verificada || undefined,
         ...filtrosTecnicos
       }
     });
-  }, [filterSig, currentPage, itemsPerPage, hasActiveFilters, useServerData, goToPage, loadPage, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos]);
+  }, [filterSig, currentPage, itemsPerPage, hasActiveFilters, useServerData, goToPage, loadPage, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, verificada]);
 
   // Precargar la siguiente página cuando sea apropiado
   useEffect(() => {
@@ -264,6 +277,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
             precioMax,
             ubicacionEstado,
             ubicacionCiudad,
+            [FILTRO_VERIFICADA_PARAM]: verificada || undefined,
             ...filtrosTecnicos
           }
         );
@@ -271,7 +285,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
 
       return () => clearTimeout(prefetchTimer);
     }
-  }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, itemsPerPage, prefetchPage]);
+  }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, verificada, itemsPerPage, prefetchPage]);
 
   const subLabel = subcategoria
     ? (cat?.subs.find(s => s.label === subcategoria)?.label || subcategoria)
@@ -361,6 +375,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
             ubicacionEstado={ubicacionEstado}
             ubicacionCiudad={ubicacionCiudad}
             filtrosTecnicos={filtrosTecnicos}
+            verificada={verificada}
             t={t}
           />
         </aside>
@@ -401,7 +416,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
                 <p className="font-semibold">{t('catalog.loadErrorTitle')}</p>
                 <p className="text-sm mt-1">{error}</p>
                 <button
-                  onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, ...filtrosTecnicos } })}
+                  onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, [FILTRO_VERIFICADA_PARAM]: verificada || undefined, ...filtrosTecnicos } })}
                   className="mt-3 text-sm font-semibold text-red-700 underline hover:text-red-900"
                 >
                   {t('catalog.retry')}

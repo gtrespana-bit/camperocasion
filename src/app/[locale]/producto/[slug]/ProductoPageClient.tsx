@@ -5,10 +5,12 @@ import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
-import { MapPin, Tag, MessageCircle, Phone, Mail, ChevronRight, Shield, Clock, Heart, Share2, CheckCircle2 } from 'lucide-react'
+import { MapPin, Tag, MessageCircle, Phone, Mail, ChevronRight, Shield, Clock, Heart, Share2, CheckCircle2, FileCheck2 } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import ReportarButton from '@/components/ReportarButton'
 import BadgeVerificado from '@/components/BadgeVerificado'
+import BadgeHomologacion from '@/components/BadgeHomologacion'
+import { esHomologacionVivienda, resumenExpediente } from '@/lib/verificacion-homologacion'
 import ImageGallery from '@/components/ImageGallery'
 import SellerReputation from '@/components/SellerReputation'
 import { resolveContactMethods } from '@/lib/contact-methods'
@@ -35,12 +37,19 @@ class ProductErrorBoundary extends Component<{children: React.ReactNode}, {hasEr
   }
 }
 
+export interface VerificacionHomologacion {
+  estado: string
+  motivo?: string | null
+  documentos: { tipo: string; estado?: string | null }[]
+}
+
 interface ProductoPageClientProps {
   initialProduct: any
   favoritosCount?: number
+  verificacion?: VerificacionHomologacion | null
 }
 
-function ProductoPageClientInner({ initialProduct, favoritosCount = 0 }: ProductoPageClientProps) {
+function ProductoPageClientInner({ initialProduct, favoritosCount = 0, verificacion = null }: ProductoPageClientProps) {
   const t = useTranslations('productDetail')
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
@@ -230,6 +239,14 @@ function ProductoPageClientInner({ initialProduct, favoritosCount = 0 }: Product
               <h3 className="font-bold text-green-800 text-lg">{t('successTitle')}</h3>
               <p className="text-green-700 text-sm mt-1">{t('successDesc')}</p>
               <p className="text-green-600 text-xs mt-2 font-bold">{t('successFree')}</p>
+              {/* Siguiente paso natural tras publicar: subir la documentación
+                  del vehículo y conseguir el sello de homologación verificada. */}
+              <LocalLink
+                href={`/producto/editar/${producto.id}#expediente`}
+                className="inline-flex items-center gap-2 mt-3 bg-brand-primary text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-dark transition"
+              >
+                {t('expedienteCta')}
+              </LocalLink>
               {/* Pico de dopamina del vendedor: compartir = tráfico gratis de SU red */}
               <div className="flex flex-wrap gap-2 mt-3">
                 <button
@@ -281,6 +298,9 @@ function ProductoPageClientInner({ initialProduct, favoritosCount = 0 }: Product
               <span className="badge-trust">{producto.estado}</span>
               {producto.marca && <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">{producto.marca}</span>}
               {producto.subcategoria && <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm capitalize">{producto.subcategoria}</span>}
+              {verificacion && verificacion.estado === 'verificada' && (
+                <BadgeHomologacion estado={verificacion.estado} size="md" />
+              )}
             </div>
             {producto.descripcion && <p className="text-gray-600 whitespace-pre-line leading-relaxed">{producto.descripcion}</p>}
 
@@ -370,6 +390,40 @@ function ProductoPageClientInner({ initialProduct, favoritosCount = 0 }: Product
                     )
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Expediente del vehículo: qué documentación ha revisado el
+                equipo. Solo se muestra cuando hay algo que contar (verificada
+                o en revisión); un anuncio sin expediente no se castiga. */}
+            {verificacion && verificacion.estado !== 'sin_verificar' && verificacion.estado !== 'rechazada' && (
+              <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5">
+                <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <FileCheck2 size={18} className="text-brand-accent" aria-hidden="true" />
+                  {t('expedienteTitle')}
+                </h3>
+                <BadgeHomologacion estado={verificacion.estado} size="md" />
+                <p className="text-sm text-gray-600 mt-2">
+                  {verificacion.estado === 'verificada' ? t('expedienteIntroVerificada') : t('expedienteIntroPendiente')}
+                </p>
+                {verificacion.estado === 'verificada' && verificacion.documentos.length > 0 && (
+                  <ul className="mt-3 space-y-1">
+                    {resumenExpediente(producto.especificaciones, verificacion.documentos)
+                      .items.filter(item => item.presente)
+                      .map(item => (
+                        <li key={item.tipo} className="flex items-center gap-2 text-sm text-gray-700">
+                          <CheckCircle2 size={15} className="text-brand-accent flex-shrink-0" aria-hidden="true" />
+                          {item.label}
+                        </li>
+                      ))}
+                  </ul>
+                )}
+                {verificacion.estado === 'pendiente' && esHomologacionVivienda(producto.especificaciones) && (
+                  <p className="mt-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    {t('expedienteAvisoVivienda')}
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-gray-500">{t('expedienteNotaComprador')}</p>
               </div>
             )}
 

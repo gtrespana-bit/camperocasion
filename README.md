@@ -45,6 +45,24 @@ traducción a la consulta viven en un único registro:
 `src/lib/filtros-tecnicos.ts` (ver
 [`docs/plan-confianza-marketplace.md`](./docs/plan-confianza-marketplace.md) §2.1).
 
+## Confianza: homologación verificada
+
+Además de los filtros, el anuncio puede acreditar su documentación:
+
+- El vendedor sube **ficha técnica**, **última ITV** y —si el anuncio declara
+  "Vehículo Vivienda (2448/3148)"— el **proyecto de homologación**, desde
+  `/producto/editar/[id]` (expediente del vehículo).
+- Los documentos van a un **bucket privado** (`documentos-vehiculo`) y se abren
+  siempre con URL firmada de 5 minutos.
+- El equipo los revisa en `/admin` → pestaña **Homologación** y entonces el
+  anuncio muestra el sello *Homologación verificada* y aparece en el filtro
+  "Solo homologación verificada" del catálogo.
+- Si el vendedor reemplaza un documento, el expediente vuelve a revisión: el
+  sello acredita unos documentos concretos, no el anuncio para siempre.
+
+Detalle y decisiones en
+[`docs/plan-confianza-marketplace.md`](./docs/plan-confianza-marketplace.md) §2.2.
+
 ## Precios
 
 Moneda única: **euro**. Formato `X.XXX €` (p. ej. `38.500 €`). Rango

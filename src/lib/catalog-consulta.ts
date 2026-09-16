@@ -15,13 +15,50 @@
  */
 
 import { CATALOG_PAGE_SIZE } from './catalog-pagination'
+import { especificacionesDeFiltros } from './filtros-tecnicos'
+
+/**
+ * Filtro del catálogo "solo anuncios con homologación verificada". Es el único
+ * filtro que no vive en `especificaciones` (es una columna de `productos`), así
+ * que se aplica aparte, pero desde aquí para que los tres sitios que consultan
+ * el catálogo lo hagan igual.
+ */
+export const FILTRO_VERIFICADA_PARAM = 'verificada'
+
+export function filtroVerificadaActivo(valor: unknown): boolean {
+  return valor === '1' || valor === true || valor === 'si' || valor === 'sí'
+}
+
+interface QueryCatalogo {
+  contains: (column: string, value: Record<string, string>) => unknown
+  eq: (column: string, value: string) => unknown
+}
+
+/**
+ * Aplica los filtros del catálogo a una consulta de productos:
+ *  - filtros técnicos → una condición de contención sobre el JSONB (índice GIN);
+ *  - "solo verificados" → igualdad sobre la columna de estado del expediente.
+ */
+export function aplicarFiltrosCatalogo<T extends QueryCatalogo>(
+  query: T,
+  filtros?: Record<string, unknown> | null
+): T {
+  let q: any = query
+  const specs = especificacionesDeFiltros(filtros)
+  if (Object.keys(specs).length > 0) q = q.contains('especificaciones', specs)
+  if (filtroVerificadaActivo(filtros?.[FILTRO_VERIFICADA_PARAM])) {
+    // `eq` (no `contains`): es una columna de texto, no el JSONB.
+    q = q.eq('verificacion_homologacion', 'verificada')
+  }
+  return q as T
+}
 
 /**
  * Columnas de la tarjeta del catálogo. `slug` es imprescindible: la URL
  * canónica del producto se construye con él (`productUrl`).
  */
 export const CATALOG_PRODUCT_COLUMNS =
-  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado'
+  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, verificacion_homologacion'
 
 /**
  * Visibilidad pública: aprobados, pendientes de moderación (aún no revisados)
@@ -45,6 +82,8 @@ export interface ProductoCatalogo {
   destacado: boolean
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
+  /** Estado del expediente de homologación (Fase 0.2). */
+  verificacion_homologacion?: string | null
   /** Pre-computado para evitar hydration mismatch entre servidor y cliente. */
   _isFeatured?: boolean
 }

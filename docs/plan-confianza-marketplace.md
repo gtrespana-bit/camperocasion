@@ -7,7 +7,7 @@
 
 | Pilar | Estado | Qué ya existe en el repo |
 |---|---|---|
-| 1. Validador de homologaciones | 🟡 Medio | Campo `Homologación` (2448/3148 Vehículo Vivienda, Turismo 1000, Mixto 3100, Furgón 2400) en `especificaciones` JSONB (`src/lib/categorias.ts`). **Falta**: subir ficha técnica, revisión, badge. |
+| 1. Validador de homologaciones | 🟢 Alto (2026-09) | Expediente documental del vehículo: bucket privado `documentos-vehiculo`, tabla `documentos_vehiculo`, columna `productos.verificacion_homologacion`, revisión manual en `/admin` y sello en card/ficha. **Falta** (fases siguientes): OCR/validación automática y consulta a la DGT. Ver §2.2. |
 | 2. Inspección a domicilio | 🔴 Nada | Solo chat, reportes y reseñas post-venta. |
 | 3. Venta + alquiler P2P | 🔴 Nada | — |
 | 4. Filtros de arquitectura furgonetera | ✅ Hecho (2026-09) | 16 filtros técnicos en el catálogo, agrupados en mecánica/habitabilidad/autonomía, y captura de tracción, MMA, longitud y altura exterior en `/publicar`. Registro único en `src/lib/filtros-tecnicos.ts`. Ver §2.1. |
@@ -95,21 +95,50 @@ campo, grupo y clave i18n; (3) clave en `catalog.filters.*` de
 `src/i18n/dictionaries/{es,en}.json`. La barra lateral, los hooks y la
 traducción a `@>` salen del registro, no hay que tocarlos.
 
-### 2.2 Badge "Homologación Verificada" (versión manual)
+### 2.2 Badge "Homologación Verificada" (versión manual) ✅ (hecho)
 
-Sin OCR, sin IA — el volumen inicial no lo justifica:
+**Implementado en septiembre de 2026.** Sin OCR, sin IA — el volumen inicial no
+lo justifica. Estado final:
 
-1. Nuevo bucket privado `documentos-vehiculo` (RLS: owner inserta, admin lee).
-2. En `/publicar` y `/producto/editar`: uploader opcional de **ficha técnica
-   (anexo I)**, proyecto de homologación y última ITV.
-3. Columna en `productos`: `verificacion_homologacion` (`sin_verificar` /
-   `pendiente` / `verificada` / `rechazada`).
-4. El admin revisa en el panel existente (`/admin`) y aprueba → aparece el
-   badge en `ProductCard` y ficha (mismo patrón que `BadgeVerificado`).
-5. Filtro "Solo homologación verificada" en catálogo.
+1. **Bucket privado `documentos-vehiculo`** (10 MB, PDF/JPG/PNG/WEBP) con RLS:
+   el propietario sube y lee su carpeta (`<user_id>/<producto_id>/archivo`), el
+   admin lee todo y el público **solo** ve los documentos ya verificados. El
+   propietario no puede marcarse nada como verificado: no tiene `UPDATE` sobre
+   la tabla (igual que en `solicitudes_verificacion`).
+2. **Tabla `documentos_vehiculo`**: un documento por tipo y anuncio (índice
+   único), con estado por documento (`pendiente` / `verificado` / `rechazado`),
+   quién lo revisó y cuándo. Se comprueba además que el anuncio sea del usuario
+   (`fn_es_dueno_del_anuncio`) antes de dejarle insertar.
+3. **Columna en `productos`**: `verificacion_homologacion` (`sin_verificar` /
+   `pendiente` / `verificada` / `rechazada`) + motivo del rechazo y fecha de
+   revisión. Índice parcial sobre los expedientes en curso.
+4. **Expediente del vehículo** (`src/components/ExpedienteVehiculo.tsx`, en
+   `/producto/editar/[id]`): checklist con lo que se exige según lo declarado —
+   la ficha técnica y la ITV siempre; el **proyecto de homologación solo si el
+   anuncio declara "Vehículo Vivienda (2448/3148)"**. Subir o reemplazar un
+   documento devuelve el expediente a revisión (el sello acredita unos
+   documentos concretos, no el anuncio para siempre). Tras publicar, la ficha
+   del producto invita al vendedor a subirlo desde el banner de éxito.
+5. **Revisión en el panel** (`/admin` → pestaña *Homologación*, FIFO por
+   antigüedad del primer documento): el admin abre cada documento con URL firmada
+   de 5 minutos, ve qué falta y verifica o rechaza con motivo. El cambio queda en
+   `auditoria` por el trigger existente sobre `productos`.
+6. **Sello en card y ficha**: `BadgeHomologacion` solo se pinta cuando hay algo
+   que contar (verificado o en revisión); un anuncio sin expediente no se marca
+   como si fuera dudoso. En la ficha, el comprador ve el checklist de lo
+   verificado y el aviso cuando se declara vivienda sin proyecto homologado.
+7. **Filtro "Solo homologación verificada"** en el catálogo: es el único filtro
+   que no vive en `especificaciones` (es una columna), así que la consulta
+   compartida lo aplica aparte (`aplicarFiltrosCatalogo`).
 
 Esto ya nos diferencia de Wallapop/Coches.net desde el día 1: **nadie más
-filtra por "camper legal para 4 plazas de dormir"**.
+filtra por "camper legal para 4 plazas de dormir" y enseña qué documentación ha
+revisado**.
+
+**Garantías verificadas contra un Postgres real** (634 statements del setup +
+comprobaciones de RLS): anon solo ve documentos verificados, un usuario no puede
+subir documentos al anuncio de otro ni auto-verificarse, el admin sí puede
+revisar, y el `user_id` de un documento no se puede cambiar.
 
 ### 2.3 Calculadora ITP + checklist de documentación (SEO + utilidad)
 
@@ -281,8 +310,9 @@ riesgo operativo.
    captura de tracción/MMA/longitud/altura, registro único y contención JSONB
    con índice GIN (ver §2.1). Queda para la siguiente iteración lo listado como
    pendiente en ese apartado (rangos numéricos y normalización de claves).
-2. ▶️ `feat/verificacion-homologacion` — **siguiente**: bucket
-   `documentos-vehiculo`, columna `verificacion_homologacion`, uploader,
-   revisión admin, badge en card/ficha.
-3. `feat/calculadora-itp` — página + landings CCAA + checklist de compra
-   segura.
+2. ✅ `feat/verificacion-homologacion` — **hecho**: bucket
+   `documentos-vehiculo`, columna `verificacion_homologacion`, expediente del
+   vendedor, revisión admin (pestaña *Homologación*), sello en card/ficha y
+   filtro "solo verificados" (ver §2.2).
+3. ▶️ `feat/calculadora-itp` — **siguiente**: página + landings CCAA + checklist
+   de compra segura.

@@ -6,7 +6,8 @@ import { categoriasData } from '@/lib/categorias';
 import {
   GRUPOS_FILTROS_TECNICOS,
   type FiltrosTecnicos,
-} from '@/lib/filtros-tecnicos';
+} from '@/lib/filtros-tecnicos'
+import { FILTRO_VERIFICADA_PARAM } from '@/lib/catalog-consulta';
 import LocalLink from './LocalLink';
 
 interface CatalogFiltersProps {
@@ -23,6 +24,8 @@ interface CatalogFiltersProps {
    * define el registro `@/lib/filtros-tecnicos`.
    */
   filtrosTecnicos: FiltrosTecnicos;
+  /** '1' cuando solo se muestran anuncios con homologación verificada. */
+  verificada: string;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
@@ -39,6 +42,7 @@ export const CatalogFilters = ({
   ubicacionEstado,
   ubicacionCiudad,
   filtrosTecnicos,
+  verificada,
   t,
 }: CatalogFiltersProps) => {
   const router = useRouter();
@@ -58,7 +62,7 @@ export const CatalogFilters = ({
 
   const hasActiveFilters = !!(
     categoria || subcategoria || marca || precioMin || precioMax ||
-    ubicacionEstado || ubicacionCiudad ||
+    ubicacionEstado || ubicacionCiudad || verificada ||
     GRUPOS_FILTROS_TECNICOS.some(g => g.filtros.some(f => filtrosTecnicos[f.param]))
   );
 
@@ -182,6 +186,22 @@ export const CatalogFilters = ({
           />
         </div>
       </div>
+
+      {/* Filtro de confianza: solo anuncios con el expediente del vehículo ya
+          revisado. Es el único que no vive en el JSONB `especificaciones`. */}
+      <label
+        htmlFor="filter-verificada"
+        className="flex items-center gap-2 mb-5 text-sm font-medium text-gray-800 cursor-pointer"
+      >
+        <input
+          id="filter-verificada"
+          type="checkbox"
+          checked={!!verificada}
+          onChange={e => setParam(FILTRO_VERIFICADA_PARAM, e.target.checked ? '1' : '')}
+          className="h-4 w-4 rounded border-gray-300 text-brand-accent focus:ring-brand-accent"
+        />
+        {t('catalog.filters.verified')}
+      </label>
 
       {/* Bloques técnicos de la ficha camper: la lista de filtros y sus
           opciones salen del registro @/lib/filtros-tecnicos, el mismo dato que
