@@ -10,7 +10,7 @@
 | 1. Validador de homologaciones | 🟡 Medio | Campo `Homologación` (2448/3148 Vehículo Vivienda, Turismo 1000, Mixto 3100, Furgón 2400) en `especificaciones` JSONB (`src/lib/categorias.ts`). **Falta**: subir ficha técnica, revisión, badge. |
 | 2. Inspección a domicilio | 🔴 Nada | Solo chat, reportes y reseñas post-venta. |
 | 3. Venta + alquiler P2P | 🔴 Nada | — |
-| 4. Filtros de arquitectura furgonetera | 🟢 Casi hecho | El paso 2 de `/publicar` ya captura TODO: plazas viaje/dormir, calefacción, baño/ducha, depósito litros, batería aux, placa solar W, inversor W, nevera, distintivo DGT, chasis L2H2…, con índice GIN en JSONB. **Falta**: exponerlos como filtros en el catálogo (`CatalogFilters.tsx` solo filtra subcategoría/marca/precio/ubicación). |
+| 4. Filtros de arquitectura furgonetera | ✅ Hecho (2026-09) | 16 filtros técnicos en el catálogo, agrupados en mecánica/habitabilidad/autonomía, y captura de tracción, MMA, longitud y altura exterior en `/publicar`. Registro único en `src/lib/filtros-tecnicos.ts`. Ver §2.1. |
 | 5. Escrow + financiación | 🔴 Nada | Solo créditos para destacar con pago manual (Bizum/transferencia/PayPal + comprobante). |
 | 6. Gestoría digital | 🔴 Nada | Ni calculadora ITP ni contrato de compraventa. |
 
@@ -47,22 +47,53 @@ generen confianza. El orden correcto **minimiza riesgo y maximiza aprendizaje**:
 
 ## 2. Fase 0 — Quick wins (solo código, sin partners, sin riesgo legal)
 
-### 2.1 Filtros técnicos en el catálogo ⭐ mayor impacto/esfuerzo
+### 2.1 Filtros técnicos en el catálogo ✅ (hecho)
 
-Los datos **ya se capturan** y ya hay índice GIN
-(`productos_especificaciones_idx`). Solo hay que exponerlos:
+**Implementado en septiembre de 2026.** Estado final:
 
-- `CatalogFilters.tsx`: añadir grupos "Habitabilidad" (plazas dormir, baño,
-  calefacción) y "Autonomía" (solar, batería litio, inversor).
-- Query: `especificaciones @> '{"Plazas para dormir":"4"}'` (PostgREST:
-  `especificaciones=cs.{"Plazas para dormir":"4"}`) — el índice GIN lo soporta.
-- Añadir a `/publicar` y a filtros: **MMA/peso máximo autorizado, longitud y
-  altura exterior** (críticos para garajes, ferries y túneles de viento) y
-  **kilometraje** ya existe.
+- Nuevo registro único `src/lib/filtros-tecnicos.ts`: qué parámetro de la URL
+  (`?plazasDormir=4`) corresponde a qué clave del JSONB `especificaciones`, en
+  qué grupo se muestra y con qué opciones. Las opciones salen de las mismas
+  listas que usa el formulario de publicación (`categorias.ts`), así que captura
+  y filtro no pueden divergir; hay un test que lo comprueba subcategoría a
+  subcategoría.
+- 16 filtros en tres bloques: **mecánica** (DGT, homologación, combustible,
+  tracción, MMA, longitud, altura), **habitabilidad** (plazas para viajar,
+  plazas para dormir, calefacción, agua caliente, baño/ducha) y **autonomía**
+  (batería auxiliar, placa solar, inversor 220V, nevera).
+- Consulta: una sola condición de contención
+  `especificaciones @> '{"Plazas para dormir":"4", ...}'` (supabase-js
+  `.contains()`), que es el operador cubierto por el índice GIN
+  `productos_especificaciones_idx`. Antes se filtraba con
+  `especificaciones->>'Campo' = 'valor'`, que **no usa ese índice** y añadía una
+  condición por campo.
+- Campos nuevos capturados en `/publicar` y `/producto/editar`: **tracción,
+  MMA (tramos con la frontera de los 3.500 kg del carnet B), longitud exterior
+  y altura exterior** (tramos pensados para garaje, ferry y túneles). Se suman
+  al bloque "Mecánica del Vehículo" de la ficha del producto.
+- Los tres sitios que consultan el catálogo (SSR inicial, `useProductLoader` y
+  `usePrefetch`) comparten ahora columnas, filtro de moderación y orden
+  (`src/lib/catalog-consulta.ts`). Antes el prefetch excluía los productos
+  `pendiente` y no traía `slug`, así que la caché podía servir una página
+  distinta a la que pedía el loader (misma clave de caché).
 
-⚠️ Deuda técnica a saldar aquí: las claves del JSONB son labels con espacios y
-acentos ("Plazas para dormir"). Funciona, pero es frágil. Normalizar a slugs
-(`plazas_dormir`) con una migración de backfill + compatibilidad de lectura.
+**Pendiente de esta fase (siguiente iteración):**
+
+- Filtros por rango numérico (`kilómetros máximos`, `año mínimo`, watios de
+  placa/inversor). Requieren comparar números, no texto: o se capturan como
+  tramos (como MMA/longitud/altura) o se añaden columnas generadas.
+- Normalización de las claves del JSONB a slugs (`plazas_dormir`). **Se aplaza
+  a propósito**: hoy las claves son los labels del formulario (con espacios y
+  acentos) pero todas viven en un único registro, y con `@>` el índice GIN sí se
+  usa. Normalizar exige migración de backfill + lectura compatible en ficha,
+  formularios y filtros; hacerlo junto con la verificación de homologación
+  (que también toca `especificaciones`) sale más barato.
+
+**Cómo añadir un filtro nuevo:** (1) opciones y campo en `categorias.ts`;
+(2) entrada en `FILTROS_TECNICOS` (`src/lib/filtros-tecnicos.ts`) con param,
+campo, grupo y clave i18n; (3) clave en `catalog.filters.*` de
+`src/i18n/dictionaries/{es,en}.json`. La barra lateral, los hooks y la
+traducción a `@>` salen del registro, no hay que tocarlos.
 
 ### 2.2 Badge "Homologación Verificada" (versión manual)
 
@@ -246,9 +277,12 @@ riesgo operativo.
 
 **Fase 0 en tres PRs independientes:**
 
-1. `feat/filtros-tecnicos` — filtros de habitabilidad/autonomía en catálogo +
-   normalización de claves de `especificaciones`.
-2. `feat/verificacion-homologacion` — bucket `documentos-vehiculo`, columna
-   `verificacion_homologacion`, uploader, revisión admin, badge en card/ficha.
+1. ✅ `feat/filtros-tecnicos` — **hecho**: 16 filtros agrupados en catálogo,
+   captura de tracción/MMA/longitud/altura, registro único y contención JSONB
+   con índice GIN (ver §2.1). Queda para la siguiente iteración lo listado como
+   pendiente en ese apartado (rangos numéricos y normalización de claves).
+2. ▶️ `feat/verificacion-homologacion` — **siguiente**: bucket
+   `documentos-vehiculo`, columna `verificacion_homologacion`, uploader,
+   revisión admin, badge en card/ficha.
 3. `feat/calculadora-itp` — página + landings CCAA + checklist de compra
    segura.

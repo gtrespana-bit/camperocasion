@@ -27,14 +27,23 @@ del producto:
 
 - **Mecánica**: año de matriculación, kilómetros, combustible (Diésel /
   Gasolina / Híbrido / Eléctrico), transmisión (Manual / Automática),
-  potencia (CV), tamaño de chasis, tracción, **distintivo ambiental DGT**
-  (Cero Emisiones / ECO / C / B / Sin) y **homologación**
-  (Vehículo Vivienda 2448/3148, Turismo 1000, Mixto Adaptable 3100, Furgón 2400).
+  potencia (CV), tamaño de chasis, tracción (4x2 / 4x4), **MMA** (tramos de
+  peso máximo autorizado, con la frontera de los 3.500 kg del carnet B),
+  **longitud** y **altura exterior** (tramos para garaje y ferry),
+  **distintivo ambiental DGT** (Cero Emisiones / ECO / C / B / Sin) y
+  **homologación** (Vehículo Vivienda 2448/3148, Turismo 1000, Mixto
+  Adaptable 3100, Furgón 2400).
 - **Habitabilidad**: plazas homologadas para viajar y plazas para dormir.
 - **Equipamiento Camper y Autonomía**: calefacción estacionaria (Diésel /
   Gas / No), agua caliente, tipo de baño, depósito de agua limpia (L),
   batería auxiliar (Litio / AGM / Gel / No), placa solar (Sí/W), inversor
   220V (Sí/W) y tipo de nevera.
+
+Todos estos campos se capturan en `/publicar`, se muestran en la ficha del
+producto y **son filtros del catálogo**. La lista de filtros, sus opciones y su
+traducción a la consulta viven en un único registro:
+`src/lib/filtros-tecnicos.ts` (ver
+[`docs/plan-confianza-marketplace.md`](./docs/plan-confianza-marketplace.md) §2.1).
 
 ## Precios
 

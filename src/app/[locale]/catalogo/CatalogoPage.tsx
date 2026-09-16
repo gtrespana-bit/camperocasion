@@ -1,7 +1,7 @@
 'use client'
 import { formatPrecio } from '@/lib/precio'
 
-import { useEffect, useState, useRef, memo } from 'react'
+import { useEffect, useMemo, useState, useRef, memo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -17,6 +17,11 @@ import { CatalogFilters } from '@/components/CatalogFilters'
 import { useProductPagination } from '@/hooks/useProductPagination'
 import { useProductLoader } from '@/hooks/useProductLoader'
 import { CATALOG_PAGE_SIZE } from '@/lib/catalog-pagination'
+import {
+  firmaFiltrosTecnicos,
+  hayFiltrosTecnicos,
+  leerFiltrosTecnicos,
+} from '@/lib/filtros-tecnicos'
 import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { usePrefetch } from '@/hooks/usePrefetch'
 import { productUrl } from '@/lib/product-url'
@@ -158,17 +163,22 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const precioMax = searchParams.get('precioMax') || ''
   const ubicacionEstado = searchParams.get('estado') || ''
   const ubicacionCiudad = searchParams.get('ciudad') || ''
-  const dgt = searchParams.get('dgt') || ''
-  const homologacion = searchParams.get('homologacion') || ''
-  const combustible = searchParams.get('combustible') || ''
-  const plazasViaje = searchParams.get('plazasViaje') || ''
-  const plazasDormir = searchParams.get('plazasDormir') || ''
-  const calefaccion = searchParams.get('calefaccion') || ''
+
+  // Filtros técnicos (ficha técnica camper): DGT, homologación, plazas, baño,
+  // autonomía, medidas… Todos se leen de una vez desde el registro
+  // @/lib/filtros-tecnicos, que también decide las opciones que ofrece la barra
+  // lateral.
+  //
+  // Se memoiza con el string de la query (primitivo) y no con el objeto de
+  // `useSearchParams`: si su identidad cambiase entre renders, los efectos que
+  // dependen de los filtros se reejecutarían en bucle.
+  const queryString = searchParams.toString()
+  const filtrosTecnicos = useMemo(() => leerFiltrosTecnicos(new URLSearchParams(queryString)), [queryString])
+  const firmaTecnica = firmaFiltrosTecnicos(filtrosTecnicos)
 
   const hasActiveFilters = !!(
     categoria || subcategoria || marca || q || precioMin || precioMax ||
-    ubicacionEstado || ubicacionCiudad || dgt || homologacion ||
-    combustible || plazasViaje || plazasDormir || calefaccion
+    ubicacionEstado || ubicacionCiudad || hayFiltrosTecnicos(filtrosTecnicos)
   )
 
   // Carga real por página desde el servidor (range()).
@@ -190,7 +200,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const totalPages = Math.max(1, Math.ceil(totalCountToUse / itemsPerPage))
 
   // Firma de filtros para detectar cambios y resetear la página.
-  const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, dgt, homologacion, combustible, plazasViaje, plazasDormir, calefaccion].join('|')
+  const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, firmaTecnica].join('|')
   const prevFilterSig = useRef(filterSig)
 
   const cat = categoriasData[categoria]
@@ -232,15 +242,10 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
         precioMax,
         ubicacionEstado,
         ubicacionCiudad,
-        dgt,
-        homologacion,
-        combustible,
-        plazasViaje,
-        plazasDormir,
-        calefaccion
+        ...filtrosTecnicos
       }
     });
-  }, [filterSig, currentPage, itemsPerPage, hasActiveFilters, useServerData, goToPage, loadPage, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, dgt, homologacion, combustible, plazasViaje, plazasDormir, calefaccion]);
+  }, [filterSig, currentPage, itemsPerPage, hasActiveFilters, useServerData, goToPage, loadPage, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos]);
 
   // Precargar la siguiente página cuando sea apropiado
   useEffect(() => {
@@ -259,19 +264,14 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
             precioMax,
             ubicacionEstado,
             ubicacionCiudad,
-            dgt,
-            homologacion,
-            combustible,
-            plazasViaje,
-            plazasDormir,
-            calefaccion
+            ...filtrosTecnicos
           }
         );
       }, 2000); // Precargar después de 2 segundos para permitir la carga completa de la página actual
 
       return () => clearTimeout(prefetchTimer);
     }
-  }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, dgt, homologacion, combustible, plazasViaje, plazasDormir, calefaccion, itemsPerPage, prefetchPage]);
+  }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, itemsPerPage, prefetchPage]);
 
   const subLabel = subcategoria
     ? (cat?.subs.find(s => s.label === subcategoria)?.label || subcategoria)
@@ -360,12 +360,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
             precioMax={precioMax}
             ubicacionEstado={ubicacionEstado}
             ubicacionCiudad={ubicacionCiudad}
-            dgt={dgt}
-            homologacion={homologacion}
-            combustible={combustible}
-            plazasViaje={plazasViaje}
-            plazasDormir={plazasDormir}
-            calefaccion={calefaccion}
+            filtrosTecnicos={filtrosTecnicos}
             t={t}
           />
         </aside>
@@ -406,7 +401,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
                 <p className="font-semibold">{t('catalog.loadErrorTitle')}</p>
                 <p className="text-sm mt-1">{error}</p>
                 <button
-                  onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, dgt, homologacion, combustible, plazasViaje, plazasDormir, calefaccion } })}
+                  onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, ...filtrosTecnicos } })}
                   className="mt-3 text-sm font-semibold text-red-700 underline hover:text-red-900"
                 >
                   {t('catalog.retry')}

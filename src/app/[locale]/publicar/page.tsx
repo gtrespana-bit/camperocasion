@@ -494,6 +494,7 @@ export default function PublicarPage() {
             {camposEspeciales.length > 0 && (
               <div className="bg-gray-50 rounded-xl p-5 space-y-4 border border-gray-200">
                 <h3 className="font-bold text-gray-900">{t('specs')} — {subcategoria}</h3>
+                <p className="text-xs text-gray-500 mt-1">{t('specsHint')}</p>
                 {camposEspeciales.map(campo => {
                   const val = specs[campo.label] || ''
                   const esOtra = val.startsWith('otra:')

@@ -327,6 +327,7 @@ export default function EditarPage() {
         {camposEspeciales.length > 0 && (
           <div className="bg-gray-50 rounded-xl p-5 space-y-4">
             <h3 className="font-bold text-gray-900">{t('specs')}</h3>
+            <p className="text-xs text-gray-500">{t('specsHint')}</p>
             {camposEspeciales.map((campo: any) => (
               <div key={campo.label}>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">{campo.label}</label>

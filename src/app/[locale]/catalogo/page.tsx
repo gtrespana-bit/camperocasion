@@ -1,6 +1,13 @@
 import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase-server-client'
 import { CATALOG_PAGE_SIZE } from '@/lib/catalog-pagination'
+import {
+  CATALOG_PRODUCT_COLUMNS,
+  CATALOG_FILTRO_MODERACION,
+  marcarDestacados,
+  ordenarProductosCatalogo,
+  type ProductoCatalogo,
+} from '@/lib/catalog-consulta'
 import CatalogoClient from './CatalogoPage'
 import { Suspense } from 'react'
 
@@ -46,36 +53,20 @@ async function getInitialProducts() {
   if (!supabase) return { products: [], count: 0 }
   try {
     // Optimización: Seleccionar solo columnas necesarias para la vista de catálogo
+    // (las mismas que usa el cliente: ver src/lib/catalog-consulta.ts)
     const { data, count, error } = await supabase
       .from('productos')
-      .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado', { count: 'exact' })
+      .select(CATALOG_PRODUCT_COLUMNS, { count: 'exact' })
       .eq('activo', true)
-      .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado,estado_moderacion.eq.pendiente')
+      .or(CATALOG_FILTRO_MODERACION)
       .order('creado_en', { ascending: false })
       .limit(CATALOG_PAGE_SIZE) // Debe coincidir con la página del cliente; de lo contrario se omiten filas.
 
     if (error || !data) return { products: [], count: 0 }
 
-    // Mismo ordenamiento que el cliente: boost > destacado vigente > fecha
-    // Pre-computamos flags de estado para evitar hydration mismatch
-    const now = new Date().toISOString()
-    const sorted = data.sort((a: any, b: any) => {
-      const aBoost = a.boosteado_en || null
-      const bBoost = b.boosteado_en || null
-      if (aBoost && !bBoost) return -1
-      if (!aBoost && bBoost) return 1
-      if (aBoost && bBoost) return bBoost.localeCompare(aBoost)
-      const aDest = a.destacado && a.destacado_hasta && a.destacado_hasta > now
-      const bDest = b.destacado && b.destacado_hasta && b.destacado_hasta > now
-      if (aDest && !bDest) return -1
-      if (!aDest && bDest) return 1
-      if (aDest && bDest) return b.destacado_hasta.localeCompare(a.destacado_hasta)
-      return b.creado_en.localeCompare(a.creado_en)
-    }).map((p: any) => ({
-      ...p,
-      // Pre-computar flags para evitar hydration mismatch en cliente
-      _isFeatured: !!(p.destacado && p.destacado_hasta && p.destacado_hasta > now),
-    }))
+    // Mismo ordenamiento que el cliente: boost > destacado vigente > fecha.
+    // Los flags van pre-computados para evitar hydration mismatch.
+    const sorted = ordenarProductosCatalogo(marcarDestacados(data as unknown as ProductoCatalogo[]))
 
     return { products: sorted, count: count ?? 0 }
   } catch {

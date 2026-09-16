@@ -28,3 +28,8 @@ relanzado como vertical camper español:
    filtros técnicos, ficha con bloques "Mecánica del Vehículo" y
    "Equipamiento Camper y Autonomía", perfil de vendedor
    Particular/Profesional-Camperizador.
+6. **Filtros técnicos (2026-09):** 16 filtros agrupados en mecánica,
+   habitabilidad y autonomía, sobre el JSONB `productos.especificaciones`
+   (contención `@>` con índice GIN). Registro único en
+   `src/lib/filtros-tecnicos.ts`: captura en `/publicar`, filtros del catálogo,
+   opciones y traducción a la consulta salen del mismo sitio.

@@ -58,6 +58,28 @@ export const OPCIONES_HOMOLOGACION = [
 
 export const OPCIONES_COMBUSTIBLE = ['Diésel', 'Gasolina', 'Híbrido', 'Eléctrico'] as const
 export const OPCIONES_TRANSMISION = ['Manual', 'Automática'] as const
+export const OPCIONES_TRACCION = ['4x2', '4x4'] as const
+
+// Magnitudes de arquitectura furgonetera. Se capturan como tramos (no como
+// número exacto) para que el mismo dato sirva de filtro: un tramo de 3.500 kg
+// es la frontera del carnet B, y la longitud/altura deciden garaje y ferry.
+export const OPCIONES_MMA = [
+  'Hasta 3.500 kg (carnet B)',
+  '3.501 - 4.250 kg',
+  'Más de 4.250 kg',
+] as const
+
+export const OPCIONES_LONGITUD = [
+  'Hasta 5,5 m',
+  '5,5 - 6,5 m',
+  'Más de 6,5 m',
+] as const
+
+export const OPCIONES_ALTURA = [
+  'Hasta 2,5 m',
+  '2,5 - 3,0 m',
+  'Más de 3,0 m',
+] as const
 
 export const OPCIONES_PLAZAS_VIAJE = ['2', '3', '4', '5', '6'] as const
 export const OPCIONES_PLAZAS_DORMIR = ['1', '2', '3', '4', '5+'] as const
@@ -94,6 +116,10 @@ const camposMecanica = (tamanos?: string[]): CatField[] => [
   ...(tamanos
     ? [{ label: 'Tamaño chasis', type: 'select' as const, placeholder: 'Selecciona...', options: tamanos }]
     : []),
+  { label: 'Tracción', type: 'select', placeholder: 'Selecciona...', options: [...OPCIONES_TRACCION] },
+  { label: 'MMA / Peso máximo autorizado', type: 'select', placeholder: 'Selecciona...', options: [...OPCIONES_MMA] },
+  { label: 'Longitud exterior', type: 'select', placeholder: 'Selecciona...', options: [...OPCIONES_LONGITUD] },
+  { label: 'Altura exterior', type: 'select', placeholder: 'Selecciona...', options: [...OPCIONES_ALTURA] },
   { label: 'Distintivo Ambiental DGT', type: 'select', placeholder: 'Selecciona...', options: [...OPCIONES_DGT] },
   { label: 'Homologación', type: 'select', placeholder: 'Selecciona...', options: [...OPCIONES_HOMOLOGACION] },
 ]
@@ -201,7 +227,6 @@ export const categoriasData: Record<string, CatConfig> = {
         marcas: ['Toyota Hilux Overland', 'Mitsubishi L200', 'Nissan Navara', 'Volkswagen Amarok', 'Ford Ranger', 'Land Rover Defender', 'Dacia Pik-Pik Célula', 'RAM ProMaster Célula'],
         campos: [
           ...camposMecanica(),
-          { label: 'Tracción', type: 'select', placeholder: 'Selecciona...', options: ['4x2', '4x4'] },
           ...camposHabitabilidad(),
           ...camposCamper(),
         ],
@@ -280,6 +305,9 @@ export const GRUPOS_FICHA_TECNICA: { titulo: string; icon: string; campos: strin
       'Potencia (CV)',
       'Tamaño chasis',
       'Tracción',
+      'MMA / Peso máximo autorizado',
+      'Longitud exterior',
+      'Altura exterior',
       'Distintivo Ambiental DGT',
       'Homologación',
       'Año',

@@ -1,8 +1,15 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { clientCache } from '@/lib/clientCache';
+import {
+  CATALOG_PRODUCT_COLUMNS,
+  CATALOG_FILTRO_MODERACION,
+  ordenarProductosCatalogo,
+  ProductoCatalogo,
+} from '@/lib/catalog-consulta';
+import { aplicarFiltrosTecnicos } from '@/lib/filtros-tecnicos';
 
 interface ProductFilter {
   categoria?: string;
@@ -13,26 +20,19 @@ interface ProductFilter {
   precioMax?: string;
   ubicacionEstado?: string;
   ubicacionCiudad?: string;
-  // Filtros técnicos camper (JSONB `especificaciones`)
-  dgt?: string;
-  homologacion?: string;
-  combustible?: string;
-  plazasViaje?: string;
-  plazasDormir?: string;
-  calefaccion?: string;
+  // Filtros técnicos camper: parámetro del registro `filtros-tecnicos` → valor.
+  [key: string]: string | number | boolean | undefined;
 }
 
-// Mismos campos técnicos que useProductLoader: la caché usa las claves
-// completas del filtro, así que ambos hooks deben filtrar igual.
-const CAMPOS_TECNICOS: Record<string, string> = {
-  dgt: 'Distintivo Ambiental DGT',
-  homologacion: 'Homologación',
-  combustible: 'Combustible',
-  plazasViaje: 'Plazas homologadas para viajar',
-  plazasDormir: 'Plazas para dormir',
-  calefaccion: 'Calefacción estacionaria',
-};
-
+/**
+ * Precarga en segundo plano la página siguiente del catálogo.
+ *
+ * La caché del cliente indexa por conjunto de filtros + página, y quien
+ * escribe la entrada es este hook: la consulta tiene que ser EXACTAMENTE la de
+ * `useProductLoader` (mismas columnas, mismo filtro de moderación, mismo
+ * orden), o el usuario vería datos distintos al cambiar de página. Por eso
+ * ambos comparten `catalog-consulta.ts` y el registro `filtros-tecnicos.ts`.
+ */
 export const usePrefetch = () => {
   const prefetchPage = useCallback(async (
     page: number,
@@ -53,9 +53,9 @@ export const usePrefetch = () => {
     try {
       let query = supabase
         .from('productos')
-        .select('id, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado', { count: 'exact' })
+        .select(CATALOG_PRODUCT_COLUMNS, { count: 'exact' })
         .eq('activo', true)
-        .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado');
+        .or(CATALOG_FILTRO_MODERACION);
 
       if (filters.categoria) {
         // maybeSingle(): evita el 406 de single() con cero filas.
@@ -94,17 +94,8 @@ export const usePrefetch = () => {
         query = query.lte('precio_usd', parseFloat(filters.precioMax));
       }
 
-      // Filtros técnicos sobre el JSONB de especificaciones
-      for (const [param, campo] of Object.entries(CAMPOS_TECNICOS)) {
-        const value = filters[param];
-        if (value) {
-          try {
-            query = query.eq(`especificaciones->>"${campo}"`, value);
-          } catch {
-            // Clave inválida: ignorar el filtro en lugar de romper la página
-          }
-        }
-      }
+      // Mismos filtros técnicos que el loader (contención JSONB, índice GIN).
+      query = aplicarFiltrosTecnicos(query, filters);
 
       // Aplicar offset para la página específica
       const offset = (page - 1) * itemsPerPage;
@@ -118,9 +109,11 @@ export const usePrefetch = () => {
         return;
       }
 
-      // Guardar en caché
+      // Guardar en caché ya ordenado: un acierto de caché no vuelve a ordenar.
+      const ordenados = ordenarProductosCatalogo((data || []) as ProductoCatalogo[]);
+
       clientCache.set(cacheKey, {
-        productos: data,
+        productos: ordenados,
         totalCount: count ?? 0
       });
     } catch (error) {

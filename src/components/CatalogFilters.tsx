@@ -2,15 +2,11 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { XCircle } from 'lucide-react';
+import { categoriasData } from '@/lib/categorias';
 import {
-  categoriasData,
-  OPCIONES_DGT,
-  OPCIONES_HOMOLOGACION,
-  OPCIONES_COMBUSTIBLE,
-  OPCIONES_PLAZAS_VIAJE,
-  OPCIONES_PLAZAS_DORMIR,
-  OPCIONES_CALEFACCION,
-} from '@/lib/categorias';
+  GRUPOS_FILTROS_TECNICOS,
+  type FiltrosTecnicos,
+} from '@/lib/filtros-tecnicos';
 import LocalLink from './LocalLink';
 
 interface CatalogFiltersProps {
@@ -21,12 +17,12 @@ interface CatalogFiltersProps {
   precioMax: string;
   ubicacionEstado: string;
   ubicacionCiudad: string;
-  dgt: string;
-  homologacion: string;
-  combustible: string;
-  plazasViaje: string;
-  plazasDormir: string;
-  calefaccion: string;
+  /**
+   * Filtros técnicos activos (param → valor), leídos con
+   * `leerFiltrosTecnicos(searchParams)`. El listado de filtros disponibles lo
+   * define el registro `@/lib/filtros-tecnicos`.
+   */
+  filtrosTecnicos: FiltrosTecnicos;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
@@ -42,12 +38,7 @@ export const CatalogFilters = ({
   precioMax,
   ubicacionEstado,
   ubicacionCiudad,
-  dgt,
-  homologacion,
-  combustible,
-  plazasViaje,
-  plazasDormir,
-  calefaccion,
+  filtrosTecnicos,
   t,
 }: CatalogFiltersProps) => {
   const router = useRouter();
@@ -67,8 +58,8 @@ export const CatalogFilters = ({
 
   const hasActiveFilters = !!(
     categoria || subcategoria || marca || precioMin || precioMax ||
-    ubicacionEstado || ubicacionCiudad || dgt || homologacion ||
-    combustible || plazasViaje || plazasDormir || calefaccion
+    ubicacionEstado || ubicacionCiudad ||
+    GRUPOS_FILTROS_TECNICOS.some(g => g.filtros.some(f => filtrosTecnicos[f.param]))
   );
 
   const select = (
@@ -79,7 +70,7 @@ export const CatalogFilters = ({
     options: readonly string[],
     allLabel: string
   ) => (
-    <div className="mb-4">
+    <div className="mb-4" key={id}>
       <label htmlFor={id} className={labelClass}>{label}</label>
       <select id={id} value={value} onChange={e => setParam(param, e.target.value)} className={selectClass}>
         <option value="">{allLabel}</option>
@@ -91,8 +82,11 @@ export const CatalogFilters = ({
   );
 
   return (
-    <div className="bg-white rounded-xl p-5 shadow-sm sticky top-20">
-      <h3 className="font-bold text-lg text-gray-900 mb-4">🔍 {t('catalog.filters')}</h3>
+    // En escritorio la columna de filtros es sticky: al crecer con los bloques
+    // técnicos se le da scroll propio para que el pie (limpiar filtros) siga
+    // siendo alcanzable sin perder la posición en el listado.
+    <div className="bg-white rounded-xl p-5 shadow-sm sticky top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+      <h3 className="font-bold text-lg text-gray-900 mb-4">🔍 {t('catalog.filtersTitle')}</h3>
 
       <div className="mb-4">
         <label htmlFor="filter-categoria" className={labelClass}>
@@ -183,21 +177,32 @@ export const CatalogFilters = ({
             onChange={e => setParam('precioMax', e.target.value)}
             placeholder={t('catalog.max')}
             min="0"
+            aria-label={t('catalog.max')}
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-brand-accent"
           />
         </div>
       </div>
 
-      <h4 className="text-xs font-black uppercase tracking-wide text-gray-400 mt-6 mb-3">
-        {t('catalog.techFilters')}
-      </h4>
-
-      {select('filter-dgt', t('catalog.dgt'), dgt, 'dgt', OPCIONES_DGT, t('catalog.all'))}
-      {select('filter-homologacion', t('catalog.homologation'), homologacion, 'homologacion', OPCIONES_HOMOLOGACION, t('catalog.all'))}
-      {select('filter-combustible', t('catalog.fuel'), combustible, 'combustible', OPCIONES_COMBUSTIBLE, t('catalog.all'))}
-      {select('filter-plazas-viaje', t('catalog.travelSeats'), plazasViaje, 'plazasViaje', OPCIONES_PLAZAS_VIAJE, t('catalog.all'))}
-      {select('filter-plazas-dormir', t('catalog.sleepSeats'), plazasDormir, 'plazasDormir', OPCIONES_PLAZAS_DORMIR, t('catalog.all'))}
-      {select('filter-calefaccion', t('catalog.heating'), calefaccion, 'calefaccion', OPCIONES_CALEFACCION, t('catalog.all'))}
+      {/* Bloques técnicos de la ficha camper: la lista de filtros y sus
+          opciones salen del registro @/lib/filtros-tecnicos, el mismo dato que
+          captura /publicar (captura y filtro no pueden divergir). */}
+      {GRUPOS_FILTROS_TECNICOS.map(grupo => (
+        <div key={grupo.grupo} className="mb-5 border-t border-gray-100 pt-4 first:border-t-0 first:pt-0">
+          <h4 className="text-xs font-black uppercase tracking-wide text-gray-500 mb-3">
+            {grupo.icono} {t(grupo.i18n)}
+          </h4>
+          {grupo.filtros.map(filtro =>
+            select(
+              `filter-${filtro.param}`,
+              t(filtro.i18n),
+              filtrosTecnicos[filtro.param] || '',
+              filtro.param,
+              filtro.opciones,
+              t('catalog.all')
+            )
+          )}
+        </div>
+      ))}
 
       {hasActiveFilters && (
         <button
