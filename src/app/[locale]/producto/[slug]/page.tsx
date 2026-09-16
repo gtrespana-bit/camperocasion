@@ -114,6 +114,43 @@ async function getVerificacionHomologacion(productoId: string) {
   }
 }
 
+/**
+ * Estado de reserva del anuncio (Fase 1.2) — consulta aparte y tolerante a
+ * fallo: si la migración no está aplicada, la ficha sigue funcionando sin CTA
+ * de reserva.
+ */
+async function getEstadoReserva(productoId: string, userId?: string | null) {
+  if (!supabase || !productoId) return null
+  try {
+    const { data: producto, error } = await supabase
+      .from('productos')
+      .select('reservado, reservado_hasta')
+      .eq('id', productoId)
+      .maybeSingle()
+    if (error || !producto) return null
+
+    let propia: string | null = null
+    if (userId) {
+      const { data: reserva } = await supabase
+        .from('reservas')
+        .select('estado')
+        .eq('producto_id', productoId)
+        .eq('comprador_id', userId)
+        .in('estado', ['pendiente_pago', 'en_revision', 'activa'])
+        .maybeSingle()
+      propia = reserva?.estado || null
+    }
+
+    return {
+      reservado: !!(producto as any).reservado,
+      reservado_hasta: (producto as any).reservado_hasta || null,
+      reserva_propia_estado: propia,
+    }
+  } catch {
+    return null
+  }
+}
+
 async function getProduct(slugOrId: string) {
   // Validate param format first to avoid unnecessary DB queries
   if (!slugOrId || typeof slugOrId !== 'string' || slugOrId.length < 3) {
@@ -355,11 +392,12 @@ export default async function ProductoPage({ params }: Props) {
     notFound()
   }
 
-  const [relacionados, favoritosCount, resumenResenas, verificacion] = await Promise.all([
+  const [relacionados, favoritosCount, resumenResenas, verificacion, reserva] = await Promise.all([
     getRelacionados(producto),
     getFavoritosCount(producto.id),
     getResumenResenas(producto.id),
     getVerificacionHomologacion(producto.id),
+    getEstadoReserva(producto.id),
   ])
 
   // JSON-LD Product Schema
@@ -443,6 +481,7 @@ export default async function ProductoPage({ params }: Props) {
           initialProduct={producto}
           favoritosCount={favoritosCount}
           verificacion={verificacion}
+          reserva={reserva}
         />
       </Suspense>
 

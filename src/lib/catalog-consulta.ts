@@ -58,7 +58,7 @@ export function aplicarFiltrosCatalogo<T extends QueryCatalogo>(
  * canónica del producto se construye con él (`productUrl`).
  */
 export const CATALOG_PRODUCT_COLUMNS =
-  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, verificacion_homologacion'
+  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, verificacion_homologacion, reservado'
 
 /**
  * Visibilidad pública: aprobados, pendientes de moderación (aún no revisados)
@@ -84,6 +84,8 @@ export interface ProductoCatalogo {
   vendedor_verificado: boolean | null
   /** Estado del expediente de homologación (Fase 0.2). */
   verificacion_homologacion?: string | null
+  /** Reserva con señal vigente (Fase 1.2): el anuncio está comprometido. */
+  reservado?: boolean | null
   /** Pre-computado para evitar hydration mismatch entre servidor y cliente. */
   _isFeatured?: boolean
 }

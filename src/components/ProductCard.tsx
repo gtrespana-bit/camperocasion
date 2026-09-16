@@ -21,6 +21,7 @@ export interface ProductCardData {
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
   verificacion_homologacion?: string | null
+  reservado?: boolean | null
 }
 
 const PLACEHOLDER_IMAGES = [
@@ -81,6 +82,17 @@ export default function ProductCard({ p, isPromoted, isFeatured, priority }: { p
         <p className="text-xl font-black text-brand-primary mt-1">
           {formatPrecio(p.precio_usd || 0)}
         </p>
+        {p.reservado && (
+          <div className="mt-1">
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+              <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="10" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              {t('productCard.reserved')}
+            </span>
+          </div>
+        )}
         {p.verificacion_homologacion === 'verificada' && (
           <div className="mt-1">
             <BadgeHomologacion estado={p.verificacion_homologacion} size="sm" />

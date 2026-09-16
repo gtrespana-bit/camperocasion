@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   LayoutDashboard, Package, ShieldAlert, Users, ShieldCheck, CreditCard, History,
-  Tag, Megaphone, Download, Settings2, LogIn, LogOut, ArrowLeft, Menu, X, Sparkles, FileCheck2,
+  Tag, Megaphone, Download, Settings2, LogIn, LogOut, ArrowLeft, Menu, X, Sparkles, FileCheck2, Handshake,
 } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { useAuth } from '@/components/AuthProvider'
@@ -21,6 +21,7 @@ import AdminExportar from './components/AdminExportar'
 import AdminAjustes from './components/AdminAjustes'
 import VerificacionTab from './VerificacionTab'
 import AdminHomologacion from './AdminHomologacion'
+import AdminReservas from './AdminReservas'
 import { Badge } from './components/AdminUi'
 import { apiJson, type Perfil } from './components/admin-utils'
 
@@ -31,6 +32,7 @@ const NAV = [
   { id: 'usuarios', label: 'Usuarios', icon: Users, description: 'Perfiles y créditos' },
   { id: 'verificacion', label: 'Verificación', icon: ShieldCheck, description: 'Vendedores' },
   { id: 'homologacion', label: 'Homologación', icon: FileCheck2, description: 'Expediente del vehículo' },
+  { id: 'reservas', label: 'Reservas', icon: Handshake, description: 'Señales y comprobantes' },
   { id: 'transacciones', label: 'Transacciones', icon: CreditCard, description: 'Pagos y créditos' },
   { id: 'auditoria', label: 'Auditoría', icon: History, description: 'Historial de cambios' },
   { id: 'categorias', label: 'Categorías', icon: Tag, description: 'Organización' },
@@ -277,6 +279,7 @@ export default function AdminPage() {
             {tab === 'usuarios' && <AdminUsuarios notify={notify} />}
             {tab === 'verificacion' && <VerificacionTab notify={notify} />}
             {tab === 'homologacion' && <AdminHomologacion notify={notify} />}
+            {tab === 'reservas' && <AdminReservas notify={notify} />}
             {tab === 'transacciones' && <AdminTransacciones notify={notify} perfiles={perfiles} onPerfilesChange={setPerfiles} />}
             {tab === 'auditoria' && <AdminAuditoria notify={notify} />}
             {tab === 'categorias' && <AdminCategorias notify={notify} />}

@@ -44,6 +44,7 @@ type Producto = {
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
   verificacion_homologacion?: string | null
+  reservado?: boolean | null
 }
 
 interface CatalogoPageProps {
@@ -123,6 +124,13 @@ const ProductCard = memo(({ p, priority = false, t }: { p: Producto; priority?: 
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 truncate group-hover:text-brand-primary transition-colors">{p.titulo}</h3>
         <p className="text-xl font-black text-brand-primary mt-1">{formatPrecio(p.precio_usd || 0)}</p>
+        {p.reservado && (
+          <div className="mt-1">
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+              🔒 {t('productCard.reserved')}
+            </span>
+          </div>
+        )}
         {p.verificacion_homologacion === 'verificada' && (
           <div className="mt-1">
             <BadgeHomologacion estado={p.verificacion_homologacion} size="sm" />

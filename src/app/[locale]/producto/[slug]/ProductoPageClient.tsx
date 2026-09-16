@@ -5,11 +5,12 @@ import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
-import { MapPin, Tag, MessageCircle, Phone, Mail, ChevronRight, Shield, Clock, Heart, Share2, CheckCircle2, FileCheck2, Calculator } from 'lucide-react'
+import { MapPin, Tag, MessageCircle, Phone, Mail, ChevronRight, Shield, Clock, Heart, Share2, CheckCircle2, FileCheck2, Calculator, CalendarClock } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import ReportarButton from '@/components/ReportarButton'
 import BadgeVerificado from '@/components/BadgeVerificado'
 import BadgeHomologacion from '@/components/BadgeHomologacion'
+import BotonReservar, { AvisoReservado } from '@/components/ReservaProducto'
 import { esHomologacionVivienda, resumenExpediente } from '@/lib/verificacion-homologacion'
 import ImageGallery from '@/components/ImageGallery'
 import SellerReputation from '@/components/SellerReputation'
@@ -43,13 +44,26 @@ export interface VerificacionHomologacion {
   documentos: { tipo: string; estado?: string | null }[]
 }
 
+export interface EstadoReserva {
+  reservado: boolean
+  reservado_hasta?: string | null
+  reserva_propia_estado?: string | null
+}
+
 interface ProductoPageClientProps {
   initialProduct: any
   favoritosCount?: number
   verificacion?: VerificacionHomologacion | null
+  reserva?: EstadoReserva | null
 }
 
-function ProductoPageClientInner({ initialProduct, favoritosCount = 0, verificacion = null }: ProductoPageClientProps) {
+function ProductoPageClientInner({
+  initialProduct,
+  favoritosCount = 0,
+  verificacion = null,
+  reserva = null,
+}: ProductoPageClientProps) {
+  const [reservaEstado, setReservaEstado] = useState<string | null>(reserva?.reserva_propia_estado || null)
   const t = useTranslations('productDetail')
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
@@ -301,6 +315,11 @@ function ProductoPageClientInner({ initialProduct, favoritosCount = 0, verificac
               {verificacion && verificacion.estado === 'verificada' && (
                 <BadgeHomologacion estado={verificacion.estado} size="md" />
               )}
+              {(reserva?.reservado || reservaEstado === 'activa') && (
+                <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full text-sm font-semibold">
+                  <CalendarClock size={14} aria-hidden="true" /> {t('reservadoBadge')}
+                </span>
+              )}
             </div>
             {producto.descripcion && <p className="text-gray-600 whitespace-pre-line leading-relaxed">{producto.descripcion}</p>}
 
@@ -425,6 +444,18 @@ function ProductoPageClientInner({ initialProduct, favoritosCount = 0, verificac
                 )}
                 <p className="mt-2 text-xs text-gray-500">{t('expedienteNotaComprador')}</p>
               </div>
+            )}
+
+            {/* Reserva con señal: el anuncio se bloquea para el comprador que
+                paga una señal pequeña (y se verifica el comprobante). */}
+            {!producto.vendido && (
+              <BotonReservar
+                producto={producto}
+                userId={user?.id || null}
+                reservadoInicial={!!reserva?.reservado}
+                reservadoHastaInicial={reserva?.reservado_hasta || null}
+                onEstadoReserva={setReservaEstado}
+              />
             )}
 
             {/* Utilidad de compra: el ITP es el coste que más sorprende, y

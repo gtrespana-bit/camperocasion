@@ -349,7 +349,8 @@
     "homologacionVerificada": "Homologación verificada",
     "homologacionPendiente": "Verificación en curso",
     "homologacionRechazada": "Documentación rechazada",
-    "homologacionSinExpediente": "Sin expediente"
+    "homologacionSinExpediente": "Sin expediente",
+    "reserved": "Reservado"
   },
   "product": {
     "featured": "Destacado",
@@ -445,7 +446,9 @@
     "expedienteNotaComprador": "Antes de cerrar la compra, pide al vendedor que te muestre los documentos originales.",
     "expedienteCta": "Sube la documentación y consigue el sello de homologación",
     "itpCtaTitulo": "Calcula el ITP de esta camper",
-    "itpCtaDesc": "Cuánto pagarás de impuesto y de cambio de nombre según tu comunidad"
+    "itpCtaDesc": "Cuánto pagarás de impuesto y de cambio de nombre según tu comunidad",
+    "reservarCta": "Reservar con señal",
+    "reservadoBadge": "Reservado"
   },
   "creditos": {
     "title1": "Compra créditos y",
@@ -640,7 +643,8 @@
     "verification": "Verificacion",
     "yourReputation": "Tu reputacion como vendedor",
     "reviews": "Resenas",
-    "noReviews": "Aun no tienes resenas. Los compradores podran dejarte una despues de una transaccion."
+    "noReviews": "Aun no tienes resenas. Los compradores podran dejarte una despues de una transaccion.",
+    "tabReservations": "Reservas"
   },
   "contact": {
     "title": "Contáctanos",
