@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Users, Package, Zap, ShieldCheck, CreditCard, Star, Eye, AlertTriangle,
   Clock, ArrowRight, Activity, Megaphone, CheckCircle2, DollarSign,
-  ShoppingBag, UserPlus, Wallet,
+  ShoppingBag, UserPlus, Wallet, FileCheck2,
 } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { productUrl } from '@/lib/product-url'
@@ -24,6 +24,7 @@ type DashboardData = {
   pendingModeration: number
   activeReports: number
   pendingVerifications: number
+  pendingHomologaciones?: number
   pendingTransactions: number
   verified: number
   reviews: number
@@ -88,6 +89,7 @@ export default function AdminDashboard({
         pendingModeration: counts.pendingModeration || 0,
         activeReports: counts.activeReports || 0,
         pendingVerifications: counts.pendingVerifications || 0,
+        pendingHomologaciones: counts.pendingHomologaciones || 0,
         pendingTransactions: counts.pendingTransactions || 0,
         verified: counts.verified || 0,
         reviews: counts.reviews || 0,
@@ -125,6 +127,7 @@ export default function AdminDashboard({
     if (data?.pendingTransactions) items.push({ label: 'Transacciones por aprobar', count: data.pendingTransactions, tab: 'transacciones', tone: 'text-red-600 bg-red-50', icon: CreditCard })
     if (data?.pendingModeration) items.push({ label: 'Publicaciones en moderación', count: data.pendingModeration, tab: 'moderacion', tone: 'text-yellow-700 bg-yellow-50', icon: ShoppingBag })
     if (data?.pendingVerifications) items.push({ label: 'Verificaciones pendientes', count: data.pendingVerifications, tab: 'verificacion', tone: 'text-blue-600 bg-blue-50', icon: ShieldCheck })
+    if (data?.pendingHomologaciones) items.push({ label: 'Expedientes de homologación', count: data.pendingHomologaciones, tab: 'homologacion', tone: 'text-emerald-700 bg-emerald-50', icon: FileCheck2 })
     if (data?.activeReports) items.push({ label: 'Denuncias activas', count: data.activeReports, tab: 'moderacion', tone: 'text-orange-600 bg-orange-50', icon: AlertTriangle })
     return items.slice(0, 6)
   }, [data])

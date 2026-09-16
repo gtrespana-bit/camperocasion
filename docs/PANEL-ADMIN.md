@@ -1,6 +1,6 @@
 # Panel Admin — VendeT Venezuela
 
-> Última actualización: 2026-08-30
+> Última actualización: 2026-09-15
 
 Panel administrativo "centro de operaciones" para controlar el marketplace desde una sola pantalla. Diseñado para que el admin tenga acción, contexto y seguridad sin tener que ir de tab en tab.
 
@@ -18,6 +18,7 @@ Panel administrativo "centro de operaciones" para controlar el marketplace desde
 | **Moderación** | Denuncias activas, cola de aprobación, rechazo con motivo, historial de denuncias resueltas. |
 | **Usuarios** | Buscar/filtrar, verificación individual o masiva, ajustar créditos (+ / −) con ledger, ver perfil público. |
 | **Verificación** | Solicitudes de vendedores, comparación de datos, visualización de cédula mediante URL firmada. |
+| **Homologación** | Expedientes documentales de vehículos: cola FIFO por antigüedad, apertura de cada documento con URL firmada, documentos exigidos que faltan, verificación o rechazo con motivo. |
 | **Transacciones** | Aprobar/rechazar pagos pendientes, ver comprobante firmado, recordatorios push, métricas de ingresos. |
 | **Auditoría** | Historial de cambios con resumen por tabla y limpieza de registros > 90 días. |
 | **Categorías** | CRUD con conteo de publicaciones; impide borrar categorías con contenido. |
@@ -33,7 +34,16 @@ El banner de **Comunicación** requiere crear la tabla `anuncios_globales`:
 supabase/migrations/202608010007_anuncios_globales.sql
 ```
 
-Ejecútala en el SQL Editor de Supabase (producción) antes o junto al despliegue. Si la tabla no existe, el sitio sigue funcionando (el banner simplemente no aparece) y el panel muestra cómo activarlo.
+La pestaña **Homologación** requiere, además, el expediente del vehículo:
+
+```bash
+supabase/migrations/202609150001_verificacion_homologacion.sql
+```
+
+Ambas están incluidas en `setup-camperocasion.sql`. Ejecútalas en el SQL Editor
+de Supabase (producción) antes o junto al despliegue. Si faltan, el sitio sigue
+funcionando: el banner simplemente no aparece, la revisión de homologación
+queda vacía y el panel avisa de que falta aplicarla.
 
 ## Endpoints nuevos
 
@@ -42,9 +52,13 @@ Ejecútala en el SQL Editor de Supabase (producción) antes o junto al despliegu
 - `GET/POST/PATCH/DELETE /api/admin/anuncios`
 - `GET /api/anuncios/active` — banner público
 - `GET /api/admin/status` — salud de configuración
+- `GET/POST /api/admin/documentos-vehiculo` — cola de expedientes y verificar/rechazar
+- `GET /api/admin/documentos-vehiculo/firmar` — URL firmada (5 min) de un documento del expediente
+- `GET/POST/DELETE /api/documentos-vehiculo` — expediente del vehículo del lado del vendedor
 
 ## Notas de operación
 
 - Las operaciones administrativas ya existentes (`toggle-activo`, `toggle-destacado`, `boost-producto`, `eliminar-producto`, `moderar-producto`, `verificar-venta`, etc.) siguen siendo la fuente de escritura. Este panel las utiliza, no duplica lógica de negocio.
-- Los comprobantes y cédulas se abren mediante URL firma (nunca como URL pública permanente).
+- Los comprobantes, las cédulas y los documentos del vehículo se abren mediante URL firmada (nunca como URL pública permanente). La ruta se valida antes de firmar: `<user_id>/<archivo>` en cédulas y `<user_id>/<producto_id>/<archivo>` en el expediente.
+- El sello de homologación acredita unos documentos concretos: **cualquier cambio en el expediente devuelve el anuncio a `pendiente`** y exige una nueva revisión.
 - Los contadores del sidebar se refrescan al cambiar de pestaña.

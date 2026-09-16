@@ -253,7 +253,6 @@
     "title": "Catalog",
     "allProducts": "All products",
     "results": "{count} results",
-    "filters": "Filters",
     "category": "Category",
     "all": "All",
     "priceUsd": "Price (€)",
@@ -317,18 +316,41 @@
     },
     "searchLabel": "Search",
     "priceEur": "Precio (€)",
-    "techFilters": "Ficha técnica",
-    "dgt": "Etiqueta DGT",
-    "homologation": "Homologación",
-    "fuel": "Combustible",
-    "travelSeats": "Plazas para viajar",
-    "sleepSeats": "Plazas para dormir",
-    "heating": "Calefacción estacionaria"
+    "filtersTitle": "Filters",
+    "filters": {
+      "groups": {
+        "mechanics": "Vehicle mechanics",
+        "liveability": "Liveability",
+        "autonomy": "Power & equipment"
+      },
+      "dgt": "DGT environmental label",
+      "homologation": "Type approval",
+      "fuel": "Fuel",
+      "drive": "Drivetrain",
+      "mma": "MAM / Max. weight",
+      "length": "Exterior length",
+      "height": "Exterior height",
+      "travelSeats": "Travel seats",
+      "sleepSeats": "Sleeping berths",
+      "heating": "Stationary heater",
+      "hotWater": "Hot water",
+      "bathroom": "Bathroom / Shower",
+      "battery": "Leisure battery",
+      "solar": "Solar panel",
+      "inverter": "220V inverter",
+      "fridge": "Fridge",
+      "verified": "Verified type approval only"
+    }
   },
   "productCard": {
     "featured": "Featured",
     "boost": "Boost",
-    "verified": "Verified"
+    "verified": "Verified",
+    "homologacionVerificada": "Type approval verified",
+    "homologacionPendiente": "Verification in progress",
+    "homologacionRechazada": "Documents rejected",
+    "homologacionSinExpediente": "No documents yet",
+    "reserved": "Reserved"
   },
   "product": {
     "featured": "Featured",
@@ -416,7 +438,17 @@
     "soldBannerDesc": "This camper found its new owner. Check similar listings.",
     "specsTitle": "Other details",
     "sellerPro": "Pro / Camper converter",
-    "sellerPrivate": "Private seller"
+    "sellerPrivate": "Private seller",
+    "expedienteTitle": "Vehicle documentation file",
+    "expedienteIntroVerificada": "We have reviewed this vehicle’s documents: technical inspection sheet (ficha técnica), ITV and, where applicable, the type-approval project.",
+    "expedienteIntroPendiente": "The seller has uploaded vehicle documents and our team is reviewing them.",
+    "expedienteAvisoVivienda": "This listing declares a motorhome conversion (Vehículo Vivienda 2448/3148) and the type-approval project is still pending verification.",
+    "expedienteNotaComprador": "Before closing the deal, ask the seller to show you the original documents.",
+    "expedienteCta": "Upload the documents and get the verified badge",
+    "itpCtaTitulo": "Calculate the transfer tax for this camper",
+    "itpCtaDesc": "What you will pay in tax and registration fee according to your region",
+    "reservarCta": "Reserve with a deposit",
+    "reservadoBadge": "Reserved"
   },
   "creditos": {
     "title1": "Buy credits and",
@@ -488,6 +520,7 @@
     "titleField": "Title",
     "titlePlaceholder": "Describe your product clearly...",
     "specs": "Specifications",
+    "specsHint": "The fields you fill in become catalogue filters: berths, heating, bathroom, off-grid kit (battery, solar panel, inverter), drivetrain, MAM, exterior length and height.",
     "description": "Description",
     "descPlaceholder": "Describe the condition, features, included accessories...",
     "condition": "Condition",
@@ -610,7 +643,8 @@
     "verification": "Verification",
     "yourReputation": "Your seller reputation",
     "reviews": "Reviews",
-    "noReviews": "No reviews yet. Buyers can leave one after a transaction."
+    "noReviews": "No reviews yet. Buyers can leave one after a transaction.",
+    "tabReservations": "Reservations"
   },
   "contact": {
     "title": "Contact Us",
@@ -951,13 +985,44 @@
     "title2": "Title",
     "description": "Description",
     "specs": "Specifications",
+    "specsHint": "The fields you fill in become catalogue filters: berths, heating, bathroom, off-grid kit (battery, solar panel, inverter), drivetrain, MAM, exterior length and height.",
     "state": "State",
     "municipality": "City",
     "currentPhotos": "Current photos",
     "newPhotos": "Add new photos",
     "contactTitle": "Contact methods",
     "contactDesc": "Choose which contact methods to display",
-    "back": "Back"
+    "back": "Back",
+    "expedienteTitle": "Vehicle documentation file",
+    "expedienteIntro": "Upload the ficha técnica, the ITV and —if the listing declares a motorhome conversion— the type-approval project. Our team reviews it and the listing gets the “Type approval verified” badge.",
+    "expedienteCargando": "Loading documents…",
+    "expedienteRequerido": "Required",
+    "expedienteOpcional": "Optional",
+    "expedienteSubir": "Upload",
+    "expedienteSubiendo": "Uploading…",
+    "expedienteReemplazar": "Replace",
+    "expedienteEliminar": "Delete document",
+    "expedienteConfirmarBorrado": "Delete this document from the file?",
+    "expedienteVerDocumento": "View document",
+    "expedientePrivacidad": "Documents are private: only you and the CamperOcasión team can see them, and they open through signed links that expire in 5 minutes.",
+    "expedienteErrorCarga": "Could not load the documents",
+    "expedienteErrorSubida": "Could not upload the document",
+    "expedienteErrorBorrado": "Could not delete the document",
+    "expedienteFormato": "Format not allowed: upload a PDF, JPG, PNG or WEBP",
+    "expedienteTamano": "The file is over the 10 MB limit",
+    "expedienteMotivo": "Reason",
+    "expedienteEstadoVerificadaNota": "If you replace a document, the file goes back to review.",
+    "expedienteEstado": {
+      "sin_verificar": "No documents yet",
+      "pendiente": "Pending verification",
+      "verificada": "Type approval verified",
+      "rechazada": "Documents rejected"
+    },
+    "expedienteDocumentoEstado": {
+      "pendiente": "In review",
+      "verificado": "Verified",
+      "rechazado": "Rejected"
+    }
   },
   "chat": {
     "title": "Messages",

@@ -4,6 +4,13 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { clientCache } from '@/lib/clientCache';
 import { getCatalogPageRange } from '@/lib/catalog-pagination';
+import {
+  CATALOG_PRODUCT_COLUMNS,
+  CATALOG_FILTRO_MODERACION,
+  aplicarFiltrosCatalogo,
+  ordenarProductosCatalogo,
+  ProductoCatalogo,
+} from '@/lib/catalog-consulta';
 
 interface ProductFilter {
   categoria?: string;
@@ -14,25 +21,9 @@ interface ProductFilter {
   precioMax?: string;
   ubicacionEstado?: string;
   ubicacionCiudad?: string;
-  // Filtros técnicos camper (JSONB `especificaciones`)
-  dgt?: string;
-  homologacion?: string;
-  combustible?: string;
-  plazasViaje?: string;
-  plazasDormir?: string;
-  calefaccion?: string;
+  // Filtros técnicos camper: parámetro del registro `filtros-tecnicos` → valor.
   [key: string]: string | number | boolean | undefined;
 }
-
-// Mapeo parámetro de URL → clave del JSONB `especificaciones`.
-const CAMPOS_TECNICOS: Record<string, string> = {
-  dgt: 'Distintivo Ambiental DGT',
-  homologacion: 'Homologación',
-  combustible: 'Combustible',
-  plazasViaje: 'Plazas homologadas para viajar',
-  plazasDormir: 'Plazas para dormir',
-  calefaccion: 'Calefacción estacionaria',
-};
 
 interface LoadPageOptions {
   page: number;
@@ -47,9 +38,6 @@ interface UseProductLoaderResult {
   totalCount: number;
   loadPage: (options: LoadPageOptions) => Promise<void>;
 }
-
-const PAGE_COLUMNS =
-  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado';
 
 // Carga UNA página real desde el servidor usando range().
 // Devuelve `totalCount` (conteo exacto) para paginar con el total real,
@@ -77,9 +65,9 @@ export const useProductLoader = (): UseProductLoaderResult => {
     try {
       let query = supabase
         .from('productos')
-        .select(PAGE_COLUMNS, { count: 'exact' })
+        .select(CATALOG_PRODUCT_COLUMNS, { count: 'exact' })
         .eq('activo', true)
-        .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado,estado_moderacion.eq.pendiente');
+        .or(CATALOG_FILTRO_MODERACION);
 
       if (filters.categoria) {
         // maybeSingle(): si la categoría no existe en la tabla, single()
@@ -119,18 +107,9 @@ export const useProductLoader = (): UseProductLoaderResult => {
         query = query.lte('precio_usd', parseFloat(filters.precioMax));
       }
 
-      // Filtros técnicos sobre el JSONB de especificaciones (p. ej.
-      // etiqueta DGT, homologación vivienda, plazas, calefacción...).
-      for (const [param, campo] of Object.entries(CAMPOS_TECNICOS)) {
-        const value = filters[param];
-        if (value) {
-          try {
-            query = query.eq(`especificaciones->>"${campo}"`, value);
-          } catch {
-            // Clave inválida: ignorar el filtro en lugar de romper la página
-          }
-        }
-      }
+      // Filtros técnicos (una sola contención JSONB, índice GIN) + el filtro
+      // de homologación verificada (columna de `productos`).
+      query = aplicarFiltrosCatalogo(query, filters);
 
       // Página real desde el servidor. El mismo tamaño se comparte con el
       // SSR inicial para no dejar filas sin mostrar entre páginas.
@@ -145,21 +124,8 @@ export const useProductLoader = (): UseProductLoaderResult => {
         throw new Error(fetchError.message);
       }
 
-      // Ordenar productos según la lógica de prioridad (boost > destacado > fecha)
-      const now = new Date().toISOString();
-      const sorted = (data || []).sort((a, b) => {
-        const aBoost = a.boosteado_en || null;
-        const bBoost = b.boosteado_en || null;
-        if (aBoost && !bBoost) return -1;
-        if (!aBoost && bBoost) return 1;
-        if (aBoost && bBoost) return bBoost.localeCompare(aBoost);
-        const aDest = a.destacado && a.destacado_hasta && a.destacado_hasta > now;
-        const bDest = b.destacado && b.destacado_hasta && b.destacado_hasta > now;
-        if (aDest && !bDest) return -1;
-        if (!aDest && bDest) return 1;
-        if (aDest && bDest) return b.destacado_hasta!.localeCompare(a.destacado_hasta!);
-        return b.creado_en.localeCompare(a.creado_en);
-      });
+      // Mismo orden que el servidor: boost > destacado vigente > fecha
+      const sorted = ordenarProductosCatalogo((data || []) as ProductoCatalogo[]);
 
       setProductos(sorted);
       setTotalCount(count ?? 0);

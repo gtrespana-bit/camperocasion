@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { CIUDADES_SEO, CATEGORIAS_POPULARES } from '@/lib/ubicaciones-seo'
 import { CATEGORIAS_SEO_LIST } from '@/lib/categorias-seo'
+import { TIPOS_ITP } from '@/lib/itp'
 
 const BASE_URL = 'https://camperocasion.es'
 const LAST_MODIFIED_DATE = new Date('2026-09-15')
@@ -68,6 +69,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/blog', changeFrequency: 'weekly', priority: 0.8 },
     { path: '/publicar', changeFrequency: 'weekly', priority: 0.8 },
     { path: '/creditos', changeFrequency: 'weekly', priority: 0.7 },
+    { path: '/calcular-itp', changeFrequency: 'monthly', priority: 0.9 },
+    { path: '/compra-segura-camper', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/como-funciona', changeFrequency: 'monthly', priority: 0.6 },
     { path: '/como-instalar-app', changeFrequency: 'monthly', priority: 0.5 },
     { path: '/contacto', changeFrequency: 'monthly', priority: 0.5 },
@@ -118,6 +121,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  // ── Landings de ITP por comunidad autónoma (SEO long tail:
+  //    "impuesto comprar camper segunda mano {comunidad}") ────────────────
+  const itpUrls: MetadataRoute.Sitemap = TIPOS_ITP.map((comunidad) => ({
+    url: `${BASE_URL}/calcular-itp/${comunidad.slug}`,
+    lastModified: LAST_MODIFIED_DATE,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+
   // ── Blog (desde src/content/blog) ────────────────────────────────────
   const blogUrls: MetadataRoute.Sitemap = []
   getBlogSlugs().forEach((post) => {
@@ -167,5 +179,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Si Supabase falla, servir al menos las URLs estáticas
   }
 
-  return [...staticUrls, ...categoryUrls, ...cityUrls, ...cityCategoryUrls, ...blogUrls, ...dynamicUrls]
+  return [
+    ...staticUrls,
+    ...categoryUrls,
+    ...cityUrls,
+    ...cityCategoryUrls,
+    ...itpUrls,
+    ...blogUrls,
+    ...dynamicUrls,
+  ]
 }

@@ -1,0 +1,108 @@
+# ⚠️ ESTE ARCHIVO TODAVÍA NO SE EJECUTA — hay que ACTIVARLO (30 segundos).
+#
+# GitHub solo ejecuta los workflows que están en `.github/workflows/`, y este
+# agente no puede crearlos ahí: GitHub rechaza el push de un workflow hecho por
+# una GitHub App sin el permiso `workflows`. Por eso vive aquí.
+#
+# FORMA RÁPIDA (recomendada, sin pegar código — vale desde el móvil):
+#   Abre este archivo en la web de GitHub y pulsa el lápiz (Edit):
+#   https://github.com/gtrespana-bit/camperocasion/edit/arena/01a0a7f4-camperocasion/docs/ci/ci.yml
+#   Cambia el nombre del archivo (campo de arriba) a:
+#       .github/workflows/ci.yml
+#   Y pulsa "Commit changes" → "Commit directly to the arena/... branch".
+#   Mover un archivo así ya crea la carpeta y no hay que copiar nada.
+#
+# FORMA CON PEGADO (si la anterior te da problemas):
+#   1. Abre https://github.com/gtrespana-bit/camperocasion/new/arena/01a0a7f4-camperocasion?filename=.github/workflows/ci.yml
+#   2. El nombre ya viene puesto; pega este archivo entero en el editor.
+#   3. "Commit changes" → commit directo a la rama.
+#
+# TERCERA OPCIÓN: desde el ordenador,
+#   mkdir -p .github/workflows && git mv docs/ci/ci.yml .github/workflows/ci.yml
+#   git commit -m 'ci: activar workflow' && git push
+#
+# Una vez activo, cada push y cada PR ejecutan los dos jobs (unos 3-5 minutos).
+# Si un job se pone en rojo, pásame el enlace del run y lo arreglo.
+#
+name: CI
+
+# Comprobación de calidad en cada push y en cada PR.
+#
+# El repo no tenía CI: un PR podía mergearse con tipos rotos, lint sucio o tests
+# en rojo y nadie se enteraba hasta producción. Estos tres pasos (tipos, lint y
+# tests unitarios) son los que se ejecutan a mano antes de cada commit; hacerlos
+# automáticos es lo que evita que se olviden.
+#
+# Nota sobre el build: `next build` necesita Supabase configurado y tarda
+# minutos, así que NO está aquí. El paso que sí protege las migraciones es el
+# job `sql`, que aplica `setup-camperocasion.sql` en un Postgres de verdad.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+# Un push nuevo sobre la misma rama cancela la ejecución anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  calidad:
+    name: Tipos, lint y tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci --no-audit --no-fund
+
+      - name: Tipos (tsc --noEmit)
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npx eslint .
+        # El lint está a cero errores: si aparece un error (los warnings no
+        # cuentan), el job falla.
+
+      - name: Tests unitarios
+        run: npm test -- --ci
+
+  sql:
+    name: Migraciones en un Postgres real
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar el arnés de validación
+        # pgserver descarga un Postgres embebido: es lo que permite aplicar el
+        # setup completo (y sus políticas RLS) sin una base de datos externa.
+        run: pip install --no-cache-dir pgserver psycopg2-binary pglast
+
+      - name: Aplicar setup-camperocasion.sql completo
+        run: python3 scripts/validate_setup_sql.py
+
+      - name: Garantías de RLS del expediente del vehículo
+        run: python3 scripts/verify_rls_documentos_vehiculo.py
+
+      - name: Garantías de la reserva con señal
+        run: python3 scripts/verify_reservas_sql.py
+
+      - name: Verificación de despliegue (fases 0.1, 0.2 y 1.2)
+        run: python3 scripts/verificar_despliegue_sql.py

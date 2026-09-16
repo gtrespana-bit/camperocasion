@@ -1,0 +1,257 @@
+/**
+ * Tests de las reglas de la reserva con señal.
+ *
+ * Lo que se protege:
+ *  1. Que "reservado" signifique algo: un anuncio no puede quedar bloqueado por
+ *     dos reservas, y las caducadas dejan de bloquear.
+ *  2. Que las transiciones de estado sean las previstas (un comprobante rechazado
+ *     no se activa solo, una reserva cerrada no se reabre).
+ *  3. Que la señal sea pequeña de verdad (importe acotado).
+ *  4. Que nadie reserve su propio anuncio ni un vehículo vendido.
+ *  5. Que el conjunto de estados "vivos" coincida con el índice único de la
+ *     migración: si alguien añade un estado y no lo actualiza, el test cae.
+ */
+import {
+  COMISION_RESERVA_PCT,
+  CONDICIONES_SEÑAL,
+  DIAS_VALIDEZ_RESERVA,
+  ESTADOS_RESERVA,
+  ESTADOS_VIVOS,
+  SEÑAL_MAXIMA,
+  SEÑAL_MINIMA,
+  SEÑAL_POR_DEFECTO,
+  TRANSICIONES_RESERVA,
+  accionesDisponibles,
+  comisionDe,
+  esParteDeReserva,
+  fechaExpiracion,
+  importeSeñalValido,
+  motivoReservaCerrada,
+  normalizarEstadoReserva,
+  puedeReservar,
+  puedeTransicionar,
+  reservaVigente,
+  sugerirImporteSeñal,
+} from '@/lib/reservas'
+
+const AYER = new Date(Date.now() - 24 * 60 * 60 * 1000)
+const EN_CINCO_DIAS = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
+
+const PRODUCTO = {
+  id: 'p1',
+  user_id: 'vendedor',
+  activo: true,
+  vendido: false,
+  reservado: false,
+  estado_moderacion: 'aprobado',
+}
+
+describe('estados', () => {
+  test('los estados vivos son exactamente los del índice único parcial', () => {
+    expect(ESTADOS_VIVOS).toEqual(['pendiente_pago', 'en_revision', 'activa'])
+    // Si esta lista cambia, hay que cambiar también la migración
+    // (reservas_producto_viva_key) y el trigger de propagación.
+    for (const estado of ESTADOS_VIVOS) expect(ESTADOS_RESERVA).toContain(estado)
+    expect(ESTADOS_RESERVA).toHaveLength(8)
+  })
+
+  test('normaliza estados desconocidos al inicial, no a uno vivo', () => {
+    expect(normalizarEstadoReserva('activa')).toBe('activa')
+    expect(normalizarEstadoReserva('inventado')).toBe('pendiente_pago')
+    expect(normalizarEstadoReserva(null)).toBe('pendiente_pago')
+  })
+
+  test('solo bloquea el anuncio una reserva viva y sin caducar', () => {
+    expect(reservaVigente('activa', EN_CINCO_DIAS)).toBe(true)
+    expect(reservaVigente('en_revision', EN_CINCO_DIAS)).toBe(true)
+    expect(reservaVigente('pendiente_pago', EN_CINCO_DIAS)).toBe(true)
+    expect(reservaVigente('activa', AYER.toISOString())).toBe(false)
+    expect(reservaVigente('cancelada', EN_CINCO_DIAS)).toBe(false)
+    expect(reservaVigente('completada', EN_CINCO_DIAS)).toBe(false)
+    expect(reservaVigente('activa', null)).toBe(false)
+    expect(reservaVigente('activa', 'no-es-una-fecha')).toBe(false)
+  })
+})
+
+describe('transiciones', () => {
+  test('el flujo normal avanza en orden', () => {
+    expect(puedeTransicionar('pendiente_pago', 'en_revision')).toBe(true)
+    expect(puedeTransicionar('en_revision', 'activa')).toBe(true)
+    expect(puedeTransicionar('activa', 'completada')).toBe(true)
+    expect(puedeTransicionar('activa', 'reembolsada')).toBe(true)
+  })
+
+  test('no se puede saltar del pago al activo sin revisión', () => {
+    expect(puedeTransicionar('pendiente_pago', 'activa')).toBe(false)
+  })
+
+  test('un comprobante rechazado no se activa solo: hay que subir otro', () => {
+    expect(puedeTransicionar('rechazada', 'activa')).toBe(false)
+    expect(TRANSICIONES_RESERVA.rechazada).toEqual([])
+  })
+
+  test('los estados terminales no reabren', () => {
+    for (const estado of ['completada', 'cancelada', 'reembolsada', 'expirada'] as const) {
+      expect(TRANSICIONES_RESERVA[estado]).toEqual([])
+    }
+  })
+
+  test('toda transición declarada es a un estado conocido', () => {
+    for (const [desde, lista] of Object.entries(TRANSICIONES_RESERVA)) {
+      expect(ESTADOS_RESERVA).toContain(desde)
+      for (const hacia of lista) expect(ESTADOS_RESERVA).toContain(hacia)
+    }
+  })
+
+  test('una caducada sí puede pasar a expirada (barrido perezoso)', () => {
+    expect(puedeTransicionar('pendiente_pago', 'expirada')).toBe(true)
+    expect(puedeTransicionar('en_revision', 'expirada')).toBe(true)
+  })
+})
+
+describe('importe de la señal', () => {
+  test('la señal es pequeña: nunca pasa de 1.000 €', () => {
+    expect(sugerirImporteSeñal(80000)).toBe(SEÑAL_MAXIMA)
+    expect(sugerirImporteSeñal(30000)).toBe(600)
+    expect(sugerirImporteSeñal(10000)).toBe(SEÑAL_POR_DEFECTO)
+    expect(sugerirImporteSeñal(0)).toBe(SEÑAL_POR_DEFECTO)
+    expect(sugerirImporteSeñal(null)).toBe(SEÑAL_POR_DEFECTO)
+  })
+
+  test('el importe sugerido es válido y redondo', () => {
+    for (const precio of [5000, 12000, 17500, 25000, 45000, 90000]) {
+      const sugerido = sugerirImporteSeñal(precio)
+      expect(importeSeñalValido(sugerido)).toBe(true)
+      expect(sugerido % 50).toBe(0)
+    }
+  })
+
+  test('valida el importe que llega del cliente', () => {
+    expect(importeSeñalValido(300)).toBe(true)
+    expect(importeSeñalValido(SEÑAL_MINIMA)).toBe(true)
+    expect(importeSeñalValido(SEÑAL_MAXIMA)).toBe(true)
+    expect(importeSeñalValido(50)).toBe(false)
+    expect(importeSeñalValido(5000)).toBe(false)
+    expect(importeSeñalValido('mucho')).toBe(false)
+    expect(importeSeñalValido(undefined)).toBe(false)
+  })
+
+  test('sin pasarela no se cobra comisión', () => {
+    expect(COMISION_RESERVA_PCT).toBe(0)
+    expect(comisionDe(500)).toBe(0)
+    expect(comisionDe(500, 5)).toBe(25)
+  })
+})
+
+describe('puedeReservar', () => {
+  test('lo normal es que sí', () => {
+    expect(puedeReservar(PRODUCTO, null, 'comprador').ok).toBe(true)
+  })
+
+  test('no puedes reservar tu propio anuncio', () => {
+    const r = puedeReservar(PRODUCTO, null, 'vendedor')
+    expect(r.ok).toBe(false)
+    expect(r.motivo).toMatch(/tu propio anuncio/i)
+  })
+
+  test('sin sesión hay que iniciar sesión', () => {
+    const r = puedeReservar(PRODUCTO, null, null)
+    expect(r.ok).toBe(false)
+    expect(r.motivo).toMatch(/inicia sesión/i)
+  })
+
+  test('un vehículo vendido no se reserva', () => {
+    expect(puedeReservar({ ...PRODUCTO, vendido: true }, null, 'comprador').ok).toBe(false)
+  })
+
+  test('un anuncio pausado no se reserva', () => {
+    expect(puedeReservar({ ...PRODUCTO, activo: false }, null, 'comprador').ok).toBe(false)
+  })
+
+  test('un anuncio rechazado en moderación no se reserva', () => {
+    const r = puedeReservar({ ...PRODUCTO, estado_moderacion: 'rechazado' }, null, 'comprador')
+    expect(r.ok).toBe(false)
+  })
+
+  test('si otro comprador tiene reserva viva, no se puede reservar', () => {
+    const r = puedeReservar(
+      PRODUCTO,
+      { id: 'r1', estado: 'activa', comprador_id: 'otro', expira_en: EN_CINCO_DIAS },
+      'comprador'
+    )
+    expect(r.ok).toBe(false)
+    expect(r.motivo).toMatch(/reservado ahora mismo/i)
+  })
+
+  test('si la reserva es tuya, no se duplica', () => {
+    const r = puedeReservar(
+      PRODUCTO,
+      { id: 'r1', estado: 'en_revision', comprador_id: 'comprador', expira_en: EN_CINCO_DIAS },
+      'comprador'
+    )
+    expect(r.ok).toBe(false)
+    expect(r.motivo).toMatch(/ya tienes una reserva/i)
+  })
+
+  test('una reserva caducada de otro no bloquea', () => {
+    const r = puedeReservar(
+      PRODUCTO,
+      { id: 'r1', estado: 'activa', comprador_id: 'otro', expira_en: AYER.toISOString() },
+      'comprador'
+    )
+    expect(r.ok).toBe(true)
+  })
+})
+
+describe('permisos por rol', () => {
+  test('el comprador sube el comprobante; el vendedor no lo toca', () => {
+    expect(accionesDisponibles('pendiente_pago', 'comprador', new Date(), EN_CINCO_DIAS)).toContain('subir_comprobante')
+    expect(accionesDisponibles('pendiente_pago', 'vendedor', new Date(), EN_CINCO_DIAS)).not.toContain('subir_comprobante')
+  })
+
+  test('solo el admin activa la reserva', () => {
+    expect(accionesDisponibles('en_revision', 'admin', new Date(), EN_CINCO_DIAS)).toContain('activar')
+    expect(accionesDisponibles('en_revision', 'comprador', new Date(), EN_CINCO_DIAS)).not.toContain('activar')
+  })
+
+  test('el vendedor puede devolver la señal', () => {
+    expect(accionesDisponibles('activa', 'vendedor', new Date(), EN_CINCO_DIAS)).toContain('reembolsar')
+  })
+
+  test('una reserva cerrada no ofrece acciones a las partes', () => {
+    for (const estado of ['cancelada', 'completada', 'rechazada', 'reembolsada', 'expirada'] as const) {
+      expect(accionesDisponibles(estado, 'comprador', new Date(), EN_CINCO_DIAS)).toEqual([])
+      expect(accionesDisponibles(estado, 'vendedor', new Date(), EN_CINCO_DIAS)).toEqual([])
+    }
+  })
+
+  test('detecta si el usuario es parte de la reserva', () => {
+    const reserva = { comprador_id: 'c1', vendedor_id: 'v1' }
+    expect(esParteDeReserva(reserva, 'c1')).toBe(true)
+    expect(esParteDeReserva(reserva, 'v1')).toBe(true)
+    expect(esParteDeReserva(reserva, 'otro')).toBe(false)
+    expect(esParteDeReserva(reserva, null)).toBe(false)
+  })
+})
+
+describe('fechas y copy', () => {
+  test('la reserva caduca en una semana y se puede calcular desde una fecha dada', () => {
+    expect(DIAS_VALIDEZ_RESERVA).toBe(7)
+    const desde = new Date('2026-09-01T10:00:00.000Z')
+    expect(fechaExpiracion(desde)).toBe('2026-09-08T10:00:00.000Z')
+  })
+
+  test('las condiciones explican dónde está el dinero', () => {
+    const texto = CONDICIONES_SEÑAL.join(' ')
+    expect(texto).toMatch(/no custodia el dinero/i)
+    expect(texto).toMatch(/se descuenta del precio/i)
+    expect(texto).toMatch(/devuelve la señal íntegra/i)
+    expect(CONDICIONES_SEÑAL.length).toBeGreaterThanOrEqual(5)
+  })
+
+  test('el motivo de cierre solo aparece cuando la reserva ya no bloquea', () => {
+    expect(motivoReservaCerrada('activa')).toBeNull()
+    expect(motivoReservaCerrada('cancelada')).toMatch(/cancelado/i)
+    expect(motivoReservaCerrada('cancelada', 'el comprador se echó atrás')).toMatch(/el comprador se echó atrás/)
+  })
+})

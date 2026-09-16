@@ -253,7 +253,6 @@
     "title": "Catálogo",
     "allProducts": "Todos los productos",
     "results": "{count} resultados",
-    "filters": "Filtros",
     "category": "Categoría",
     "all": "Todas",
     "priceUsd": "Precio (€)",
@@ -317,18 +316,41 @@
     },
     "searchLabel": "Buscar",
     "priceEur": "Precio (€)",
-    "techFilters": "Ficha técnica",
-    "dgt": "Etiqueta DGT",
-    "homologation": "Homologación",
-    "fuel": "Combustible",
-    "travelSeats": "Plazas para viajar",
-    "sleepSeats": "Plazas para dormir",
-    "heating": "Calefacción estacionaria"
+    "filtersTitle": "Filtros",
+    "filters": {
+      "groups": {
+        "mechanics": "Mecánica del vehículo",
+        "liveability": "Habitabilidad",
+        "autonomy": "Autonomía y equipamiento"
+      },
+      "dgt": "Etiqueta DGT",
+      "homologation": "Homologación",
+      "fuel": "Combustible",
+      "drive": "Tracción",
+      "mma": "MMA / Peso máximo",
+      "length": "Longitud exterior",
+      "height": "Altura exterior",
+      "travelSeats": "Plazas para viajar",
+      "sleepSeats": "Plazas para dormir",
+      "heating": "Calefacción estacionaria",
+      "hotWater": "Agua caliente",
+      "bathroom": "Baño / Ducha",
+      "battery": "Batería auxiliar",
+      "solar": "Placa solar",
+      "inverter": "Inversor 220V",
+      "fridge": "Nevera",
+      "verified": "Solo homologación verificada"
+    }
   },
   "productCard": {
     "featured": "Destacado",
     "boost": "Boost",
-    "verified": "Verificado"
+    "verified": "Verificado",
+    "homologacionVerificada": "Homologación verificada",
+    "homologacionPendiente": "Verificación en curso",
+    "homologacionRechazada": "Documentación rechazada",
+    "homologacionSinExpediente": "Sin expediente",
+    "reserved": "Reservado"
   },
   "product": {
     "featured": "Destacado",
@@ -416,7 +438,17 @@
     "soldBannerDesc": "Este camper ya encontró su nuevo dueño. Mira las publicaciones similares.",
     "specsTitle": "Otros detalles",
     "sellerPro": "Profesional / Camperizador",
-    "sellerPrivate": "Particular"
+    "sellerPrivate": "Particular",
+    "expedienteTitle": "Expediente del vehículo",
+    "expedienteIntroVerificada": "Hemos revisado la documentación de este vehículo: ficha técnica, ITV y, si procede, proyecto de homologación.",
+    "expedienteIntroPendiente": "El vendedor ha subido documentación del vehículo y está en revisión por nuestro equipo.",
+    "expedienteAvisoVivienda": "El anuncio declara vehículo vivienda (2448/3148) y el proyecto de homologación todavía está pendiente de verificar.",
+    "expedienteNotaComprador": "Antes de cerrar la compra, pide al vendedor que te muestre los documentos originales.",
+    "expedienteCta": "Sube la documentación y consigue el sello de homologación",
+    "itpCtaTitulo": "Calcula el ITP de esta camper",
+    "itpCtaDesc": "Cuánto pagarás de impuesto y de cambio de nombre según tu comunidad",
+    "reservarCta": "Reservar con señal",
+    "reservadoBadge": "Reservado"
   },
   "creditos": {
     "title1": "Compra créditos y",
@@ -488,6 +520,7 @@
     "titleField": "Título del anuncio",
     "titlePlaceholder": "Ej: Fiat Ducato 2016 camperizada L3H2, 145.000 km",
     "specs": "Especificaciones",
+    "specsHint": "Los campos que rellenes se usan como filtros del catálogo: plazas, calefacción, baño, autonomía (batería, placa solar, inversor), tracción, MMA, longitud y altura exterior.",
     "description": "Descripción",
     "descPlaceholder": "Describe el estado, características, accesorios incluidos...",
     "condition": "Estado",
@@ -610,7 +643,8 @@
     "verification": "Verificacion",
     "yourReputation": "Tu reputacion como vendedor",
     "reviews": "Resenas",
-    "noReviews": "Aun no tienes resenas. Los compradores podran dejarte una despues de una transaccion."
+    "noReviews": "Aun no tienes resenas. Los compradores podran dejarte una despues de una transaccion.",
+    "tabReservations": "Reservas"
   },
   "contact": {
     "title": "Contáctanos",
@@ -951,13 +985,44 @@
     "title2": "Título",
     "description": "Descripción",
     "specs": "Especificaciones",
+    "specsHint": "Los campos que rellenes se usan como filtros del catálogo: plazas, calefacción, baño, autonomía (batería, placa solar, inversor), tracción, MMA, longitud y altura exterior.",
     "state": "Estado",
     "municipality": "Municipio",
     "currentPhotos": "Fotos actuales",
     "newPhotos": "Añadir fotos nuevas",
     "contactTitle": "Métodos de contacto",
     "contactDesc": "Elige qué métodos de contacto mostrar",
-    "back": "Volver"
+    "back": "Volver",
+    "expedienteTitle": "Expediente del vehículo",
+    "expedienteIntro": "Sube la ficha técnica, la ITV y —si el anuncio declara vehículo vivienda— el proyecto de homologación. Nuestro equipo lo revisa y el anuncio recibe el sello de Homologación verificada.",
+    "expedienteCargando": "Cargando expediente…",
+    "expedienteRequerido": "Requerido",
+    "expedienteOpcional": "Opcional",
+    "expedienteSubir": "Subir",
+    "expedienteSubiendo": "Subiendo…",
+    "expedienteReemplazar": "Reemplazar",
+    "expedienteEliminar": "Eliminar documento",
+    "expedienteConfirmarBorrado": "¿Eliminar este documento del expediente?",
+    "expedienteVerDocumento": "Ver documento",
+    "expedientePrivacidad": "Los documentos son privados: solo los ves tú y el equipo de CamperOcasión, y se abren con enlaces firmados que caducan en 5 minutos.",
+    "expedienteErrorCarga": "No se pudo cargar el expediente",
+    "expedienteErrorSubida": "No se pudo subir el documento",
+    "expedienteErrorBorrado": "No se pudo eliminar el documento",
+    "expedienteFormato": "Formato no permitido: sube un PDF, JPG, PNG o WEBP",
+    "expedienteTamano": "El archivo supera el máximo de 10 MB",
+    "expedienteMotivo": "Motivo",
+    "expedienteEstadoVerificadaNota": "Si reemplazas un documento, el expediente vuelve a revisión.",
+    "expedienteEstado": {
+      "sin_verificar": "Sin expediente",
+      "pendiente": "Pendiente de verificar",
+      "verificada": "Homologación verificada",
+      "rechazada": "Documentación rechazada"
+    },
+    "expedienteDocumentoEstado": {
+      "pendiente": "En revisión",
+      "verificado": "Verificado",
+      "rechazado": "Rechazado"
+    }
   },
   "chat": {
     "title": "Mensajes",

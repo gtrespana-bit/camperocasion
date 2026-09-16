@@ -31,7 +31,7 @@ export const CATEGORIAS_SEO: Record<string, CategoriaSEO> = {
     descripcion: 'El marketplace especializado en furgonetas camperizadas y autocaravanas de ocasión en España. Gran volumen, camper medianas, minicamper, perfiladas, capuchinas, integrales y 4x4 overland. Publica gratis.',
     introduccion: [
       'CamperOcasión reúne furgonetas camper y autocaravanas de segunda mano de toda España: Fiat Ducato, Peugeot Boxer, Citroën Jumper, Renault Master, Volkswagen Crafter, Mercedes Sprinter, MAN TGE, VW California y mucho más, en un rango habitual de 20.000 € a 80.000 €.',
-      'Cada anuncio muestra la ficha técnica completa: año de matriculación, kilómetros, distintivo ambiental DGT, homologación (vehículo vivienda 2448/3148, turismo, mixto o furgón), plazas para viajar y dormir, y todo el equipamiento de autonomía (calefacción estacionaria, agua caliente, baño, batería auxiliar, placa solar e inversor).',
+      'Cada anuncio muestra la ficha técnica completa: año de matriculación, kilómetros, distintivo ambiental DGT, homologación (vehículo vivienda 2448/3148, turismo, mixto o furgón), tracción, MMA (peso máximo autorizado), longitud y altura exterior, plazas para viajar y dormir, y todo el equipamiento de autonomía (calefacción estacionaria, agua caliente, baño, batería auxiliar, placa solar e inversor).',
       'Puedes contactar con el vendedor por chat o WhatsApp, y publicar gratis tu camper de ocasión en menos de cinco minutos.',
     ],
     terminos: [
@@ -55,7 +55,7 @@ export const CATEGORIAS_SEO: Record<string, CategoriaSEO> = {
       },
       {
         pregunta: '¿Qué campos técnicos puedo indicar al publicar?',
-        respuesta: 'Año de matriculación, kilómetros, combustible, transmisión, potencia, distintivo DGT (Cero Emisiones, ECO, C, B o sin distintivo), homologación (Vehículo Vivienda 2448/3148, Turismo, Mixto 3100 o Furgón 2400), plazas para viajar y dormir, calefacción estacionaria, agua caliente, tipo de baño, depósito de agua, batería auxiliar, placa solar, inversor 220V y nevera.',
+        respuesta: 'Año de matriculación, kilómetros, combustible, transmisión, potencia, tracción, MMA (peso máximo autorizado), longitud y altura exterior, distintivo DGT (Cero Emisiones, ECO, C, B o sin distintivo), homologación (Vehículo Vivienda 2448/3148, Turismo, Mixto 3100 o Furgón 2400), plazas para viajar y dormir, calefacción estacionaria, agua caliente, tipo de baño, depósito de agua, batería auxiliar, placa solar, inversor 220V y nevera.',
       },
     ],
   },

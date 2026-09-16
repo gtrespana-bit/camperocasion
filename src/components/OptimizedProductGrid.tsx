@@ -18,6 +18,8 @@ interface Producto {
   destacado: boolean;
   destacado_hasta: string | null;
   vendedor_verificado: boolean | null;
+  verificacion_homologacion?: string | null
+  reservado?: boolean | null;
 }
 
 interface OptimizedProductGridProps {

@@ -10,6 +10,7 @@ import { Camera, X, ArrowLeft, Save, AlertCircle, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { compressImages } from '@/lib/compress-image'
+import ExpedienteVehiculo from '@/components/ExpedienteVehiculo'
 
 const estadosProducto = ['Nuevo', 'Como nuevo', 'Bueno', 'Usado']
 
@@ -323,10 +324,15 @@ export default function EditarPage() {
 
         {marca && <div><label className="block text-sm font-semibold text-gray-900 mb-1.5">Marca</label><input type="text" value={marca} onChange={e => setMarca(e.target.value)} className="w-full border rounded-lg px-4 py-3" /></div>}
 
+        {/* Expediente del vehículo: sube la documentación y consigue el sello
+            de "Homologación verificada" en el anuncio (Fase 0.2). */}
+        <ExpedienteVehiculo productoId={productoId} especificaciones={specs} />
+
         {/* Campos especiales */}
         {camposEspeciales.length > 0 && (
           <div className="bg-gray-50 rounded-xl p-5 space-y-4">
             <h3 className="font-bold text-gray-900">{t('specs')}</h3>
+            <p className="text-xs text-gray-500">{t('specsHint')}</p>
             {camposEspeciales.map((campo: any) => (
               <div key={campo.label}>
                 <label className="block text-sm font-semibold text-gray-900 mb-1.5">{campo.label}</label>

@@ -27,14 +27,55 @@ del producto:
 
 - **Mecánica**: año de matriculación, kilómetros, combustible (Diésel /
   Gasolina / Híbrido / Eléctrico), transmisión (Manual / Automática),
-  potencia (CV), tamaño de chasis, tracción, **distintivo ambiental DGT**
-  (Cero Emisiones / ECO / C / B / Sin) y **homologación**
-  (Vehículo Vivienda 2448/3148, Turismo 1000, Mixto Adaptable 3100, Furgón 2400).
+  potencia (CV), tamaño de chasis, tracción (4x2 / 4x4), **MMA** (tramos de
+  peso máximo autorizado, con la frontera de los 3.500 kg del carnet B),
+  **longitud** y **altura exterior** (tramos para garaje y ferry),
+  **distintivo ambiental DGT** (Cero Emisiones / ECO / C / B / Sin) y
+  **homologación** (Vehículo Vivienda 2448/3148, Turismo 1000, Mixto
+  Adaptable 3100, Furgón 2400).
 - **Habitabilidad**: plazas homologadas para viajar y plazas para dormir.
 - **Equipamiento Camper y Autonomía**: calefacción estacionaria (Diésel /
   Gas / No), agua caliente, tipo de baño, depósito de agua limpia (L),
   batería auxiliar (Litio / AGM / Gel / No), placa solar (Sí/W), inversor
   220V (Sí/W) y tipo de nevera.
+
+Todos estos campos se capturan en `/publicar`, se muestran en la ficha del
+producto y **son filtros del catálogo**. La lista de filtros, sus opciones y su
+traducción a la consulta viven en un único registro:
+`src/lib/filtros-tecnicos.ts` (ver
+[`docs/plan-confianza-marketplace.md`](./docs/plan-confianza-marketplace.md) §2.1).
+
+## Confianza: homologación verificada
+
+Además de los filtros, el anuncio puede acreditar su documentación:
+
+- El vendedor sube **ficha técnica**, **última ITV** y —si el anuncio declara
+  "Vehículo Vivienda (2448/3148)"— el **proyecto de homologación**, desde
+  `/producto/editar/[id]` (expediente del vehículo).
+- Los documentos van a un **bucket privado** (`documentos-vehiculo`) y se abren
+  siempre con URL firmada de 5 minutos.
+- El equipo los revisa en `/admin` → pestaña **Homologación** y entonces el
+  anuncio muestra el sello *Homologación verificada* y aparece en el filtro
+  "Solo homologación verificada" del catálogo.
+- Si el vendedor reemplaza un documento, el expediente vuelve a revisión: el
+  sello acredita unos documentos concretos, no el anuncio para siempre.
+
+Detalle y decisiones en
+[`docs/plan-confianza-marketplace.md`](./docs/plan-confianza-marketplace.md) §2.2.
+
+## Herramientas para el comprador
+
+- **Calculadora de ITP** (`/calcular-itp`): impuesto de la compraventa entre
+  particulares según la comunidad del comprador, con el desglose del cálculo
+  (depreciación por antigüedad, base imponible, cuota fija de vehículo antiguo,
+  tipo incrementado por potencia fiscal o cilindrada) y el coste total con la
+  tasa de la DGT. Incluye landings por comunidad (`/calcular-itp/{ccaa}`).
+- **Checklist de compra segura** (`/compra-segura-camper`): qué documentación y
+  qué reformas revisar antes de firmar, con el foco en campers (homologación
+  declarada, plazas, MMA y carnet, instalación de gas, carga útil).
+
+Los tipos por comunidad viven en `src/lib/itp.ts` (registro con fuente oficial y
+fecha de revisión): es el único sitio a actualizar cada año.
 
 ## Precios
 

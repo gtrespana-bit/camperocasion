@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   LayoutDashboard, Package, ShieldAlert, Users, ShieldCheck, CreditCard, History,
-  Tag, Megaphone, Download, Settings2, LogIn, LogOut, ArrowLeft, Menu, X, Sparkles,
+  Tag, Megaphone, Download, Settings2, LogIn, LogOut, ArrowLeft, Menu, X, Sparkles, FileCheck2, Handshake,
 } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { useAuth } from '@/components/AuthProvider'
@@ -20,6 +20,8 @@ import AdminComunicacion from './components/AdminComunicacion'
 import AdminExportar from './components/AdminExportar'
 import AdminAjustes from './components/AdminAjustes'
 import VerificacionTab from './VerificacionTab'
+import AdminHomologacion from './AdminHomologacion'
+import AdminReservas from './AdminReservas'
 import { Badge } from './components/AdminUi'
 import { apiJson, type Perfil } from './components/admin-utils'
 
@@ -29,6 +31,8 @@ const NAV = [
   { id: 'moderacion', label: 'Moderación', icon: ShieldAlert, description: 'Reportes y pendientes' },
   { id: 'usuarios', label: 'Usuarios', icon: Users, description: 'Perfiles y créditos' },
   { id: 'verificacion', label: 'Verificación', icon: ShieldCheck, description: 'Vendedores' },
+  { id: 'homologacion', label: 'Homologación', icon: FileCheck2, description: 'Expediente del vehículo' },
+  { id: 'reservas', label: 'Reservas', icon: Handshake, description: 'Señales y comprobantes' },
   { id: 'transacciones', label: 'Transacciones', icon: CreditCard, description: 'Pagos y créditos' },
   { id: 'auditoria', label: 'Auditoría', icon: History, description: 'Historial de cambios' },
   { id: 'categorias', label: 'Categorías', icon: Tag, description: 'Organización' },
@@ -45,7 +49,7 @@ export default function AdminPage() {
   const [toast, setToast] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [perfiles, setPerfiles] = useState<Record<string, Perfil>>({})
-  const [counts, setCounts] = useState({ transacciones: 0, publicaciones: 0, moderacion: 0, verificacion: 0 })
+  const [counts, setCounts] = useState({ transacciones: 0, publicaciones: 0, moderacion: 0, verificacion: 0, homologacion: 0 })
 
   const isAdmin = ADMIN_EMAILS.includes((user?.email || '').toLowerCase())
   const activeNav = NAV.find((n) => n.id === tab) || NAV[0]
@@ -88,6 +92,7 @@ export default function AdminPage() {
         publicaciones: c.publicaciones || 0,
         moderacion: (c.publicaciones || 0) + (c.denuncias || 0),
         verificacion: c.verificacion || 0,
+        homologacion: c.homologacion || 0,
       })
     } catch {
       // Sin contadores la navegación sigue disponible.
@@ -131,6 +136,7 @@ export default function AdminPage() {
     if (tabKey === 'publicaciones') return counts.publicaciones
     if (tabKey === 'moderacion') return counts.moderacion
     if (tabKey === 'verificacion') return counts.verificacion
+    if (tabKey === 'homologacion') return counts.homologacion
     return 0
   }
 
@@ -272,6 +278,8 @@ export default function AdminPage() {
             {tab === 'moderacion' && <AdminModeracion notify={notify} adminEmail={user.email || ''} />}
             {tab === 'usuarios' && <AdminUsuarios notify={notify} />}
             {tab === 'verificacion' && <VerificacionTab notify={notify} />}
+            {tab === 'homologacion' && <AdminHomologacion notify={notify} />}
+            {tab === 'reservas' && <AdminReservas notify={notify} />}
             {tab === 'transacciones' && <AdminTransacciones notify={notify} perfiles={perfiles} onPerfilesChange={setPerfiles} />}
             {tab === 'auditoria' && <AdminAuditoria notify={notify} />}
             {tab === 'categorias' && <AdminCategorias notify={notify} />}

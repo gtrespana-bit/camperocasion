@@ -7,12 +7,12 @@
 
 | Pilar | Estado | Qué ya existe en el repo |
 |---|---|---|
-| 1. Validador de homologaciones | 🟡 Medio | Campo `Homologación` (2448/3148 Vehículo Vivienda, Turismo 1000, Mixto 3100, Furgón 2400) en `especificaciones` JSONB (`src/lib/categorias.ts`). **Falta**: subir ficha técnica, revisión, badge. |
+| 1. Validador de homologaciones | 🟢 Alto (2026-09) | Expediente documental del vehículo: bucket privado `documentos-vehiculo`, tabla `documentos_vehiculo`, columna `productos.verificacion_homologacion`, revisión manual en `/admin` y sello en card/ficha. **Falta** (fases siguientes): OCR/validación automática y consulta a la DGT. Ver §2.2. |
 | 2. Inspección a domicilio | 🔴 Nada | Solo chat, reportes y reseñas post-venta. |
 | 3. Venta + alquiler P2P | 🔴 Nada | — |
-| 4. Filtros de arquitectura furgonetera | 🟢 Casi hecho | El paso 2 de `/publicar` ya captura TODO: plazas viaje/dormir, calefacción, baño/ducha, depósito litros, batería aux, placa solar W, inversor W, nevera, distintivo DGT, chasis L2H2…, con índice GIN en JSONB. **Falta**: exponerlos como filtros en el catálogo (`CatalogFilters.tsx` solo filtra subcategoría/marca/precio/ubicación). |
+| 4. Filtros de arquitectura furgonetera | ✅ Hecho (2026-09) | 16 filtros técnicos en el catálogo, agrupados en mecánica/habitabilidad/autonomía, y captura de tracción, MMA, longitud y altura exterior en `/publicar`. Registro único en `src/lib/filtros-tecnicos.ts`. Ver §2.1. |
 | 5. Escrow + financiación | 🔴 Nada | Solo créditos para destacar con pago manual (Bizum/transferencia/PayPal + comprobante). |
-| 6. Gestoría digital | 🔴 Nada | Ni calculadora ITP ni contrato de compraventa. |
+| 6. Gestoría digital | 🟡 Medio (2026-09) | Calculadora de ITP con los 19 territorios, 19 landings por comunidad y checklist de compra segura (`/calcular-itp`, `/compra-segura-camper`). **Falta**: contrato de compraventa descargable y gestoría del cambio de nombre. |
 
 **Ya tenemos además** (activos sobre los que construir): vendedor verificado con
 badge (`BadgeVerificado.tsx` + `solicitudes_verificacion`), moderación, reseñas,
@@ -47,50 +47,141 @@ generen confianza. El orden correcto **minimiza riesgo y maximiza aprendizaje**:
 
 ## 2. Fase 0 — Quick wins (solo código, sin partners, sin riesgo legal)
 
-### 2.1 Filtros técnicos en el catálogo ⭐ mayor impacto/esfuerzo
+### 2.1 Filtros técnicos en el catálogo ✅ (hecho)
 
-Los datos **ya se capturan** y ya hay índice GIN
-(`productos_especificaciones_idx`). Solo hay que exponerlos:
+**Implementado en septiembre de 2026.** Estado final:
 
-- `CatalogFilters.tsx`: añadir grupos "Habitabilidad" (plazas dormir, baño,
-  calefacción) y "Autonomía" (solar, batería litio, inversor).
-- Query: `especificaciones @> '{"Plazas para dormir":"4"}'` (PostgREST:
-  `especificaciones=cs.{"Plazas para dormir":"4"}`) — el índice GIN lo soporta.
-- Añadir a `/publicar` y a filtros: **MMA/peso máximo autorizado, longitud y
-  altura exterior** (críticos para garajes, ferries y túneles de viento) y
-  **kilometraje** ya existe.
+- Nuevo registro único `src/lib/filtros-tecnicos.ts`: qué parámetro de la URL
+  (`?plazasDormir=4`) corresponde a qué clave del JSONB `especificaciones`, en
+  qué grupo se muestra y con qué opciones. Las opciones salen de las mismas
+  listas que usa el formulario de publicación (`categorias.ts`), así que captura
+  y filtro no pueden divergir; hay un test que lo comprueba subcategoría a
+  subcategoría.
+- 16 filtros en tres bloques: **mecánica** (DGT, homologación, combustible,
+  tracción, MMA, longitud, altura), **habitabilidad** (plazas para viajar,
+  plazas para dormir, calefacción, agua caliente, baño/ducha) y **autonomía**
+  (batería auxiliar, placa solar, inversor 220V, nevera).
+- Consulta: una sola condición de contención
+  `especificaciones @> '{"Plazas para dormir":"4", ...}'` (supabase-js
+  `.contains()`), que es el operador cubierto por el índice GIN
+  `productos_especificaciones_idx`. Antes se filtraba con
+  `especificaciones->>'Campo' = 'valor'`, que **no usa ese índice** y añadía una
+  condición por campo.
+- Campos nuevos capturados en `/publicar` y `/producto/editar`: **tracción,
+  MMA (tramos con la frontera de los 3.500 kg del carnet B), longitud exterior
+  y altura exterior** (tramos pensados para garaje, ferry y túneles). Se suman
+  al bloque "Mecánica del Vehículo" de la ficha del producto.
+- Los tres sitios que consultan el catálogo (SSR inicial, `useProductLoader` y
+  `usePrefetch`) comparten ahora columnas, filtro de moderación y orden
+  (`src/lib/catalog-consulta.ts`). Antes el prefetch excluía los productos
+  `pendiente` y no traía `slug`, así que la caché podía servir una página
+  distinta a la que pedía el loader (misma clave de caché).
 
-⚠️ Deuda técnica a saldar aquí: las claves del JSONB son labels con espacios y
-acentos ("Plazas para dormir"). Funciona, pero es frágil. Normalizar a slugs
-(`plazas_dormir`) con una migración de backfill + compatibilidad de lectura.
+**Pendiente de esta fase (siguiente iteración):**
 
-### 2.2 Badge "Homologación Verificada" (versión manual)
+- Filtros por rango numérico (`kilómetros máximos`, `año mínimo`, watios de
+  placa/inversor). Requieren comparar números, no texto: o se capturan como
+  tramos (como MMA/longitud/altura) o se añaden columnas generadas.
+- Normalización de las claves del JSONB a slugs (`plazas_dormir`). **Se aplaza
+  a propósito**: hoy las claves son los labels del formulario (con espacios y
+  acentos) pero todas viven en un único registro, y con `@>` el índice GIN sí se
+  usa. Normalizar exige migración de backfill + lectura compatible en ficha,
+  formularios y filtros; hacerlo junto con la verificación de homologación
+  (que también toca `especificaciones`) sale más barato.
 
-Sin OCR, sin IA — el volumen inicial no lo justifica:
+**Cómo añadir un filtro nuevo:** (1) opciones y campo en `categorias.ts`;
+(2) entrada en `FILTROS_TECNICOS` (`src/lib/filtros-tecnicos.ts`) con param,
+campo, grupo y clave i18n; (3) clave en `catalog.filters.*` de
+`src/i18n/dictionaries/{es,en}.json`. La barra lateral, los hooks y la
+traducción a `@>` salen del registro, no hay que tocarlos.
 
-1. Nuevo bucket privado `documentos-vehiculo` (RLS: owner inserta, admin lee).
-2. En `/publicar` y `/producto/editar`: uploader opcional de **ficha técnica
-   (anexo I)**, proyecto de homologación y última ITV.
-3. Columna en `productos`: `verificacion_homologacion` (`sin_verificar` /
-   `pendiente` / `verificada` / `rechazada`).
-4. El admin revisa en el panel existente (`/admin`) y aprueba → aparece el
-   badge en `ProductCard` y ficha (mismo patrón que `BadgeVerificado`).
-5. Filtro "Solo homologación verificada" en catálogo.
+### 2.2 Badge "Homologación Verificada" (versión manual) ✅ (hecho)
+
+**Implementado en septiembre de 2026.** Sin OCR, sin IA — el volumen inicial no
+lo justifica. Estado final:
+
+1. **Bucket privado `documentos-vehiculo`** (10 MB, PDF/JPG/PNG/WEBP) con RLS:
+   el propietario sube y lee su carpeta (`<user_id>/<producto_id>/archivo`), el
+   admin lee todo y el público **solo** ve los documentos ya verificados. El
+   propietario no puede marcarse nada como verificado: no tiene `UPDATE` sobre
+   la tabla (igual que en `solicitudes_verificacion`).
+2. **Tabla `documentos_vehiculo`**: un documento por tipo y anuncio (índice
+   único), con estado por documento (`pendiente` / `verificado` / `rechazado`),
+   quién lo revisó y cuándo. Se comprueba además que el anuncio sea del usuario
+   (`fn_es_dueno_del_anuncio`) antes de dejarle insertar.
+3. **Columna en `productos`**: `verificacion_homologacion` (`sin_verificar` /
+   `pendiente` / `verificada` / `rechazada`) + motivo del rechazo y fecha de
+   revisión. Índice parcial sobre los expedientes en curso.
+4. **Expediente del vehículo** (`src/components/ExpedienteVehiculo.tsx`, en
+   `/producto/editar/[id]`): checklist con lo que se exige según lo declarado —
+   la ficha técnica y la ITV siempre; el **proyecto de homologación solo si el
+   anuncio declara "Vehículo Vivienda (2448/3148)"**. Subir o reemplazar un
+   documento devuelve el expediente a revisión (el sello acredita unos
+   documentos concretos, no el anuncio para siempre). Tras publicar, la ficha
+   del producto invita al vendedor a subirlo desde el banner de éxito.
+5. **Revisión en el panel** (`/admin` → pestaña *Homologación*, FIFO por
+   antigüedad del primer documento): el admin abre cada documento con URL firmada
+   de 5 minutos, ve qué falta y verifica o rechaza con motivo. El cambio queda en
+   `auditoria` por el trigger existente sobre `productos`.
+6. **Sello en card y ficha**: `BadgeHomologacion` solo se pinta cuando hay algo
+   que contar (verificado o en revisión); un anuncio sin expediente no se marca
+   como si fuera dudoso. En la ficha, el comprador ve el checklist de lo
+   verificado y el aviso cuando se declara vivienda sin proyecto homologado.
+7. **Filtro "Solo homologación verificada"** en el catálogo: es el único filtro
+   que no vive en `especificaciones` (es una columna), así que la consulta
+   compartida lo aplica aparte (`aplicarFiltrosCatalogo`).
 
 Esto ya nos diferencia de Wallapop/Coches.net desde el día 1: **nadie más
-filtra por "camper legal para 4 plazas de dormir"**.
+filtra por "camper legal para 4 plazas de dormir" y enseña qué documentación ha
+revisado**.
 
-### 2.3 Calculadora ITP + checklist de documentación (SEO + utilidad)
+**Garantías verificadas contra un Postgres real** (634 statements del setup +
+comprobaciones de RLS): anon solo ve documentos verificados, un usuario no puede
+subir documentos al anuncio de otro ni auto-verificarse, el admin sí puede
+revisar, y el `user_id` de un documento no se puede cambiar.
 
-- Página `/calcular-itp`: precio + CCAA + antigüedad → tipo aplicable y
-  estimación. Tabla de tipos configurable por CCAA (se actualiza cada año;
-  típicamente entre ~4% y ~10% con reducciones por antigüedad — mantener en
-  config, no hardcodear).
-- Checklist de compra segura (permiso de circulación, ficha técnica, ITV en
-  vigor, certificados de reformas, contrato) como contenido estático con
-  landings por CCAA — encaja con la estrategia de landings provinciales ya
-  existente y captura búsquedas como "impuesto comprar camper segunda mano
-  andalucía".
+### 2.3 Calculadora ITP + checklist de documentación (SEO + utilidad) ✅ (hecho)
+
+**Implementado en septiembre de 2026.** Estado final:
+
+1. **Registro de tipos por comunidad** (`src/lib/itp.ts`): 19 entradas (17 CCAA +
+   Ceuta y Melilla) con tipo general, tipo incrementado (por potencia fiscal o
+   por cilindrada), cuota fija para vehículos antiguos, exención por antigüedad,
+   tipos de cero emisiones/ECO, plazo, modelo de autoliquidación, notas y
+   **enlace a la sede tributaria oficial** de cada comunidad. `REVISADO_EN` deja
+   constancia de la fecha de revisión: es lo único que hay que tocar cada año.
+2. **Cálculo** (`calcularITP`): base imponible = **el mayor** entre el precio
+   pactado y el valor de tablas de Hacienda depreciado con los coeficientes del
+   anexo IV (100 % el primer año → 10 % a partir de los 12). Orden de decisión:
+   exención por antigüedad → cuota fija → tipo. Devuelve las **reglas aplicadas**
+   y los **avisos** (sin CV fiscales no se sabe si aplica el 8 %, con más de
+   2.000 cc en la Comunitat Valenciana sí, el matiz de que las cuotas fijas
+   están redactadas para "turismos y todoterrenos"…), no solo la cifra.
+3. **Página `/calcular-itp`**: precio, comunidad, año de matriculación, CV
+   fiscales, cilindrada, etiqueta DGT y —opcional— el precio de tablas del
+   vehículo nuevo. Muestra el desglose, el coste total con la tasa de la DGT
+   (55,70 €), el cálculo paso a paso y una **comparativa con las 19
+   comunidades** (de los 3 % de Galicia a los 6 % de Cantabria, Castilla-La
+   Mancha, Comunitat Valenciana y Extremadura).
+4. **Landings por comunidad** (`/calcular-itp/{ccaa}`): 19 páginas con datos,
+   notas, plazo, modelo, fuente oficial, calculadora preseleccionada, FAQ
+   propia y enlazado interno entre comunidades. Objetivo de posicionamiento:
+   "impuesto comprar camper segunda mano {comunidad}". Se enlazan desde el
+   footer y desde el `sitemap.ts` (prioridad 0.8).
+5. **Checklist de compra segura** (`/compra-segura-camper`): 10 comprobaciones
+   generales + 5 específicas de camper (homologación declarada, plazas, MMA y
+   carnet, instalación de gas, carga útil), con `HowTo` estructurado y los pasos
+   de la operación (contrato → ITP → tasa DGT → cambio de nombre).
+6. **Integración con el marketplace**: la ficha de cada anuncio enlaza a la
+   calculadora con **el precio ya puesto** (`/calcular-itp?precio=`), y las
+   páginas de ITP empujan al catálogo filtrado por **homologación verificada**
+   (`/catalogo?verificada=1`), que es la Fase 0.2. Así la utilidad fiscal lleva
+   tráfico hacia los anuncios que ya tienen el expediente revisado.
+
+**Mantenimiento:** los tipos cambian por ley autonómica (Cantabria bajó del 8 %
+al 6 % en 2024 y todavía hay webs con el dato viejo). Actualizar `TIPOS_ITP`,
+`REVISADO_EN` y `EJERCICIO_FISCAL` una vez al año; `tests/unit/itp.test.ts`
+(28 pruebas) comprueba la forma del registro y el cálculo.
 
 **Monetización desde la Fase 0:** el paquete "Destacado Premium" existente
 (sistema de créditos) pasa a incluir la verificación de homologación → el
@@ -246,9 +337,17 @@ riesgo operativo.
 
 **Fase 0 en tres PRs independientes:**
 
-1. `feat/filtros-tecnicos` — filtros de habitabilidad/autonomía en catálogo +
-   normalización de claves de `especificaciones`.
-2. `feat/verificacion-homologacion` — bucket `documentos-vehiculo`, columna
-   `verificacion_homologacion`, uploader, revisión admin, badge en card/ficha.
-3. `feat/calculadora-itp` — página + landings CCAA + checklist de compra
-   segura.
+1. ✅ `feat/filtros-tecnicos` — **hecho**: 16 filtros agrupados en catálogo,
+   captura de tracción/MMA/longitud/altura, registro único y contención JSONB
+   con índice GIN (ver §2.1). Queda para la siguiente iteración lo listado como
+   pendiente en ese apartado (rangos numéricos y normalización de claves).
+2. ✅ `feat/verificacion-homologacion` — **hecho**: bucket
+   `documentos-vehiculo`, columna `verificacion_homologacion`, expediente del
+   vendedor, revisión admin (pestaña *Homologación*), sello en card/ficha y
+   filtro "solo verificados" (ver §2.2).
+3. ✅ `feat/calculadora-itp` — **hecho**: calculadora (`/calcular-itp`), 19
+   landings por comunidad autónoma y checklist de compra segura
+   (`/compra-segura-camper`), sin SQL (ver §2.3).
+
+**Fase 0 completa.** Siguiente bloque del plan: Fase 1 (§3) — expediente
+documental (ya cubierto por 0.2) y señal de reserva online.

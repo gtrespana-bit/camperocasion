@@ -58,3 +58,7 @@ convert-to-webp.ps1
 .env.local
 .env
 *.local
+
+# python (scripts de validación SQL)
+__pycache__/
+*.pyc

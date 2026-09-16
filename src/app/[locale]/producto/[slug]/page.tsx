@@ -80,6 +80,77 @@ function queryProducto(column: 'id' | 'slug', value: string, columns: string) {
     .maybeSingle()
 }
 
+/**
+ * Estado del expediente de homologación del anuncio (Fase 0.2).
+ *
+ * Va en consultas SEPARADAS y tolerantes a fallo a propósito: si la migración
+ * todavía no está aplicada en esta base de datos, PostgREST responde 42703 por
+ * columna/tabla inexistente y rechazaría el SELECT entero. La ficha del
+ * producto no puede caerse por un sello informativo.
+ */
+async function getVerificacionHomologacion(productoId: string) {
+  if (!supabase || !productoId) return null
+  try {
+    const { data: producto, error } = await supabase
+      .from('productos')
+      .select('verificacion_homologacion, verificacion_homologacion_motivo')
+      .eq('id', productoId)
+      .maybeSingle()
+    if (error || !producto) return null
+
+    const { data: documentos } = await supabase
+      .from('documentos_vehiculo')
+      .select('tipo, estado')
+      .eq('producto_id', productoId)
+      .eq('estado', 'verificado')
+
+    return {
+      estado: (producto as any).verificacion_homologacion || 'sin_verificar',
+      motivo: (producto as any).verificacion_homologacion_motivo || null,
+      documentos: documentos || [],
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Estado de reserva del anuncio (Fase 1.2) — consulta aparte y tolerante a
+ * fallo: si la migración no está aplicada, la ficha sigue funcionando sin CTA
+ * de reserva.
+ */
+async function getEstadoReserva(productoId: string, userId?: string | null) {
+  if (!supabase || !productoId) return null
+  try {
+    const { data: producto, error } = await supabase
+      .from('productos')
+      .select('reservado, reservado_hasta')
+      .eq('id', productoId)
+      .maybeSingle()
+    if (error || !producto) return null
+
+    let propia: string | null = null
+    if (userId) {
+      const { data: reserva } = await supabase
+        .from('reservas')
+        .select('estado')
+        .eq('producto_id', productoId)
+        .eq('comprador_id', userId)
+        .in('estado', ['pendiente_pago', 'en_revision', 'activa'])
+        .maybeSingle()
+      propia = reserva?.estado || null
+    }
+
+    return {
+      reservado: !!(producto as any).reservado,
+      reservado_hasta: (producto as any).reservado_hasta || null,
+      reserva_propia_estado: propia,
+    }
+  } catch {
+    return null
+  }
+}
+
 async function getProduct(slugOrId: string) {
   // Validate param format first to avoid unnecessary DB queries
   if (!slugOrId || typeof slugOrId !== 'string' || slugOrId.length < 3) {
@@ -321,10 +392,12 @@ export default async function ProductoPage({ params }: Props) {
     notFound()
   }
 
-  const [relacionados, favoritosCount, resumenResenas] = await Promise.all([
+  const [relacionados, favoritosCount, resumenResenas, verificacion, reserva] = await Promise.all([
     getRelacionados(producto),
     getFavoritosCount(producto.id),
     getResumenResenas(producto.id),
+    getVerificacionHomologacion(producto.id),
+    getEstadoReserva(producto.id),
   ])
 
   // JSON-LD Product Schema
@@ -404,7 +477,12 @@ export default async function ProductoPage({ params }: Props) {
       />
       <Breadcrumbs items={breadcrumbItems} />
       <Suspense fallback={<div className="max-w-7xl mx-auto px-4 py-20 text-center">{t('loading')}</div>}>
-        <ProductoPageClient initialProduct={producto} favoritosCount={favoritosCount} />
+        <ProductoPageClient
+          initialProduct={producto}
+          favoritosCount={favoritosCount}
+          verificacion={verificacion}
+          reserva={reserva}
+        />
       </Suspense>
 
       {relacionados.length > 0 && (

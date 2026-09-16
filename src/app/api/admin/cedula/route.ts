@@ -1,35 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAdmin } from '@/lib/require-auth'
-
-const UUID_FOLDER = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+import { rutaStorageValida } from '@/lib/storage-paths'
 
 /**
  * Las solicitudes almacenan la ruta del objeto (no una URL pública). Aunque
  * este endpoint solo es administrativo, validamos la ruta para que la firma
- * nunca pueda apuntar a una clave anómala.
+ * nunca pueda apuntar a una clave anómala: `<user_id>/<archivo>`.
  */
-function getSafeCedulaPath(value: string | null): string | null {
-  if (!value || value.length > 1_024 || value.includes('\0')) return null
-
-  let decoded: string
-  try {
-    decoded = decodeURIComponent(value)
-  } catch {
-    return null
-  }
-
-  const parts = decoded.split('/')
-  if (
-    parts.length < 2
-    || !UUID_FOLDER.test(parts[0])
-    || parts.some(part => !part || part === '.' || part === '..')
-  ) {
-    return null
-  }
-
-  return parts.join('/')
-}
+const getSafeCedulaPath = (value: string | null) => rutaStorageValida(value, { minPartes: 2 })
 
 /**
  * GET /api/admin/cedula?path=<uuid>/<archivo>

@@ -28,3 +28,22 @@ relanzado como vertical camper español:
    filtros técnicos, ficha con bloques "Mecánica del Vehículo" y
    "Equipamiento Camper y Autonomía", perfil de vendedor
    Particular/Profesional-Camperizador.
+6. **Filtros técnicos (2026-09):** 16 filtros agrupados en mecánica,
+   habitabilidad y autonomía, sobre el JSONB `productos.especificaciones`
+   (contención `@>` con índice GIN). Registro único en
+   `src/lib/filtros-tecnicos.ts`: captura en `/publicar`, filtros del catálogo,
+   opciones y traducción a la consulta salen del mismo sitio.
+7. **Homologación verificada (2026-09):** expediente documental del vehículo
+   (bucket privado `documentos-vehiculo` + tabla `documentos_vehiculo` +
+   `productos.verificacion_homologacion`). El vendedor sube ficha técnica, ITV y
+   —si declara "Vehículo Vivienda (2448/3148)"— proyecto de homologación; el
+   admin lo revisa en `/admin` → *Homologación* y el anuncio recibe el sello
+   (`src/components/BadgeHomologacion.tsx`) más el filtro "solo homologación
+   verificada" del catálogo. Cualquier cambio en el expediente devuelve el
+   anuncio a revisión.
+8. **Calculadora de ITP y compra segura (2026-09):** `/calcular-itp` con el tipo
+   por comunidad autónoma (registro de 19 territorios en `src/lib/itp.ts`,
+   coeficientes de depreciación del anexo IV, cuotas fijas para vehículos
+   antiguos y tipos incrementados), 19 landings por CCAA, checklist de compra
+   segura de camper (`/compra-segura-camper`) y enlace desde cada anuncio con el
+   precio precargado.
