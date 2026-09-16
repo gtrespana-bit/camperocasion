@@ -89,7 +89,7 @@ los formatea siempre con `formatPrecio()` de `src/lib/precio.ts`.
 
 - 17 Comunidades Autónomas + Ceuta y Melilla (`src/lib/ubicaciones.ts`).
 - Una landing SEO por cada provincia (`/[provincia]`, p. ej.
-  `https://camperocasion.es/madrid`) con keywords como
+  `https://camperocasion.online/madrid`) con keywords como
   *"furgonetas camper segunda mano madrid"*,
   *"camper gran volumen valencia"*, *"autocaravanas ocasión barcelona"*.
 - Landings programáticas provincia + subcategoría
@@ -183,6 +183,9 @@ La build es *zero-config*: Vercel detecta Next.js por `package.json` y usa
 4. **Crons**: las 4 rutas de `vercel.json` exigen `CRON_SECRET`; sin ella
    responden 401. En el plan Hobby Vercel limita las ejecuciones de cron al día.
 
-`camperocasion.es` (y el alterna `vendet.online`, que redirige 301 vía
-`next.config.js`) se añade en *Project → Settings → Domains* con el registro
-`A 76.76.21.21` o el `CNAME cname.vercel-dns.com`.
+`camperocasion.online` y `www.camperocasion.online` se añaden en
+*Project → Settings → Domains* con el registro `CNAME cname.vercel-dns.com`
+(apex incluido: Vercel hace *CNAME flattening*; si el proveedor no lo permite,
+`A 76.76.21.21`). Los dominios alternativos `vendet.online` y el anterior
+`camperocasion.es` (apex + www) redirigen 301 al canónico vía
+`next.config.js`, por si quedaran apuntando a Vercel.

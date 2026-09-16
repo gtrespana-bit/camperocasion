@@ -5,7 +5,9 @@
 ## General
 - **Repo:** `gtrespana-bit/camperocasion` (GitHub)
 - **Producto:** Marketplace vertical de furgonetas camper y autocaravanas de ocasión en España
-- **Dominio canónico:** `https://camperocasion.es`
+- **Dominio canónico:** `https://camperocasion.online` (cambiado el 2026-09-16
+  desde `camperocasion.es`, que no llegó a servir; 301 de `.es` y `vendet.online`
+  en `next.config.js`)
 - **Idiomas:** `es` (canónico, indexado) y `en` (disponible, noindex)
 - **Moneda:** Euro (€) — formato `X.XXX €`
 

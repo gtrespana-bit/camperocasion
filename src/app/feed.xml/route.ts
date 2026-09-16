@@ -8,7 +8,7 @@
 import fs from 'fs'
 import path from 'path'
 
-const BASE_URL = 'https://camperocasion.es'
+const BASE_URL = 'https://camperocasion.online'
 
 export const revalidate = 3600
 export const dynamic = 'force-static'

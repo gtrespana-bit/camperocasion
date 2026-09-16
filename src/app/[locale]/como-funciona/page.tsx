@@ -18,7 +18,7 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
     '@type': 'HowTo',
     name: t('heroTitle'),
     description: t('heroSubtitle'),
-    url: 'https://camperocasion.es/como-funciona',
+    url: 'https://camperocasion.online/como-funciona',
     step: [
       { '@type': 'HowToStep', name: t('step1Title'), text: t('step1Desc') },
       { '@type': 'HowToStep', name: t('step2Title'), text: t('step2Desc') },

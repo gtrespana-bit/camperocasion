@@ -92,14 +92,14 @@
                   El marketplace camper de España 🚐🇪🇸
                 </p>
                 <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                  ¿Necesitas ayuda? Escríbenos a <a href="mailto:soporte@camperocasion.es" style="color: #16A34A; text-decoration: none;">soporte@camperocasion.es</a>
+                  ¿Necesitas ayuda? Escríbenos a <a href="mailto:soporte@camperocasion.online" style="color: #16A34A; text-decoration: none;">soporte@camperocasion.online</a>
                 </p>
               </div>
             </td>
           </tr>
         </table>
         <p style="margin-top: 20px; font-size: 12px; color: #9ca3af; text-align: center;">
-          © 2026 CamperOcasión — camperocasion.es
+          © 2026 CamperOcasión — camperocasion.online
         </p>
       </td>
     </tr>
@@ -133,7 +133,7 @@ Consejos:
 
 El enlace expirará en 1 hora.
 
-¿Necesitas ayuda? Escríbenos a: soporte@camperocasion.es
+¿Necesitas ayuda? Escríbenos a: soporte@camperocasion.online
 
 ---
 CamperOcasión

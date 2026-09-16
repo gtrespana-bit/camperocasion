@@ -18,8 +18,8 @@ export default async function EliminarCuentaPage({ params }: { params: Promise<{
         <section>
           <h2 className="text-2xl font-bold text-gray-800 mb-3">{t('howTitle')}</h2>
           <p className="text-gray-600 mb-4">
-            <a href="mailto:privacidad@camperocasion.es?subject=Solicitud%20de%20eliminaci%C3%B3n%20de%20cuenta%20%E2%80%94%20CamperOcasión" className="text-blue-600 underline font-medium">
-              privacidad@camperocasion.es
+            <a href="mailto:privacidad@camperocasion.online?subject=Solicitud%20de%20eliminaci%C3%B3n%20de%20cuenta%20%E2%80%94%20CamperOcasión" className="text-blue-600 underline font-medium">
+              privacidad@camperocasion.online
             </a> — {t('howP1')}
           </p>
           <p className="text-gray-600 mb-3">{t('howBody')}</p>
@@ -46,7 +46,7 @@ export default async function EliminarCuentaPage({ params }: { params: Promise<{
         <section className="bg-blue-50 rounded-2xl p-6 border border-blue-100">
           <h3 className="font-bold text-gray-800 mb-2">{t('contactTitle')}</h3>
           <p className="text-gray-600">
-            <a href="mailto:privacidad@camperocasion.es" className="text-blue-600 underline font-medium">privacidad@camperocasion.es</a>
+            <a href="mailto:privacidad@camperocasion.online" className="text-blue-600 underline font-medium">privacidad@camperocasion.online</a>
           </p>
           <p className="text-gray-500 text-sm mt-2">{t('tagline')}</p>
         </section>

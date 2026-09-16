@@ -24,7 +24,7 @@ export async function GET() {
   }
 
   const paypal = {
-    email: env.PAGO_PAYPAL_EMAIL || 'pagos@camperocasion.es',
+    email: env.PAGO_PAYPAL_EMAIL || 'pagos@camperocasion.online',
   }
 
   return NextResponse.json({

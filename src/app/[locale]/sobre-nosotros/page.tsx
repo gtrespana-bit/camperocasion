@@ -16,11 +16,11 @@ export default async function SobreNosotrosPage({ params }: { params: Promise<{ 
     '@type': 'AboutPage',
     name: t('title'),
     description: t('subtitle'),
-    url: 'https://camperocasion.es/sobre-nosotros',
+    url: 'https://camperocasion.online/sobre-nosotros',
     mainEntity: {
       '@type': 'Organization',
       name: 'CamperOcasión',
-      url: 'https://camperocasion.es',
+      url: 'https://camperocasion.online',
       description: t('subtitle'),
       foundingDate: '2024',
       areaServed: { '@type': 'Country', name: 'España' },

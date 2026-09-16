@@ -111,16 +111,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: {
-      canonical: `https://camperocasion.es/vendedor/${id}`,
+      canonical: `https://camperocasion.online/vendedor/${id}`,
       languages: {
-        'es-VE': `https://camperocasion.es/vendedor/${id}`,
-        'x-default': `https://camperocasion.es/vendedor/${id}`,
+        'es-VE': `https://camperocasion.online/vendedor/${id}`,
+        'x-default': `https://camperocasion.online/vendedor/${id}`,
       },
     },
     openGraph: {
       title,
       description,
-      url: `https://camperocasion.es/vendedor/${id}`,
+      url: `https://camperocasion.online/vendedor/${id}`,
       siteName: 'CamperOcasión',
       type: 'profile',
       locale: 'es_ES',
@@ -152,7 +152,7 @@ export default async function VendedorPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': perfil.verificado ? 'Organization' : 'Person',
     name: perfil.nombre || 'Vendedor CamperOcasión',
-    url: `https://camperocasion.es/vendedor/${id}`,
+    url: `https://camperocasion.online/vendedor/${id}`,
     ...(perfil.foto_perfil_url && { image: perfil.foto_perfil_url }),
     address: {
       '@type': 'PostalAddress',

@@ -54,19 +54,19 @@ export const metadata: Metadata = {
   title: 'Blog de Compra y Venta en España',
   description: 'Guías, precios del mercado español y consejos para comprar y vender sin estafas. Todo sobre emprendimiento y comercio electrónico en España.',
   alternates: {
-    canonical: 'https://camperocasion.es/blog',
+    canonical: 'https://camperocasion.online/blog',
     languages: {
-      'es-VE': 'https://camperocasion.es/blog',
-      'x-default': 'https://camperocasion.es/blog',
+      'es-VE': 'https://camperocasion.online/blog',
+      'x-default': 'https://camperocasion.online/blog',
     },
     types: {
-      'application/rss+xml': 'https://camperocasion.es/feed.xml',
+      'application/rss+xml': 'https://camperocasion.online/feed.xml',
     },
   },
   openGraph: {
     title: 'Blog de Compra y Venta en España',
     description: 'Guías del mercado español, consejos para emprendedores y mucho más.',
-    url: 'https://camperocasion.es/blog',
+    url: 'https://camperocasion.online/blog',
     siteName: 'CamperOcasión',
     type: 'website',
     locale: 'es_ES',

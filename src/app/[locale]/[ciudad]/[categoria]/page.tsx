@@ -65,10 +65,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       locale: 'es_ES',
     },
     alternates: {
-      canonical: `https://camperocasion.es/${ciudad}/${categoria}`,
+      canonical: `https://camperocasion.online/${ciudad}/${categoria}`,
       languages: {
-        'es-ES': `https://camperocasion.es/${ciudad}/${categoria}`,
-        'x-default': `https://camperocasion.es/${ciudad}/${categoria}`,
+        'es-ES': `https://camperocasion.online/${ciudad}/${categoria}`,
+        'x-default': `https://camperocasion.online/${ciudad}/${categoria}`,
       },
     },
     robots: {

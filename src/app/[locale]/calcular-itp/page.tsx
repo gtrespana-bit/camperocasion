@@ -6,7 +6,7 @@ import CalculadoraITP from './CalculadoraITP'
 import { CALCULADORA_FAQ, SECCIONES_CALCULADORA } from './contenido'
 import { TIPOS_ITP, REVISADO_EN } from '@/lib/itp'
 
-const CANONICAL = 'https://camperocasion.es/calcular-itp'
+const CANONICAL = 'https://camperocasion.online/calcular-itp'
 
 export const metadata: Metadata = {
   title: 'Calculadora de ITP para comprar una camper de segunda mano',

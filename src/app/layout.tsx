@@ -37,7 +37,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://camperocasion.es'),
+  metadataBase: new URL('https://camperocasion.online'),
   title: {
     default: 'CamperOcasión — Furgonetas camper y autocaravanas de ocasión en España',
     template: '%s | CamperOcasión',
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'es_ES',
-    url: 'https://camperocasion.es',
+    url: 'https://camperocasion.online',
     siteName: 'CamperOcasión',
     title: 'CamperOcasión — Furgonetas camper y autocaravanas de ocasión en España',
     description:
@@ -155,19 +155,19 @@ export default async function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'WebSite',
               name: 'CamperOcasión',
-              url: 'https://camperocasion.es',
+              url: 'https://camperocasion.online',
               description:
                 'El marketplace especializado en furgonetas camper y autocaravanas de ocasión en España.',
               potentialAction: {
                 '@type': 'SearchAction',
-                target: 'https://camperocasion.es/buscar?q={search_term_string}',
+                target: 'https://camperocasion.online/buscar?q={search_term_string}',
                 'query-input': 'required name=search_term_string'
               },
               publisher: {
                 '@type': 'Organization',
                 name: 'CamperOcasión',
-                url: 'https://camperocasion.es',
-                logo: 'https://camperocasion.es/icon-192.png',
+                url: 'https://camperocasion.online',
+                logo: 'https://camperocasion.online/icon-192.png',
                 sameAs: [
                   'https://instagram.com/camperocasion',
                   'https://facebook.com/camperocasion'

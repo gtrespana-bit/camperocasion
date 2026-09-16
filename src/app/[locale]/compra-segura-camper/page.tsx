@@ -4,7 +4,7 @@ import Breadcrumbs from '@/components/Breadcrumbs'
 import LocalLink from '@/components/LocalLink'
 import { CHECKLIST_CAMPER, CHECKLIST_COMPRA_SEGURA, TASA_DGT } from '@/lib/itp'
 
-const CANONICAL = 'https://camperocasion.es/compra-segura-camper'
+const CANONICAL = 'https://camperocasion.online/compra-segura-camper'
 
 export const metadata: Metadata = {
   title: 'Checklist de compra segura de una camper de segunda mano',

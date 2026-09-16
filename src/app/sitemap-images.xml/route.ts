@@ -11,7 +11,7 @@
  */
 import { getSupabaseServerClient } from '@/lib/supabase-server-client'
 
-const BASE_URL = 'https://camperocasion.es'
+const BASE_URL = 'https://camperocasion.online'
 const MAX_PRODUCTOS = 2000
 
 export const revalidate = 21600
