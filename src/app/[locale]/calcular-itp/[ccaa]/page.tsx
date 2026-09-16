@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: t('title'), description: t('description') }
   }
 
-  const canonical = `https://camperocasion.es/calcular-itp/${comunidad.slug}`
+  const canonical = `https://camperocasion.online/calcular-itp/${comunidad.slug}`
   const titulo = `ITP de una camper de segunda mano en ${comunidad.nombre} (${new Date().getFullYear()})`
   const description = `Cuánto se paga de ITP al comprar una camper o autocaravana de ocasión en ${comunidad.nombre}: tipo` +
     ` general del ${comunidad.tipo} %${comunidad.tipoIncrementado ? `, ${comunidad.tipoIncrementado.tipo} % para ${comunidad.tipoIncrementado.aplica}` : ''}` +

@@ -1,6 +1,6 @@
 # 🔍 Auditoría completa: CamperOcasión — errores y cosas por resolver
 
-**Fecha:** 31 de julio de 2026 · **Alcance:** repositorio completo + sitio en producción (camperocasion.es)
+**Fecha:** 31 de julio de 2026 · **Alcance:** repositorio completo + sitio en producción (camperocasion.online)
 **Método:** revisión de código (seguridad, auth, datos, i18n, PWA, SEO, rendimiento), prueba de conceptos en vivo, reportes Lighthouse del repo, y verificación de tasas oficiales —.
 
 ---
@@ -152,7 +152,7 @@
 | # | Hallazgo | Archivo(s) | Detalle / solución |
 |---|---|---|---|
 | M1 | **Sin security headers** | `next.config.js` | No hay CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy ni HSTS (verificado también en vivo: ausentes). Añadir `headers()` en next.config: CSP restrictivo, `frame-ancestors 'none'`, etc. |
-| M2 | **hreflang incorrecto** | `src/app/[locale]/layout.tsx` | `alternates.languages` emite `'es-VE': 'https://camperocasion.es/${locale}'` → la página `/en` declara es-VE apuntando a sí misma. Debe emitir es-VE→`/`, en→`/en` y `x-default`. |
+| M2 | **hreflang incorrecto** | `src/app/[locale]/layout.tsx` | `alternates.languages` emite `'es-VE': 'https://camperocasion.online/${locale}'` → la página `/en` declara es-VE apuntando a sí misma. Debe emitir es-VE→`/`, en→`/en` y `x-default`. |
 | M3 | **Manifest/PWA roto** | `public/manifest.json`, `public/sw.js` | Iconos `.webp` declarados como `"type": "image/png"` (los navegadores pueden rechazar el manifest → falla el prompt de instalación); las notificaciones push usan `/icon-192.png` que **no existe** (solo hay .webp) → icono roto en notificaciones. |
 | M4 | **JWT sin verificar en el servidor** | `src/lib/supabase-server.ts` | `getServerUser()` parsea la cookie `sb-*-auth-token` como JSON sin verificar firma ni expiración. Hoy solo alimenta el layout (riesgo bajo), pero es un polvorín si alguien lo usa para autorizar. Usar `supabase.auth.getUser()` (con refresh) o verificar el JWT. |
 | M5 | **`marcar-vendido` con userId del body** | `src/app/api/admin/marcar-vendido/route.ts` | Compara `producto.user_id !== userId` donde `userId` viene del request: cualquiera puede marcar vendido cualquier producto pasando el userId del dueño. (Agravado por C1.) |

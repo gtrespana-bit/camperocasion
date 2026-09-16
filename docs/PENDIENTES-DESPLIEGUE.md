@@ -5,10 +5,13 @@
 > reiniciarse el entorno, así que ahora está versionado aquí. El resumen corto
 > también está en la descripción del PR #3.
 
-> **Estado a 2026-09-16 (tarde):** `setup-camperocasion.sql` aplicado y verificado
+> **Estado a 2026-09-16 (noche):** `setup-camperocasion.sql` aplicado y verificado
 > **20/20** con `scripts/verificar_despliegue.sql`. CI activada y en verde.
-> Quedan las variables de entorno de Vercel (§1.3) y, sobre todo, **conseguir el
-> primer despliegue** (§6): el proyecto existe pero no tiene producción.
+> **Vercel ya despliega producción** (el bloqueo §6 se resolvió: hay deployments
+> de Production sobre `main` en cada push). **Nuevo dominio canónico:
+> `camperocasion.online`** (cambiado el 2026-09-16, antes `camperocasion.es`,
+> que nunca llegó a servir tráfico). Quedan: **DNS del dominio en Vercel** y las
+> **variables de entorno** (§1.3), y verificar la producción cuando propague.
 
 ## 0. Resumen en cuatro líneas
 
@@ -17,9 +20,11 @@
 2. Revisar las **variables de entorno** en Vercel (§1.3) — **PENDIENTE**.
 3. ~~Activar la **CI**~~ ✅ **hecho** el 2026-09-16: el workflow ya vive en
    `.github/workflows/ci.yml` y los dos jobs pasan en `main`.
-4. Que Vercel tenga **un despliegue de producción** (§6) — **PENDIENTE**: hoy no
-   existe ninguno (`gh api repos/.../deployments` devuelve la lista vacía), por
-   eso el panel dice *«No Production Deployment»*.
+4. ~~Que Vercel tenga **un despliegue de producción**~~ ✅ **resuelto el
+   2026-09-16**: Vercel publica deployment de Production en cada push a `main`
+   (verificado vía `gh api .../deployments`).
+5. **Apuntar `camperocasion.online` a Vercel** (Settings → Domains + DNS) y
+   **verificar** que producción carga anuncios con las env vars — **PENDIENTE**.
 
 ---
 
@@ -122,14 +127,14 @@ a la build.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → *Project Settings → Data API (legacy)* → `anon` / `publishable` | `getSupabaseServerClient()` devuelve `null` → home, catálogo y landings salen sin anuncios |
 | `SUPABASE_SERVICE_ROLE_KEY` | la `service_role` (server-side **solo**) | todo `/api/admin/*`, reservas y expediente de homologación sin funcionar |
 | `CRON_SECRET` | un string aleatorio propio (p. ej. `openssl rand -hex 32`) | **los 4 crons devuelven 401**: el guard es `if (!secret \|\| auth !== Bearer) → 401`, o sea que sin la variable ni Vercel puede llamarlos |
-| `NEXT_PUBLIC_URL` | `https://camperocasion.es` | enlaces de emails/OG/sitemap apuntan al default; ponerlo igualmente |
+| `NEXT_PUBLIC_URL` | `https://camperocasion.online` | enlaces de emails/OG/sitemap apuntan al default; ponerlo igualmente |
 
 **Bloque B — emails salientes (elegir UN canal):** `RESEND_API_KEY` (+ dominio
 verificado en Resend) **o** `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`.
 Orden real en `src/lib/server-email.ts`: 1º Resend API, 2º `SMTP_*`, 3º
 `ZOHO_SMTP_*` (legado). Opcional: `EMAIL_FROM` (default `"CamperOcasión"
-<noreply@camperocasion.es>`) y `CONTACTO_EMAIL` (default
-`soporte@camperocasion.es`). Sin canal, el envío devuelve *"Sin canal de envío:
+<noreply@camperocasion.online>`) y `CONTACTO_EMAIL` (default
+`soporte@camperocasion.online`). Sin canal, el envío devuelve *"Sin canal de envío:
 configura RESEND_API_KEY o SMTP_USER/SMTP_PASS"* y el registro no se verifica.
 
 **Bloque C — opcionales:** `ADMIN_EMAILS` + `NEXT_PUBLIC_ADMIN_EMAILS` (ambas
@@ -246,11 +251,50 @@ las 20 comprobaciones de despliegue). Los cuatro scripts ya pasan en local.
 
 ---
 
-## 6. Vercel: «No Production Deployment» — el proyecto existe pero no despliega
+## 6. Vercel: «No Production Deployment» — ✅ RESUELTO el 2026-09-16 (noche)
 
-Síntoma visto el 2026-09-16: proyecto creado en el dashboard, y la página pone
-**«No Production Deployment — Your Production Domain is not serving traffic»**,
-sin rastro de build ni log.
+> **Actualización 2026-09-16 (noche):** Vercel **ya despliega**. Verificado vía
+> `gh api repos/gtrespana-bit/camperocasion/deployments`: 17 deployments, con
+> Production en cada push a `main` (último sobre `8dc0728`, merge del PR #6).
+> Lo que falta ahora es **el dominio** (ver §6-bis) y las env vars (§1.3), no
+> la build.
+
+Síntoma visto el 2026-09-16 (día): proyecto creado en el dashboard, y la página
+pone **«No Production Deployment — Your Production Domain is not serving
+traffic»**, sin rastro de build ni log.
+
+## 6-bis. Cambio de dominio: `camperocasion.es` → `camperocasion.online`
+
+El 2026-09-16 se cambió el dominio canónico a **`camperocasion.online`** (el
+`.es` quedó apuntando a un parking/hosting por defecto, `ui-r.com`, y nunca
+llegó a servir tráfico del sitio — no hay que migrar nada). En el repositorio
+se actualizaron las ~120 referencias (canonicals, hreflang, sitemap, robots,
+emails, `NEXT_PUBLIC_URL` default, plantillas Supabase) y `next.config.js`
+301-redirectea `vendet.online` y `camperocasion.es` (apex + www) hacia
+`camperocasion.online`.
+
+Pendiente **fuera del código**:
+
+1. **Vercel → Project → Settings → Domains**: añadir `camperocasion.online` y
+   `www.camperocasion.online`.
+2. **DNS en el proveedor del dominio** (donde se compró el `.online`):
+   - `www` → `CNAME` `cname.vercel-dns.com`
+   - `@` (apex) → `CNAME` `cname.vercel-dns.com` (Vercel hace *CNAME
+     flattening*; si el registro no lo permite, `A` `76.76.21.21`)
+   - Vercel muestra los registros exactos y los verifica automáticamente.
+3. **Env var `NEXT_PUBLIC_URL`** = `https://camperocasion.online` en Vercel
+   (Production + Preview) y **redeploy**: se incrusta en el bundle en build
+   time. (El default del código ya es `.online`, pero mejor tenerla puesta.)
+4. **Supabase → Authentication → URL Configuration**: Site URL =
+   `https://camperocasion.online` y añadir `https://camperocasion.online/confirm`
+   y `https://camperocasion.online/reset-password` (o equivalentes) a Redirect
+   URLs; revisar también las plantillas de email de Supabase (las de referencia
+   están en `supabase-email-templates/`, ya actualizadas).
+5. **Correo**: si se van a usar cajas en el dominio (soporte@, noreply@…),
+   crearlas en el proveedor y dejar `EMAIL_FROM`/`CONTACTO_EMAIL` con el
+   `.online` (los defaults del código ya son `.online`).
+6. **Verificación tras la propagación**: home y catálogo cargando anuncios,
+   `/api/diagnostico/supabase?token=<CRON_SECRET>` y `/admin` → estado.
 
 ### 6.1 Diagnóstico (dato duro, no intuición)
 
@@ -307,7 +351,7 @@ parece que funciona:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | idem |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | server-side; **nunca** con prefijo `NEXT_PUBLIC_` |
 | `CRON_SECRET` | ✅ para los 4 crons | sin ella `/api/cron/*` responde 401 |
-| `NEXT_PUBLIC_URL` | ✅ | `https://camperocasion.es` (emails, OG, sitemap) |
+| `NEXT_PUBLIC_URL` | ✅ | `https://camperocasion.online` (emails, OG, sitemap) |
 | `ADMIN_EMAILS`, `RESEND_API_KEY`, `EMAIL_FROM` | opcional | panel y emails |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | opcional | avisos de reservas |
 

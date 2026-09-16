@@ -33,7 +33,7 @@ import { randomBytes } from 'crypto'
 import { emailLayout } from '@/lib/email-layout'
 import { enviarEmailSMTP } from '@/lib/server-email'
 
-const SITIO_URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.es'
+const SITIO_URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'
 /** Página de la app que completa la verificación (token en URL). */
 const REDIRECT_CONFIRMACION = `${SITIO_URL}/confirm`
 
@@ -165,7 +165,7 @@ export async function enviarConfirmacion(email: string, nombre: string, password
   return {
     ok: false,
     codigo: 'smtp',
-    mensaje: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.es',
+    mensaje: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.online',
   }
 }
 
@@ -220,6 +220,6 @@ export async function reenviarConfirmacion(email: string): Promise<
   return {
     ok: false,
     codigo: 'smtp',
-    mensaje: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.es',
+    mensaje: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.online',
   }
 }

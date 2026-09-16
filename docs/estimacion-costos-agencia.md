@@ -1,6 +1,6 @@
 # 💰 Estimación de costos: construir este marketplace con una agencia externa
 
-**Proyecto analizado:** CamperOcasión (camperocasion.es) — marketplace vertical de furgonetas camper y autocaravanas de ocasión en España
+**Proyecto analizado:** CamperOcasión (camperocasion.online) — marketplace vertical de furgonetas camper y autocaravanas de ocasión en España
 **Fecha del análisis:** 31 de julio de 2026
 **Moneda:** USD (con referencia en EUR para agencias españolas)
 
@@ -130,7 +130,7 @@ No es solo construirlo: hay que mantenerlo funcionando.
 | Vercel (hosting Next.js) | Pro plan | ~$20 |
 | Supabase (DB + Auth + Storage + Realtime) | Plan Pro (RLS, realtime) | ~$25 |
 | Cloudflare R2 (fotos de productos) | Pago por uso | $1–10 |
-| Dominio + email | camperocasion.es | ~$2 |
+| Dominio + email | camperocasion.online | ~$2 |
 | SMTP/emails (Zoho o Resend) | Transaccionales | $0–20 |
 | Sentry + Analytics | Gratis/Pro | $0–30 |
 | **Total inicial** | | **≈ $50 – $110/mes** |
@@ -200,7 +200,7 @@ Estos son datos públicos de 2024–2026 de empresas que cotizan marketplaces:
 
 ## 8. Contexto importante: el proyecto YA existe
 
-Este repositorio no es una idea: es un producto **completo y funcional** (≈21.300 líneas, desplegado en camperocasion.es, con SEO, PWA, chat, admin y monetización implementados). Antes de gastar $60.000–100.000 en reconstruirlo, considera:
+Este repositorio no es una idea: es un producto **completo y funcional** (≈21.300 líneas, desplegado en camperocasion.online, con SEO, PWA, chat, admin y monetización implementados). Antes de gastar $60.000–100.000 en reconstruirlo, considera:
 
 | Opción | Costo | Cuándo conviene |
 |---|---|---|

@@ -6,7 +6,7 @@ import { CIUDADES_SEO, CATEGORIAS_POPULARES } from '@/lib/ubicaciones-seo'
 import { CATEGORIAS_SEO_LIST } from '@/lib/categorias-seo'
 import { TIPOS_ITP } from '@/lib/itp'
 
-const BASE_URL = 'https://camperocasion.es'
+const BASE_URL = 'https://camperocasion.online'
 const LAST_MODIFIED_DATE = new Date('2026-09-15')
 
 // ÚNICO sitemap del sitio. No crear otro en [locale]/.

@@ -63,21 +63,21 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     creator: 'CamperOcasión',
     publisher: 'CamperOcasión',
     alternates: {
-      canonical: 'https://camperocasion.es/',
+      canonical: 'https://camperocasion.online/',
       languages: {
-        'es-ES': 'https://camperocasion.es/',
-        'x-default': 'https://camperocasion.es/',
+        'es-ES': 'https://camperocasion.online/',
+        'x-default': 'https://camperocasion.online/',
       },
     },
     openGraph: {
       title: 'Furgonetas camper y autocaravanas de ocasión en España',
       description:
         'El marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Publica gratis y encuentra tu próxima furgoneta camper.',
-      url: 'https://camperocasion.es/',
+      url: 'https://camperocasion.online/',
       siteName: 'CamperOcasión',
       images: [
         {
-          url: 'https://camperocasion.es/og-image.webp',
+          url: 'https://camperocasion.online/og-image.webp',
           width: 1200,
           height: 630,
           alt: 'CamperOcasión - Furgonetas camper y autocaravanas de ocasión en España',
@@ -91,7 +91,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       title: 'Furgonetas camper y autocaravanas de ocasión en España',
       description:
         'El marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Publica gratis.',
-      images: ['https://camperocasion.es/og-image.webp'],
+      images: ['https://camperocasion.online/og-image.webp'],
     },
     robots: {
       index: true,
@@ -253,7 +253,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   const provincias = getProvinciasPopulares()
   const subs = categoriasData.camper.subs
-  const jsonLd = generateItemListSchema(recientes, 'https://camperocasion.es')
+  const jsonLd = generateItemListSchema(recientes, 'https://camperocasion.online')
 
   return (
     <>

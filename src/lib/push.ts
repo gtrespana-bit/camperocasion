@@ -21,7 +21,7 @@ export function getVapidPublicKey(): string {
 
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webpush.setVapidDetails(
-    `mailto:noreply@camperocasion.es`,
+    `mailto:noreply@camperocasion.online`,
     VAPID_PUBLIC,
     VAPID_PRIVATE,
   )

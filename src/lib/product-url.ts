@@ -20,7 +20,7 @@ export function productUrl(p: { id: string; slug?: string | null }): string {
 
 export function productAbsoluteUrl(
   p: { id: string; slug?: string | null },
-  baseUrl = 'https://camperocasion.es'
+  baseUrl = 'https://camperocasion.online'
 ): string {
   return `${baseUrl}${productUrl(p)}`
 }

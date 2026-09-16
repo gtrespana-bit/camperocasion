@@ -5,10 +5,10 @@
 
 ---
 
-Ver `confirmation-mail-es.md` para el HTML definitivo de CamperOcasión (grafito/verde/naranja, soporte@camperocasion.es, camperocasion.es).
+Ver `confirmation-mail-es.md` para el HTML definitivo de CamperOcasión (grafito/verde/naranja, soporte@camperocasion.online, camperocasion.online).
 
 URLs en Supabase → Authentication → URLs:
-- **Site URL:** `https://camperocasion.es`
-- **Redirect URL:** `https://camperocasion.es/confirm`
+- **Site URL:** `https://camperocasion.online`
+- **Redirect URL:** `https://camperocasion.online/confirm`
 
 Flujo: registro → email → `{{ .ConfirmationURL }}` → `/api/confirm-email?token=…` → `/confirm` → login.

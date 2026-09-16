@@ -38,10 +38,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       locale: 'es_ES',
     },
     alternates: {
-      canonical: `https://camperocasion.es/${ciudad}`,
+      canonical: `https://camperocasion.online/${ciudad}`,
       languages: {
-        'es-ES': `https://camperocasion.es/${ciudad}`,
-        'x-default': `https://camperocasion.es/${ciudad}`,
+        'es-ES': `https://camperocasion.online/${ciudad}`,
+        'x-default': `https://camperocasion.online/${ciudad}`,
       },
     },
     robots: {
@@ -92,7 +92,7 @@ export default async function CiudadPage({ params }: Props) {
       }
     },
     description: ciudadSEO.descripcion,
-    sameAs: `https://camperocasion.es/${ciudad}`
+    sameAs: `https://camperocasion.online/${ciudad}`
   }
 
   return (

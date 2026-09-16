@@ -5,16 +5,16 @@ import { Resend } from 'resend'
 import { emailLayout, card, priceLine, COLORS } from '@/lib/email-layout'
 
 // ─── Remitente ─────────────────────────────────────────────
-// Configurable con EMAIL_FROM. Por defecto noreply@camperocasion.es.
+// Configurable con EMAIL_FROM. Por defecto noreply@camperocasion.online.
 // IMPORTANTE (Resend): el dominio del `from` debe estar verificado en
-// Resend (Domains → camperocasion.es → Verified). Si aún no lo verificas,
+// Resend (Domains → camperocasion.online → Verified). Si aún no lo verificas,
 // Resend rechaza el envío con 403 y el correo NUNCA llega.
 // Mientras verificas, puedes usar temporalmente:
 //   EMAIL_FROM="CamperOcasión <onboarding@resend.dev>"
 // pero en ese modo Resend solo entrega al email dueño de la cuenta.
 const FROM =
-  process.env.EMAIL_FROM || '"CamperOcasión" <noreply@camperocasion.es>'
-const URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.es'
+  process.env.EMAIL_FROM || '"CamperOcasión" <noreply@camperocasion.online>'
+const URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'
 
 // ─── Canal 1: Resend API (preferido) ───────────────────────
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''

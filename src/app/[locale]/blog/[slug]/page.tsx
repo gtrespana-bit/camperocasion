@@ -70,16 +70,16 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
     title: post.title,
     description: post.excerpt,
     alternates: {
-      canonical: `https://camperocasion.es/blog/${post.slug}`,
+      canonical: `https://camperocasion.online/blog/${post.slug}`,
       languages: {
-        'es-VE': `https://camperocasion.es/blog/${post.slug}`,
-        'x-default': `https://camperocasion.es/blog/${post.slug}`,
+        'es-VE': `https://camperocasion.online/blog/${post.slug}`,
+        'x-default': `https://camperocasion.online/blog/${post.slug}`,
       },
     },
     openGraph: {
       title: post.title,
       description: post.excerpt,
-      url: `https://camperocasion.es/blog/${post.slug}`,
+      url: `https://camperocasion.online/blog/${post.slug}`,
       siteName: 'CamperOcasión',
       type: 'article',
       locale: 'es_ES',
@@ -98,20 +98,20 @@ function generateArticleSchema(post: Post) {
     "author": {
       "@type": "Organization",
       "name": "CamperOcasión.es",
-      "url": "https://camperocasion.es"
+      "url": "https://camperocasion.online"
     },
     "publisher": {
       "@type": "Organization",
       "name": "CamperOcasión.es",
-      "url": "https://camperocasion.es",
+      "url": "https://camperocasion.online",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://camperocasion.es/logo.png"
+        "url": "https://camperocasion.online/logo.png"
       }
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://camperocasion.es/blog/${post.slug}`
+      "@id": `https://camperocasion.online/blog/${post.slug}`
     },
     "articleSection": post.category,
     "keywords": post.tags.join(', '),

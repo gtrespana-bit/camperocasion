@@ -52,7 +52,7 @@ camino crítico; no se debe reactivar el worker anterior.
 - `npm test -- --runInBand`: incluye la guarda de no-intercepción del worker.
 
 No fue posible ejecutar una auditoría contra producción desde este entorno: las
-conexiones TLS salientes a `camperocasion.es` y `*.vercel.app` son bloqueadas por
+conexiones TLS salientes a `camperocasion.online` y `*.vercel.app` son bloqueadas por
 el sandbox. Tras desplegar, la comprobación decisiva es Lighthouse en una sesión
 incógnita y en un perfil que haya usado el sitio antes (para verificar la retirada
 del worker heredado).
@@ -60,7 +60,7 @@ del worker heredado).
 ## Qué verificar tras el despliegue
 
 1. Chrome DevTools → **Application → Service Workers**: tras refrescar una vez,
-   no debe quedar worker para `camperocasion.es`.
+   no debe quedar worker para `camperocasion.online`.
 2. DevTools → Network: no debe aparecer `from ServiceWorker` ni solicitudes
    abortadas a `/_next/static/*` por el worker.
 3. Ejecutar Lighthouse móvil tres veces con caché desactivada. Si aún hay una

@@ -359,10 +359,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: image,
     },
     alternates: {
-      canonical: `https://camperocasion.es/producto/${canonicalSlug}`,
+      canonical: `https://camperocasion.online/producto/${canonicalSlug}`,
       languages: {
-        'es-VE': `https://camperocasion.es/producto/${canonicalSlug}`,
-        'x-default': `https://camperocasion.es/producto/${canonicalSlug}`,
+        'es-VE': `https://camperocasion.online/producto/${canonicalSlug}`,
+        'x-default': `https://camperocasion.online/producto/${canonicalSlug}`,
       },
     },
     // Vendido: la URL sigue viva (llega tráfico de WhatsApp/Google y hay
@@ -409,11 +409,11 @@ export default async function ProductoPage({ params }: Props) {
   const jsonLd: any = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    '@id': `https://camperocasion.es/producto/${producto.slug || slug}`,
+    '@id': `https://camperocasion.online/producto/${producto.slug || slug}`,
     name: producto.titulo,
     description: producto.descripcion?.slice(0, 500) || producto.titulo,
     image: producto.imagen_url ? [producto.imagen_url] : [],
-    url: `https://camperocasion.es/producto/${producto.slug || slug}`,
+    url: `https://camperocasion.online/producto/${producto.slug || slug}`,
     sku: producto.id,
     offers: {
       '@type': 'Offer',

@@ -77,19 +77,33 @@ const nextConfig = withNextIntl({
 
   // Redirigir los dominios alternativos al dominio canónico conservando
   // la ruta y los parámetros de búsqueda. Ejemplo:
-  // vendet.online/catalogo?q=ducato → camperocasion.es/catalogo?q=ducato
+  // vendet.online/catalogo?q=ducato → camperocasion.online/catalogo?q=ducato
+  // camperocasion.es (dominio anterior) también cae en 301 por si se
+  // apuntara a Vercel en el futuro.
   async redirects() {
     return [
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'vendet.online' }],
-        destination: 'https://camperocasion.es/:path*',
+        destination: 'https://camperocasion.online/:path*',
         permanent: true,
       },
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'www.vendet.online' }],
-        destination: 'https://camperocasion.es/:path*',
+        destination: 'https://camperocasion.online/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'camperocasion.es' }],
+        destination: 'https://camperocasion.online/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.camperocasion.es' }],
+        destination: 'https://camperocasion.online/:path*',
         permanent: true,
       },
     ]

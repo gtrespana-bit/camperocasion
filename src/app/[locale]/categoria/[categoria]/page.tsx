@@ -7,7 +7,7 @@ import { CATEGORIAS_SEO_LIST, getCategoriaSEO } from '@/lib/categorias-seo'
 import { productUrl } from '@/lib/product-url'
 import { formatPrecio } from '@/lib/precio'
 
-const BASE_URL = 'https://camperocasion.es'
+const BASE_URL = 'https://camperocasion.online'
 const PRODUCT_LIMIT = 24
 
 type Props = {

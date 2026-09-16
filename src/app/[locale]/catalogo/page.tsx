@@ -25,8 +25,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const categoria = (resolvedParams?.categoria as string) || ''
   
   const ogImageUrl = categoria 
-    ? `https://camperocasion.es/api/og/catalog?categoria=${categoria}`
-    : 'https://camperocasion.es/api/og/catalog'
+    ? `https://camperocasion.online/api/og/catalog?categoria=${categoria}`
+    : 'https://camperocasion.online/api/og/catalog'
 
   return {
     title: 'Catálogo de furgonetas camper y autocaravanas de ocasión',
@@ -38,10 +38,10 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
       locale: 'es_ES',
     },
     alternates: {
-      canonical: 'https://camperocasion.es/catalogo',
+      canonical: 'https://camperocasion.online/catalogo',
       languages: {
-        'es-ES': 'https://camperocasion.es/catalogo',
-        'x-default': 'https://camperocasion.es/catalogo',
+        'es-ES': 'https://camperocasion.online/catalogo',
+        'x-default': 'https://camperocasion.online/catalogo',
       },
     },
   }

@@ -6,7 +6,7 @@ import { enviarEmailDetallado, emailConfigurado } from '@/lib/server-email'
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID
 const CONTACTO_DESTINO =
-  process.env.CONTACTO_EMAIL || 'soporte@camperocasion.es'
+  process.env.CONTACTO_EMAIL || 'soporte@camperocasion.online'
 
 /** Rate limiter distribuido vía Supabase */
 async function checkContactRateLimit(ip: string): Promise<boolean> {

@@ -11,7 +11,7 @@ import { createClient } from '@supabase/supabase-js'
 import { emailLayout } from '@/lib/email-layout'
 import { enviarEmailSMTP } from '@/lib/server-email'
 
-const SITIO_URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.es'
+const SITIO_URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'
 
 function getAdminClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -106,7 +106,7 @@ export async function enviarRecuperacion(
     return {
       ok: false,
       mensaje:
-        'No se pudo enviar el correo. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.es',
+        'No se pudo enviar el correo. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.online',
     }
   }
   return { ok: true }
