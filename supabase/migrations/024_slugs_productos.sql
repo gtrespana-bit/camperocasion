@@ -70,6 +70,8 @@ end
 $$;
 
 drop trigger if exists trg_productos_slug on public.productos;
+DROP TRIGGER IF EXISTS "trg_productos_slug" ON "public"."productos";
+
 
 create trigger trg_productos_slug
   before insert on public.productos

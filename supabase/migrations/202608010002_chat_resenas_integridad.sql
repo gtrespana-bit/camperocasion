@@ -17,6 +17,8 @@ drop policy if exists "conv_insert" on public.conversaciones;
  drop policy if exists "conv_update" on public.conversaciones;
  drop policy if exists "Eliminar conversaciones propias" on public.conversaciones;
  drop policy if exists "conv_delete" on public.conversaciones;
+DROP POLICY IF EXISTS "Ver conversaciones propias" ON "public"."conversaciones";
+
 
 create policy "Ver conversaciones propias" on public.conversaciones
   for select using (auth.uid() = user1_id or auth.uid() = user2_id);
@@ -44,6 +46,8 @@ drop policy if exists "Ver mensajes" on public.mensajes;
 drop policy if exists "msg_select" on public.mensajes;
 drop policy if exists "msg_update" on public.mensajes;
 drop policy if exists "Actualizar mensajes" on public.mensajes;
+DROP POLICY IF EXISTS "Ver mensajes de conversaciones propias" ON "public"."mensajes";
+
 
 create policy "Ver mensajes de conversaciones propias" on public.mensajes
   for select using (
@@ -54,6 +58,8 @@ create policy "Ver mensajes de conversaciones propias" on public.mensajes
         and (c.user1_id = auth.uid() or c.user2_id = auth.uid())
     )
   );
+DROP POLICY IF EXISTS "Enviar mensajes dentro de conversación propia" ON "public"."mensajes";
+
 
 create policy "Enviar mensajes dentro de conversación propia" on public.mensajes
   for insert with check (

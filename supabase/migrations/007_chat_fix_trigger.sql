@@ -42,6 +42,8 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS "trigger_crear_conversacion" ON "mensajes";
+
 
 -- Recreate trigger
 CREATE TRIGGER trigger_crear_conversacion

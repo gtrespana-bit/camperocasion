@@ -99,35 +99,63 @@ create table if not exists transacciones_creditos (
 
 -- Perfiles: todos pueden ver, el dueño puede editar
 alter table perfiles enable row level security;
+DROP POLICY IF EXISTS "Ver perfiles" ON "perfiles";
+
 
 create policy "Ver perfiles" on perfiles for select using (true);
+DROP POLICY IF EXISTS "Editar propio perfil" ON "perfiles";
+
 create policy "Editar propio perfil" on perfiles for update using (auth.uid() = id);
 
 -- Productos: visibles todos, el dueño puede CRUD
 alter table productos enable row level security;
+DROP POLICY IF EXISTS "Ver productos" ON "productos";
+
 
 create policy "Ver productos" on productos for select using (activo = true);
+DROP POLICY IF EXISTS "Ver propios" ON "productos";
+
 create policy "Ver propios" on productos for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Insert propios" ON "productos";
+
 create policy "Insert propios" on productos for insert with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Editar propios" ON "productos";
+
 create policy "Editar propios" on productos for update using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Eliminar propios" ON "productos";
+
 create policy "Eliminar propios" on productos for delete using (auth.uid() = user_id);
 
 -- Favoritos
 alter table favoritos enable row level security;
+DROP POLICY IF EXISTS "Ver favoritos propios" ON "favoritos";
+
 create policy "Ver favoritos propios" on favoritos for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Insert favoritos propios" ON "favoritos";
+
 create policy "Insert favoritos propios" on favoritos for insert with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Eliminar favoritos propios" ON "favoritos";
+
 create policy "Eliminar favoritos propios" on favoritos for delete using (auth.uid() = user_id);
 
 -- Mensajes
 alter table mensajes enable row level security;
+DROP POLICY IF EXISTS "Ver mensajes" ON "mensajes";
+
 create policy "Ver mensajes" on mensajes for select using (
   auth.uid() = remitente_id or auth.uid() = destinatario_id
 );
+DROP POLICY IF EXISTS "Enviar mensajes" ON "mensajes";
+
 create policy "Enviar mensajes" on mensajes for insert with check (auth.uid() = remitente_id);
 
 -- Transacciones créditos
 alter table transacciones_creditos enable row level security;
+DROP POLICY IF EXISTS "Ver transacciones propias" ON "transacciones_creditos";
+
 create policy "Ver transacciones propias" on transacciones_creditos for select using (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Insert propias" ON "transacciones_creditos";
+
 create policy "Insert propias" on transacciones_creditos for insert with check (auth.uid() = user_id);
 
 -- Trigger para actualizar actualizado_en
@@ -138,12 +166,18 @@ begin
   return new;
 end;
 $$ language plpgsql;
+DROP TRIGGER IF EXISTS "actualizar_productos_ts" ON "productos";
+
 
 create trigger actualizar_productos_ts before update on productos
   for each row execute procedure actualizar_timestamp();
+DROP TRIGGER IF EXISTS "actualizar_perfiles_ts" ON "perfiles";
+
 
 create trigger actualizar_perfiles_ts before update on perfiles
   for each row execute procedure actualizar_timestamp();
+DROP FUNCTION IF EXISTS crear_perfil() CASCADE;
+
 
 -- Trigger: crear perfil automáticamente al registrarse
 create or replace function crear_perfil()
@@ -160,6 +194,8 @@ begin
   return new;
 end;
 $$ language plpgsql security definer;
+DROP TRIGGER IF EXISTS "on_auth_user_created" ON "auth"."users";
+
 
 create trigger on_auth_user_created
   after insert on auth.users
@@ -196,15 +232,23 @@ create table if not exists conversaciones (
 
 -- RLS conversaciones
 alter table conversaciones enable row level security;
+DROP POLICY IF EXISTS "Ver conversaciones propias" ON "conversaciones";
+
 
 create policy "Ver conversaciones propias" on conversaciones for select
   using (auth.uid() = user1_id or auth.uid() = user2_id);
+DROP POLICY IF EXISTS "Crear conversaciones" ON "conversaciones";
+
 
 create policy "Crear conversaciones" on conversaciones for insert
   with check (auth.uid() = user1_id);
+DROP POLICY IF EXISTS "Actualizar conversaciones" ON "conversaciones";
+
 
 create policy "Actualizar conversaciones" on conversaciones for update
   using (auth.uid() = user1_id or auth.uid() = user2_id);
+DROP FUNCTION IF EXISTS crear_conversacion_si_no_existe() CASCADE;
+
 
 -- Trigger para crear conversacion automatica al primer mensaje
 create or replace function crear_conversacion_si_no_existe()
@@ -232,11 +276,15 @@ begin
   return NEW;
 end;
 $$ language plpgsql;
+DROP TRIGGER IF EXISTS "trigger_crear_conversacion" ON "mensajes";
+
 
 create trigger trigger_crear_conversacion
   before insert on mensajes
   for each row
   execute function crear_conversacion_si_no_existe();
+DROP FUNCTION IF EXISTS actualizar_ultimo_mensaje() CASCADE;
+
 
 -- Trigger para actualizar ultimo_mensaje
 create or replace function actualizar_ultimo_mensaje()
@@ -249,6 +297,8 @@ begin
   return NEW;
 end;
 $$ language plpgsql;
+DROP TRIGGER IF EXISTS "trigger_ultimo_mensaje" ON "mensajes";
+
 
 create trigger trigger_ultimo_mensaje
   after insert on mensajes
@@ -257,6 +307,8 @@ create trigger trigger_ultimo_mensaje
 
 -- RLS mensajes (actualizar para incluir conversacion_id)
 drop policy if exists "Ver mensajes" on mensajes;
+DROP POLICY IF EXISTS "Ver mensajes" ON "mensajes";
+
 create policy "Ver mensajes" on mensajes for select
   using (
     auth.uid() in (
@@ -267,6 +319,8 @@ create policy "Ver mensajes" on mensajes for select
   );
 
 drop policy if exists "Enviar mensajes" on mensajes;
+DROP POLICY IF EXISTS "Enviar mensajes" ON "mensajes";
+
 create policy "Enviar mensajes" on mensajes for insert
   with check (auth.uid() = remitente_id);
 
@@ -351,41 +405,57 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Productos: registrar cambios de precio, estado, moderación
 DROP TRIGGER IF EXISTS trigger_auditoria_productos ON productos;
+DROP TRIGGER IF EXISTS "trigger_auditoria_productos" ON "productos";
+
 CREATE TRIGGER trigger_auditoria_productos
 AFTER INSERT OR UPDATE OR DELETE ON productos
 FOR EACH ROW EXECUTE FUNCTION registrar_auditoria();
 
 -- Perfiles: registrar cambios de verificación, créditos
 DROP TRIGGER IF EXISTS trigger_auditoria_perfiles ON perfiles;
+DROP TRIGGER IF EXISTS "trigger_auditoria_perfiles" ON "perfiles";
+
 CREATE TRIGGER trigger_auditoria_perfiles
 AFTER INSERT OR UPDATE OR DELETE ON perfiles
 FOR EACH ROW EXECUTE FUNCTION registrar_auditoria();
 
 -- Mensajes: registrar envío y eliminación de mensajes
 DROP TRIGGER IF EXISTS trigger_auditoria_mensajes ON mensajes;
+DROP TRIGGER IF EXISTS "trigger_auditoria_mensajes" ON "mensajes";
+
 CREATE TRIGGER trigger_auditoria_mensajes
 AFTER INSERT OR UPDATE OR DELETE ON mensajes
 FOR EACH ROW EXECUTE FUNCTION registrar_auditoria();
 
 -- Transacciones de créditos: registrar todas las transacciones
 DROP TRIGGER IF EXISTS trigger_auditoria_transacciones ON transacciones_creditos;
+DROP TRIGGER IF EXISTS "trigger_auditoria_transacciones" ON "transacciones_creditos";
+
 CREATE TRIGGER trigger_auditoria_transacciones
 AFTER INSERT OR UPDATE OR DELETE ON transacciones_creditos
 FOR EACH ROW EXECUTE FUNCTION registrar_auditoria();
 
 -- Política RLS para auditoría
 ALTER TABLE auditoria ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Admin puede ver auditoría" ON "auditoria";
+
 
 -- Solo administradores pueden ver auditoría (usando service_role en API)
 CREATE POLICY "Admin puede ver auditoría" ON auditoria
 FOR SELECT USING (auth.jwt() ->> 'role' = 'admin');
+DROP POLICY IF EXISTS "Nadie puede insertar auditoría" ON "auditoria";
+
 
 -- Nadie puede modificar auditoría manualmente (solo triggers)
 CREATE POLICY "Nadie puede insertar auditoría" ON auditoria
 FOR INSERT WITH CHECK (false);
+DROP POLICY IF EXISTS "Nadie puede actualizar auditoría" ON "auditoria";
+
 
 CREATE POLICY "Nadie puede actualizar auditoría" ON auditoria
 FOR UPDATE USING (false);
+DROP POLICY IF EXISTS "Nadie puede eliminar auditoría" ON "auditoria";
+
 
 CREATE POLICY "Nadie puede eliminar auditoría" ON auditoria
 FOR DELETE USING (false);
@@ -469,6 +539,8 @@ CREATE INDEX IF NOT EXISTS idx_conv_busqueda
 
 CREATE INDEX IF NOT EXISTS idx_mensajes_por_conv
   ON mensajes (conversacion_id, creado_en);
+DROP FUNCTION IF EXISTS crear_conversacion_si_no_existe() CASCADE;
+
 
 -- ============================================
 -- FIX 3: Mejorar trigger para evitar race conditions
@@ -548,8 +620,8 @@ DROP INDEX IF EXISTS uq_conversaciones;
 DROP INDEX IF EXISTS uq_conversaciones_null;
 -- Limpieza del intento anterior con columna generada
 ALTER TABLE conversaciones DROP COLUMN IF EXISTS _producto_normalized;
-CREATE UNIQUE INDEX uq_conversaciones      ON conversaciones (user1_id, user2_id, producto_id) WHERE producto_id IS NOT NULL;
-CREATE UNIQUE INDEX uq_conversaciones_null ON conversaciones (user1_id, user2_id)               WHERE producto_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_conversaciones      ON conversaciones (user1_id, user2_id, producto_id) WHERE producto_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_conversaciones_null ON conversaciones (user1_id, user2_id)               WHERE producto_id IS NULL;
 
 -- 3. Índices para queries mas rapidas
 CREATE INDEX IF NOT EXISTS idx_conversaciones_usuarios ON conversaciones (user1_id, user2_id);
@@ -567,13 +639,15 @@ CREATE INDEX IF NOT EXISTS idx_mensajes_conversacion ON mensajes (conversacion_i
 
 -- ─── FIX CHAT: Unique constraint para conversaciones duplicadas ───
 
--- Limpiar duplicados existentes (mantener el más antiguo por id)
+-- Limpiar duplicados existentes (mantener el más antiguo por creado_en)
+-- NOTA: no existe MIN(uuid) en PostgreSQL, se usa DISTINCT ON + creado_en
 DELETE FROM conversaciones
 WHERE id NOT IN (
-  SELECT MIN(id)
+  SELECT DISTINCT ON (LEAST(user1_id::text, user2_id::text), GREATEST(user1_id::text, user2_id::text), COALESCE(producto_id::text, 'null'))
+         id
   FROM conversaciones
-  GROUP BY LEAST(user1_id::text, user2_id::text), GREATEST(user1_id::text, user2_id::text),
-           COALESCE(producto_id::text, 'null')
+  ORDER BY LEAST(user1_id::text, user2_id::text), GREATEST(user1_id::text, user2_id::text),
+           COALESCE(producto_id::text, 'null'), creado_en, id
 );
 
 -- Unique index bidireccional para conversaciones con producto
@@ -589,6 +663,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_conv_sin_prod
 -- Índices de rendimiento
 CREATE INDEX IF NOT EXISTS idx_mensajes_conv_fecha ON mensajes (conversacion_id, creado_en DESC);
 CREATE INDEX IF NOT EXISTS idx_mensajes_dest_leido ON mensajes (destinatario_id, leido) WHERE leido = false;
+DROP FUNCTION IF EXISTS crear_conversacion_si_no_existe() CASCADE;
+
 
 -- Mejorar trigger: normalizar user1 < user2 y evitar duplicados
 CREATE OR REPLACE FUNCTION crear_conversacion_si_no_existe()
@@ -670,16 +746,24 @@ CREATE TABLE IF NOT EXISTS resenas (
 
 -- RLS para reseñas
 ALTER TABLE resenas ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Ver todas las resenas" ON "resenas";
+
 
 CREATE POLICY "Ver todas las resenas" ON resenas FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Insert resenas (comprador)" ON "resenas";
+
 CREATE POLICY "Insert resenas (comprador)" ON resenas FOR INSERT
   WITH CHECK (auth.uid() = comprador_id);
+DROP POLICY IF EXISTS "Editar resenas propias" ON "resenas";
+
 CREATE POLICY "Editar resenas propias" ON resenas FOR UPDATE
   USING (auth.uid() = comprador_id);
 
 -- Índices
 CREATE INDEX IF NOT EXISTS idx_resenas_vendedor ON resenas (vendedor_id);
 CREATE INDEX IF NOT EXISTS idx_resenas_comprador ON resenas (comprador_id);
+DROP FUNCTION IF EXISTS crear_perfil() CASCADE;
+
 
 -- ─── Trigger: crear perfil (sobreescribe para incluir foto por defecto si se añade en el futuro) ───
 CREATE OR REPLACE FUNCTION crear_perfil()
@@ -720,8 +804,14 @@ CREATE INDEX IF NOT EXISTS idx_rate_limit_lookup ON rate_limit(key, identifier, 
 
 -- RLS: nadie puede leer rate_limit directamente
 ALTER TABLE rate_limit ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Nadie lee rate_limit" ON "rate_limit";
+
 CREATE POLICY "Nadie lee rate_limit" ON rate_limit FOR SELECT USING (false);
+DROP POLICY IF EXISTS "System inserta rate_limit" ON "rate_limit";
+
 CREATE POLICY "System inserta rate_limit" ON rate_limit FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "System elimina rate_limit" ON "rate_limit";
+
 CREATE POLICY "System elimina rate_limit" ON rate_limit FOR DELETE USING (true);
 
 -- Función para limpiar registros antiguos (> 24 horas)
@@ -821,6 +911,7 @@ end;
 $$;
 
 -- 3. Función RPC: obtener productos destacados (para home)
+drop function if exists obtener_destacados_home(integer) CASCADE;
 create or replace function obtener_destacados_home(
   p_limite integer default 8
 )
@@ -866,6 +957,8 @@ begin
   limit p_limite;
 end;
 $$;
+DROP FUNCTION IF EXISTS usar_boost(uuid, uuid) CASCADE;
+
 
 -- 4. Función RPC: usar crédito para BOOST (sube al #1)
 create or replace function usar_boost(
@@ -908,6 +1001,8 @@ begin
   return jsonb_build_object('ok', true, 'balance', v_balance - 1);
 end;
 $$;
+DROP FUNCTION IF EXISTS usar_destacado(uuid, uuid, int4) CASCADE;
+
 
 -- 5. Función RPC: usar créditos para DESTACADO
 create or replace function usar_destacado(
@@ -962,6 +1057,8 @@ begin
   return jsonb_build_object('ok', true, 'balance', v_balance - v_costo, 'hasta', now() + (p_horas || ' hours')::interval);
 end;
 $$;
+DROP FUNCTION IF EXISTS aprobar_transaccion(uuid, uuid) CASCADE;
+
 
 -- 6. Función RPC: aprobar transacción y añadir créditos (admin)
 create or replace function aprobar_transaccion(
@@ -1019,6 +1116,8 @@ grant execute on function aprobar_transaccion to authenticated;
 insert into storage.buckets (id, name, public)
 values ('comprobantes', 'comprobantes', true)
 on conflict (id) do nothing;
+DROP POLICY IF EXISTS "Usuarios pueden subir comprobantes" ON "storage"."objects";
+
 
 -- Políticas de almacenamiento para comprobantes
 -- Solo usuarios autenticados pueden subir
@@ -1028,11 +1127,15 @@ create policy "Usuarios pueden subir comprobantes"
     bucket_id = 'comprobantes'
     and auth.role() = 'authenticated'
   );
+DROP POLICY IF EXISTS "Cualquiera puede ver comprobantes" ON "storage"."objects";
+
 
 -- Cualquiera puede ver (para revisión manual)
 create policy "Cualquiera puede ver comprobantes"
   on storage.objects for select
   using (bucket_id = 'comprobantes');
+DROP POLICY IF EXISTS "Ver comprobantes propios" ON "storage"."objects";
+
 
 -- Solo el dueño puede ver sus propios comprobantes
 create policy "Ver comprobantes propios"
@@ -1064,7 +1167,7 @@ ALTER TABLE conversaciones
 -- Drop the old trigger and function, recreate with proper guard
 
 DROP TRIGGER IF EXISTS trigger_crear_conversacion ON mensajes;
-DROP FUNCTION IF EXISTS crear_conversacion_si_no_existe();
+DROP FUNCTION IF EXISTS crear_conversacion_si_no_existe() CASCADE;
 
 -- Recreate function with proper dedup
 CREATE OR REPLACE FUNCTION crear_conversacion_si_no_existe()
@@ -1104,6 +1207,8 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS "trigger_crear_conversacion" ON "mensajes";
+
 
 -- Recreate trigger
 CREATE TRIGGER trigger_crear_conversacion
@@ -1170,6 +1275,8 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS trg_bloquear_por_denuncias ON denuncias;
+DROP TRIGGER IF EXISTS "trg_bloquear_por_denuncias" ON "denuncias";
+
 CREATE TRIGGER trg_bloquear_por_denuncias
   AFTER INSERT ON denuncias
   FOR EACH ROW
@@ -1177,6 +1284,8 @@ CREATE TRIGGER trg_bloquear_por_denuncias
 
 -- 4. RLS Policies para denuncias
 ALTER TABLE denuncias ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Admin ve todas las denuncias" ON "denuncias";
+
 
 -- Solo el admin puede ver todas
 CREATE POLICY "Admin ve todas las denuncias" ON denuncias
@@ -1187,10 +1296,14 @@ CREATE POLICY "Admin ve todas las denuncias" ON denuncias
       AND p.nombre = 'Admin' -- o validar email directamente
     )
   );
+DROP POLICY IF EXISTS "Usuarios pueden denunciar" ON "denuncias";
+
 
 -- Usuario puede crear denuncia
 CREATE POLICY "Usuarios pueden denunciar" ON denuncias
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "Usuarios ven sus denuncias" ON "denuncias";
+
 
 -- Usuario puede ver sus propias denuncias
 CREATE POLICY "Usuarios ven sus denuncias" ON denuncias
@@ -1257,6 +1370,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_solicitud_unica_aprobada
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('cedulas', 'cedulas', false, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp'])
 ON CONFLICT (id) DO NOTHING;
+DROP POLICY IF EXISTS "Usuarios suben sus propias cedulas" ON "storage"."objects";
+
 
 -- RLS Policies para cedulas bucket
 CREATE POLICY "Usuarios suben sus propias cedulas" ON storage.objects
@@ -1264,12 +1379,16 @@ CREATE POLICY "Usuarios suben sus propias cedulas" ON storage.objects
     bucket_id = 'cedulas'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
+DROP POLICY IF EXISTS "Usuarios ven sus propias cedulas" ON "storage"."objects";
+
 
 CREATE POLICY "Usuarios ven sus propias cedulas" ON storage.objects
   FOR SELECT USING (
     bucket_id = 'cedulas'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
+DROP POLICY IF EXISTS "Admin ve todas las cedulas" ON "storage"."objects";
+
 
 CREATE POLICY "Admin ve todas las cedulas" ON storage.objects
   FOR SELECT USING (bucket_id = 'cedulas');
@@ -1278,18 +1397,26 @@ CREATE POLICY "Admin ve todas las cedulas" ON storage.objects
 ALTER TABLE solicitudes_verificacion ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Usuarios ven sus solicitudes" ON solicitudes_verificacion;
+DROP POLICY IF EXISTS "Usuarios ven sus solicitudes" ON "solicitudes_verificacion";
+
 CREATE POLICY "Usuarios ven sus solicitudes" ON solicitudes_verificacion
   FOR SELECT USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Usuarios crean solicitudes" ON solicitudes_verificacion;
+DROP POLICY IF EXISTS "Usuarios crean solicitudes" ON "solicitudes_verificacion";
+
 CREATE POLICY "Usuarios crean solicitudes" ON solicitudes_verificacion
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Admin ve todas las solicitudes" ON solicitudes_verificacion;
+DROP POLICY IF EXISTS "Admin ve todas las solicitudes" ON "solicitudes_verificacion";
+
 CREATE POLICY "Admin ve todas las solicitudes" ON solicitudes_verificacion
   FOR ALL USING (true);
 
 DROP POLICY IF EXISTS "Admin actualiza solicitudes" ON solicitudes_verificacion;
+DROP POLICY IF EXISTS "Admin actualiza solicitudes" ON "solicitudes_verificacion";
+
 CREATE POLICY "Admin actualiza solicitudes" ON solicitudes_verificacion
   FOR UPDATE USING (true);
 
@@ -1302,7 +1429,7 @@ CREATE POLICY "Admin actualiza solicitudes" ON solicitudes_verificacion
 
 -- 1. Columna
 ALTER TABLE productos
-  ADD COLUMN vendedor_verificado BOOLEAN DEFAULT false;
+  ADD COLUMN IF NOT EXISTS vendedor_verificado BOOLEAN DEFAULT false;
 
 -- 2. Sync datos existentes
 UPDATE productos p
@@ -1324,6 +1451,8 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS trg_propagar_verificado ON perfiles;
+DROP TRIGGER IF EXISTS "trg_propagar_verificado" ON "perfiles";
+
 CREATE TRIGGER trg_propagar_verificado
   AFTER UPDATE OF verificado ON perfiles
   FOR EACH ROW
@@ -1334,6 +1463,8 @@ CREATE TRIGGER trg_propagar_verificado
 -- 011_chat_fix_create_conv.sql
 -- Fix 1: RLS policy para permitir crear conversación cuando el usuario es user1 o user2
 DROP POLICY IF EXISTS "Crear conversaciones" ON conversaciones;
+DROP POLICY IF EXISTS "Crear conversaciones" ON "conversaciones";
+
 CREATE POLICY "Crear conversaciones" ON conversaciones FOR INSERT
   WITH CHECK (auth.uid() = user1_id OR auth.uid() = user2_id);
 
@@ -1433,6 +1564,8 @@ $$ LANGUAGE plpgsql;
 
 -- Drop trigger si existe y crear nuevo
 DROP TRIGGER IF EXISTS trg_pack_emprendedor ON productos;
+DROP TRIGGER IF EXISTS "trg_pack_emprendedor" ON "productos";
+
 CREATE TRIGGER trg_pack_emprendedor
   AFTER INSERT ON productos
   FOR EACH ROW
@@ -1469,6 +1602,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_recalc_emprendedor ON productos;
+DROP TRIGGER IF EXISTS "trg_recalc_emprendedor" ON "productos";
+
 CREATE TRIGGER trg_recalc_emprendedor
   AFTER DELETE OR UPDATE OF activo ON productos
   FOR EACH ROW
@@ -1478,6 +1613,8 @@ CREATE TRIGGER trg_recalc_emprendedor
 CREATE INDEX IF NOT EXISTS idx_transacciones_tipo ON transacciones_creditos(tipo);
 CREATE INDEX IF NOT EXISTS idx_transacciones_user_tipo ON transacciones_creditos(user_id, tipo);
 CREATE INDEX IF NOT EXISTS idx_productos_user_activo ON productos(user_id, activo);
+DROP POLICY IF EXISTS "Eliminar conversaciones propias" ON "conversaciones";
+
 
 
 -- ----- 012_delete_policies.sql -----
@@ -1486,6 +1623,8 @@ CREATE INDEX IF NOT EXISTS idx_productos_user_activo ON productos(user_id, activ
 -- DELETE policy for conversaciones: user can delete if they are user1 or user2
 create policy "Eliminar conversaciones propias" on conversaciones for delete
   using (auth.uid() = user1_id or auth.uid() = user2_id);
+DROP POLICY IF EXISTS "Eliminar mensajes propios" ON "mensajes";
+
 
 -- DELETE policy for mensajes: user can delete messages they sent or received in their conversations
 create policy "Eliminar mensajes propios" on mensajes for delete
@@ -1657,6 +1796,8 @@ $$ LANGUAGE plpgsql;
 
 -- Después de cualquier update en perfiles
 DROP TRIGGER IF EXISTS trg_calc_reputacion ON perfiles;
+DROP TRIGGER IF EXISTS "trg_calc_reputacion" ON "perfiles";
+
 CREATE TRIGGER trg_calc_reputacion
   AFTER INSERT OR UPDATE ON perfiles
   FOR EACH ROW
@@ -1664,6 +1805,8 @@ CREATE TRIGGER trg_calc_reputacion
 
 -- Después de insertar/rechazar producto (cambia reputación vendedor)
 DROP TRIGGER IF EXISTS trg_calc_reputacion_prod ON productos;
+DROP TRIGGER IF EXISTS "trg_calc_reputacion_prod" ON "productos";
+
 CREATE TRIGGER trg_calc_reputacion_prod
   AFTER INSERT OR UPDATE OF activo, estado_moderacion ON productos
   FOR EACH ROW
@@ -1671,6 +1814,8 @@ CREATE TRIGGER trg_calc_reputacion_prod
 
 -- Después de insertar reseña
 DROP TRIGGER IF EXISTS trg_calc_reputacion_resena ON resenas;
+DROP TRIGGER IF EXISTS "trg_calc_reputacion_resena" ON "resenas";
+
 CREATE TRIGGER trg_calc_reputacion_resena
   AFTER INSERT OR UPDATE ON resenas
   FOR EACH ROW
@@ -1696,6 +1841,8 @@ CREATE INDEX IF NOT EXISTS idx_productos_vendido ON productos(user_id, activo, e
 -- This policy simply requires: sender must be the authenticated user.
 
 drop policy if exists "Enviar mensajes" on mensajes;
+DROP POLICY IF EXISTS "Enviar mensajes" ON "mensajes";
+
 
 create policy "Enviar mensajes" on mensajes for insert
   with check (auth.uid() = remitente_id);
@@ -1711,8 +1858,8 @@ create policy "Enviar mensajes" on mensajes for insert
 -- 1. Drop triggers
 DROP TRIGGER IF EXISTS trigger_crear_conversacion ON mensajes;
 DROP TRIGGER IF EXISTS trigger_ultimo_mensaje ON mensajes;
-DROP FUNCTION IF EXISTS crear_conversacion_si_no_existe();
-DROP FUNCTION IF EXISTS actualizar_ultimo_mensaje();
+DROP FUNCTION IF EXISTS crear_conversacion_si_no_existe() CASCADE;
+DROP FUNCTION IF EXISTS actualizar_ultimo_mensaje() CASCADE;
 
 -- 2. Drop policies
 DROP POLICY IF EXISTS "Ver mensajes" ON mensajes;
@@ -1728,7 +1875,7 @@ DROP TABLE IF EXISTS mensajes CASCADE;
 DROP TABLE IF EXISTS conversaciones CASCADE;
 
 -- 4. Recrear conversaciones
-CREATE TABLE conversaciones (
+CREATE TABLE IF NOT EXISTS conversaciones (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user1_id UUID NOT NULL,
   user2_id UUID NOT NULL,
@@ -1738,14 +1885,13 @@ CREATE TABLE conversaciones (
   creado_en TIMESTAMPTZ DEFAULT NOW(),
   CHECK (user1_id != user2_id)
 );
-
-CREATE INDEX idx_conv_user1 ON conversaciones(user1_id);
-CREATE INDEX idx_conv_user2 ON conversaciones(user2_id);
-CREATE UNIQUE INDEX uq_conv_producto ON conversaciones(user1_id, user2_id, producto_id) WHERE producto_id IS NOT NULL;
-CREATE UNIQUE INDEX uq_conv_sin_producto ON conversaciones(user1_id, user2_id) WHERE producto_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_conv_user1 ON conversaciones(user1_id);
+CREATE INDEX IF NOT EXISTS idx_conv_user2 ON conversaciones(user2_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_conv_producto ON conversaciones(user1_id, user2_id, producto_id) WHERE producto_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_conv_sin_producto ON conversaciones(user1_id, user2_id) WHERE producto_id IS NULL;
 
 -- 5. Recrear mensajes
-CREATE TABLE mensajes (
+CREATE TABLE IF NOT EXISTS mensajes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   conversacion_id UUID REFERENCES conversaciones(id) ON DELETE CASCADE,
   remitente_id UUID REFERENCES auth.users(id),
@@ -1755,27 +1901,36 @@ CREATE TABLE mensajes (
   leido BOOLEAN DEFAULT FALSE,
   creado_en TIMESTAMPTZ DEFAULT NOW()
 );
-
-CREATE INDEX idx_msg_conv ON mensajes(conversacion_id, creado_en);
-CREATE INDEX idx_msg_remitente ON mensajes(remitente_id);
-CREATE INDEX idx_msg_destinatario_leido ON mensajes(destinatario_id, leido) WHERE leido = FALSE;
+CREATE INDEX IF NOT EXISTS idx_msg_conv ON mensajes(conversacion_id, creado_en);
+CREATE INDEX IF NOT EXISTS idx_msg_remitente ON mensajes(remitente_id);
+CREATE INDEX IF NOT EXISTS idx_msg_destinatario_leido ON mensajes(destinatario_id, leido) WHERE leido = FALSE;
 
 -- 6. Enable RLS
 ALTER TABLE conversaciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mensajes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "conv_select" ON "conversaciones";
+
 
 -- 7. RLS conversaciones
 CREATE POLICY "conv_select" ON conversaciones FOR SELECT
   USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+DROP POLICY IF EXISTS "conv_insert" ON "conversaciones";
+
 
 CREATE POLICY "conv_insert" ON conversaciones FOR INSERT
   WITH CHECK (auth.uid() = user1_id OR auth.uid() = user2_id);
+DROP POLICY IF EXISTS "conv_update" ON "conversaciones";
+
 
 CREATE POLICY "conv_update" ON conversaciones FOR UPDATE
   USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+DROP POLICY IF EXISTS "conv_delete" ON "conversaciones";
+
 
 CREATE POLICY "conv_delete" ON conversaciones FOR DELETE
   USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+DROP POLICY IF EXISTS "msg_select" ON "mensajes";
+
 
 -- 8. RLS mensajes
 -- SELECT: el usuario debe ser parte de la conversacion
@@ -1785,15 +1940,21 @@ CREATE POLICY "msg_select" ON mensajes FOR SELECT
     WHERE conversaciones.id = mensajes.conversacion_id
     AND (conversaciones.user1_id = auth.uid() OR conversaciones.user2_id = auth.uid())
   ));
+DROP POLICY IF EXISTS "msg_insert" ON "mensajes";
+
 
 -- INSERT: solo verificar que el remitente sea el usuario logueado
 -- (sin JOINs — el trigger crea la conversacion si hace falta)
 CREATE POLICY "msg_insert" ON mensajes FOR INSERT
   WITH CHECK (auth.uid() = remitente_id);
+DROP POLICY IF EXISTS "msg_update" ON "mensajes";
+
 
 -- UPDATE: marcar como leído (solo destinatario)
 CREATE POLICY "msg_update" ON mensajes FOR UPDATE
   USING (auth.uid() = destinatario_id);
+DROP POLICY IF EXISTS "msg_delete" ON "mensajes";
+
 
 -- DELETE: solo si el usuario es parte de la conversación
 CREATE POLICY "msg_delete" ON mensajes FOR DELETE
@@ -1802,6 +1963,8 @@ CREATE POLICY "msg_delete" ON mensajes FOR DELETE
     WHERE conversaciones.id = mensajes.conversacion_id
     AND (conversaciones.user1_id = auth.uid() OR conversaciones.user2_id = auth.uid())
   ));
+DROP FUNCTION IF EXISTS crear_conversacion_si_no_existe() CASCADE;
+
 
 -- 9. Trigger: crear conversacion al insertar mensaje
 CREATE OR REPLACE FUNCTION crear_conversacion_si_no_existe()
@@ -1842,11 +2005,15 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS "trigger_crear_conversacion" ON "mensajes";
+
 
 CREATE TRIGGER trigger_crear_conversacion
   BEFORE INSERT ON mensajes
   FOR EACH ROW
   EXECUTE FUNCTION crear_conversacion_si_no_existe();
+DROP FUNCTION IF EXISTS actualizar_ultimo_mensaje() CASCADE;
+
 
 -- 10. Trigger: actualizar ultimo_mensaje
 CREATE OR REPLACE FUNCTION actualizar_ultimo_mensaje()
@@ -1859,6 +2026,8 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS "trigger_ultimo_mensaje" ON "mensajes";
+
 
 CREATE TRIGGER trigger_ultimo_mensaje
   AFTER INSERT ON mensajes
@@ -1880,6 +2049,8 @@ ALTER SEQUENCE IF EXISTS conversaciones_id_seq RESTART WITH 1;
 -- ----- 016_add_seller_telefono.sql -----
 -- Añadir columna seller_telefono y seller_nombre a productos si no existen
 ALTER TABLE productos ADD COLUMN IF NOT EXISTS seller_telefono text;
+DROP FUNCTION IF EXISTS crear_perfil() CASCADE;
+
 
 
 -- ----- 017_fix_perfiles.sql -----
@@ -1909,6 +2080,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Recreate the trigger if it doesn't already exist
 DROP TRIGGER IF EXISTS crear_perfil_trigger ON auth.users;
+DROP TRIGGER IF EXISTS "crear_perfil_trigger" ON "auth"."users";
+
 CREATE TRIGGER crear_perfil_trigger
   AFTER INSERT ON auth.users
   FOR EACH ROW
@@ -1921,6 +2094,8 @@ CREATE TRIGGER crear_perfil_trigger
 
 -- Allow users to INSERT their own profile
 DROP POLICY IF EXISTS "Insert propio" ON perfiles;
+DROP POLICY IF EXISTS "Insert propio" ON "perfiles";
+
 CREATE POLICY "Insert propio" ON perfiles FOR INSERT
   WITH CHECK (auth.uid() = id);
 
@@ -2081,6 +2256,8 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 );
 
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own push subscriptions" ON "push_subscriptions";
+
 
 CREATE POLICY "Users manage own push subscriptions"
     ON push_subscriptions FOR ALL
@@ -2100,8 +2277,7 @@ CREATE TABLE IF NOT EXISTS notificaciones_push (
     procesada boolean DEFAULT false,
     creado_en timestamptz DEFAULT now()
 );
-
-CREATE INDEX idx_notificaciones_push_pending ON notificaciones_push (target_user_id, procesada) WHERE procesada = false;
+CREATE INDEX IF NOT EXISTS idx_notificaciones_push_pending ON notificaciones_push (target_user_id, procesada) WHERE procesada = false;
 
 
 -- ----- 021_stats_y_alertas.sql -----
@@ -2119,6 +2295,8 @@ CREATE TABLE IF NOT EXISTS historial_precios (
 );
 
 ALTER TABLE historial_precios ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "historial_precios: lectura publica" ON "historial_precios";
+
 CREATE POLICY "historial_precios: lectura publica"
     ON historial_precios FOR SELECT USING (true);
 
@@ -2134,13 +2312,15 @@ CREATE TABLE IF NOT EXISTS busquedas_guardadas (
 );
 
 ALTER TABLE busquedas_guardadas ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "busquedas_guardadas: users own" ON "busquedas_guardadas";
+
 CREATE POLICY "busquedas_guardadas: users own"
     ON busquedas_guardadas FOR ALL
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
 -- Índice para búsqueda de alertas
-CREATE INDEX idx_busquedas_guardadas_user ON busquedas_guardadas(user_id, activa);
+CREATE INDEX IF NOT EXISTS idx_busquedas_guardadas_user ON busquedas_guardadas(user_id, activa);
 
 
 -- ----- 022_trigger_precio.sql -----
@@ -2164,6 +2344,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_precio_history ON productos;
+DROP TRIGGER IF EXISTS "trg_precio_history" ON "productos";
+
 CREATE TRIGGER trg_precio_history
   AFTER UPDATE OF precio_usd ON productos
   FOR EACH ROW
@@ -2195,6 +2377,8 @@ create table if not exists admins (
 
 insert into admins (email) values ('gtrespana@gmail.com')
 on conflict (email) do nothing;
+DROP FUNCTION IF EXISTS aprobar_transaccion(uuid, uuid) CASCADE;
+
 
 -- 2. aprobar_transaccion: SOLO admins (según sesión JWT, no el parámetro)
 create or replace function aprobar_transaccion(
@@ -2254,6 +2438,8 @@ begin
   return jsonb_build_object('ok', true, 'creditos_anadidos', v_monto);
 end;
 $$;
+DROP FUNCTION IF EXISTS usar_boost(uuid, uuid) CASCADE;
+
 
 -- 3. usar_boost: el llamador debe ser el dueño del producto
 create or replace function usar_boost(
@@ -2295,6 +2481,8 @@ begin
   return jsonb_build_object('ok', true, 'balance', v_balance - 1);
 end;
 $$;
+DROP FUNCTION IF EXISTS usar_destacado(uuid, uuid, int4) CASCADE;
+
 
 -- 4. usar_destacado: igual que usar_boost
 create or replace function usar_destacado(
@@ -2429,6 +2617,8 @@ end
 $$;
 
 drop trigger if exists trg_productos_slug on public.productos;
+DROP TRIGGER IF EXISTS "trg_productos_slug" ON "public"."productos";
+
 
 create trigger trg_productos_slug
   before insert on public.productos
@@ -2439,7 +2629,7 @@ comment on column public.productos.slug is
 
 -- 7. Actualizar RPCs que la app usa para listar productos, incluyendo slug.
 --    (create or replace con cambio de returns table requiere drop previo)
-drop function if exists public.obtener_destacados_home(integer);
+drop function if exists public.obtener_destacados_home(integer) CASCADE;
 
 create or replace function public.obtener_destacados_home(
   p_limite integer default 8
@@ -2784,9 +2974,13 @@ grant execute on function public.is_admin() to anon, authenticated;
  drop policy if exists "Ver perfiles" on public.perfiles;
  drop policy if exists "Editar propio perfil" on public.perfiles;
  drop policy if exists "Insert propio" on public.perfiles;
+DROP POLICY IF EXISTS "Ver perfiles públicos" ON "public"."perfiles";
+
 
 create policy "Ver perfiles públicos" on public.perfiles
   for select using (true);
+DROP POLICY IF EXISTS "Editar campos propios" ON "public"."perfiles";
+
 
 create policy "Editar campos propios" on public.perfiles
   for update
@@ -2870,13 +3064,19 @@ revoke insert, update, delete on table public.resenas from anon, authenticated;
  drop policy if exists "Admin ve todas las denuncias" on public.denuncias;
  drop policy if exists "Usuarios pueden denunciar" on public.denuncias;
  drop policy if exists "Usuarios ven sus denuncias" on public.denuncias;
+DROP POLICY IF EXISTS "Denuncias visibles para reportante o admin" ON "public"."denuncias";
+
 
 create policy "Denuncias visibles para reportante o admin" on public.denuncias
   for select using (auth.uid() = reportante_id or public.is_admin());
+DROP POLICY IF EXISTS "Usuarios denuncian con su propia identidad" ON "public"."denuncias";
+
 
 create policy "Usuarios denuncian con su propia identidad" on public.denuncias
   for insert
   with check (auth.uid() = reportante_id);
+DROP POLICY IF EXISTS "Admin actualiza denuncias" ON "public"."denuncias";
+
 
 create policy "Admin actualiza denuncias" on public.denuncias
   for update
@@ -2891,18 +3091,26 @@ create policy "Admin actualiza denuncias" on public.denuncias
  drop policy if exists "Usuarios crean solicitudes" on public.solicitudes_verificacion;
  drop policy if exists "Admin ve todas las solicitudes" on public.solicitudes_verificacion;
  drop policy if exists "Admin actualiza solicitudes" on public.solicitudes_verificacion;
+DROP POLICY IF EXISTS "Usuario ve su solicitud o admin" ON "public"."solicitudes_verificacion";
+
 
 create policy "Usuario ve su solicitud o admin" on public.solicitudes_verificacion
   for select using (auth.uid() = user_id or public.is_admin());
+DROP POLICY IF EXISTS "Usuario crea su propia solicitud" ON "public"."solicitudes_verificacion";
+
 
 create policy "Usuario crea su propia solicitud" on public.solicitudes_verificacion
   for insert
   with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Admin actualiza solicitudes de verificación" ON "public"."solicitudes_verificacion";
+
 
 create policy "Admin actualiza solicitudes de verificación" on public.solicitudes_verificacion
   for update
   using (public.is_admin())
   with check (public.is_admin());
+DROP POLICY IF EXISTS "Admin elimina solicitudes de verificación" ON "public"."solicitudes_verificacion";
+
 
 create policy "Admin elimina solicitudes de verificación" on public.solicitudes_verificacion
   for delete using (public.is_admin());
@@ -2918,6 +3126,8 @@ where id = 'comprobantes';
  drop policy if exists "Usuarios pueden subir comprobantes" on storage.objects;
  drop policy if exists "Cualquiera puede ver comprobantes" on storage.objects;
  drop policy if exists "Ver comprobantes propios" on storage.objects;
+DROP POLICY IF EXISTS "Usuarios suben sus comprobantes" ON "storage"."objects";
+
 
 create policy "Usuarios suben sus comprobantes"
 on storage.objects for insert
@@ -2926,6 +3136,8 @@ with check (
   and auth.uid() is not null
   and (storage.foldername(name))[1] = auth.uid()::text
 );
+DROP POLICY IF EXISTS "Usuarios ven sus comprobantes" ON "storage"."objects";
+
 
 create policy "Usuarios ven sus comprobantes"
 on storage.objects for select
@@ -2933,12 +3145,16 @@ using (
   bucket_id = 'comprobantes'
   and (storage.foldername(name))[1] = auth.uid()::text
 );
+DROP POLICY IF EXISTS "Admin ve comprobantes" ON "storage"."objects";
+
 
 create policy "Admin ve comprobantes"
 on storage.objects for select
 using (bucket_id = 'comprobantes' and public.is_admin());
 
  drop policy if exists "Admin ve todas las cedulas" on storage.objects;
+DROP POLICY IF EXISTS "Admin ve todas las cedulas" ON "storage"."objects";
+
 create policy "Admin ve todas las cedulas"
 on storage.objects for select
 using (bucket_id = 'cedulas' and public.is_admin());
@@ -3196,6 +3412,8 @@ revoke execute on function public.agregar_creditos_admin(uuid, integer, text) fr
 -- ────────────────────────────────────────────────────────────────────────────
 
  drop trigger if exists trg_calc_reputacion on public.perfiles;
+DROP TRIGGER IF EXISTS "trg_calc_reputacion" ON "public"."perfiles";
+
 create trigger trg_calc_reputacion
   after insert or update of verificado, verificado_desde on public.perfiles
   for each row execute function public.fn_calcular_reputacion();
@@ -3229,9 +3447,8 @@ $$;
 -- PostgreSQL no permite cambiar el tipo de retorno con CREATE OR REPLACE.
 -- Algunas instalaciones antiguas tienen esta función con una firma/retorno
 -- diferente, así que se elimina solo la sobrecarga exacta antes de recrearla.
-drop function if exists public.obtener_detalle_producto(uuid, uuid);
-
-create function public.obtener_detalle_producto(
+drop function if exists public.obtener_detalle_producto(uuid, uuid) CASCADE;
+CREATE OR REPLACE FUNCTION public.obtener_detalle_producto(
   p_producto_id uuid,
   p_user_id uuid default null
 )
@@ -3362,6 +3579,8 @@ drop policy if exists "conv_insert" on public.conversaciones;
  drop policy if exists "conv_update" on public.conversaciones;
  drop policy if exists "Eliminar conversaciones propias" on public.conversaciones;
  drop policy if exists "conv_delete" on public.conversaciones;
+DROP POLICY IF EXISTS "Ver conversaciones propias" ON "public"."conversaciones";
+
 
 create policy "Ver conversaciones propias" on public.conversaciones
   for select using (auth.uid() = user1_id or auth.uid() = user2_id);
@@ -3389,6 +3608,8 @@ drop policy if exists "Ver mensajes" on public.mensajes;
 drop policy if exists "msg_select" on public.mensajes;
 drop policy if exists "msg_update" on public.mensajes;
 drop policy if exists "Actualizar mensajes" on public.mensajes;
+DROP POLICY IF EXISTS "Ver mensajes de conversaciones propias" ON "public"."mensajes";
+
 
 create policy "Ver mensajes de conversaciones propias" on public.mensajes
   for select using (
@@ -3399,6 +3620,8 @@ create policy "Ver mensajes de conversaciones propias" on public.mensajes
         and (c.user1_id = auth.uid() or c.user2_id = auth.uid())
     )
   );
+DROP POLICY IF EXISTS "Enviar mensajes dentro de conversación propia" ON "public"."mensajes";
+
 
 create policy "Enviar mensajes dentro de conversación propia" on public.mensajes
   for insert with check (
@@ -3530,7 +3753,7 @@ where exists (
 
 -- El trigger que reseteaba el flag permitía volver a cobrar. Se elimina.
 drop trigger if exists trg_recalc_emprendedor on public.productos;
-drop function if exists public.trg_recalcular_emprendedor();
+drop function if exists public.trg_recalcular_emprendedor() CASCADE;
 
 create or replace function public.trg_empaque_emprendedor()
 returns trigger
@@ -3584,6 +3807,8 @@ end;
 $$;
 
 drop trigger if exists trg_pack_emprendedor on public.productos;
+DROP TRIGGER IF EXISTS "trg_pack_emprendedor" ON "public"."productos";
+
 create trigger trg_pack_emprendedor
   after insert on public.productos
   for each row execute function public.trg_empaque_emprendedor();
@@ -3761,6 +3986,8 @@ revoke all on public.anuncios_globales from anon, authenticated;
 -- Lectura pública limitada a lo estrictamente visible (escrituras solo admin).
 grant select on public.anuncios_globales to anon, authenticated;
 grant all on public.anuncios_globales to service_role;
+DROP POLICY IF EXISTS "Anuncios activos públicos" ON "public"."anuncios_globales";
+
 
 create policy "Anuncios activos públicos"
 on public.anuncios_globales
@@ -3832,14 +4059,20 @@ create index if not exists idx_busquedas_guardadas_user
 alter table busquedas_guardadas enable row level security;
 
 drop policy if exists "Ver búsquedas propias" on busquedas_guardadas;
+DROP POLICY IF EXISTS "Ver búsquedas propias" ON "busquedas_guardadas";
+
 create policy "Ver búsquedas propias" on busquedas_guardadas
   for select using (auth.uid() = user_id);
 
 drop policy if exists "Crear búsquedas propias" on busquedas_guardadas;
+DROP POLICY IF EXISTS "Crear búsquedas propias" ON "busquedas_guardadas";
+
 create policy "Crear búsquedas propias" on busquedas_guardadas
   for insert with check (auth.uid() = user_id);
 
 drop policy if exists "Eliminar búsquedas propias" on busquedas_guardadas;
+DROP POLICY IF EXISTS "Eliminar búsquedas propias" ON "busquedas_guardadas";
+
 create policy "Eliminar búsquedas propias" on busquedas_guardadas
   for delete using (auth.uid() = user_id);
 
@@ -3880,11 +4113,15 @@ ON CONFLICT (id) DO NOTHING;
 
 -- SELECT: fotos públicas, todo el mundo puede leer
 DROP POLICY IF EXISTS "productos-fotos: public read" ON storage.objects;
+DROP POLICY IF EXISTS "productos-fotos: public read" ON "storage"."objects";
+
 CREATE POLICY "productos-fotos: public read" ON storage.objects
   FOR SELECT USING (bucket_id = 'productos-fotos');
 
 -- INSERT: usuarios autenticados pueden subir solo a su carpeta (<user_id>/...)
 DROP POLICY IF EXISTS "productos-fotos: authenticated upload own folder" ON storage.objects;
+DROP POLICY IF EXISTS "productos-fotos: authenticated upload own folder" ON "storage"."objects";
+
 CREATE POLICY "productos-fotos: authenticated upload own folder" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -3894,6 +4131,8 @@ CREATE POLICY "productos-fotos: authenticated upload own folder" ON storage.obje
 
 -- UPDATE: propietario
 DROP POLICY IF EXISTS "productos-fotos: owner update" ON storage.objects;
+DROP POLICY IF EXISTS "productos-fotos: owner update" ON "storage"."objects";
+
 CREATE POLICY "productos-fotos: owner update" ON storage.objects
   FOR UPDATE TO authenticated
   USING (
@@ -3903,6 +4142,8 @@ CREATE POLICY "productos-fotos: owner update" ON storage.objects
 
 -- DELETE: propietario
 DROP POLICY IF EXISTS "productos-fotos: owner delete" ON storage.objects;
+DROP POLICY IF EXISTS "productos-fotos: owner delete" ON "storage"."objects";
+
 CREATE POLICY "productos-fotos: owner delete" ON storage.objects
   FOR DELETE TO authenticated
   USING (
@@ -3917,10 +4158,14 @@ VALUES ('foto_perfil', 'foto_perfil', true, 3145728, ARRAY['image/jpeg','image/p
 ON CONFLICT (id) DO NOTHING;
 
 DROP POLICY IF EXISTS "foto_perfil: public read" ON storage.objects;
+DROP POLICY IF EXISTS "foto_perfil: public read" ON "storage"."objects";
+
 CREATE POLICY "foto_perfil: public read" ON storage.objects
   FOR SELECT USING (bucket_id = 'foto_perfil');
 
 DROP POLICY IF EXISTS "foto_perfil: own upload" ON storage.objects;
+DROP POLICY IF EXISTS "foto_perfil: own upload" ON "storage"."objects";
+
 CREATE POLICY "foto_perfil: own upload" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -3933,11 +4178,15 @@ CREATE POLICY "foto_perfil: own upload" ON storage.objects
   );
 
 DROP POLICY IF EXISTS "foto_perfil: own update" ON storage.objects;
+DROP POLICY IF EXISTS "foto_perfil: own update" ON "storage"."objects";
+
 CREATE POLICY "foto_perfil: own update" ON storage.objects
   FOR UPDATE TO authenticated
   USING (bucket_id = 'foto_perfil' AND (storage.foldername(name))[1] = auth.uid()::text);
 
 DROP POLICY IF EXISTS "foto_perfil: own delete" ON storage.objects;
+DROP POLICY IF EXISTS "foto_perfil: own delete" ON "storage"."objects";
+
 CREATE POLICY "foto_perfil: own delete" ON storage.objects
   FOR DELETE TO authenticated
   USING (bucket_id = 'foto_perfil' AND (storage.foldername(name))[1] = auth.uid()::text);

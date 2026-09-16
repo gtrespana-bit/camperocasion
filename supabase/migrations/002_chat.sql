@@ -12,12 +12,18 @@ create table if not exists conversaciones (
 
 -- RLS conversaciones
 alter table conversaciones enable row level security;
+DROP POLICY IF EXISTS "Ver conversaciones propias" ON "conversaciones";
+
 
 create policy "Ver conversaciones propias" on conversaciones for select
   using (auth.uid() = user1_id or auth.uid() = user2_id);
+DROP POLICY IF EXISTS "Crear conversaciones" ON "conversaciones";
+
 
 create policy "Crear conversaciones" on conversaciones for insert
   with check (auth.uid() = user1_id);
+DROP POLICY IF EXISTS "Actualizar conversaciones" ON "conversaciones";
+
 
 create policy "Actualizar conversaciones" on conversaciones for update
   using (auth.uid() = user1_id or auth.uid() = user2_id);
@@ -48,6 +54,8 @@ begin
   return NEW;
 end;
 $$ language plpgsql;
+DROP TRIGGER IF EXISTS "trigger_crear_conversacion" ON "mensajes";
+
 
 create trigger trigger_crear_conversacion
   before insert on mensajes
@@ -65,6 +73,8 @@ begin
   return NEW;
 end;
 $$ language plpgsql;
+DROP TRIGGER IF EXISTS "trigger_ultimo_mensaje" ON "mensajes";
+
 
 create trigger trigger_ultimo_mensaje
   after insert on mensajes
@@ -73,6 +83,8 @@ create trigger trigger_ultimo_mensaje
 
 -- RLS mensajes (actualizar para incluir conversacion_id)
 drop policy if exists "Ver mensajes" on mensajes;
+DROP POLICY IF EXISTS "Ver mensajes" ON "mensajes";
+
 create policy "Ver mensajes" on mensajes for select
   using (
     auth.uid() in (
@@ -83,5 +95,7 @@ create policy "Ver mensajes" on mensajes for select
   );
 
 drop policy if exists "Enviar mensajes" on mensajes;
+DROP POLICY IF EXISTS "Enviar mensajes" ON "mensajes";
+
 create policy "Enviar mensajes" on mensajes for insert
   with check (auth.uid() = remitente_id);

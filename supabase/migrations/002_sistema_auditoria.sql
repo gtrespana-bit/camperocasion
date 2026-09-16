@@ -77,41 +77,57 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Productos: registrar cambios de precio, estado, moderación
 DROP TRIGGER IF EXISTS trigger_auditoria_productos ON productos;
+DROP TRIGGER IF EXISTS "trigger_auditoria_productos" ON "productos";
+
 CREATE TRIGGER trigger_auditoria_productos
 AFTER INSERT OR UPDATE OR DELETE ON productos
 FOR EACH ROW EXECUTE FUNCTION registrar_auditoria();
 
 -- Perfiles: registrar cambios de verificación, créditos
 DROP TRIGGER IF EXISTS trigger_auditoria_perfiles ON perfiles;
+DROP TRIGGER IF EXISTS "trigger_auditoria_perfiles" ON "perfiles";
+
 CREATE TRIGGER trigger_auditoria_perfiles
 AFTER INSERT OR UPDATE OR DELETE ON perfiles
 FOR EACH ROW EXECUTE FUNCTION registrar_auditoria();
 
 -- Mensajes: registrar envío y eliminación de mensajes
 DROP TRIGGER IF EXISTS trigger_auditoria_mensajes ON mensajes;
+DROP TRIGGER IF EXISTS "trigger_auditoria_mensajes" ON "mensajes";
+
 CREATE TRIGGER trigger_auditoria_mensajes
 AFTER INSERT OR UPDATE OR DELETE ON mensajes
 FOR EACH ROW EXECUTE FUNCTION registrar_auditoria();
 
 -- Transacciones de créditos: registrar todas las transacciones
 DROP TRIGGER IF EXISTS trigger_auditoria_transacciones ON transacciones_creditos;
+DROP TRIGGER IF EXISTS "trigger_auditoria_transacciones" ON "transacciones_creditos";
+
 CREATE TRIGGER trigger_auditoria_transacciones
 AFTER INSERT OR UPDATE OR DELETE ON transacciones_creditos
 FOR EACH ROW EXECUTE FUNCTION registrar_auditoria();
 
 -- Política RLS para auditoría
 ALTER TABLE auditoria ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Admin puede ver auditoría" ON "auditoria";
+
 
 -- Solo administradores pueden ver auditoría (usando service_role en API)
 CREATE POLICY "Admin puede ver auditoría" ON auditoria
 FOR SELECT USING (auth.jwt() ->> 'role' = 'admin');
+DROP POLICY IF EXISTS "Nadie puede insertar auditoría" ON "auditoria";
+
 
 -- Nadie puede modificar auditoría manualmente (solo triggers)
 CREATE POLICY "Nadie puede insertar auditoría" ON auditoria
 FOR INSERT WITH CHECK (false);
+DROP POLICY IF EXISTS "Nadie puede actualizar auditoría" ON "auditoria";
+
 
 CREATE POLICY "Nadie puede actualizar auditoría" ON auditoria
 FOR UPDATE USING (false);
+DROP POLICY IF EXISTS "Nadie puede eliminar auditoría" ON "auditoria";
+
 
 CREATE POLICY "Nadie puede eliminar auditoría" ON auditoria
 FOR DELETE USING (false);

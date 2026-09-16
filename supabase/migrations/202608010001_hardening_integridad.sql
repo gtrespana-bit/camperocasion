@@ -68,9 +68,13 @@ grant execute on function public.is_admin() to anon, authenticated;
  drop policy if exists "Ver perfiles" on public.perfiles;
  drop policy if exists "Editar propio perfil" on public.perfiles;
  drop policy if exists "Insert propio" on public.perfiles;
+DROP POLICY IF EXISTS "Ver perfiles públicos" ON "public"."perfiles";
+
 
 create policy "Ver perfiles públicos" on public.perfiles
   for select using (true);
+DROP POLICY IF EXISTS "Editar campos propios" ON "public"."perfiles";
+
 
 create policy "Editar campos propios" on public.perfiles
   for update
@@ -154,13 +158,19 @@ revoke insert, update, delete on table public.resenas from anon, authenticated;
  drop policy if exists "Admin ve todas las denuncias" on public.denuncias;
  drop policy if exists "Usuarios pueden denunciar" on public.denuncias;
  drop policy if exists "Usuarios ven sus denuncias" on public.denuncias;
+DROP POLICY IF EXISTS "Denuncias visibles para reportante o admin" ON "public"."denuncias";
+
 
 create policy "Denuncias visibles para reportante o admin" on public.denuncias
   for select using (auth.uid() = reportante_id or public.is_admin());
+DROP POLICY IF EXISTS "Usuarios denuncian con su propia identidad" ON "public"."denuncias";
+
 
 create policy "Usuarios denuncian con su propia identidad" on public.denuncias
   for insert
   with check (auth.uid() = reportante_id);
+DROP POLICY IF EXISTS "Admin actualiza denuncias" ON "public"."denuncias";
+
 
 create policy "Admin actualiza denuncias" on public.denuncias
   for update
@@ -175,18 +185,26 @@ create policy "Admin actualiza denuncias" on public.denuncias
  drop policy if exists "Usuarios crean solicitudes" on public.solicitudes_verificacion;
  drop policy if exists "Admin ve todas las solicitudes" on public.solicitudes_verificacion;
  drop policy if exists "Admin actualiza solicitudes" on public.solicitudes_verificacion;
+DROP POLICY IF EXISTS "Usuario ve su solicitud o admin" ON "public"."solicitudes_verificacion";
+
 
 create policy "Usuario ve su solicitud o admin" on public.solicitudes_verificacion
   for select using (auth.uid() = user_id or public.is_admin());
+DROP POLICY IF EXISTS "Usuario crea su propia solicitud" ON "public"."solicitudes_verificacion";
+
 
 create policy "Usuario crea su propia solicitud" on public.solicitudes_verificacion
   for insert
   with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Admin actualiza solicitudes de verificación" ON "public"."solicitudes_verificacion";
+
 
 create policy "Admin actualiza solicitudes de verificación" on public.solicitudes_verificacion
   for update
   using (public.is_admin())
   with check (public.is_admin());
+DROP POLICY IF EXISTS "Admin elimina solicitudes de verificación" ON "public"."solicitudes_verificacion";
+
 
 create policy "Admin elimina solicitudes de verificación" on public.solicitudes_verificacion
   for delete using (public.is_admin());
@@ -202,6 +220,8 @@ where id = 'comprobantes';
  drop policy if exists "Usuarios pueden subir comprobantes" on storage.objects;
  drop policy if exists "Cualquiera puede ver comprobantes" on storage.objects;
  drop policy if exists "Ver comprobantes propios" on storage.objects;
+DROP POLICY IF EXISTS "Usuarios suben sus comprobantes" ON "storage"."objects";
+
 
 create policy "Usuarios suben sus comprobantes"
 on storage.objects for insert
@@ -210,6 +230,8 @@ with check (
   and auth.uid() is not null
   and (storage.foldername(name))[1] = auth.uid()::text
 );
+DROP POLICY IF EXISTS "Usuarios ven sus comprobantes" ON "storage"."objects";
+
 
 create policy "Usuarios ven sus comprobantes"
 on storage.objects for select
@@ -217,12 +239,16 @@ using (
   bucket_id = 'comprobantes'
   and (storage.foldername(name))[1] = auth.uid()::text
 );
+DROP POLICY IF EXISTS "Admin ve comprobantes" ON "storage"."objects";
+
 
 create policy "Admin ve comprobantes"
 on storage.objects for select
 using (bucket_id = 'comprobantes' and public.is_admin());
 
  drop policy if exists "Admin ve todas las cedulas" on storage.objects;
+DROP POLICY IF EXISTS "Admin ve todas las cedulas" ON "storage"."objects";
+
 create policy "Admin ve todas las cedulas"
 on storage.objects for select
 using (bucket_id = 'cedulas' and public.is_admin());
@@ -480,6 +506,8 @@ revoke execute on function public.agregar_creditos_admin(uuid, integer, text) fr
 -- ────────────────────────────────────────────────────────────────────────────
 
  drop trigger if exists trg_calc_reputacion on public.perfiles;
+DROP TRIGGER IF EXISTS "trg_calc_reputacion" ON "public"."perfiles";
+
 create trigger trg_calc_reputacion
   after insert or update of verificado, verificado_desde on public.perfiles
   for each row execute function public.fn_calcular_reputacion();
@@ -515,7 +543,7 @@ $$;
 -- diferente, así que se elimina solo la sobrecarga exacta antes de recrearla.
 drop function if exists public.obtener_detalle_producto(uuid, uuid);
 
-create function public.obtener_detalle_producto(
+CREATE OR REPLACE FUNCTION public.obtener_detalle_producto(
   p_producto_id uuid,
   p_user_id uuid default null
 )

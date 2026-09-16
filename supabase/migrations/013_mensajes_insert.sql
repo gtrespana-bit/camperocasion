@@ -4,6 +4,8 @@
 -- This policy simply requires: sender must be the authenticated user.
 
 drop policy if exists "Enviar mensajes" on mensajes;
+DROP POLICY IF EXISTS "Enviar mensajes" ON "mensajes";
+
 
 create policy "Enviar mensajes" on mensajes for insert
   with check (auth.uid() = remitente_id);

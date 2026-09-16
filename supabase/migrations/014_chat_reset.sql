@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS mensajes CASCADE;
 DROP TABLE IF EXISTS conversaciones CASCADE;
 
 -- 4. Recrear conversaciones
-CREATE TABLE conversaciones (
+CREATE TABLE IF NOT EXISTS conversaciones (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user1_id UUID NOT NULL,
   user2_id UUID NOT NULL,
@@ -35,13 +35,13 @@ CREATE TABLE conversaciones (
   CHECK (user1_id != user2_id)
 );
 
-CREATE INDEX idx_conv_user1 ON conversaciones(user1_id);
-CREATE INDEX idx_conv_user2 ON conversaciones(user2_id);
-CREATE UNIQUE INDEX uq_conv_producto ON conversaciones(user1_id, user2_id, producto_id) WHERE producto_id IS NOT NULL;
-CREATE UNIQUE INDEX uq_conv_sin_producto ON conversaciones(user1_id, user2_id) WHERE producto_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_conv_user1 ON conversaciones(user1_id);
+CREATE INDEX IF NOT EXISTS idx_conv_user2 ON conversaciones(user2_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_conv_producto ON conversaciones(user1_id, user2_id, producto_id) WHERE producto_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_conv_sin_producto ON conversaciones(user1_id, user2_id) WHERE producto_id IS NULL;
 
 -- 5. Recrear mensajes
-CREATE TABLE mensajes (
+CREATE TABLE IF NOT EXISTS mensajes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   conversacion_id UUID REFERENCES conversaciones(id) ON DELETE CASCADE,
   remitente_id UUID REFERENCES auth.users(id),
@@ -52,26 +52,36 @@ CREATE TABLE mensajes (
   creado_en TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_msg_conv ON mensajes(conversacion_id, creado_en);
-CREATE INDEX idx_msg_remitente ON mensajes(remitente_id);
-CREATE INDEX idx_msg_destinatario_leido ON mensajes(destinatario_id, leido) WHERE leido = FALSE;
+CREATE INDEX IF NOT EXISTS idx_msg_conv ON mensajes(conversacion_id, creado_en);
+CREATE INDEX IF NOT EXISTS idx_msg_remitente ON mensajes(remitente_id);
+CREATE INDEX IF NOT EXISTS idx_msg_destinatario_leido ON mensajes(destinatario_id, leido) WHERE leido = FALSE;
 
 -- 6. Enable RLS
 ALTER TABLE conversaciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mensajes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "conv_select" ON "conversaciones";
+
 
 -- 7. RLS conversaciones
 CREATE POLICY "conv_select" ON conversaciones FOR SELECT
   USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+DROP POLICY IF EXISTS "conv_insert" ON "conversaciones";
+
 
 CREATE POLICY "conv_insert" ON conversaciones FOR INSERT
   WITH CHECK (auth.uid() = user1_id OR auth.uid() = user2_id);
+DROP POLICY IF EXISTS "conv_update" ON "conversaciones";
+
 
 CREATE POLICY "conv_update" ON conversaciones FOR UPDATE
   USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+DROP POLICY IF EXISTS "conv_delete" ON "conversaciones";
+
 
 CREATE POLICY "conv_delete" ON conversaciones FOR DELETE
   USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+DROP POLICY IF EXISTS "msg_select" ON "mensajes";
+
 
 -- 8. RLS mensajes
 -- SELECT: el usuario debe ser parte de la conversacion
@@ -81,15 +91,21 @@ CREATE POLICY "msg_select" ON mensajes FOR SELECT
     WHERE conversaciones.id = mensajes.conversacion_id
     AND (conversaciones.user1_id = auth.uid() OR conversaciones.user2_id = auth.uid())
   ));
+DROP POLICY IF EXISTS "msg_insert" ON "mensajes";
+
 
 -- INSERT: solo verificar que el remitente sea el usuario logueado
 -- (sin JOINs — el trigger crea la conversacion si hace falta)
 CREATE POLICY "msg_insert" ON mensajes FOR INSERT
   WITH CHECK (auth.uid() = remitente_id);
+DROP POLICY IF EXISTS "msg_update" ON "mensajes";
+
 
 -- UPDATE: marcar como leído (solo destinatario)
 CREATE POLICY "msg_update" ON mensajes FOR UPDATE
   USING (auth.uid() = destinatario_id);
+DROP POLICY IF EXISTS "msg_delete" ON "mensajes";
+
 
 -- DELETE: solo si el usuario es parte de la conversación
 CREATE POLICY "msg_delete" ON mensajes FOR DELETE
@@ -138,6 +154,8 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS "trigger_crear_conversacion" ON "mensajes";
+
 
 CREATE TRIGGER trigger_crear_conversacion
   BEFORE INSERT ON mensajes
@@ -155,6 +173,8 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS "trigger_ultimo_mensaje" ON "mensajes";
+
 
 CREATE TRIGGER trigger_ultimo_mensaje
   AFTER INSERT ON mensajes

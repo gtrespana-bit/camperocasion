@@ -80,6 +80,7 @@ end;
 $$;
 
 -- 3. Función RPC: obtener productos destacados (para home)
+drop function if exists obtener_destacados_home(integer);
 create or replace function obtener_destacados_home(
   p_limite integer default 8
 )

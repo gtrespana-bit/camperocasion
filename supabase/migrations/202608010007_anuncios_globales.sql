@@ -29,6 +29,8 @@ revoke all on public.anuncios_globales from anon, authenticated;
 -- Lectura pública limitada a lo estrictamente visible (escrituras solo admin).
 grant select on public.anuncios_globales to anon, authenticated;
 grant all on public.anuncios_globales to service_role;
+DROP POLICY IF EXISTS "Anuncios activos públicos" ON "public"."anuncios_globales";
+
 
 create policy "Anuncios activos públicos"
 on public.anuncios_globales

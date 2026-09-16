@@ -109,10 +109,16 @@ CREATE TABLE IF NOT EXISTS resenas (
 
 -- RLS para reseñas
 ALTER TABLE resenas ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Ver todas las resenas" ON "resenas";
+
 
 CREATE POLICY "Ver todas las resenas" ON resenas FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Insert resenas (comprador)" ON "resenas";
+
 CREATE POLICY "Insert resenas (comprador)" ON resenas FOR INSERT
   WITH CHECK (auth.uid() = comprador_id);
+DROP POLICY IF EXISTS "Editar resenas propias" ON "resenas";
+
 CREATE POLICY "Editar resenas propias" ON resenas FOR UPDATE
   USING (auth.uid() = comprador_id);
 

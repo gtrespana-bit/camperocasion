@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS historial_precios (
 );
 
 ALTER TABLE historial_precios ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "historial_precios: lectura publica" ON "historial_precios";
+
 CREATE POLICY "historial_precios: lectura publica"
     ON historial_precios FOR SELECT USING (true);
 
@@ -27,10 +29,12 @@ CREATE TABLE IF NOT EXISTS busquedas_guardadas (
 );
 
 ALTER TABLE busquedas_guardadas ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "busquedas_guardadas: users own" ON "busquedas_guardadas";
+
 CREATE POLICY "busquedas_guardadas: users own"
     ON busquedas_guardadas FOR ALL
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
 -- Índice para búsqueda de alertas
-CREATE INDEX idx_busquedas_guardadas_user ON busquedas_guardadas(user_id, activa);
+CREATE INDEX IF NOT EXISTS idx_busquedas_guardadas_user ON busquedas_guardadas(user_id, activa);

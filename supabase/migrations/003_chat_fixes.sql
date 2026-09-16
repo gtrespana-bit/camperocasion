@@ -14,8 +14,8 @@ DROP INDEX IF EXISTS uq_conversaciones;
 DROP INDEX IF EXISTS uq_conversaciones_null;
 -- Limpieza del intento anterior con columna generada
 ALTER TABLE conversaciones DROP COLUMN IF EXISTS _producto_normalized;
-CREATE UNIQUE INDEX uq_conversaciones      ON conversaciones (user1_id, user2_id, producto_id) WHERE producto_id IS NOT NULL;
-CREATE UNIQUE INDEX uq_conversaciones_null ON conversaciones (user1_id, user2_id)               WHERE producto_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_conversaciones      ON conversaciones (user1_id, user2_id, producto_id) WHERE producto_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_conversaciones_null ON conversaciones (user1_id, user2_id)               WHERE producto_id IS NULL;
 
 -- 3. Índices para queries mas rapidas
 CREATE INDEX IF NOT EXISTS idx_conversaciones_usuarios ON conversaciones (user1_id, user2_id);

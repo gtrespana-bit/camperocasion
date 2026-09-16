@@ -18,8 +18,14 @@ CREATE INDEX IF NOT EXISTS idx_rate_limit_lookup ON rate_limit(key, identifier, 
 
 -- RLS: nadie puede leer rate_limit directamente
 ALTER TABLE rate_limit ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Nadie lee rate_limit" ON "rate_limit";
+
 CREATE POLICY "Nadie lee rate_limit" ON rate_limit FOR SELECT USING (false);
+DROP POLICY IF EXISTS "System inserta rate_limit" ON "rate_limit";
+
 CREATE POLICY "System inserta rate_limit" ON rate_limit FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "System elimina rate_limit" ON "rate_limit";
+
 CREATE POLICY "System elimina rate_limit" ON rate_limit FOR DELETE USING (true);
 
 -- Función para limpiar registros antiguos (> 24 horas)

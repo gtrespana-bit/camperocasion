@@ -84,10 +84,40 @@ def leading_ws(src, off):
     return src[line_start:off]
 
 
+def func_signature(st):
+    """Nombre y tipos de argumentos de un CreateFunctionStmt para DROP FUNCTION."""
+    name = '.'.join(n.sval if hasattr(n, 'sval') else str(n) for n in st.funcname)
+    parts = []
+    for p in (st.parameters or []):
+        tn = getattr(p, 'argType', None) or getattr(p, 'arg_type', None)
+        if tn.names:
+            parts.append(str(tn.names[-1].sval if hasattr(tn.names[-1], 'sval') else tn.names[-1]))
+        else:
+            parts.append('text')
+    return name, '(' + ', '.join(parts) + ')'
+
+
 def transform(path, dry=False):
     src = open(path, encoding='utf-8').read()
     stmts = split_statements(src)
     edits = []  # (offset, old_text, new_text) aplicados en orden descendente
+
+    # pase 1: firmas de funciones definidas mas de una vez (misma firma exacta)
+    from collections import Counter
+    sig_count = Counter()
+    for start, end in stmts:
+        stmt = src[start:end]
+        if not stmt.strip():
+            continue
+        try:
+            tree = parse_sql(stmt)
+        except Exception:
+            continue
+        for raw in tree:
+            st = getattr(raw, 'stmt', raw)
+            if isinstance(st, CreateFunctionStmt):
+                sig_count[func_signature(st)] += 1
+    dup_sigs = {sig for sig, n in sig_count.items() if n > 1}
 
     for idx, (start, end) in enumerate(stmts):
         stmt = src[start:end]
@@ -102,6 +132,9 @@ def transform(path, dry=False):
             continue
         for raw in tree:
             st = getattr(raw, 'stmt', raw)
+            # posicion exacta del keyword CREATE (salta comentarios previos)
+            koff = start + raw.stmt_location if raw.stmt_location >= 0 else start
+            tail = src[koff:]
 
             if isinstance(st, CreatePolicyStmt):
                 table = relname(st.table)
@@ -121,25 +154,28 @@ def transform(path, dry=False):
                     rel = relname(st.relation)
                     if not re.search(r'drop\s+table\s+if\s+exists\s+' + re.escape(rel) + r'\b',
                                      window, re.I):
-                        m = re.match(r'(\s*)CREATE\s+TABLE\s+(?!IF\s+NOT\s+EXISTS)', stmt, re.I)
+                        m = re.match(r'CREATE\s+TABLE\s+', tail, re.I)
                         if m:
-                            edits.append((start + len(m.group(1)), '',
-                                          'CREATE TABLE IF NOT EXISTS ' + stmt[m.end():]))
+                            edits.append((koff, m.group(0), 'CREATE TABLE IF NOT EXISTS '))
 
             elif isinstance(st, CreateFunctionStmt):
                 if not st.replace:
-                    m = re.match(r'(\s*)CREATE\s+(?!OR\s+REPLACE)FUNCTION', stmt, re.I)
+                    m = re.match(r'CREATE\s+FUNCTION', tail, re.I)
                     if m:
-                        edits.append((start, stmt[m.group(1).__len__():m.end()],
-                                      'CREATE OR REPLACE FUNCTION'))
+                        edits.append((koff, m.group(0), 'CREATE OR REPLACE FUNCTION'))
+                # firma duplicada: anteponer DROP FUNCTION (permite cambiar return type/defaults)
+                name, argtypes = func_signature(st)
+                if (name, argtypes) in dup_sigs:
+                    drop = f'DROP FUNCTION IF EXISTS {name}{argtypes} CASCADE;'
+                    if f'drop function if exists {name}(' not in window.lower():
+                        edits.append((start, '', f'\n{drop}\n'))
 
             elif isinstance(st, IndexStmt):
                 if not st.if_not_exists and st.idxname:
-                    m = re.match(r'(\s*)CREATE\s+(UNIQUE\s+)?INDEX\s+(?!IF\s+NOT\s+EXISTS)', stmt, re.I)
+                    m = re.match(r'CREATE\s+(UNIQUE\s+)?INDEX\s+', tail, re.I)
                     if m:
-                        edits.append((start + m.group(1).__len__(),
-                                      stmt[len(m.group(1)):m.end()],
-                                      f'CREATE {m.group(2) or ""}INDEX IF NOT EXISTS '))
+                        edits.append((koff, m.group(0),
+                                      'CREATE ' + (m.group(1) or '') + 'INDEX IF NOT EXISTS '))
 
             elif isinstance(st, AlterTableStmt):
                 table = relname(st.relation)
@@ -160,6 +196,11 @@ def transform(path, dry=False):
 
     # aplicar ediciones de atrás hacia delante
     edits.sort(key=lambda e: e[0], reverse=True)
+    if __debug__ and '--dump-edits' in sys.argv:
+        import os
+        with open('/tmp/edits.dump', 'w', encoding='utf-8') as f:
+            for off, old, new in edits:
+                f.write(f'OFF={off} OLD={old!r}\nNEW={new!r}\n----\n')
     out = src
     for off, old, new in edits:
         if old == '':
