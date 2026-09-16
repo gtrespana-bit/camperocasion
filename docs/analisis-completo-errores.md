@@ -1,7 +1,7 @@
-# 🔍 Auditoría completa: VendeT.online — errores y cosas por resolver
+# 🔍 Auditoría completa: CamperOcasión — errores y cosas por resolver
 
-**Fecha:** 31 de julio de 2026 · **Alcance:** repositorio completo + sitio en producción (vendet.online)
-**Método:** revisión de código (seguridad, auth, datos, i18n, PWA, SEO, rendimiento), prueba de conceptos en vivo, reportes Lighthouse del repo, y verificación de tasas oficiales BCV.
+**Fecha:** 31 de julio de 2026 · **Alcance:** repositorio completo + sitio en producción (camperocasion.es)
+**Método:** revisión de código (seguridad, auth, datos, i18n, PWA, SEO, rendimiento), prueba de conceptos en vivo, reportes Lighthouse del repo, y verificación de tasas oficiales —.
 
 ---
 
@@ -72,10 +72,10 @@
 
 **Solución:** matchear por **palabra completa** (límites de palabra con regex: `\b` o split por espacios/puntuación), y revisar la lista quitando substrings peligrosos (`put`, `bala`, `pistola` → reemplazar por expresiones más específicas: "arma de fuego", "pistola 9mm", "venta de pistola", etc.).
 
-### C5. Tasa BCV de respaldo desactualizada: precios en Bs. con ~35% de error
-**Archivos:** `src/lib/tasaBCV.ts` (`FALLBACK_RATE = 487`), `src/app/[locale]/creditos/page.tsx` (`FALLBACK_TASA = 487.12`), `src/app/[locale]/dashboard/components/tabs/TabCreditos.tsx` (`487.12`)
+### C5. Tasa — de respaldo desactualizada: precios en Bs. con ~35% de error
+**Archivos:** `src/lib/tasa—.ts` (`FALLBACK_RATE = 487`), `src/app/[locale]/creditos/page.tsx` (`FALLBACK_TASA = 487.12`), `src/app/[locale]/dashboard/components/tabs/TabCreditos.tsx` (`487.12`)
 
-**Evidencia:** la tasa oficial BCV al 30-jul-2026 es **≈745,6 Bs/USD** (Finanzas Digital, Aporrea, Caracol). El fallback de 487 queda ~35% por debajo. Cada vez que la API `ve.dolarapi.com` falla (frecuente con conectividad inestable), **todos los precios en bolívares se muestran 35% más baratos de lo real**.
+**Evidencia:** la tasa oficial — al 30-jul-2026 es **≈745,6 Bs/USD** (Finanzas Digital, Aporrea, Caracol). El fallback de 487 queda ~35% por debajo. Cada vez que la API `ve.dolarapi.com` falla (frecuente con conectividad inestable), **todos los precios en bolívares se muestran 35% más baratos de lo real**.
 
 **Impacto:** compradores que ven precios en Bs. incorrectos, desconfianza, y decisiones de compra erróneas. En una economía con inflación como la venezolana, una constante hardcodeada caduca en semanas.
 
@@ -138,7 +138,7 @@
 **Verificado en vivo** (`/en`):
 - Precios distintos entre locales: español "Destacado 24h = 6 créditos / $2 USD" vs. inglés "Featured 24h = **$3**, $2 USD per day"; "Featured 48h = $5 vs $4". El Boost: "1 crédito" (es) vs "$1" (en).
 - Tarjetas de producto sin traducir: "Como nuevo · San Diego", "Nuevo · Vargas" en `/en`.
-- Título de la página en español en `/en`: "Clasificados Venezuela | VendeT.online...".
+- Título de la página en español en `/en`: "Clasificados Venezuela | CamperOcasión...".
 - Texto residual: "Cheapest way to get seen **ya**".
 
 **Impacto:** confusión y desconfianza del usuario angloparlante; riesgo legal/publicitario por precios inconsistentes entre idiomas.
@@ -152,13 +152,13 @@
 | # | Hallazgo | Archivo(s) | Detalle / solución |
 |---|---|---|---|
 | M1 | **Sin security headers** | `next.config.js` | No hay CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy ni HSTS (verificado también en vivo: ausentes). Añadir `headers()` en next.config: CSP restrictivo, `frame-ancestors 'none'`, etc. |
-| M2 | **hreflang incorrecto** | `src/app/[locale]/layout.tsx` | `alternates.languages` emite `'es-VE': 'https://vendet.online/${locale}'` → la página `/en` declara es-VE apuntando a sí misma. Debe emitir es-VE→`/`, en→`/en` y `x-default`. |
+| M2 | **hreflang incorrecto** | `src/app/[locale]/layout.tsx` | `alternates.languages` emite `'es-VE': 'https://camperocasion.es/${locale}'` → la página `/en` declara es-VE apuntando a sí misma. Debe emitir es-VE→`/`, en→`/en` y `x-default`. |
 | M3 | **Manifest/PWA roto** | `public/manifest.json`, `public/sw.js` | Iconos `.webp` declarados como `"type": "image/png"` (los navegadores pueden rechazar el manifest → falla el prompt de instalación); las notificaciones push usan `/icon-192.png` que **no existe** (solo hay .webp) → icono roto en notificaciones. |
 | M4 | **JWT sin verificar en el servidor** | `src/lib/supabase-server.ts` | `getServerUser()` parsea la cookie `sb-*-auth-token` como JSON sin verificar firma ni expiración. Hoy solo alimenta el layout (riesgo bajo), pero es un polvorín si alguien lo usa para autorizar. Usar `supabase.auth.getUser()` (con refresh) o verificar el JWT. |
 | M5 | **`marcar-vendido` con userId del body** | `src/app/api/admin/marcar-vendido/route.ts` | Compara `producto.user_id !== userId` donde `userId` viene del request: cualquiera puede marcar vendido cualquier producto pasando el userId del dueño. (Agravado por C1.) |
 | M6 | **`comprar-creditos` sin autenticación ni validación de paquete** | `src/app/api/comprar-creditos/route.ts` | Acepta `{userId, creditos, precioUsd, metodoPago, comprobanteUrl}` sin sesión; `creditos` puede ser 999999 y `comprobanteUrl` arbitrario. Permite spamear el Telegram del admin con compras falsas (y combinado con C2, créditos gratis). |
 | M7 | **Accesibilidad 89/100** | Reportes Lighthouse del repo | Fallos: botones sin nombre accesible (`button-name`), contraste insuficiente (`color-contrast`), CLS (layout shifts), TTI 19s en mobile. Corregir los botones-icono (aria-label) y contraste es barato y mejora SEO/UX. |
-| M8 | **Título duplicado y SEO residual** | Home | "…VendeT.online - Compra y Venta en Venezuela | VendeT" (VendeT repetido al final). El título de `/en` está en español. |
+| M8 | **Título duplicado y SEO residual** | Home | "…CamperOcasión - Compra y Venta en Venezuela | CamperOcasión" (CamperOcasión repetido al final). El título de `/en` está en español. |
 | M9 | **console.log en rutas de producción** | `contacto`, `push-subscribe`, `server-email`, etc. | `removeConsole` solo aplica al bundle cliente; los logs del servidor se imprimen en cada invocación (ruido + posible fuga de datos de configuración en logs). |
 | M10 | **Tokens de sesión en el body del login** | `src/app/api/login/route.ts` | Devuelve `access_token` y `refresh_token` en el JSON de respuesta (además de cookies). Preferible no exponerlos en el body; solo cookies HttpOnly. |
 
@@ -195,7 +195,7 @@
 | Fase | Qué | Esfuerzo estimado |
 |---|---|---|
 | **1. Seguridad crítica (hoy)** | C1 (auth en 12 rutas admin + `requireAdmin`), C2 (`aprobar_transaccion`), C3 (`auth.uid()` en boost/destacado), A1 (remitente desde sesión), A2 (avatar desde sesión), A3 (validar r2-upload) | 1–2 días |
-| **2. Dinero y datos** | C5 (tasa BCV actualizada), M6 (validar paquete y sesión en comprar-creditos), M5 (marcar-vendido con sesión) | ½ día |
+| **2. Dinero y datos** | C5 (tasa — actualizada), M6 (validar paquete y sesión en comprar-creditos), M5 (marcar-vendido con sesión) | ½ día |
 | **3. Moderación** | C4 (match por palabra completa + revisar lista) + tests unitarios del filtro | ½ día |
 | **4. Producción limpia** | A6 (borrar test pages y APIs debug), A4 (aplicar rate limits restantes), A5 (cron de limpieza) | ½–1 día |
 | **5. PWA** | A7 (no cachear rutas privadas), M3 (manifest e iconos correctos) | ½ día |

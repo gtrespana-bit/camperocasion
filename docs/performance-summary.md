@@ -1,4 +1,4 @@
-# Resumen de Optimizaciones de Rendimiento - VendeT
+# Resumen de Optimizaciones de Rendimiento - CamperOcasión
 
 ## Situación Inicial
 - Puntaje de Lighthouse en la página de catálogo: **50/100**

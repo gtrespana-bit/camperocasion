@@ -1,6 +1,6 @@
 # 💰 Estimación de costos: construir este marketplace con una agencia externa
 
-**Proyecto analizado:** VendeT-Venezuela (vendet.online) — marketplace de clasificados para Venezuela
+**Proyecto analizado:** CamperOcasión (camperocasion.es) — marketplace vertical de furgonetas camper y autocaravanas de ocasión en España
 **Fecha del análisis:** 31 de julio de 2026
 **Moneda:** USD (con referencia en EUR para agencias españolas)
 
@@ -56,7 +56,7 @@ Un **marketplace de clasificados** estilo OLX/Wallapop para Venezuela: publicar 
 9. **PWA completa** — service worker con estrategias de caché (network-first, stale-while-revalidate), página offline, **notificaciones push**, banners de instalación.
 10. **SEO masivo** — sitemap, robots, landings dinámicas por ciudad/categoría, blog, metadatos Open Graph generados por imagen.
 11. **Emails transaccionales** — confirmación, reset, alertas, notificaciones (SMTP Zoho + plantillas).
-12. **Integraciones** — Supabase (Auth/DB/Storage/Realtime), Cloudflare R2, tasa BCV en vivo, Sentry, Vercel Analytics, Telegram.
+12. **Integraciones** — Supabase (Auth/DB/Storage/Realtime), Cloudflare R2, tasa — en vivo, Sentry, Vercel Analytics, Telegram.
 13. **Seguridad** — Row Level Security en Postgres, rate-limiting, auditoría, validaciones, roles service_role para admin.
 
 ### 2.4 Qué NO incluye (y por qué el precio no es más alto)
@@ -90,7 +90,7 @@ La estimación es **bottom-up**: desglosé el proyecto en 17 paquetes de trabajo
 | 12 | PWA (service worker, offline, notificaciones push) | 60 | 90 |
 | 13 | Internacionalización es/en | 30 | 50 |
 | 14 | Landings SEO (ciudades × categorías, blog, sitemaps, OG) | 60 | 90 |
-| 15 | Emails transaccionales + integraciones (BCV, Sentry, etc.) | 40 | 60 |
+| 15 | Emails transaccionales + integraciones (—, Sentry, etc.) | 40 | 60 |
 | 16 | QA, testing, performance, compatibilidad | 120 | 180 |
 | 17 | Gestión de proyecto + documentación | 80 | 130 |
 | | **TOTAL** | **≈1.440** | **≈2.140** |
@@ -130,7 +130,7 @@ No es solo construirlo: hay que mantenerlo funcionando.
 | Vercel (hosting Next.js) | Pro plan | ~$20 |
 | Supabase (DB + Auth + Storage + Realtime) | Plan Pro (RLS, realtime) | ~$25 |
 | Cloudflare R2 (fotos de productos) | Pago por uso | $1–10 |
-| Dominio + email | vendet.online | ~$2 |
+| Dominio + email | camperocasion.es | ~$2 |
 | SMTP/emails (Zoho o Resend) | Transaccionales | $0–20 |
 | Sentry + Analytics | Gratis/Pro | $0–30 |
 | **Total inicial** | | **≈ $50 – $110/mes** |
@@ -200,7 +200,7 @@ Estos son datos públicos de 2024–2026 de empresas que cotizan marketplaces:
 
 ## 8. Contexto importante: el proyecto YA existe
 
-Este repositorio no es una idea: es un producto **completo y funcional** (≈21.300 líneas, desplegado en vendet.online, con SEO, PWA, chat, admin y monetización implementados). Antes de gastar $60.000–100.000 en reconstruirlo, considera:
+Este repositorio no es una idea: es un producto **completo y funcional** (≈21.300 líneas, desplegado en camperocasion.es, con SEO, PWA, chat, admin y monetización implementados). Antes de gastar $60.000–100.000 en reconstruirlo, considera:
 
 | Opción | Costo | Cuándo conviene |
 |---|---|---|

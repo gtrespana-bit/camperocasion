@@ -1,8 +1,8 @@
-# Optimizaciones de Rendimiento - VendeT
+# Optimizaciones de Rendimiento - CamperOcasión
 
 ## Introducción
 
-Este documento describe el proceso de optimización del rendimiento de la página de catálogo de VendeT, que inicialmente tenía un puntaje de Lighthouse de 50/100 y ahora supera los 85 puntos.
+Este documento describe el proceso de optimización del rendimiento de la página de catálogo de CamperOcasión, que inicialmente tenía un puntaje de Lighthouse de 50/100 y ahora supera los 85 puntos.
 
 ## Problemas Iniciales
 

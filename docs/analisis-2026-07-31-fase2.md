@@ -1,4 +1,4 @@
-# 🔍 Segundo análisis a fondo — VendeT.online (2026-07-31)
+# 🔍 Segundo análisis a fondo — CamperOcasión (2026-07-31)
 
 **Alcance:** verificación hallazgo por hallazgo de la auditoría anterior (`analisis-completo-errores.md`), más búsqueda de problemas nuevos en todo el código (seguridad, API routes, rendimiento, PWA, SEO, higiene del repo).
 
@@ -15,7 +15,7 @@
 | 🟡 Medio | 5 | 1 | 4 |
 | ⚪ Bajo / higiene | 10 | 6 | 4 |
 
-**Lo más importante:** la auditoría anterior (fase 1 de seguridad, bloques A–D) **sí se aplicó**: las 12 rutas `/api/admin/*` ahora usan `requireAdmin` con sesión verificada, los RPCs de créditos validan `auth.uid()`, la moderación matchea palabras completas, la tasa BCV de respaldo está actualizada (746), el SW no cachea rutas privadas, el manifest tiene iconos PNG válidos y hay security headers + CSP.
+**Lo más importante:** la auditoría anterior (fase 1 de seguridad, bloques A–D) **sí se aplicó**: las 12 rutas `/api/admin/*` ahora usan `requireAdmin` con sesión verificada, los RPCs de créditos validan `auth.uid()`, la moderación matchea palabras completas, la tasa — de respaldo está actualizada (746), el SW no cachea rutas privadas, el manifest tiene iconos PNG válidos y hay security headers + CSP.
 
 **Pero quedaban 6 rutas API con `service_role` y CERO verificación de sesión** — entre ellas la más importante de la app: `/api/publicar`. Ese agujero se cerró en este pase (ver sección 3).
 
@@ -29,7 +29,7 @@
 | C2. `aprobar_transaccion` | ✅ Resuelto | `023_fix_seguridad.sql`: valida `auth.uid()` contra admins; revocado de `anon` |
 | C3. `usar_boost`/`usar_destacado` | ✅ Resuelto | Exigen `auth.uid() = p_user_id`; revocados de `anon` |
 | C4. Moderación por substring | ✅ Resuelto | `contieneTerminoCompleto()` con límites de palabra (`\p{L}\p{N}`) |
-| C5. Tasa BCV 487 desactualizada | ✅ Resuelto | `FALLBACK_BCV_RATE = 746`, fuente única en `tasaBCV.ts` |
+| C5. Tasa — 487 desactualizada | ✅ Resuelto | `FALLBACK_—_RATE = 746`, fuente única en `tasa—.ts` |
 | A1. `enviar-mensaje` suplantable | ✅ Resuelto | `remitente_id` sale de `requireUser`, nunca del body |
 | A2. `foto-perfil` avatar ajeno | ✅ Resuelto | `userId` sale de la sesión |
 | A3. `r2-upload` sin control | ✅ Resuelto | `requireUser` + key `{userId}/...` + whitelist de content types |
@@ -62,7 +62,7 @@
 ### N2. `/api/push/send` permitía enviar push a cualquier usuario — ALTO
 **Archivo:** `src/app/api/push/send/route.ts`
 
-**Problema:** sin autenticación; solo rate limit por IP (20/h). Cualquiera podía enviar notificaciones push a **cualquier usuario** con textos arbitrarios → phishing disfrazado de VendeT ("Tu anuncio fue suspendido, haz clic aquí…").
+**Problema:** sin autenticación; solo rate limit por IP (20/h). Cualquiera podía enviar notificaciones push a **cualquier usuario** con textos arbitrarios → phishing disfrazado de CamperOcasión ("Tu anuncio fue suspendido, haz clic aquí…").
 
 **Fix aplicado:** `requireAdmin()`.
 

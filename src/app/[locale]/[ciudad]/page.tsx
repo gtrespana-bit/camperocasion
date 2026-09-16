@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // Antes tenía `generateStaticParams()` (SSG/ISR). En Next 16, renderizar
 // on-demand una ruta SSG (o prerenderizarla con el layout raíz, que usa
 // cookies()/headers()) lanza `DynamicServerError` (digest
-// DYNAMIC_SERVER_USAGE) → 500 en TODAS las páginas de ciudad (/caracas, etc.).
+// DYNAMIC_SERVER_USAGE) → 500 en TODAS las páginas de provincia (/madrid, etc.).
 // Además, generateStaticParams devolvía `{ city: slug }` en vez de
 // `{ ciudad: slug }`, así que Next ignoraba todos los params y la ruta
 // quedaba marcada SSG sin páginas prerenderizadas: cada visita intentaba una

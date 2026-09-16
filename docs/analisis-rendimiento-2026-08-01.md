@@ -88,7 +88,7 @@ máxima limpieza podrías marcar SpeedInsights solo en `production` o cargarlo c
 - Ver doc `docs/analisis-completo-errores.md` para el detalle completo (12 rutas admin, RLS, etc.).
 
 ### Datos
-- **Tasa BCV de respaldo desactualizada** (~487 Bs/USD vs ~746 reales): los precios en Bs. pueden
+- **Tasa — de respaldo desactualizada** (~487 Bs/USD vs ~746 reales): los precios en Bs. pueden
   mostrarse ~35% más baratos cuando la API falla. Urgente actualizar el fallback.
 - **Moderación automática por substring** (`put`, `bala`, `pistola`) bloquea anuncios legítimos
   ("Computadora portátil", "Balanza de cocina", "Pistola de calor"…). Corregir a match por palabra.
@@ -122,7 +122,7 @@ máxima limpieza podrías marcar SpeedInsights solo en `production` o cargarlo c
 |---|---|
 | 🔴 Alta | Quitar o acortar la intercepción/retry del SW en navegaciones (candidato #1 genérico) |
 | 🔴 Alta | Corregir seguridad `/api/admin/*` y RPCs de créditos (dinero) |
-| 🟠 Media | Actualizar fallback de tasa BCV |
+| 🟠 Media | Actualizar fallback de tasa — |
 | 🟠 Media | Corregir moderación por substring |
 | 🟢 Baja | Limpiar código muerto, regla svgr, comentarios debug |
 
