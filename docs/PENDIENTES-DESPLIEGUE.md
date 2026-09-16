@@ -105,19 +105,48 @@ Nota de producto: el dinero **no pasa por la plataforma**; el comprador paga la
 señal por Bizum/transferencia/en mano y el admin verifica el comprobante. No hay
 Stripe ni custodia, así que no hace falta ninguna variable nueva de pago.
 
-### 1.3 Variables de entorno en Vercel — PENDIENTE (cuando estés en el ordenador)
+### 1.3 Variables de entorno en Vercel — PENDIENTE
 
-Ya existentes y necesarias para lo nuevo:
+Reglas del dashboard: nombre **exacto** (mayúsculas, sin espacios ni comillas),
+marcar **Production + Preview**, y tras cambiar cualquier `NEXT_PUBLIC_*` hay
+que **redeployar** (se incrustan en el bundle en build time, no se leen en
+runtime). No usar el tipo *Sensitive*: hay variables leídas a nivel de módulo
+(`src/lib/server-email.ts`, `src/lib/supabase.ts`) y con Sensitive llegan vacías
+a la build.
 
-- `SUPABASE_SERVICE_ROLE_KEY` → la usan las rutas nuevas del expediente
-  (`/api/documentos-vehiculo` y `/api/admin/documentos-vehiculo`) y todas las de
-  reservas, igual que el resto del panel.
-- `ADMIN_EMAILS` → el email del admin que puede revisar, verificar y activar
-  reservas (fallback `gtrespana@gmail.com`).
-- `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` → opcionales; solo para que llegue un
-  aviso al móvil cuando alguien reserva o sube un comprobante.
+**Bloque A — sin estas el sitio no funciona (5):**
 
----
+| Variable | Valor | Consecuencia de no ponerla |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://jmbkqelkusxjebsdnjoc.supabase.co` | sitio vacío; es el proyecto que ya está fijado en `next.config.js` (imágenes) y en el `preconnect` de `layout.tsx` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → *Project Settings → Data API (legacy)* → `anon` / `publishable` | `getSupabaseServerClient()` devuelve `null` → home, catálogo y landings salen sin anuncios |
+| `SUPABASE_SERVICE_ROLE_KEY` | la `service_role` (server-side **solo**) | todo `/api/admin/*`, reservas y expediente de homologación sin funcionar |
+| `CRON_SECRET` | un string aleatorio propio (p. ej. `openssl rand -hex 32`) | **los 4 crons devuelven 401**: el guard es `if (!secret \|\| auth !== Bearer) → 401`, o sea que sin la variable ni Vercel puede llamarlos |
+| `NEXT_PUBLIC_URL` | `https://camperocasion.es` | enlaces de emails/OG/sitemap apuntan al default; ponerlo igualmente |
+
+**Bloque B — emails salientes (elegir UN canal):** `RESEND_API_KEY` (+ dominio
+verificado en Resend) **o** `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`.
+Orden real en `src/lib/server-email.ts`: 1º Resend API, 2º `SMTP_*`, 3º
+`ZOHO_SMTP_*` (legado). Opcional: `EMAIL_FROM` (default `"CamperOcasión"
+<noreply@camperocasion.es>`) y `CONTACTO_EMAIL` (default
+`soporte@camperocasion.es`). Sin canal, el envío devuelve *"Sin canal de envío:
+configura RESEND_API_KEY o SMTP_USER/SMTP_PASS"* y el registro no se verifica.
+
+**Bloque C — opcionales:** `ADMIN_EMAILS` + `NEXT_PUBLIC_ADMIN_EMAILS` (ambas
+con el mismo valor; el fallback ya es `gtrespana@gmail.com`, así que no urge),
+`TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (avisos de reservas), par VAPID
+(`NEXT_PUBLIC_VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY`, push PWA),
+`GOOGLE_SITE_VERIFICATION` (meta tag de Search Console).
+
+**NO añadir en Vercel:** `SUPABASE_SERVICE_KEY` (alias legado que solo usan
+3 scripts locales de `scripts/`), `EMAIL_SERVER_HOST` (no la lee ningún envío:
+solo el chequeo de salud de `/api/admin/status`), `NODE_ENV` (lo pone Vercel) y
+`NEXT_OUTPUT` (rompe la build, ver §6.4).
+
+**Comprobación tras el deploy:** entrar en `/admin` → la pestaña de estado llama
+a `/api/admin/status`, que reporta `supabase`, `telegram`, `push`,
+`emailResend` y `emailSmtp` → sirve para confirmar en 10 segundos qué variables
+están realmente llegando a producción.
 
 ## 2. Al aplicar el SQL, comprobar en producción
 
