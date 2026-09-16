@@ -273,6 +273,7 @@
     "breadcrumb": "Home",
     "loadErrorTitle": "Could not load products",
     "retry": "Retry",
+    "serviceUnavailable": "The catalogue is temporarily unavailable. Please try again in a few minutes.",
     "clearFilters": "Clear filters",
     "search": "Search",
     "states": {

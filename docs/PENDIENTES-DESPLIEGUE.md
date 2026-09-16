@@ -118,7 +118,7 @@ a la build.
 
 | Variable | Valor | Consecuencia de no ponerla |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://jmbkqelkusxjebsdnjoc.supabase.co` | sitio vacío; es el proyecto que ya está fijado en `next.config.js` (imágenes) y en el `preconnect` de `layout.tsx` |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://hbiywrddxrsidniwxuhe.supabase.co` | **cuidado**: el proyecto de marketplace-vzla es `jmbkqelkusxjebsdnjoc`. Con esa URL y estas claves, Supabase responde `401 Invalid API key` en todo el sitio (incluido el login). `next.config.js` (imágenes) y el `preconnect` de `layout.tsx` ya la leen de esta variable, así que basta con cambiarla aquí y redeployar. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → *Project Settings → Data API (legacy)* → `anon` / `publishable` | `getSupabaseServerClient()` devuelve `null` → home, catálogo y landings salen sin anuncios |
 | `SUPABASE_SERVICE_ROLE_KEY` | la `service_role` (server-side **solo**) | todo `/api/admin/*`, reservas y expediente de homologación sin funcionar |
 | `CRON_SECRET` | un string aleatorio propio (p. ej. `openssl rand -hex 32`) | **los 4 crons devuelven 401**: el guard es `if (!secret \|\| auth !== Bearer) → 401`, o sea que sin la variable ni Vercel puede llamarlos |
@@ -147,6 +147,21 @@ solo el chequeo de salud de `/api/admin/status`), `NODE_ENV` (lo pone Vercel) y
 a `/api/admin/status`, que reporta `supabase`, `telegram`, `push`,
 `emailResend` y `emailSmtp` → sirve para confirmar en 10 segundos qué variables
 están realmente llegando a producción.
+
+**Si al entrar al catálogo sale «No se pudieron cargar los productos / Invalid
+API key» y en la consola hay 401 a `*.supabase.co/rest/v1/*`:** no es la base de
+datos (que puede estar vacía), es que las claves de Vercel no son las del
+proyecto. Diagnóstico y arreglo paso a paso en
+[`docs/diagnostico-supabase-401.md`](./diagnostico-supabase-401.md). Resumen:
+
+```
+https://<dominio>/api/diagnostico/supabase?token=<CRON_SECRET>
+```
+
+Dice si cada clave está definida, de qué proyecto es, si está caducada y si
+Supabase la acepta (prueba real) — sin revelar ninguna clave. Tras corregir las
+variables hay que **redeployar**: las `NEXT_PUBLIC_*` se incrustan en el bundle
+en build time.
 
 ## 2. Al aplicar el SQL, comprobar en producción
 

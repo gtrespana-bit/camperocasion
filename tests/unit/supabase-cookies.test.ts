@@ -18,8 +18,8 @@ import {
   decodeJwtExp,
 } from '@/lib/supabase-cookies'
 
-const PROJECT_URL = 'https://jmbkqelkusxjebsdnjoc.supabase.co'
-const COOKIE_KEY = 'sb-jmbkqelkusxjebsdnjoc-auth-token'
+const PROJECT_URL = 'https://hbiywrddxrsidniwxuhe.supabase.co'
+const COOKIE_KEY = 'sb-hbiywrddxrsidniwxuhe-auth-token'
 
 const SAMPLE_SESSION = {
   access_token: 'header.payload.signature',
@@ -57,7 +57,7 @@ describe('supabase-cookies', () => {
   })
 
   test('getSupabaseProjectRef extrae el ref del hostname', () => {
-    expect(getSupabaseProjectRef()).toBe('jmbkqelkusxjebsdnjoc')
+    expect(getSupabaseProjectRef()).toBe('hbiywrddxrsidniwxuhe')
     expect(getAuthCookieName()).toBe(COOKIE_KEY)
   })
 

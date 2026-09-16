@@ -273,6 +273,7 @@
     "breadcrumb": "Inicio",
     "loadErrorTitle": "No se pudieron cargar los productos",
     "retry": "Reintentar",
+    "serviceUnavailable": "El catálogo no está disponible en este momento. Inténtalo de nuevo en unos minutos.",
     "clearFilters": "Limpiar filtros",
     "search": "Buscar",
     "states": {

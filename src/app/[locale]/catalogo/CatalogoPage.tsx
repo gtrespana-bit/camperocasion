@@ -27,6 +27,7 @@ import { FILTRO_VERIFICADA_PARAM } from '@/lib/catalog-consulta'
 import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { usePrefetch } from '@/hooks/usePrefetch'
 import { productUrl } from '@/lib/product-url'
+import { esErrorDeCredenciales, esErrorDeRed } from '@/lib/supabase-diagnostico'
 
 type Producto = {
   id: string
@@ -422,7 +423,15 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
               <XCircle size={20} className="flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold">{t('catalog.loadErrorTitle')}</p>
-                <p className="text-sm mt-1">{error}</p>
+                {/* Nunca se muestra el mensaje técnico de Supabase ("Invalid
+                    API key", "JWT expired", "fetch failed"...): o es un
+                    problema de configuración del despliegue o es transitorio;
+                    en ningún caso es información útil para el visitante. */}
+                <p className="text-sm mt-1">
+                  {esErrorDeCredenciales(error) || esErrorDeRed(error)
+                    ? t('catalog.serviceUnavailable')
+                    : error}
+                </p>
                 <button
                   onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, [FILTRO_VERIFICADA_PARAM]: verificada || undefined, ...filtrosTecnicos } })}
                   className="mt-3 text-sm font-semibold text-red-700 underline hover:text-red-900"
