@@ -166,7 +166,19 @@ create trigger on_auth_user_created
   for each row execute procedure crear_perfil();
 
 -- Habilitar Realtime para chat
-alter publication supabase_realtime add table mensajes;
+-- (crea la publication si no existe y evita error si la tabla ya fue añadida)
+do $$
+begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table mensajes;
+exception
+  when duplicate_object then null; -- ya estaba añadida
+end $$;
 
 
 -- ----- 002_chat.sql -----

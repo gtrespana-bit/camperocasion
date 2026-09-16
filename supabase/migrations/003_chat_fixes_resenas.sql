@@ -4,13 +4,15 @@
 
 -- ─── FIX CHAT: Unique constraint para conversaciones duplicadas ───
 
--- Limpiar duplicados existentes (mantener el más antiguo por id)
+-- Limpiar duplicados existentes (mantener el más antiguo por creado_en)
+-- NOTA: no existe MIN(uuid) en PostgreSQL, se usa DISTINCT ON + creado_en
 DELETE FROM conversaciones
 WHERE id NOT IN (
-  SELECT MIN(id)
+  SELECT DISTINCT ON (LEAST(user1_id::text, user2_id::text), GREATEST(user1_id::text, user2_id::text), COALESCE(producto_id::text, 'null'))
+         id
   FROM conversaciones
-  GROUP BY LEAST(user1_id::text, user2_id::text), GREATEST(user1_id::text, user2_id::text),
-           COALESCE(producto_id::text, 'null')
+  ORDER BY LEAST(user1_id::text, user2_id::text), GREATEST(user1_id::text, user2_id::text),
+           COALESCE(producto_id::text, 'null'), creado_en, id
 );
 
 -- Unique index bidireccional para conversaciones con producto
