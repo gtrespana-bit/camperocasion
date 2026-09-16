@@ -106,7 +106,7 @@ create policy "Editar propio perfil" on perfiles for update using (auth.uid() = 
 -- Productos: visibles todos, el dueño puede CRUD
 alter table productos enable row level security;
 
-create policy "Ver productos" on productos for select using (activo = true) with check (true);
+create policy "Ver productos" on productos for select using (activo = true);
 create policy "Ver propios" on productos for select using (auth.uid() = user_id);
 create policy "Insert propios" on productos for insert with check (auth.uid() = user_id);
 create policy "Editar propios" on productos for update using (auth.uid() = user_id);
@@ -529,14 +529,15 @@ $$ LANGUAGE plpgsql;
 
 -- 2. Unique constraint para evitar duplicados
 -- Una conversacion por par de usuarios + producto (mismo par + null producto = 1 sola)
+-- NOTA: una CONSTRAINT UNIQUE de tabla no admite expresiones (COALESCE), por eso
+-- se usan dos indices unicos parciales, soportados en todos los PostgreSQL:
 ALTER TABLE conversaciones DROP CONSTRAINT IF EXISTS uq_conversaciones;
-ALTER TABLE conversaciones ADD CONSTRAINT uq_conversaciones UNIQUE (user1_id, user2_id, COALESCE(producto_id, '00000000-0000-0000-0000-000000000000'::uuid));
-
--- Para PostgreSQL < 15 que no soporta COALESCE en unique constraint,
--- hacemos el unique con una columna generada:
+DROP INDEX IF EXISTS uq_conversaciones;
+DROP INDEX IF EXISTS uq_conversaciones_null;
+-- Limpieza del intento anterior con columna generada
 ALTER TABLE conversaciones DROP COLUMN IF EXISTS _producto_normalized;
-ALTER TABLE conversaciones ADD COLUMN _producto_normalized uuid GENERATED ALWAYS AS (COALESCE(producto_id, '00000000-0000-0000-0000-000000000000'::uuid)) STORED;
-ALTER TABLE conversaciones ADD CONSTRAINT uq_conversaciones UNIQUE (user1_id, user2_id, _producto_normalized);
+CREATE UNIQUE INDEX uq_conversaciones      ON conversaciones (user1_id, user2_id, producto_id) WHERE producto_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_conversaciones_null ON conversaciones (user1_id, user2_id)               WHERE producto_id IS NULL;
 
 -- 3. Índices para queries mas rapidas
 CREATE INDEX IF NOT EXISTS idx_conversaciones_usuarios ON conversaciones (user1_id, user2_id);

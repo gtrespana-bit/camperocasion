@@ -99,7 +99,7 @@ create policy "Editar propio perfil" on perfiles for update using (auth.uid() = 
 -- Productos: visibles todos, el dueño puede CRUD
 alter table productos enable row level security;
 
-create policy "Ver productos" on productos for select using (activo = true) with check (true);
+create policy "Ver productos" on productos for select using (activo = true);
 create policy "Ver propios" on productos for select using (auth.uid() = user_id);
 create policy "Insert propios" on productos for insert with check (auth.uid() = user_id);
 create policy "Editar propios" on productos for update using (auth.uid() = user_id);
