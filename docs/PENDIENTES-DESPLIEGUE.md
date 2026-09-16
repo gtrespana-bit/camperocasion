@@ -5,16 +5,22 @@
 > reiniciarse el entorno, así que ahora está versionado aquí. El resumen corto
 > también está en la descripción del PR #3.
 
+> **Estado a 2026-09-16:** el usuario ya ejecutó `setup-camperocasion.sql` y la
+> verificación pasó **20/20** con `scripts/verificar_despliegue.sql`. Quedan la CI
+> (§4) y las variables de Vercel (§1.3).
+
 ## 0. Resumen en tres líneas
 
-1. Aplicar **dos migraciones** en Supabase (`202609150001_verificacion_homologacion.sql`
-   y `202609160001_reservas.sql`) — o pegar el `setup-camperocasion.sql` completo.
+1. ~~Aplicar **dos migraciones** en Supabase~~ ✅ **hecho**: `setup-camperocasion.sql`
+   completo, verificado con `scripts/verificar_despliegue.sql` (20/20).
 2. Revisar las **variables de entorno** en Vercel (§1.3).
 3. Activar la **CI** creando `.github/workflows/ci.yml` con `docs/ci/ci.yml` (§4).
 
 ---
 
-## 1. SQL que hay que ejecutar en Supabase (producción) — PENDIENTE
+## 1. SQL en Supabase (producción) — ✅ APLICADO el 2026-09-16
+
+Verificación completa: `scripts/verificar_despliegue.sql` → 20/20 ✅
 
 ### 1.1 Verificar prerrequisitos de la Fase 0.1 (filtros técnicos)
 
@@ -43,11 +49,14 @@ supabase/migrations/202609150001_verificacion_homologacion.sql
 setup-camperocasion.sql
 ```
 
-Comprobación posterior (>0 en las tres):
+Comprobación: `scripts/verificar_despliegue.sql` de una vez (20 comprobaciones),
+o al menos esta — **atención**: para funciones hay que usar `to_regprocedure()`,
+porque `to_regclass()` solo mira relaciones (tablas, índices, vistas) y devuelve
+NULL aunque la función exista:
 
 ```sql
 select to_regclass('public.documentos_vehiculo'),
-       to_regclass('public.fn_es_dueno_del_anuncio'),
+       to_regprocedure('public.fn_es_dueno_del_anuncio(uuid)'),
        (select 1 from storage.buckets where id = 'documentos-vehiculo');
 ```
 
@@ -66,11 +75,11 @@ supabase/migrations/202609160001_reservas.sql
 setup-camperocasion.sql
 ```
 
-Comprobación posterior (>0 en las tres):
+Comprobación (los tres valores, no nulos):
 
 ```sql
 select to_regclass('public.reservas'),
-       to_regclass('public.fn_propagar_reserva'),
+       to_regprocedure('public.fn_propagar_reserva()'),
        (select 1 from storage.buckets where id = 'comprobantes-reserva');
 ```
 
