@@ -148,6 +148,21 @@ a `/api/admin/status`, que reporta `supabase`, `telegram`, `push`,
 `emailResend` y `emailSmtp` → sirve para confirmar en 10 segundos qué variables
 están realmente llegando a producción.
 
+**Si al entrar al catálogo sale «No se pudieron cargar los productos / Invalid
+API key» y en la consola hay 401 a `*.supabase.co/rest/v1/*`:** no es la base de
+datos (que puede estar vacía), es que las claves de Vercel no son las del
+proyecto. Diagnóstico y arreglo paso a paso en
+[`docs/diagnostico-supabase-401.md`](./diagnostico-supabase-401.md). Resumen:
+
+```
+https://<dominio>/api/diagnostico/supabase?token=<CRON_SECRET>
+```
+
+Dice si cada clave está definida, de qué proyecto es, si está caducada y si
+Supabase la acepta (prueba real) — sin revelar ninguna clave. Tras corregir las
+variables hay que **redeployar**: las `NEXT_PUBLIC_*` se incrustan en el bundle
+en build time.
+
 ## 2. Al aplicar el SQL, comprobar en producción
 
 - [ ] Subir un documento de prueba en un anuncio propio → aparece en el

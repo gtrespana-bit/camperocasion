@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { clientCache } from '@/lib/clientCache';
+import { esErrorDeCredenciales } from '@/lib/supabase-diagnostico';
 import { getCatalogPageRange } from '@/lib/catalog-pagination';
 import {
   CATALOG_PRODUCT_COLUMNS,
@@ -137,6 +138,16 @@ export const useProductLoader = (): UseProductLoaderResult => {
       });
     } catch (err) {
       console.error('Error loading products:', err);
+      // Fallo de credenciales (clave rotada/caducada/de otro proyecto): se
+      // avisa con un prefijo filtrable en los logs. La UI NO debe enseñar
+      // "Invalid API key" al visitante; eso lo hace CatalogoPage con un texto
+      // traducido y amable (ver src/lib/supabase-diagnostico.ts).
+      if (esErrorDeCredenciales(err)) {
+        console.error(
+          '[supabase-credenciales] Supabase rechazó NEXT_PUBLIC_SUPABASE_ANON_KEY. ' +
+            'Compruébalo en /api/diagnostico/supabase?token=<CRON_SECRET>.',
+        );
+      }
       setError(err instanceof Error ? err.message : 'Error desconocido');
       setProductos([]);
       setTotalCount(0);
