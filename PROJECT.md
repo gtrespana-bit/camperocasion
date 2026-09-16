@@ -41,3 +41,9 @@ relanzado como vertical camper español:
    (`src/components/BadgeHomologacion.tsx`) más el filtro "solo homologación
    verificada" del catálogo. Cualquier cambio en el expediente devuelve el
    anuncio a revisión.
+8. **Calculadora de ITP y compra segura (2026-09):** `/calcular-itp` con el tipo
+   por comunidad autónoma (registro de 19 territorios en `src/lib/itp.ts`,
+   coeficientes de depreciación del anexo IV, cuotas fijas para vehículos
+   antiguos y tipos incrementados), 19 landings por CCAA, checklist de compra
+   segura de camper (`/compra-segura-camper`) y enlace desde cada anuncio con el
+   precio precargado.

@@ -5,7 +5,7 @@ import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
-import { MapPin, Tag, MessageCircle, Phone, Mail, ChevronRight, Shield, Clock, Heart, Share2, CheckCircle2, FileCheck2 } from 'lucide-react'
+import { MapPin, Tag, MessageCircle, Phone, Mail, ChevronRight, Shield, Clock, Heart, Share2, CheckCircle2, FileCheck2, Calculator } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import ReportarButton from '@/components/ReportarButton'
 import BadgeVerificado from '@/components/BadgeVerificado'
@@ -425,6 +425,26 @@ function ProductoPageClientInner({ initialProduct, favoritosCount = 0, verificac
                 )}
                 <p className="mt-2 text-xs text-gray-500">{t('expedienteNotaComprador')}</p>
               </div>
+            )}
+
+            {/* Utilidad de compra: el ITP es el coste que más sorprende, y
+                depende de la comunidad del comprador. Va con el precio puesto. */}
+            {!producto.vendido && Number(producto.precio_usd) > 0 && (
+              <LocalLink
+                href={`/calcular-itp?precio=${Math.round(Number(producto.precio_usd))}`}
+                className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl p-3.5 mb-5 hover:border-brand-accent transition group"
+              >
+                <span className="w-9 h-9 rounded-full bg-brand-accent/10 text-brand-accent-dark flex items-center justify-center flex-shrink-0">
+                  <Calculator size={17} aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-gray-900 group-hover:text-brand-primary">
+                    {t('itpCtaTitulo')}
+                  </span>
+                  <span className="block text-xs text-gray-500">{t('itpCtaDesc')}</span>
+                </span>
+                <ChevronRight size={16} className="ml-auto text-gray-400 flex-shrink-0" aria-hidden="true" />
+              </LocalLink>
             )}
 
             {vendedor && (

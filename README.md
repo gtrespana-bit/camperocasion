@@ -63,6 +63,20 @@ Además de los filtros, el anuncio puede acreditar su documentación:
 Detalle y decisiones en
 [`docs/plan-confianza-marketplace.md`](./docs/plan-confianza-marketplace.md) §2.2.
 
+## Herramientas para el comprador
+
+- **Calculadora de ITP** (`/calcular-itp`): impuesto de la compraventa entre
+  particulares según la comunidad del comprador, con el desglose del cálculo
+  (depreciación por antigüedad, base imponible, cuota fija de vehículo antiguo,
+  tipo incrementado por potencia fiscal o cilindrada) y el coste total con la
+  tasa de la DGT. Incluye landings por comunidad (`/calcular-itp/{ccaa}`).
+- **Checklist de compra segura** (`/compra-segura-camper`): qué documentación y
+  qué reformas revisar antes de firmar, con el foco en campers (homologación
+  declarada, plazas, MMA y carnet, instalación de gas, carga útil).
+
+Los tipos por comunidad viven en `src/lib/itp.ts` (registro con fuente oficial y
+fecha de revisión): es el único sitio a actualizar cada año.
+
 ## Precios
 
 Moneda única: **euro**. Formato `X.XXX €` (p. ej. `38.500 €`). Rango

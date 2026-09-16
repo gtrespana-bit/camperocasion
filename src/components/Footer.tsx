@@ -61,6 +61,8 @@ export function Footer() {
               <ul className="space-y-2 text-sm">
                 {[
                   ['Blog', '/blog'],
+                  ['Calcular el ITP', '/calcular-itp'],
+                  ['Compra segura', '/compra-segura-camper'],
                   [t('footer.howItWorks'), '/como-funciona'],
                   [t('footer.aboutUs'), '/sobre-nosotros'],
                   ['FAQ', '/faq'],

@@ -12,7 +12,7 @@
 | 3. Venta + alquiler P2P | 🔴 Nada | — |
 | 4. Filtros de arquitectura furgonetera | ✅ Hecho (2026-09) | 16 filtros técnicos en el catálogo, agrupados en mecánica/habitabilidad/autonomía, y captura de tracción, MMA, longitud y altura exterior en `/publicar`. Registro único en `src/lib/filtros-tecnicos.ts`. Ver §2.1. |
 | 5. Escrow + financiación | 🔴 Nada | Solo créditos para destacar con pago manual (Bizum/transferencia/PayPal + comprobante). |
-| 6. Gestoría digital | 🔴 Nada | Ni calculadora ITP ni contrato de compraventa. |
+| 6. Gestoría digital | 🟡 Medio (2026-09) | Calculadora de ITP con los 19 territorios, 19 landings por comunidad y checklist de compra segura (`/calcular-itp`, `/compra-segura-camper`). **Falta**: contrato de compraventa descargable y gestoría del cambio de nombre. |
 
 **Ya tenemos además** (activos sobre los que construir): vendedor verificado con
 badge (`BadgeVerificado.tsx` + `solicitudes_verificacion`), moderación, reseñas,
@@ -140,17 +140,48 @@ comprobaciones de RLS): anon solo ve documentos verificados, un usuario no puede
 subir documentos al anuncio de otro ni auto-verificarse, el admin sí puede
 revisar, y el `user_id` de un documento no se puede cambiar.
 
-### 2.3 Calculadora ITP + checklist de documentación (SEO + utilidad)
+### 2.3 Calculadora ITP + checklist de documentación (SEO + utilidad) ✅ (hecho)
 
-- Página `/calcular-itp`: precio + CCAA + antigüedad → tipo aplicable y
-  estimación. Tabla de tipos configurable por CCAA (se actualiza cada año;
-  típicamente entre ~4% y ~10% con reducciones por antigüedad — mantener en
-  config, no hardcodear).
-- Checklist de compra segura (permiso de circulación, ficha técnica, ITV en
-  vigor, certificados de reformas, contrato) como contenido estático con
-  landings por CCAA — encaja con la estrategia de landings provinciales ya
-  existente y captura búsquedas como "impuesto comprar camper segunda mano
-  andalucía".
+**Implementado en septiembre de 2026.** Estado final:
+
+1. **Registro de tipos por comunidad** (`src/lib/itp.ts`): 19 entradas (17 CCAA +
+   Ceuta y Melilla) con tipo general, tipo incrementado (por potencia fiscal o
+   por cilindrada), cuota fija para vehículos antiguos, exención por antigüedad,
+   tipos de cero emisiones/ECO, plazo, modelo de autoliquidación, notas y
+   **enlace a la sede tributaria oficial** de cada comunidad. `REVISADO_EN` deja
+   constancia de la fecha de revisión: es lo único que hay que tocar cada año.
+2. **Cálculo** (`calcularITP`): base imponible = **el mayor** entre el precio
+   pactado y el valor de tablas de Hacienda depreciado con los coeficientes del
+   anexo IV (100 % el primer año → 10 % a partir de los 12). Orden de decisión:
+   exención por antigüedad → cuota fija → tipo. Devuelve las **reglas aplicadas**
+   y los **avisos** (sin CV fiscales no se sabe si aplica el 8 %, con más de
+   2.000 cc en la Comunitat Valenciana sí, el matiz de que las cuotas fijas
+   están redactadas para "turismos y todoterrenos"…), no solo la cifra.
+3. **Página `/calcular-itp`**: precio, comunidad, año de matriculación, CV
+   fiscales, cilindrada, etiqueta DGT y —opcional— el precio de tablas del
+   vehículo nuevo. Muestra el desglose, el coste total con la tasa de la DGT
+   (55,70 €), el cálculo paso a paso y una **comparativa con las 19
+   comunidades** (de los 3 % de Galicia a los 6 % de Cantabria, Castilla-La
+   Mancha, Comunitat Valenciana y Extremadura).
+4. **Landings por comunidad** (`/calcular-itp/{ccaa}`): 19 páginas con datos,
+   notas, plazo, modelo, fuente oficial, calculadora preseleccionada, FAQ
+   propia y enlazado interno entre comunidades. Objetivo de posicionamiento:
+   "impuesto comprar camper segunda mano {comunidad}". Se enlazan desde el
+   footer y desde el `sitemap.ts` (prioridad 0.8).
+5. **Checklist de compra segura** (`/compra-segura-camper`): 10 comprobaciones
+   generales + 5 específicas de camper (homologación declarada, plazas, MMA y
+   carnet, instalación de gas, carga útil), con `HowTo` estructurado y los pasos
+   de la operación (contrato → ITP → tasa DGT → cambio de nombre).
+6. **Integración con el marketplace**: la ficha de cada anuncio enlaza a la
+   calculadora con **el precio ya puesto** (`/calcular-itp?precio=`), y las
+   páginas de ITP empujan al catálogo filtrado por **homologación verificada**
+   (`/catalogo?verificada=1`), que es la Fase 0.2. Así la utilidad fiscal lleva
+   tráfico hacia los anuncios que ya tienen el expediente revisado.
+
+**Mantenimiento:** los tipos cambian por ley autonómica (Cantabria bajó del 8 %
+al 6 % en 2024 y todavía hay webs con el dato viejo). Actualizar `TIPOS_ITP`,
+`REVISADO_EN` y `EJERCICIO_FISCAL` una vez al año; `tests/unit/itp.test.ts`
+(28 pruebas) comprueba la forma del registro y el cálculo.
 
 **Monetización desde la Fase 0:** el paquete "Destacado Premium" existente
 (sistema de créditos) pasa a incluir la verificación de homologación → el
@@ -314,5 +345,9 @@ riesgo operativo.
    `documentos-vehiculo`, columna `verificacion_homologacion`, expediente del
    vendedor, revisión admin (pestaña *Homologación*), sello en card/ficha y
    filtro "solo verificados" (ver §2.2).
-3. ▶️ `feat/calculadora-itp` — **siguiente**: página + landings CCAA + checklist
-   de compra segura.
+3. ✅ `feat/calculadora-itp` — **hecho**: calculadora (`/calcular-itp`), 19
+   landings por comunidad autónoma y checklist de compra segura
+   (`/compra-segura-camper`), sin SQL (ver §2.3).
+
+**Fase 0 completa.** Siguiente bloque del plan: Fase 1 (§3) — expediente
+documental (ya cubierto por 0.2) y señal de reserva online.

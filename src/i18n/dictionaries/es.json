@@ -443,7 +443,9 @@
     "expedienteIntroPendiente": "El vendedor ha subido documentación del vehículo y está en revisión por nuestro equipo.",
     "expedienteAvisoVivienda": "El anuncio declara vehículo vivienda (2448/3148) y el proyecto de homologación todavía está pendiente de verificar.",
     "expedienteNotaComprador": "Antes de cerrar la compra, pide al vendedor que te muestre los documentos originales.",
-    "expedienteCta": "Sube la documentación y consigue el sello de homologación"
+    "expedienteCta": "Sube la documentación y consigue el sello de homologación",
+    "itpCtaTitulo": "Calcula el ITP de esta camper",
+    "itpCtaDesc": "Cuánto pagarás de impuesto y de cambio de nombre según tu comunidad"
   },
   "creditos": {
     "title1": "Compra créditos y",
