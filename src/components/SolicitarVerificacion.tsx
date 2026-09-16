@@ -6,11 +6,10 @@
  * Flujo español:
  *  - El vendedor sube fotos de su DNI/NIE (frente y dorso) + teléfono y banco
  *    (para contraste con los datos de pago de créditos vía Bizum/transferencia).
- *  - La tabla `solicitudes_verificacion` y el bucket `cedulas` conservan
- *    nombres heredados del marketplace venezolano por compatibilidad con la BD
- *    existente: aquí se usan como alias de "verificación de identidad" y
- *    "documentos de identidad". Columnas `pago_movil_*` ≡ datos de identidad
- *    (teléfono / DNI-NIE / banco) y `cedula_foto_*` ≡ foto DNI/NIE.
+ *  - Canónico desde 2026-09-17: bucket `documentos-identidad`, columnas
+ *    `telefono` / `dni` / `banco` y `dni_foto_frente_url` / `dni_foto_dorso_url`
+ *    en `solicitudes_verificacion`. Los nombres legados `cedulas` y
+ *    `pago_movil_*` / `cedula_foto_*` siguen sincronizados por trigger.
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -59,22 +58,28 @@ export default function SolicitarVerificacion() {
       return
     }
 
+    // Lectura tolerante: canónico telefono/dni/banco + legados pago_movil_*
     const { data: sol } = await supabase
       .from('solicitudes_verificacion')
-      .select('id, user_id, pago_movil_telefono, pago_movil_cedula, pago_movil_banco, mensaje, estado, creada_en')
+      .select('id, user_id, telefono, dni, banco, dni_foto_frente_url, dni_foto_dorso_url, pago_movil_telefono, pago_movil_cedula, pago_movil_banco, cedula_foto_frente_url, cedula_foto_dorso_url, mensaje, estado, creada_en')
       .eq('user_id', user?.id)
       .eq('estado', 'pendiente')
       .single()
 
     if (sol) {
       setEstado('pendiente')
-      setSolicitudActual(sol)
+      setSolicitudActual({
+        ...sol,
+        pago_movil_telefono: sol.telefono ?? sol.pago_movil_telefono,
+        pago_movil_cedula: sol.dni ?? sol.pago_movil_cedula,
+        pago_movil_banco: sol.banco ?? sol.pago_movil_banco,
+      })
       return
     }
 
     const { data: solRech } = await supabase
       .from('solicitudes_verificacion')
-      .select('id, user_id, pago_movil_telefono, pago_movil_cedula, pago_movil_banco, mensaje, estado, creada_en, rechazo_motivo')
+      .select('id, user_id, telefono, dni, banco, dni_foto_frente_url, dni_foto_dorso_url, pago_movil_telefono, pago_movil_cedula, pago_movil_banco, cedula_foto_frente_url, cedula_foto_dorso_url, mensaje, estado, creada_en, rechazo_motivo')
       .eq('user_id', user?.id)
       .eq('estado', 'rechazada')
       .order('creada_en', { ascending: false })
@@ -84,7 +89,12 @@ export default function SolicitarVerificacion() {
     if (solRech) {
       setEstado('rechazada')
       setRechazoMotivo(solRech.rechazo_motivo || '')
-      setSolicitudActual(solRech)
+      setSolicitudActual({
+        ...solRech,
+        pago_movil_telefono: solRech.telefono ?? solRech.pago_movil_telefono,
+        pago_movil_cedula: solRech.dni ?? solRech.pago_movil_cedula,
+        pago_movil_banco: solRech.banco ?? solRech.pago_movil_banco,
+      })
     }
   }, [user])
 
@@ -133,11 +143,17 @@ export default function SolicitarVerificacion() {
       const frentePath = `${userId}/${ts}_frente.jpg`
       const dorsoPath = `${userId}/${ts}_dorso.jpg`
 
-      // Bucket `cedulas` = documentos de identidad (nombre legado, conserva compatibilidad)
-      const [upF, upD] = await Promise.all([
-        supabase.storage.from('cedulas').upload(frentePath, frenteFile),
-        supabase.storage.from('cedulas').upload(dorsoPath, dorsoFile),
+      // Canónico: bucket documentos-identidad. Fallback a `cedulas` si aún no existe (instalación antigua).
+      let [upF, upD] = await Promise.all([
+        supabase.storage.from('documentos-identidad').upload(frentePath, frenteFile),
+        supabase.storage.from('documentos-identidad').upload(dorsoPath, dorsoFile),
       ])
+      if (upF.error && /bucket.*not found/i.test(upF.error.message || '')) {
+        ;[upF, upD] = await Promise.all([
+          supabase.storage.from('cedulas').upload(frentePath, frenteFile),
+          supabase.storage.from('cedulas').upload(dorsoPath, dorsoFile),
+        ])
+      }
 
       if (upF.error || upD.error) {
         throw new Error(upF.error?.message || upD.error?.message || 'Error subiendo fotos')
@@ -147,10 +163,15 @@ export default function SolicitarVerificacion() {
 
       const { error: dbError } = await supabase.from('solicitudes_verificacion').insert({
         user_id: userId,
-        // Columnas legado: pago_movil_* ≡ teléfono / DNI-NIE / banco en España
+        // Canónico + legado (trigger los mantiene sincronizados)
+        telefono: telefonoVerif,
+        dni: dniVerif,
+        banco: bancoVerif,
         pago_movil_telefono: telefonoVerif,
         pago_movil_cedula: dniVerif,
         pago_movil_banco: bancoVerif,
+        dni_foto_frente_url: upF.data?.path || '',
+        dni_foto_dorso_url: upD.data?.path || '',
         cedula_foto_frente_url: upF.data?.path || '',
         cedula_foto_dorso_url: upD.data?.path || '',
         mensaje: mensaje.trim() || null,

@@ -278,6 +278,7 @@ export default function PublicarPage() {
       // Insert product via API route with rate limiting. La moderación y la
       // alerta se calculan en el servidor; no se envía una segunda alerta desde
       // el navegador para evitar duplicados y manipulación del estado.
+      const precioNum = parseFloat(precioUsd) || null
       const res = await fetch('/api/publicar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -292,7 +293,10 @@ export default function PublicarPage() {
           modelo: modeloFinal,
           especificaciones: especificacionesFinal,
           estado: estadoProd,
-          precio_usd: parseFloat(precioUsd) || null,
+          // Canónico ES: `precio` (euros). El alias `precio_usd` se mantiene por compat BD, ambos sincronizados.
+          precio: precioNum,
+          precio_eur: precioNum,
+          precio_usd: precioNum,
           ubicacion_estado: ubicacionEstado,
           ubicacion_ciudad: ubicacionCiudad,
           imagen_url: imagenUrl,

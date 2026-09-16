@@ -94,7 +94,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Sanitizar strings para prevenir XSS
-    const sanitizedData = sanitizeObject(productoData)
+    const sanitizedData: Record<string, unknown> = sanitizeObject(productoData)
+
+    // Canonizar precio: el front puede mandar precio / precio_eur / precio_usd (legado)
+    // La BD mantiene los tres sincronizados, pero escribir en el canónico `precio` es lo correcto.
+    const precioEntrada = (sanitizedData['precio'] ?? sanitizedData['precio_eur'] ?? sanitizedData['precio_usd']) as unknown
+    if (precioEntrada != null) {
+      const n = Number(String(precioEntrada).replace(',', '.'))
+      if (Number.isFinite(n)) {
+        sanitizedData['precio'] = n
+        sanitizedData['precio_eur'] = n
+        sanitizedData['precio_usd'] = n
+      }
+    }
 
     // La moderación es una regla de seguridad: se recalcula en el servidor y
     // no se confía en `estado_moderacion` ni en una alerta enviada por el
