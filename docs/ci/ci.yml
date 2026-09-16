@@ -1,17 +1,28 @@
-# ⚠️ ESTE ARCHIVO NO SE EJECUTA TODAVÍA — hay que ACTIVARLO.
+# ⚠️ ESTE ARCHIVO TODAVÍA NO SE EJECUTA — hay que ACTIVARLO (30 segundos).
 #
-# Para que GitHub lo ejecute, cópialo a `.github/workflows/ci.yml` (mismo
-# contenido). Aquí está porque el agente que prepara los cambios no tiene el
-# permiso `workflows` y GitHub rechaza el push de `.github/workflows/*`.
+# GitHub solo ejecuta los workflows que están en `.github/workflows/`, y este
+# agente no puede crearlos ahí: GitHub rechaza el push de un workflow hecho por
+# una GitHub App sin el permiso `workflows`. Por eso vive aquí.
 #
-# Tres formas de activarlo:
-#  1. Web de GitHub → "Add file" → "Create new file" → ruta
-#     `.github/workflows/ci.yml` → pegar este contenido → commit.
-#  2. Desde tu máquina: `mkdir -p .github/workflows && git mv docs/ci/ci.yml
-#     .github/workflows/ci.yml && git commit -m 'ci: activar workflow'`.
-#  3. Reconectar GitHub en Arena con permiso de workflows.
+# FORMA RÁPIDA (recomendada, sin pegar código — vale desde el móvil):
+#   Abre este archivo en la web de GitHub y pulsa el lápiz (Edit):
+#   https://github.com/gtrespana-bit/camperocasion/edit/arena/01a0a7f4-camperocasion/docs/ci/ci.yml
+#   Cambia el nombre del archivo (campo de arriba) a:
+#       .github/workflows/ci.yml
+#   Y pulsa "Commit changes" → "Commit directly to the arena/... branch".
+#   Mover un archivo así ya crea la carpeta y no hay que copiar nada.
 #
-# Una vez activo, cada push y cada PR ejecutan los dos jobs.
+# FORMA CON PEGADO (si la anterior te da problemas):
+#   1. Abre https://github.com/gtrespana-bit/camperocasion/new/arena/01a0a7f4-camperocasion?filename=.github/workflows/ci.yml
+#   2. El nombre ya viene puesto; pega este archivo entero en el editor.
+#   3. "Commit changes" → commit directo a la rama.
+#
+# TERCERA OPCIÓN: desde el ordenador,
+#   mkdir -p .github/workflows && git mv docs/ci/ci.yml .github/workflows/ci.yml
+#   git commit -m 'ci: activar workflow' && git push
+#
+# Una vez activo, cada push y cada PR ejecutan los dos jobs (unos 3-5 minutos).
+# Si un job se pone en rojo, pásame el enlace del run y lo arreglo.
 #
 name: CI
 
@@ -30,7 +41,6 @@ on:
   push:
     branches: ['**']
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
 # Un push nuevo sobre la misma rama cancela la ejecución anterior.
@@ -90,3 +100,9 @@ jobs:
 
       - name: Garantías de RLS del expediente del vehículo
         run: python3 scripts/verify_rls_documentos_vehiculo.py
+
+      - name: Garantías de la reserva con señal
+        run: python3 scripts/verify_reservas_sql.py
+
+      - name: Verificación de despliegue (fases 0.1, 0.2 y 1.2)
+        run: python3 scripts/verificar_despliegue_sql.py

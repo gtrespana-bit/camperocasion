@@ -152,17 +152,20 @@ tipos cada año (la constante `REVISADO_EN` indica de cuándo son los datos).
 El repositorio **no tiene `.github/workflows/`** y el agente no puede crearlo:
 GitHub rechaza el push de un workflow hecho por una GitHub App sin el permiso
 `workflows` (*"refusing to allow a GitHub App to create or update workflow"*).
-El workflow está en **`docs/ci/ci.yml`** con las instrucciones en cabecera:
+El workflow está en **`docs/ci/ci.yml`**. Forma rápida (sin pegar código, vale
+desde el móvil): abrir el archivo en la web, pulsar el lápiz y **cambiar el
+nombre** a `.github/workflows/ci.yml`:
 
-1. En GitHub, *Add file → Create new file*, nombre `.github/workflows/ci.yml`, y
-   pegar el contenido de `docs/ci/ci.yml` (se puede hacer desde el móvil).
-2. O bien `git mv docs/ci/ci.yml .github/workflows/ci.yml` desde el ordenador.
-3. O reconectar Arena con el permiso de workflows y pedirlo de nuevo.
+https://github.com/gtrespana-bit/camperocasion/edit/arena/01a0a7f4-camperocasion/docs/ci/ci.yml
+
+Commit directo a la rama → el workflow queda activo y arranca solo. Alternativas:
+*Add file → Create new file* con el contenido pegado, `git mv` desde el
+ordenador, o reconectar Arena con el permiso `workflows`.
 
 Jobs: **calidad** (Node 22 → `npm ci` → `tsc --noEmit` → `eslint .` → `npm test`)
 y **sql** (Python 3.12 → `pgserver`, `psycopg2-binary`, `pglast` → valida el
-`setup-camperocasion.sql` completo y ejecuta los tests de RLS contra un Postgres
-real). Los dos ya pasan en local.
+`setup-camperocasion.sql` completo + RLS de documentos + garantías de reservas +
+las 20 comprobaciones de despliegue). Los cuatro scripts ya pasan en local.
 
 ---
 

@@ -15,8 +15,9 @@ Ejecuta `setup-camperocasion.sql` en un Postgres de verdad (mismo arnés que
 Uso:  python3 scripts/verify_reservas_sql.py
 """
 
+import os
 import sys
-sys.path.insert(0, '/home/user/camperocasion/scripts')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import psycopg2
 import validate_setup_sql as v

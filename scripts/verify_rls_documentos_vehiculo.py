@@ -15,8 +15,9 @@ script falla.
 
 Uso:  python3 scripts/verify_rls_documentos_vehiculo.py
 """
+import os
 import sys
-sys.path.insert(0, '/home/user/camperocasion/scripts')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import validate_setup_sql as v, psycopg2
 
 v.run(reset=True)
