@@ -15,12 +15,18 @@ import {
   GRUPOS_FILTROS_TECNICOS,
   CAMPOS_TECNICOS,
   PARAMETROS_TECNICOS,
+  RANGOS_NUMERICOS,
   leerFiltrosTecnicos,
   limpiarFiltrosTecnicos,
   hayFiltrosTecnicos,
   especificacionesDeFiltros,
   aplicarFiltrosTecnicos,
   firmaFiltrosTecnicos,
+  leerFiltrosRango,
+  limpiarFiltrosRango,
+  hayFiltrosRango,
+  firmaFiltrosRango,
+  parsearNumeroEs,
 } from '@/lib/filtros-tecnicos'
 import { categoriasData, resolverCampos } from '@/lib/categorias'
 
@@ -152,5 +158,50 @@ describe('firma de filtros', () => {
     expect(firmaFiltrosTecnicos({ dgt: 'ECO' })).not.toBe(firmaFiltrosTecnicos({ dgt: 'Cero Emisiones' }))
     expect(firmaFiltrosTecnicos({})).toBe('')
     expect(firmaFiltrosTecnicos(null)).toBe('')
+  })
+})
+
+describe('rangos numéricos', () => {
+  test('los rangos cubren km, año y watios con columna generada esperada', () => {
+    expect(RANGOS_NUMERICOS.map(r => r.param)).toEqual([
+      'kmMax', 'anioMin', 'placaWatiosMin', 'inversorWatiosMin',
+    ])
+    for (const r of RANGOS_NUMERICOS) {
+      expect(r.columnaGenerada).toMatch(/^espec_/)
+      expect(r.campo).toBeTruthy()
+      expect(r.claves).toContain(r.campo)
+    }
+    expect(RANGOS_NUMERICOS.find(r => r.param === 'kmMax')!.operador).toBe('lte')
+    expect(RANGOS_NUMERICOS.find(r => r.param === 'anioMin')!.operador).toBe('gte')
+  })
+
+  test('parsea números en formato español e internacional', () => {
+    expect(parsearNumeroEs('145000')).toBe(145000)
+    expect(parsearNumeroEs('145.000')).toBe(145000)
+    expect(parsearNumeroEs('12,5')).toBe(12.5)
+    expect(parsearNumeroEs('200')).toBe(200)
+    expect(parsearNumeroEs(240)).toBe(240)
+    expect(parsearNumeroEs('abc')).toBeNull()
+    expect(parsearNumeroEs('')).toBeNull()
+    expect(parsearNumeroEs('1450.500')).toBe(1450500) // heurístico US/miles → un solo número
+  })
+
+  test('lee y limpia los rangos de la query string', () => {
+    expect(leerFiltrosRango(new URLSearchParams('kmMax=150000&anioMin=2019&placaWatiosMin=200'))).toEqual({
+      kmMax: 150000, anioMin: 2019, placaWatiosMin: 200,
+    })
+    expect(leerFiltrosRango(new URLSearchParams('kmMax=abc&foo=1'))).toEqual({})
+    expect(limpiarFiltrosRango({ kmMax: '150000', anioMin: 2019, raro: 'x' })).toEqual({ kmMax: 150000, anioMin: 2019 })
+    expect(hayFiltrosRango({ kmMax: 1 })).toBe(true)
+    expect(hayFiltrosRango({ raro: 1 })).toBe(false)
+    expect(hayFiltrosRango(null)).toBe(false)
+  })
+
+  test('firma de rangos estable e independiente del orden', () => {
+    const a = firmaFiltrosRango({ kmMax: 150000, anioMin: 2019 })
+    const b = firmaFiltrosRango({ anioMin: 2019, kmMax: 150000 })
+    expect(a).toBe(b)
+    expect(a).toBe('kmMax=150000&anioMin=2019')
+    expect(firmaFiltrosRango({})).toBe('')
   })
 })

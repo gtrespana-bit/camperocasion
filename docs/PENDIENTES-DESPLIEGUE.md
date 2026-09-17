@@ -5,12 +5,14 @@
 > reiniciarse el entorno, así que ahora está versionado aquí. El resumen corto
 > también está en la descripción del PR #3.
 
-> **Estado a 2026-09-16 (noche):** `setup-camperocasion.sql` aplicado y verificado
-> **20/20** con `scripts/verificar_despliegue.sql`. CI activada y en verde.
-> **Vercel ya despliega producción** (el bloqueo §6 se resolvió: hay deployments
-> de Production sobre `main` en cada push). **Nuevo dominio canónico:
-> `camperocasion.online`** (cambiado el 2026-09-16, antes `camperocasion.es`,
-> que nunca llegó a servir tráfico).
+> **Estado a 2026-09-17:** todas las migraciones de CamperOcasión aplicadas
+> en producción y verificadas **32/32** con `scripts/verificar_despliegue.sql`
+> (SQL ejecutado con éxito en el editor de Supabase; verificado por el usuario).
+> CI activada, en verde y —desde el 2026-09-17— con el paso
+> `Migraciones 202609* reaplicadas` (`scripts/validate_migrations_sql.py`), que
+> valida también los archivos individuales de `supabase/migrations/`.
+> **Vercel ya despliega producción.** Dominio canónico:
+> **`camperocasion.online`**.
 >
 > **Cierre del cambio de dominio (2026-09-16/17):** DNS apuntado a Vercel, env
 > vars aplicadas y Supabase Auth con la URL nueva. **Verificado en producción**
@@ -21,10 +23,14 @@
 ## 0. Resumen en cuatro líneas
 
 1. ~~Aplicar **dos migraciones** en Supabase~~ ✅ **hecho**: `setup-camperocasion.sql`
-   completo, verificado con `scripts/verificar_despliegue.sql` (20/20 ✅).
+   completo y migraciones individuales aplicadas; verificado en producción con
+   `scripts/verificar_despliegue.sql` (**32/32 ✅** a 2026-09-17). Incluye la
+   Fase 1.2 de reservas con confirmación del vendedor
+   (`202609170004`, aplicada el 2026-09-17).
 2. Revisar las **variables de entorno** en Vercel (§1.3) — **PENDIENTE**.
 3. ~~Activar la **CI**~~ ✅ **hecho** el 2026-09-16: el workflow ya vive en
-   `.github/workflows/ci.yml` y los dos jobs pasan en `main`.
+   `.github/workflows/ci.yml`, los dos jobs pasan en `main` y desde el
+   2026-09-17 incluye la validación de los archivos individuales de migración.
 4. ~~Que Vercel tenga **un despliegue de producción**~~ ✅ **resuelto el
    2026-09-16**: Vercel publica deployment de Production en cada push a `main`
    (verificado vía `gh api .../deployments`).
@@ -33,9 +39,10 @@
 
 ---
 
-## 1. SQL en Supabase (producción) — ✅ APLICADO el 2026-09-16
+## 1. SQL en Supabase (producción) — ✅ APLICADO (32/32 el 2026-09-17)
 
-Verificación completa: `scripts/verificar_despliegue.sql` → 20/20 ✅
+Verificación completa: `scripts/verificar_despliegue.sql` → **32/32 ✅** el
+2026-09-17 (incluye Fase 0.1, 0.2, 1.2, §4 y Rangos numéricos).
 
 ### 1.1 Verificar prerrequisitos de la Fase 0.1 (filtros técnicos)
 
@@ -64,7 +71,8 @@ supabase/migrations/202609150001_verificacion_homologacion.sql
 setup-camperocasion.sql
 ```
 
-Comprobación: `scripts/verificar_despliegue.sql` de una vez (20 comprobaciones),
+Comprobación: `scripts/verificar_despliegue.sql` de una vez (ahora 32
+comprobaciones en total),
 o al menos esta — **atención**: para funciones hay que usar `to_regprocedure()`,
 porque `to_regclass()` solo mira relaciones (tablas, índices, vistas) y devuelve
 NULL aunque la función exista:
@@ -80,42 +88,52 @@ expediente sale vacío en `/producto/editar/[id]`, la pestaña **Homologación**
 panel avisa de que falta la migración y el filtro "Solo homologación verificada"
 no devuelve nada.
 
-### 1.2-bis Aplicar la Fase 1.2 (reserva con señal)
+### 1.2-bis Aplicar la Fase 1.2 (reserva con señal) — ✅ APLICADA en producción
 
 ```bash
-# Opción A: solo esta migración
+# Opción A: solo estas dos migraciones (en orden)
 supabase/migrations/202609160001_reservas.sql
+supabase/migrations/202609170004_reservas_confirmacion_vendedor.sql
 
-# Opción B: el setup completo (ya la incluye al final y es idempotente)
+# Opción B: el setup completo (ya las incluye y es idempotente)
 setup-camperocasion.sql
 ```
 
-Comprobación (los tres valores, no nulos):
+**Modelo (revisado el 2026-09-17): la confirmación la hace el VENDEDOR.** Como
+la plataforma no custodia el dinero, no puede "verificar" el pago: el comprador
+**solicita** la reserva (`solicitada`, no bloquea el anuncio) y el vendedor la
+**confirma** cuando recibe la señal (`activa` — solo entonces el anuncio queda
+reservado). Se eliminaron los comprobantes, el bucket y la revisión del admin:
+era un proceso de 8 estados que no podíamos respaldar (no veíamos ese pago) y
+solo añadía fricción. Aplicada y verificada con `scripts/verificar_despliegue.sql`
+en producción el 2026-09-17.
+
+Comprobación:
 
 ```sql
 select to_regclass('public.reservas'),
        to_regprocedure('public.fn_propagar_reserva()'),
-       (select 1 from storage.buckets where id = 'comprobantes-reserva');
+       (select 1 from pg_indexes where indexname = 'reservas_producto_activa_key');
 ```
 
 Sin aplicarla el sitio **no se rompe**: la ficha del anuncio simplemente no
 muestra el botón de reservar y las pestañas de reservas avisan de que falta la
 migración. Cuando esté aplicada aparecen solas:
 
-- Ficha del anuncio → botón "Reservar con señal" (100–1.000 €, sugerido 2 %),
-  modal con condiciones y subida del comprobante.
-- `/dashboard` → pestaña **Reservas** con "Mis reservas" y "En mis anuncios".
-- `/admin?tab=reservas` → cola de verificación: activar / rechazar / completar /
-  reembolsar / cancelar, con el comprobante en enlace firmado.
-- Sello **Reservado** en las tarjetas de catálogo, buscador y ficha.
-- Avisos por Telegram al admin si defines `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`
-  (opcionales: sin ellos todo funciona igual, solo no llega el aviso).
+- Ficha del anuncio → botón "Reservar con señal" (100–1.000 €, sugerido 2 %):
+  envía la solicitud al vendedor.
+- `/dashboard` → pestaña **Reservas**: el comprador sigue su solicitud; el
+  vendedor ve las solicitudes de sus anuncios y las **confirma** (recibió la
+  señal) o **rechaza**.
+- Sello **Reservado** solo cuando hay una reserva activa (confirmada).
+- Avisos push al vendedor cuando llega una solicitud; Telegram al admin si
+  defines `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` (opcionales).
 
 Nota de producto: el dinero **no pasa por la plataforma**; el comprador paga la
-señal por Bizum/transferencia/en mano y el admin verifica el comprobante. No hay
-Stripe ni custodia, así que no hace falta ninguna variable nueva de pago.
+señal por Bizum/transferencia/en mano y el vendedor confirma. No hay Stripe ni
+custodia, así que no hace falta ninguna variable nueva de pago.
 
-### 1.2-ter Aplicar la Fase §4 (inspección + gestoría) — PENDIENTE en producción
+### 1.2-ter Aplicar la Fase §4 (inspección + gestoría) — ✅ APLICADA en producción
 
 ```bash
 # Opción A: solo esta migración
@@ -147,6 +165,34 @@ aparecen solas:
   **Gestoría** (leads de la landing `/gestoria-cambio-nombre`).
 - El contrato se genera íntegro en el navegador (`/contrato-compraventa`):
   no toca base de datos ni servers. Enlazado desde ficha, ITP y compra-segura.
+
+### 1.2-quater Aplicar los rangos numéricos del catálogo (202609170003) — ✅ APLICADA en producción
+
+```bash
+# Opción A: solo esta migración
+supabase/migrations/202609170003_rangos_numericos.sql
+
+# Opción B: el setup completo (ya la incluye al final y es idempotente)
+setup-camperocasion.sql
+```
+
+Comprobación (la función más una columna; el resto sale con
+`scripts/verificar_despliegue.sql`, ahora **32** comprobaciones):
+
+```sql
+select to_regprocedure('public.fn_espec_numero(text)'),
+       (select 1 from information_schema.columns
+         where table_schema = 'public' and table_name = 'productos'
+           and column_name = 'espec_km');
+```
+
+Qué añade: 4 columnas **generadas** (`espec_km`, `espec_anio`, `espec_placa_w`,
+`espec_inversor_w`) que extraen el número del JSONB `especificaciones` con su
+índice funcional — la comparación numérica real de los filtros "km máximos",
+"año mínimo", "placa solar mínima" e "inversor mínimo" del catálogo y de
+`/buscar`. Si aún no está aplicada, los rangos se reintentan automáticamente sin
+ellos (plan B), así que nada se rompe: simplemente esos 4 filtros no acotan
+hasta que se aplique.
 
 ### 1.3 Variables de entorno en Vercel — ✅ APLICADAS el 2026-09-16
 
@@ -215,10 +261,26 @@ en build time.
 
 - [ ] Subir un documento de prueba en un anuncio propio → aparece en el
       expediente y se abre con el enlace firmado.
-- [ ] Reservar un anuncio propio con otra cuenta → la tarjeta del catálogo pasa a
-      "Reservado", sube un comprobante de prueba y verifícalo desde
-      `/admin?tab=reservas` (activar). Luego cancela para liberar el anuncio.
-- [ ] Comprobar que el anuncio reservado **no** permite una segunda reserva.
+- [ ] Reservar un anuncio propio con otra cuenta → llega una solicitud a
+      `/dashboard?tab=reservas` del vendedor. Confirmarla desde ahí (recibió la
+      señal) → la tarjeta del catálogo pasa a "Reservado". Luego cancela para
+      liberar el anuncio.
+- [ ] Comprobar que una **solicitud sin confirmar NO bloquea** el anuncio (sigue
+      disponible para todos), y que una activa **no** permite una segunda reserva.
+- [ ] **Rangos numéricos**: en `/catalogo`, filtra "Kilómetros máximos" con un
+      valor intermedio (p. ej. 150.000) y confirma que filtra por número: un
+      anuncio de 1.500.000 km no aparece y uno de 145.000 km sí (si comparara
+      texto, `'9' > '10'` y el orden saldría mal). Prueba también "Año mínimo",
+      "Placa solar mínima" e "Inversor mínimo".
+- [ ] **Rangos en `/buscar`**: confirma que los mismos 4 filtros de rango
+      aparecen y acotan junto al resto de la ficha técnica camper.
+- [ ] **Inspección + gestoría**: pide una inspección desde la ficha de un
+      anuncio y confirma que llega a `/admin?tab=inspecciones`; envía un lead
+      desde `/gestoria-cambio-nombre` y confirma que llega a
+      `/admin?tab=gestoria`.
+- [ ] **Calculadora ITP**: elige etiqueta "ECO" o "Cero Emisiones" y confirma
+      que el ITP estimado cambia (tipos reducidos) y que la comparativa por
+      comunidades se actualiza.
 
 ## 2-bis. La Fase 0.3 (ITP) NO necesita SQL
 
@@ -230,17 +292,24 @@ tipos cada año (la constante `REVISADO_EN` indica de cuándo son los datos).
 
 ## 3. Decisiones de producto ya tomadas (no volver a preguntarlas)
 
-- **Comisión de reserva: 0 %** mientras no haya pasarela de pago. Se verifica el
-  comprobante a mano; el importe de la señal va íntegro al vendedor.
-- **Caducidad de la reserva: 7 días**, renovados al activarla (el comprador puede
-  tardar en quedar para ver el vehículo).
-- **Una reserva viva por anuncio**, garantizado por índice único parcial en la
-  base de datos, no por la aplicación.
+- **Comisión de reserva: 0 %** mientras no haya pasarela de pago. El importe de
+  la señal va íntegro al vendedor.
+- **La confirmación la hace el VENDEDOR** (2026-09-17): como la plataforma no
+  custodia el dinero, no "verifica" el pago. El comprador solicita; el vendedor
+  confirma al recibir la señal y solo entonces el anuncio queda reservado. Sin
+  comprobantes.
+- **Una solicitud NO bloquea el anuncio** (si no, cualquiera logueado podría
+  "reservar" sin pagar). Solo una reserva **activa** lo bloquea.
+- **Caducidad de la reserva: 7 días**, contados desde la confirmación del
+  vendedor (el comprador puede tardar en quedar para ver el vehículo).
+- **Una reserva activa por anuncio** (y una solicitud por comprador/anuncio),
+  garantizado por índices únicos parciales en la base de datos, no por la app.
 - **Señal sugerida: 2 % del precio**, redondeo a 50 €, mínimo 300 € y máximo
   1.000 €. El límite duro es 100–1.000 €.
-- Si el **vendedor** cancela una reserva activa, queda en **"reembolsada"**: es la
-  constancia de que debe devolver la señal.
-- Las reservas caducadas se barren de forma **perezosa** en cada POST (sin cron).
+- Si el **vendedor** cancela una reserva activa, queda en **"cancelada"** con el
+  motivo: es la constancia de que debe devolver la señal.
+- Las solicitudes y reservas caducadas se barren de forma **perezosa** en cada
+  POST (sin cron).
 
 ---
 
@@ -278,7 +347,8 @@ ordenador, o reconectar Arena con el permiso `workflows`.
 Jobs: **calidad** (Node 22 → `npm ci` → `tsc --noEmit` → `eslint .` → `npm test`)
 y **sql** (Python 3.12 → `pgserver`, `psycopg2-binary`, `pglast` → valida el
 `setup-camperocasion.sql` completo + RLS de documentos + garantías de reservas +
-las 20 comprobaciones de despliegue). Los cuatro scripts ya pasan en local.
+migraciones `202609*` individuales + las 32 comprobaciones de despliegue). Los
+scripts ya pasan en local.
 
 </details>
 
@@ -286,8 +356,15 @@ las 20 comprobaciones de despliegue). Los cuatro scripts ya pasan en local.
 
 ## 5. Pendientes de producto (sin fecha, sin SQL)
 
-- Rangos numéricos en los filtros (km máximos, año mínimo, watios de placa).
-- Llevar los filtros técnicos también a `/buscar`, que tiene su propia barra.
+- ~~Rangos numéricos en los filtros (km máximos, año mínimo, watios de placa)~~ ✅
+  **hecho (2026-09-17)**: `RANGOS_NUMERICOS` en `src/lib/filtros-tecnicos.ts`,
+  columnas generadas `espec_*` en `supabase/migrations/202609170003_rangos_numericos.sql`
+  (comparación numérica indexada, no texto), panel de rangos en catálogo y `/buscar`,
+  y reintento automático sin rangos si la migración aún no está aplicada.
+- ~~Llevar los filtros técnicos también a `/buscar`, que tiene su propia barra~~ ✅
+  **hecho (2026-09-17)**: `/buscar` reutiliza el mismo panel
+  (`FiltrosTecnicosPanel`) y la misma lógica de consulta compartida
+  (`aplicarFiltrosBase` en `src/lib/catalog-consulta.ts`), igual que catálogo.
 - Normalizar las claves del JSONB a slugs (`plazas_dormir`) — necesita backfill.
 - ~~Fase 1 restante: inspección precompra, contrato de compraventa descargable
   y gestoría del cambio de nombre~~ ✅ **hecho (2026-09-17, plan §4)**: botón

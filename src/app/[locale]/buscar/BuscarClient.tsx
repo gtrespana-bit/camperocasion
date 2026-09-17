@@ -5,7 +5,7 @@ import LocalLink from '@/components/LocalLink'
 import BadgeHomologacion from '@/components/BadgeHomologacion'
 import { Search, ChevronRight, XCircle, Loader2, Bell, BellRing } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useCallback, use } from 'react'
+import { useEffect, useState, useCallback, useMemo, use } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
@@ -13,6 +13,16 @@ import { categoriasData } from '@/lib/categorias'
 import UbicacionSelector from '@/components/UbicacionSelector'
 import { useTranslations } from 'next-intl'
 import { productUrl } from '@/lib/product-url'
+import { FiltrosTecnicosPanel } from '@/components/FiltrosTecnicosPanel'
+import {
+  leerFiltrosTecnicos,
+  leerFiltrosRango,
+} from '@/lib/filtros-tecnicos'
+import {
+  aplicarFiltrosBase,
+  esErrorColumnasRango,
+  type FiltrosCatalogo,
+} from '@/lib/catalog-consulta'
 
 type Producto = {
   id: string
@@ -139,6 +149,16 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
   const searchParams = use(searchParamsPromise)
   const router = useRouter()
   const t = useTranslations('search')
+  const tc = useTranslations('catalog')
+  // Traductor universal para el panel técnico (resolve 'catalog.*' y, si la
+  // clave no está en 'search', cae a 'catalog').
+  const tu = (key: string) => {
+    const parts = key.split('.')
+    const ns = parts[0]
+    const rest = parts.slice(1).join('.')
+    if (ns === 'catalog') return tc(rest as any)
+    return t(key as any)
+  }
   
   const query = searchParams?.q || ''
   const categoria = searchParams?.categoria || ''
@@ -150,6 +170,18 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
   const precioMin = searchParams?.precio_min || ''
   const precioMax = searchParams?.precio_max || ''
   const orden = searchParams?.orden || ''
+
+  // Filtros técnicos camper (los mismos del catálogo): opciones + rangos.
+  // Se memoizan por la referencia de `searchParams`: `use()` devuelve la misma
+  // referencia mientras no cambie la query string, así que el efecto no se
+  // reejecuta en bucle por identidades nuevas.
+  const filtrosTecnicos = useMemo(() => leerFiltrosTecnicos(searchParams ?? {}), [searchParams])
+  const filtrosRango = useMemo(() => leerFiltrosRango(searchParams ?? {}), [searchParams])
+  const rangosEnBruto: Record<string, string> = {}
+  for (const k of ['kmMax', 'anioMin', 'placaWatiosMin', 'inversorWatiosMin']) {
+    const v = searchParams?.[k]
+    if (v) rangosEnBruto[k] = v
+  }
 
   const [productos, setProductos] = useState<Producto[]>([])
   const [loading, setLoading] = useState(false)
@@ -245,40 +277,51 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
     setLoading(true)
 
     async function buscar() {
-      let sq = supabase
-        .from('productos')
-        .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, verificacion_homologacion, reservado', { count: 'exact' })
-        .eq('activo', true)
-        .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado')
+      const ejecutar = async (conRangos: boolean) => {
+        let sq = supabase
+          .from('productos')
+          .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, verificacion_homologacion, reservado', { count: 'exact' })
+          .eq('activo', true)
+          .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado')
 
-      if (query) {
-        sq = sq.textSearch('search_vector', query, { config: 'spanish', type: 'plain' })
+        if (categoria) {
+          // maybeSingle(): evita el 406 de single() con cero filas.
+          const { data: catRow } = await supabase.from('categorias').select('id').eq('nombre', categoria).maybeSingle()
+          if (catRow) sq = sq.eq('categoria_id', catRow.id)
+        }
+
+        // Filtros compartidos con el catálogo (subcategoría, marca, q,
+        // ubicación, precio, condición, ficha técnica camper y rangos).
+        const filtros: Record<string, unknown> = {
+          subcategoria,
+          marca,
+          q: query,
+          ubicacionEstado,
+          ubicacionCiudad,
+          precioMin,
+          precioMax,
+          condicion,
+          ...filtrosTecnicos,
+        }
+        if (conRangos) Object.assign(filtros, filtrosRango)
+        const { categoria: _cat, ...resto } = filtros
+        sq = aplicarFiltrosBase(sq, resto as FiltrosCatalogo) as typeof sq
+
+        if (orden === 'precio_asc') sq = sq.order('precio_usd', { ascending: true })
+        else if (orden === 'precio_desc') sq = sq.order('precio_usd', { ascending: false })
+        else sq = sq.order('creado_en', { ascending: false })
+
+        return await sq
       }
 
-      if (categoria) {
-        // maybeSingle(): evita el 406 de single() con cero filas.
-        const { data: catRow } = await supabase.from('categorias').select('id').eq('nombre', categoria).maybeSingle()
-        if (catRow) sq = sq.eq('categoria_id', catRow.id)
+      // Plan B: sin columnas generadas de rangos (migración pendiente), reintenta
+      // sin los rangos para que el resto de filtros siga funcionando.
+      let result = await ejecutar(true)
+      if (result.error && esErrorColumnasRango(result.error) && Object.keys(filtrosRango).length > 0) {
+        result = await ejecutar(false)
       }
 
-      if (subcategoria) sq = sq.eq('subcategoria', subcategoria)
-      if (marca) sq = sq.eq('marca', marca)
-      if (condicion) sq = sq.eq('estado', condicion)
-
-      if (ubicacionCiudad) {
-        sq = sq.eq('ubicacion_ciudad', ubicacionCiudad)
-      } else if (ubicacionEstado) {
-        sq = sq.eq('ubicacion_estado', ubicacionEstado)
-      }
-
-      if (precioMin) sq = sq.gte('precio_usd', parseFloat(precioMin))
-      if (precioMax) sq = sq.lte('precio_usd', parseFloat(precioMax))
-
-      if (orden === 'precio_asc') sq = sq.order('precio_usd', { ascending: true })
-      else if (orden === 'precio_desc') sq = sq.order('precio_usd', { ascending: false })
-      else sq = sq.order('creado_en', { ascending: false })
-
-      const { data, count, error } = await sq
+      const { data, count, error } = result
       if (!cancelled) {
         if (!error) {
           let sorted = data as Producto[]
@@ -311,7 +354,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
 
     buscar()
     return () => { cancelled = true }
-  }, [query, categoria, subcategoria, marca, condicion, ubicacionEstado, ubicacionCiudad, precioMin, precioMax, orden])
+  }, [query, categoria, subcategoria, marca, condicion, ubicacionEstado, ubicacionCiudad, precioMin, precioMax, orden, filtrosTecnicos, filtrosRango])
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -470,6 +513,17 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
                     className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white"
                   />
                 </div>
+              </div>
+
+              {/* Ficha técnica camper: el mismo panel que usa /catalogo, con las
+                  mismas opciones del formulario de publicación. */}
+              <div className="mt-4 pt-4 border-t">
+                <FiltrosTecnicosPanel
+                  filtrosTecnicos={filtrosTecnicos}
+                  rangos={rangosEnBruto}
+                  t={tu}
+                  onSetParam={setParam}
+                />
               </div>
 
               <div>

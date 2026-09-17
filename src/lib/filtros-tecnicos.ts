@@ -15,13 +15,20 @@
  * pueden divergir).
  *
  * ── Sobre la consulta ────────────────────────────────────────────────────
- * Los filtros se aplican con contención JSONB (`@>`, en supabase-js
+ * Los filtros por opción se aplican con contención JSONB (`@>`, en supabase-js
  * `.contains()`), que es exactamente el operador que cubre el índice GIN
  * `productos_especificaciones_idx` (migración 025). La extracción campo a campo
  * (`especificaciones->>'Campo' = 'valor'`) devuelve el mismo resultado pero NO
  * puede usar ese índice: fuerza un recorrido secuencial de `productos`.
  * Además, todos los filtros activos viajan en una sola condición `@>`, en vez
  * de una condición por campo.
+ *
+ * Los filtros por RANGO numérico (kilómetros máximos, año mínimo, watios de
+ * placa/inversor) son otra cosa: `@>` compara igualdad de texto y no sirve
+ * para ">" y "<". Esos filtros viven en `RANGOS_NUMERICOS` y su traducción a la
+ * consulta está en `src/lib/catalog-consulta.ts` (`aplicarRangosNumericos`):
+ * se comparan los números extraídos del JSONB con las claves canónicas
+ * (`Kilómetros`, `Año de matriculación`, `Placa solar (watios)`, …).
  *
  * Las claves y los valores llevan espacios y acentos ("Plazas para dormir",
  * "C (Verde)"): supabase-js los envía percent-encoded y PostgREST los decodifica
@@ -49,6 +56,9 @@ import {
 
 /** Bloques en los que se agrupan los filtros técnicos en la barra lateral. */
 export type GrupoFiltroTecnico = 'mecanica' | 'habitabilidad' | 'autonomia'
+
+/** Tipo de control con el que se captura el filtro. */
+export type TipoFiltro = 'select' | 'rango'
 
 export interface FiltroTecnico {
   /** Parámetro de la query string: /catalogo?plazasDormir=4 */
@@ -99,7 +109,7 @@ export const GRUPOS_FILTROS_TECNICOS: readonly {
   ] as const
 ).map(g => ({ ...g, filtros: FILTROS_TECNICOS.filter(f => f.grupo === g.grupo) }))
 
-/** Parámetros de URL que corresponden a un filtro técnico. */
+/** Parámetros de URL que corresponden a un filtro técnico por opción. */
 export const PARAMETROS_TECNICOS: readonly string[] = FILTROS_TECNICOS.map(f => f.param)
 
 /** Mapa param → clave del JSONB, mantenido por compatibilidad con los hooks. */
@@ -111,8 +121,140 @@ export const FILTROS_POR_PARAM: Record<string, FiltroTecnico> = Object.fromEntri
   FILTROS_TECNICOS.map(f => [f.param, f])
 )
 
-/** Filtros técnicos activos: `{ plazasDormir: '4', ... }`. */
+// ── Filtros por rango numérico ─────────────────────────────────────────────
+//
+// Los tres campos numéricos que de verdad segmentan la búsqueda camper
+// (km máximos, año mínimo y watios de placa/inversor) se capturan como número
+// en el formulario y se guardan como TEXTO en el JSONB (`String(km)`), así
+// que un `@>` de igualdad no sirve: hay que comparar su valor numérico.
+//
+// El plan decía "capturarlos como tramos o añadir columnas generadas": aquí se
+// hace lo segundo. La migración `202609170003_rangos_numericos.sql` añade
+// columnas GENERATED (`espec_km`, `espec_anio`, `espec_placa_w`,
+// `espec_inversor_w`) que extraen y castean el número del JSONB, con índice
+// funcional. La consulta de rangos filtra por ESAS columnas (comparación
+// numérica real, indexada), no por la clave JSONB — filtrar con `->>` hace
+// comparación ALFABÉTICA de texto ('9' > '10') y las claves con espacios
+// rompen la ruta.
+//
+// Si la migración aún no está aplicada, la query falla con "column ... does
+// not exist" y `quitarRangos()` + un reintento (en los cargadores) deja el
+// catálogo funcionando SOLO con los filtros que no dependen de esa columna.
+
+export type OperadorRango = 'gte' | 'lte'
+
+export interface RangoNumerico {
+  /** Parámetro de la query string: /catalogo?kmMax=150000&anioMin=2019 */
+  param: string
+  /** Clave canónica con la que el campo se guarda en el JSONB. */
+  campo: string
+  /**
+   * Claves alternativas (históricas) que también cuentan como el mismo dato.
+   * Por ejemplo, el kilometraje se guardó alguna vez como "Kilometraje (km)".
+   * La columna generada de la migración las lee todas con COALESCE.
+   */
+  claves: readonly string[]
+  operador: OperadorRango
+  grupo: GrupoFiltroTecnico
+  /** Columna generada (migración 202609170003) usada para filtrar. */
+  columnaGenerada: string
+  i18n: string
+  /** Sufijo para el placeholder del input ("km", "año", "W"). */
+  unidad: string
+  min?: number
+}
+
+export const RANGOS_NUMERICOS: readonly RangoNumerico[] = [
+  {
+    param: 'kmMax',
+    campo: 'Kilómetros',
+    claves: ['Kilómetros', 'Kilometraje (km)', 'Kilometraje'],
+    operador: 'lte',
+    grupo: 'mecanica',
+    columnaGenerada: 'espec_km',
+    i18n: 'catalog.filters.kmMax',
+    unidad: 'km',
+    min: 0,
+  },
+  {
+    param: 'anioMin',
+    campo: 'Año de matriculación',
+    claves: ['Año de matriculación', 'Año', 'Ano de matriculación'],
+    operador: 'gte',
+    grupo: 'mecanica',
+    columnaGenerada: 'espec_anio',
+    i18n: 'catalog.filters.anioMin',
+    unidad: 'año',
+    min: 1950,
+  },
+  {
+    param: 'placaWatiosMin',
+    campo: 'Placa solar (watios)',
+    claves: ['Placa solar (watios)'],
+    operador: 'gte',
+    grupo: 'autonomia',
+    columnaGenerada: 'espec_placa_w',
+    i18n: 'catalog.filters.placaWatiosMin',
+    unidad: 'W',
+    min: 0,
+  },
+  {
+    param: 'inversorWatiosMin',
+    campo: 'Inversor 220V (watios)',
+    claves: ['Inversor 220V (watios)'],
+    operador: 'gte',
+    grupo: 'autonomia',
+    columnaGenerada: 'espec_inversor_w',
+    i18n: 'catalog.filters.inversorWatiosMin',
+    unidad: 'W',
+    min: 0,
+  },
+]
+
+export const PARAMETROS_RANGO: readonly string[] = RANGOS_NUMERICOS.map(r => r.param)
+
+export const RANGOS_POR_PARAM: Record<string, RangoNumerico> = Object.fromEntries(
+  RANGOS_NUMERICOS.map(r => [r.param, r])
+)
+
+/** Columnas generadas que espera la consulta de rangos (para el reintento). */
+export const COLUMNAS_RANGO: readonly string[] = RANGOS_NUMERICOS.map(r => r.columnaGenerada)
+
+/**
+ * Parseo de un número en los formatos que puede traer el JSONB de
+ * `especificaciones`: enteros sueltos ("145000"), separadores de millares en
+ * español ("145.000"), decimales con coma ("12,5") y la mezcla ("1.450,5").
+ * También el formato US ("1450.5").
+ */
+export function parsearNumeroEs(v: unknown): number | null {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null
+  if (typeof v !== 'string') return null
+
+  let s = v.trim().replace(/[^0-9.,\-]/g, '')
+  if (!s || s === '-' || s === '.' || s === ',') return null
+
+  const tieneComaDecimal = /,(\d{1,2})$/.test(s)
+  const tienePuntoMiles = /\d\.\d{3}(?=(\D|$))/.test(s)
+
+  if (tieneComaDecimal) {
+    // "145.000,5" o "145000,5": la coma es el decimal, los puntos son miles.
+    s = s.replace(/\./g, '').replace(',', '.').replace(/^-\./, '-0.')
+  } else if (tienePuntoMiles) {
+    // "145.000": el punto separa millares → lo quitamos.
+    // Ojo: "1450.500" también encaja y se leería como 1.450.500; es el caso
+    // ambiguo y se acepta el heurístico (no hay tal formato en la semilla).
+    s = s.replace(/\./g, '')
+  }
+
+  const n = Number(s)
+  return Number.isFinite(n) ? n : null
+}
+
+/** Filtros técnicos activos por opción: `{ plazasDormir: '4', dgt: 'ECO' }`. */
 export type FiltrosTecnicos = Record<string, string>
+
+/** Filtros de rango activos: `{ kmMax: 150000, anioMin: 2019 }`. */
+export type FiltrosRango = Record<string, number>
 
 type EntradaParams =
   | URLSearchParams
@@ -134,8 +276,8 @@ function leerParam(params: EntradaParams, param: string): string {
  * Extrae de la query string los filtros técnicos conocidos y con valor.
  * Descarta parámetros desconocidos y valores vacíos.
  */
-export function leerFiltrosTecnicos(params: EntradaParams): FiltrosTecnicos {
-  const filtros: FiltrosTecnicos = {}
+export function leerFiltrosTecnicos(params: EntradaParams): Record<string, string> {
+  const filtros: Record<string, string> = {}
   for (const { param } of FILTROS_TECNICOS) {
     const valor = leerParam(params, param).trim()
     if (valor) filtros[param] = valor
@@ -144,8 +286,8 @@ export function leerFiltrosTecnicos(params: EntradaParams): FiltrosTecnicos {
 }
 
 /** Deja solo los filtros técnicos conocidos y no vacíos. */
-export function limpiarFiltrosTecnicos(filtros?: Record<string, unknown> | null): FiltrosTecnicos {
-  const limpios: FiltrosTecnicos = {}
+export function limpiarFiltrosTecnicos(filtros?: Record<string, unknown> | null): Record<string, string> {
+  const limpios: Record<string, string> = {}
   if (!filtros) return limpios
   for (const { param } of FILTROS_TECNICOS) {
     const raw = filtros[param]
@@ -158,6 +300,36 @@ export function limpiarFiltrosTecnicos(filtros?: Record<string, unknown> | null)
 /** ¿Hay algún filtro técnico activo? */
 export function hayFiltrosTecnicos(filtros?: Record<string, unknown> | null): boolean {
   return Object.keys(limpiarFiltrosTecnicos(filtros)).length > 0
+}
+
+/** Lee los filtros de rango de la query string; los no numéricos se descartan. */
+export function leerFiltrosRango(params: EntradaParams): FiltrosRango {
+  const filtros: FiltrosRango = {}
+  for (const rango of RANGOS_NUMERICOS) {
+    const valor = leerParam(params, rango.param).trim()
+    if (!valor) continue
+    const n = parsearNumeroEs(valor)
+    if (n != null) filtros[rango.param] = n
+  }
+  return filtros
+}
+
+/** Deja solo los filtros de rango conocidos, numéricos y con valor. */
+export function limpiarFiltrosRango(filtros?: Record<string, unknown> | null): FiltrosRango {
+  const limpios: FiltrosRango = {}
+  if (!filtros) return limpios
+  for (const rango of RANGOS_NUMERICOS) {
+    const n = typeof filtros[rango.param] === 'number'
+      ? (filtros[rango.param] as number)
+      : parsearNumeroEs(filtros[rango.param])
+    if (n != null) limpios[rango.param] = n
+  }
+  return limpios
+}
+
+/** ¿Hay algún filtro de rango activo? */
+export function hayFiltrosRango(filtros?: Record<string, unknown> | null): boolean {
+  return Object.keys(limpiarFiltrosRango(filtros)).length > 0
 }
 
 /**
@@ -192,13 +364,23 @@ export function aplicarFiltrosTecnicos<T extends QueryConContains<unknown>>(
 }
 
 /**
- * Firma estable de los filtros técnicos activos. Se usa para detectar cambios
- * de filtro (y resetear la paginación) sin depender de la identidad del objeto.
+ * Firma estable de los filtros técnicos activos (solo los de opción). Se usa
+ * para detectar cambios de filtro (y resetear la paginación) sin depender de
+ * la identidad del objeto. Los rangos numéricos firman aparte.
  */
 export function firmaFiltrosTecnicos(filtros?: Record<string, unknown> | null): string {
   const limpios = limpiarFiltrosTecnicos(filtros)
   return FILTROS_TECNICOS
     .filter(f => limpios[f.param])
     .map(f => `${f.param}=${limpios[f.param]}`)
+    .join('&')
+}
+
+/** Firma estable de los rangos numéricos activos. */
+export function firmaFiltrosRango(filtros?: Record<string, unknown> | null): string {
+  const limpios = limpiarFiltrosRango(filtros)
+  return RANGOS_NUMERICOS
+    .filter(r => limpios[r.param] != null)
+    .map(r => `${r.param}=${limpios[r.param]}`)
     .join('&')
 }

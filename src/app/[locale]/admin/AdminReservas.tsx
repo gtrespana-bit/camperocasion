@@ -1,21 +1,16 @@
 'use client'
 
 /**
- * Revisión de reservas con señal (Fase 1.2).
+ * Reservas con señal (Fase 1.2, confirmación del vendedor) — panel admin.
  *
  * El dinero no pasa por la plataforma: el comprador paga la señal directamente
- * al vendedor (Bizum, transferencia o en mano) y sube el comprobante. Aquí el
- * admin comprueba que el comprobante es real (importe, destinatario, fecha) y
- * activa la reserva — o la rechaza con motivo, lo que libera el anuncio y pide
- * al comprador que suba otro comprobante.
- *
- * Por eso todas las acciones que mueven dinero (activar, rechazar, completar,
- * reembolsar, cancelar) exigen un motivo salvo activar y completar, y quedan
- * registradas en la fila de la reserva (`revisado_por`, `revisado_en`).
+ * al vendedor y es EL VENDEDOR quien la confirma desde su dashboard. Aquí el
+ * admin supervisa la actividad y puede cerrar reservas (completar una venta o
+ * cancelar con motivo). Ya no hay comprobantes que revisar.
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, BadgeEuro, CheckCircle2, ExternalLink, Loader2, RefreshCw, Undo2, X } from 'lucide-react'
+import { CheckCircle2, Loader2, RefreshCw, X } from 'lucide-react'
 import { ETIQUETAS_ESTADO_RESERVA, normalizarEstadoReserva, type EstadoReserva } from '@/lib/reservas'
 import { apiJson } from './components/admin-utils'
 
@@ -28,39 +23,28 @@ interface Reserva {
   comision: number | null
   mensaje: string | null
   motivo_cancelacion: string | null
-  comprobante_signed_url: string | null
   expira_en: string
   created_at: string
   revisado_en: string | null
-  vigente: boolean
   productos: { id: string; titulo: string | null; precio_usd: number | null; slug: string | null; user_id: string } | null
   comprador: { id: string; nombre: string | null; email: string | null; telefono: string | null } | null
   vendedor: { id: string; nombre: string | null; email: string | null; telefono: string | null } | null
 }
 
 interface Stats {
-  pendientes: number
-  en_revision: number
+  solicitadas: number
   activas: number
   completadas: number
-  importe_activo: number
+  total: number
 }
 
-type Filtro = 'vivas' | 'en_revision' | 'activas' | 'todas'
+type Filtro = 'vivas' | 'solicitadas' | 'activas' | 'todas'
 
 const FILTROS: { id: Filtro; label: string }[] = [
   { id: 'vivas', label: 'Vivas' },
-  { id: 'en_revision', label: 'Por verificar' },
+  { id: 'solicitadas', label: 'Solicitadas' },
   { id: 'activas', label: 'Activas' },
   { id: 'todas', label: 'Todas' },
-]
-
-const ACCIONES: { id: string; label: string; requiereMotivo: boolean; tono: string }[] = [
-  { id: 'activar', label: 'Verificar y activar', requiereMotivo: false, tono: 'bg-green-600 hover:bg-green-700 text-white' },
-  { id: 'rechazar', label: 'Rechazar comprobante', requiereMotivo: true, tono: 'bg-red-600 hover:bg-red-700 text-white' },
-  { id: 'completar', label: 'Marcar entregada', requiereMotivo: false, tono: 'bg-brand-primary hover:bg-brand-dark text-white' },
-  { id: 'reembolsar', label: 'Reembolsada', requiereMotivo: true, tono: 'bg-amber-600 hover:bg-amber-700 text-white' },
-  { id: 'cancelar', label: 'Cancelar', requiereMotivo: true, tono: 'bg-gray-700 hover:bg-gray-800 text-white' },
 ]
 
 const fecha = (valor?: string | null) => {
@@ -100,21 +84,14 @@ export default function AdminReservas({ notify }: { notify: (msg: string) => voi
 
   useEffect(() => { cargar() }, [cargar])
 
-  async function accion(reserva: Reserva, id: string, requiereMotivo: boolean) {
+  async function accion(reserva: Reserva, id: string) {
     let motivo = ''
-    if (requiereMotivo) {
-      const entrada = window.prompt(
-        id === 'rechazar'
-          ? 'Motivo del rechazo (se lo enviaremos al comprador para que suba otro comprobante):'
-          : id === 'reembolsar'
-            ? 'Constancia de la devolución de la señal:'
-            : 'Motivo de la cancelación:',
-      )
+    if (id === 'cancelar') {
+      const entrada = window.prompt('Motivo de la cancelación:')
       if (entrada === null) return
       motivo = entrada.trim()
       if (!motivo) { notify('El motivo es obligatorio'); return }
     }
-
     setTrabajando(reserva.id)
     try {
       await apiJson('/api/admin/reservas', {
@@ -136,8 +113,9 @@ export default function AdminReservas({ notify }: { notify: (msg: string) => voi
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
         <h3 className="font-bold text-amber-900 mb-1">Migración de reservas pendiente</h3>
         <p className="text-sm text-amber-800">
-          Aplica <code className="rounded bg-amber-100 px-1">supabase/migrations/202609160001_reservas.sql</code> para
-          activar la revisión de reservas.
+          Aplica <code className="rounded bg-amber-100 px-1">supabase/migrations/202609160001_reservas.sql</code> y{' '}
+          <code className="rounded bg-amber-100 px-1">202609170004_reservas_confirmacion_vendedor.sql</code> para
+          activar las reservas.
         </p>
       </div>
     )
@@ -148,10 +126,10 @@ export default function AdminReservas({ notify }: { notify: (msg: string) => voi
       {stats && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: 'Por verificar', valor: stats.pendientes + stats.en_revision, tono: 'text-amber-700' },
+            { label: 'Solicitadas', valor: stats.solicitadas, tono: 'text-amber-700' },
             { label: 'Activas', valor: stats.activas, tono: 'text-green-700' },
             { label: 'Completadas', valor: stats.completadas, tono: 'text-gray-700' },
-            { label: 'Señales activas', valor: `${stats.importe_activo} €`, tono: 'text-brand-primary' },
+            { label: 'Total', valor: stats.total, tono: 'text-brand-primary' },
           ].map(c => (
             <div key={c.label} className="rounded-xl border border-gray-100 bg-white p-3">
               <p className="text-xs text-gray-500">{c.label}</p>
@@ -198,20 +176,19 @@ export default function AdminReservas({ notify }: { notify: (msg: string) => voi
           {reservas.map(r => {
             const estado = normalizarEstadoReserva(r.estado) as EstadoReserva
             const etiqueta = ETIQUETAS_ESTADO_RESERVA[estado]
-            const acciones = accionesPara(estado)
+            const vivas = ['solicitada', 'activa'].includes(estado)
             return (
               <div key={r.id} className="rounded-xl border border-gray-100 bg-white p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900">{r.productos?.titulo || 'Anuncio'}</p>
                     <p className="text-xs text-gray-500">
-                      {r.productos?.precio_usd ? `${r.productos.precio_usd} $ de precio · ` : ''}
-                      Reserva del {fecha(r.created_at)} · expira {fecha(r.expira_en)}
+                      {r.productos?.precio_usd ? `${r.productos.precio_usd} € de precio · ` : ''}
+                      Del {fecha(r.created_at)} · {estado === 'activa' ? `expira ${fecha(r.expira_en)}` : 'sin confirmar'}
                     </p>
                   </div>
                   <span className={`rounded-full border px-2 py-1 text-[11px] font-bold ${etiqueta?.tono || 'border-gray-200 bg-gray-50'}`}>
                     {etiqueta?.label || r.estado}
-                    {r.estado !== 'expirada' && !r.vigente && estado !== 'completada' && estado !== 'cancelada' && estado !== 'rechazada' && estado !== 'reembolsada' ? ' · caducada' : ''}
                   </span>
                 </div>
 
@@ -235,21 +212,6 @@ export default function AdminReservas({ notify }: { notify: (msg: string) => voi
                 {r.motivo_cancelacion && <p className="mt-1 text-xs text-red-700">Motivo: {r.motivo_cancelacion}</p>}
 
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {r.comprobante_signed_url ? (
-                    <a
-                      href={r.comprobante_signed_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                      <ExternalLink size={13} /> Ver comprobante
-                    </a>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
-                      <AlertTriangle size={13} /> Sin comprobante
-                    </span>
-                  )}
-
                   {r.productos?.id && (
                     <a
                       href={`/producto/${r.productos.slug || r.productos.id}`}
@@ -261,21 +223,28 @@ export default function AdminReservas({ notify }: { notify: (msg: string) => voi
                     </a>
                   )}
 
-                  {acciones.map(a => {
-                    const meta = ACCIONES.find(x => x.id === a)!
-                    return (
+                  {vivas && (
+                    <>
                       <button
-                        key={a}
                         type="button"
-                        onClick={() => accion(r, a, meta.requiereMotivo)}
+                        onClick={() => accion(r, 'completar')}
                         disabled={trabajando === r.id}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold disabled:opacity-50 ${meta.tono}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary px-3 py-2 text-xs font-bold text-white hover:bg-brand-dark disabled:opacity-50"
                       >
-                        {trabajando === r.id ? <Loader2 size={13} className="animate-spin" /> : iconoAccion(a)}
-                        {meta.label}
+                        {trabajando === r.id ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                        Marcar entregada
                       </button>
-                    )
-                  })}
+                      <button
+                        type="button"
+                        onClick={() => accion(r, 'cancelar')}
+                        disabled={trabajando === r.id}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-gray-700 px-3 py-2 text-xs font-bold text-white hover:bg-gray-800 disabled:opacity-50"
+                      >
+                        {trabajando === r.id ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
+                        Cancelar
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )
@@ -284,22 +253,4 @@ export default function AdminReservas({ notify }: { notify: (msg: string) => voi
       )}
     </div>
   )
-}
-
-function iconoAccion(id: string) {
-  if (id === 'activar') return <CheckCircle2 size={13} />
-  if (id === 'rechazar' || id === 'cancelar') return <X size={13} />
-  if (id === 'reembolsar') return <Undo2 size={13} />
-  return <BadgeEuro size={13} />
-}
-
-/** Qué puede hacer el admin con una reserva en cada estado (espejo de TRANSICIONES_RESERVA). */
-function accionesPara(estado: EstadoReserva): string[] {
-  switch (estado) {
-    case 'pendiente_pago': return ['cancelar']
-    case 'en_revision': return ['activar', 'rechazar', 'cancelar']
-    case 'activa': return ['completar', 'reembolsar', 'cancelar']
-    case 'rechazada': return ['cancelar']
-    default: return []
-  }
 }

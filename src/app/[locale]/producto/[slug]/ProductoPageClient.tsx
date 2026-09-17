@@ -448,8 +448,8 @@ function ProductoPageClientInner({
               </div>
             )}
 
-            {/* Reserva con señal: el anuncio se bloquea para el comprador que
-                paga una señal pequeña (y se verifica el comprobante). */}
+            {/* Reserva con señal: el comprador solicita, el vendedor confirma la
+                señal al recibirla y entonces el anuncio queda reservado. */}
             {!producto.vendido && (
               <BotonReservar
                 producto={producto}

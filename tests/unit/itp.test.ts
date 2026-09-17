@@ -17,6 +17,7 @@ import {
   compararComunidades,
   edadVehiculo,
   getComunidadITP,
+  normalizarEtiquetaDGT,
 } from '@/lib/itp'
 
 describe('coeficientes de depreciación', () => {
@@ -234,6 +235,32 @@ describe('calcularITP', () => {
     // Un vehículo con etiqueta C no tiene reducción
     const c = calcularITP({ ccaa: 'baleares', precio: 40000, anioMatriculacion: 2022, anioCompra: 2026, etiquetaDGT: 'C' })
     expect(c.tipoAplicado).toBe(4)
+  })
+
+  test('la etiqueta DGT se normaliza a mayúsculas y a las formas del catálogo', () => {
+    expect(normalizarEtiquetaDGT('ECO')).toBe('ECO')
+    expect(normalizarEtiquetaDGT('eco')).toBe('ECO')
+    expect(normalizarEtiquetaDGT('C (Verde)')).toBe('C')
+    expect(normalizarEtiquetaDGT('B (Amarillo)')).toBe('B')
+    expect(normalizarEtiquetaDGT('Cero Emisiones')!).toBe('0')
+    expect(normalizarEtiquetaDGT('Sin distintivo')).toBeNull()
+    expect(normalizarEtiquetaDGT('')).toBeNull()
+    expect(normalizarEtiquetaDGT(undefined)).toBeNull()
+  })
+
+  test('el select con formas largas ("ECO", "C (Verde)", "Cero Emisiones") activa el tipo reducido', () => {
+    // Antes esto fallaba: 'C (Verde)' en mayúsculas nunca coincidía con 'C'.
+    const cero = calcularITP({ ccaa: 'baleares', precio: 40000, anioMatriculacion: 2022, anioCompra: 2026, etiquetaDGT: 'Cero Emisiones' })
+    expect(cero.tipoAplicado).toBe(0)
+
+    const eco = calcularITP({ ccaa: 'baleares', precio: 40000, anioMatriculacion: 2022, anioCompra: 2026, etiquetaDGT: 'eco' })
+    expect(eco.tipoAplicado).toBe(2)
+    expect(eco.cuota).toBe(800)
+
+    // La comparativa usa la misma normalización (por comunidad).
+    const filaBaleares = compararComunidades({ precio: 40000, anioMatriculacion: 2022, anioCompra: 2026, etiquetaDGT: 'ECO' })
+      .find(f => f.comunidad.slug === 'baleares')
+    expect(filaBaleares!.cuota).toBe(800)
   })
 
   test('el aviso de la DGT aparece siempre que no hay autoliquidación que presentar', () => {

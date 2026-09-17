@@ -20,8 +20,11 @@ import { useProductLoader } from '@/hooks/useProductLoader'
 import { CATALOG_PAGE_SIZE } from '@/lib/catalog-pagination'
 import {
   firmaFiltrosTecnicos,
+  firmaFiltrosRango,
   hayFiltrosTecnicos,
+  hayFiltrosRango,
   leerFiltrosTecnicos,
+  leerFiltrosRango,
 } from '@/lib/filtros-tecnicos'
 import { FILTRO_VERIFICADA_PARAM } from '@/lib/catalog-consulta'
 import { LoadingIndicator } from '@/components/LoadingIndicator'
@@ -197,9 +200,25 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const filtrosTecnicos = useMemo(() => leerFiltrosTecnicos(new URLSearchParams(queryString)), [queryString])
   const firmaTecnica = firmaFiltrosTecnicos(filtrosTecnicos)
 
+  // Rangos numéricos del catálogo (km máximos, año mínimo, watios): se leen
+  // como número para la query, pero el input los conserva como texto de forma
+  // directa desde la URL para poder editar sin volver a parsear.
+  const filtrosRango = useMemo(() => leerFiltrosRango(new URLSearchParams(queryString)), [queryString])
+  const firmaRango = firmaFiltrosRango(filtrosRango)
+  const rangosEnBruto = useMemo(() => {
+    const enBruto: Record<string, string> = {}
+    const sp = new URLSearchParams(queryString)
+    for (const k of ['kmMax', 'anioMin', 'placaWatiosMin', 'inversorWatiosMin']) {
+      const v = sp.get(k)
+      if (v) enBruto[k] = v
+    }
+    return enBruto
+  }, [queryString])
+
   const hasActiveFilters = !!(
     categoria || subcategoria || marca || q || precioMin || precioMax ||
-    ubicacionEstado || ubicacionCiudad || verificada || hayFiltrosTecnicos(filtrosTecnicos)
+    ubicacionEstado || ubicacionCiudad || verificada || hayFiltrosTecnicos(filtrosTecnicos) ||
+    hayFiltrosRango(filtrosRango)
   )
 
   // Carga real por página desde el servidor (range()).
@@ -221,7 +240,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const totalPages = Math.max(1, Math.ceil(totalCountToUse / itemsPerPage))
 
   // Firma de filtros para detectar cambios y resetear la página.
-  const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, firmaTecnica, verificada].join('|')
+  const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, firmaTecnica, firmaRango, verificada].join('|')
   const prevFilterSig = useRef(filterSig)
 
   const cat = categoriasData[categoria]
@@ -264,10 +283,11 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
         ubicacionEstado,
         ubicacionCiudad,
         [FILTRO_VERIFICADA_PARAM]: verificada || undefined,
-        ...filtrosTecnicos
+        ...filtrosTecnicos,
+        ...filtrosRango
       }
     });
-  }, [filterSig, currentPage, itemsPerPage, hasActiveFilters, useServerData, goToPage, loadPage, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, verificada]);
+  }, [filterSig, currentPage, itemsPerPage, hasActiveFilters, useServerData, goToPage, loadPage, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada]);
 
   // Precargar la siguiente página cuando sea apropiado
   useEffect(() => {
@@ -287,14 +307,15 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
             ubicacionEstado,
             ubicacionCiudad,
             [FILTRO_VERIFICADA_PARAM]: verificada || undefined,
-            ...filtrosTecnicos
+            ...filtrosTecnicos,
+            ...filtrosRango
           }
         );
       }, 2000); // Precargar después de 2 segundos para permitir la carga completa de la página actual
 
       return () => clearTimeout(prefetchTimer);
     }
-  }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, verificada, itemsPerPage, prefetchPage]);
+  }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada, itemsPerPage, prefetchPage]);
 
   const subLabel = subcategoria
     ? (cat?.subs.find(s => s.label === subcategoria)?.label || subcategoria)
@@ -384,6 +405,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
             ubicacionEstado={ubicacionEstado}
             ubicacionCiudad={ubicacionCiudad}
             filtrosTecnicos={filtrosTecnicos}
+            rangos={rangosEnBruto}
             verificada={verificada}
             t={t}
           />
@@ -433,7 +455,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
                     : error}
                 </p>
                 <button
-                  onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, [FILTRO_VERIFICADA_PARAM]: verificada || undefined, ...filtrosTecnicos } })}
+                  onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, [FILTRO_VERIFICADA_PARAM]: verificada || undefined, ...filtrosTecnicos, ...filtrosRango } })}
                   className="mt-3 text-sm font-semibold text-red-700 underline hover:text-red-900"
                 >
                   {t('catalog.retry')}

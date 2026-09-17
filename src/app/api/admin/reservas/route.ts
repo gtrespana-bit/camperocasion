@@ -1,15 +1,13 @@
 /**
- * Revisión de reservas con señal (Fase 1.2) — panel de administración.
+ * Reservas con señal (Fase 1.2, confirmación del vendedor) — panel admin.
  *
- *   GET  /api/admin/reservas?estado=pendiente|todas|...
- *   POST /api/admin/reservas { action: 'activar'|'rechazar'|'completar'|'reembolsar'|'cancelar', reservaId, motivo? }
+ *   GET  /api/admin/reservas?estado=vivas|activas|solicitadas|todas
+ *   POST /api/admin/reservas { action: 'completar'|'cancelar', reservaId, motivo? }
  *
- * Igual que en verificación y homologación, todo pasa por service_role: la RLS
- * de `reservas` no depende del JWT del panel y el navegador no puede activar una
- * reserva (ni escribir en la tabla).
- *
- * Al ACTIVAR se renueva la fecha límite: la reserva verificada da una semana
- * desde la verificación, no desde que el comprador la creó.
+ * El dinero ya no pasa por la plataforma ni se revisa ningún comprobante: el
+ * vendedor confirma la señal desde su dashboard (/api/reservas/confirmar). El
+ * admin observa y puede cerrar reservas (completar una venta o cancelar con
+ * motivo), igual que en el resto del panel todo pasa por service_role.
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -17,20 +15,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/require-auth'
 import { isValidUUID } from '@/lib/validation'
 import {
-  DIAS_VALIDEZ_RESERVA,
+  ESTADOS_PENDIENTES,
   ESTADOS_RESERVA,
   ESTADOS_VIVOS,
   normalizarEstadoReserva,
-  reservaVigente,
 } from '@/lib/reservas'
 import { notifyUser } from '@/lib/push-notify'
 
-const BUCKET = 'comprobantes-reserva'
-const URL_FIRMADA_SEGUNDOS = 300
-
 const COLUMNAS = `
   id, producto_id, comprador_id, vendedor_id, importe, comision, comision_pct,
-  metodo_pago, estado, comprobante_url, mensaje, motivo_cancelacion,
+  metodo_pago, estado, mensaje, motivo_cancelacion,
   revisado_en, expira_en, creado_en, actualizado_en,
   producto:productos ( id, slug, titulo, precio_usd, imagen_url, user_id )
 `
@@ -49,12 +43,12 @@ export async function GET(request: NextRequest) {
     if ('response' in auth) return auth.response
 
     const params = new URL(request.url).searchParams
-    const estadoParam = params.get('estado') || 'pendiente'
+    const estadoParam = params.get('estado') || 'solicitadas'
     const sb = serviceClient()
 
     let query = sb.from('reservas').select(COLUMNAS).order('creado_en', { ascending: false }).limit(100)
     if (estadoParam === 'vivas') {
-      query = query.in('estado', [...ESTADOS_VIVOS])
+      query = query.in('estado', [...ESTADOS_PENDIENTES, ...ESTADOS_VIVOS])
     } else if (estadoParam !== 'todas') {
       query = query.eq('estado', normalizarEstadoReserva(estadoParam))
     }
@@ -65,26 +59,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
           ok: true,
           reservas: [],
-          stats: { pendientes: 0, vivas: 0, total: 0 },
+          stats: { solicitadas: 0, activas: 0, completadas: 0, total: 0 },
           pendienteMigracion: true,
         })
       }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Comprobante con URL firmada para poder revisarlo sin abrir el bucket.
-    const reservas = await Promise.all(
-      (data || []).map(async (r: any) => {
-        // Una reserva vencida se muestra como tal aunque el barrido perezoso no
-        // haya pasado todavía: el panel no debe decir "activa" de algo caducado.
-        const vigente = reservaVigente(r.estado, r.expira_en)
-        if (!r.comprobante_url) return { ...r, comprobante_signed_url: null, vigente }
-        const { data: firmada } = await sb.storage
-          .from(BUCKET)
-          .createSignedUrl(r.comprobante_url, URL_FIRMADA_SEGUNDOS)
-        return { ...r, comprobante_signed_url: firmada?.signedUrl || null, vigente }
-      }),
-    )
+    const reservas = (data || []).map((r: any) => ({ ...r }))
 
     // Contadores de la cabecera (independientes del filtro activo).
     const conteos = await Promise.all(
@@ -92,14 +74,13 @@ export async function GET(request: NextRequest) {
         sb.from('reservas').select('id', { count: 'exact', head: true }).eq('estado', e)),
     )
     const stats = {
-      pendientes: conteos[ESTADOS_RESERVA.indexOf('pendiente_pago')]?.count || 0,
-      enRevision: conteos[ESTADOS_RESERVA.indexOf('en_revision')]?.count || 0,
+      solicitadas: conteos[ESTADOS_RESERVA.indexOf('solicitada')]?.count || 0,
       activas: conteos[ESTADOS_RESERVA.indexOf('activa')]?.count || 0,
       completadas: conteos[ESTADOS_RESERVA.indexOf('completada')]?.count || 0,
       vivas: 0,
       total: 0,
     }
-    stats.vivas = (stats.pendientes || 0) + (stats.enRevision || 0) + (stats.activas || 0)
+    stats.vivas = (stats.solicitadas || 0) + (stats.activas || 0)
     stats.total = conteos.reduce((acc, r) => acc + (r.count || 0), 0)
 
     return NextResponse.json(
@@ -119,14 +100,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}))
     const { action, reservaId, motivo } = body as { action?: string; reservaId?: string; motivo?: string }
 
-    const acciones = ['activar', 'rechazar', 'completar', 'reembolsar', 'cancelar']
+    const acciones = ['completar', 'cancelar']
     if (!acciones.includes(String(action))) {
       return NextResponse.json({ error: 'Acción inválida' }, { status: 400 })
     }
     if (!reservaId || !isValidUUID(reservaId)) {
       return NextResponse.json({ error: 'reservaId inválido' }, { status: 400 })
     }
-    if (['rechazar', 'reembolsar', 'cancelar'].includes(String(action)) && !String(motivo || '').trim()) {
+    if (String(action) === 'cancelar' && !String(motivo || '').trim()) {
       return NextResponse.json({ error: 'Motivo requerido' }, { status: 400 })
     }
 
@@ -144,35 +125,17 @@ export async function POST(request: NextRequest) {
     }
 
     const estadoActual = normalizarEstadoReserva(reserva.estado)
-    const estadoNuevo: Record<string, string> = {
-      activar: 'activa',
-      rechazar: 'rechazada',
-      completar: 'completada',
-      reembolsar: 'reembolsada',
-      cancelar: 'cancelada',
-    }
-    const destino = estadoNuevo[String(action)]
-
-    if (!ESTADOS_VIVOS.includes(estadoActual)) {
+    if (!ESTADOS_PENDIENTES.includes(estadoActual) && !ESTADOS_VIVOS.includes(estadoActual)) {
       return NextResponse.json({ error: `La reserva ya está cerrada (${estadoActual})` }, { status: 409 })
     }
-    if (action === 'activar' && !reserva.comprobante_url) {
-      return NextResponse.json({ error: 'No hay comprobante que verificar' }, { status: 409 })
-    }
 
+    const destino = String(action) === 'completar' ? 'completada' : 'cancelada'
     const cambios: Record<string, unknown> = {
       estado: destino,
       revisado_por: auth.user.id,
       revisado_en: ahora.toISOString(),
       actualizado_en: ahora.toISOString(),
-      motivo_cancelacion: ['rechazar', 'reembolsar', 'cancelar'].includes(String(action))
-        ? String(motivo).slice(0, 500)
-        : null,
-    }
-
-    // Activar renueva la ventana: la semana cuenta desde la verificación.
-    if (action === 'activar') {
-      cambios.expira_en = new Date(ahora.getTime() + DIAS_VALIDEZ_RESERVA * 24 * 60 * 60 * 1000).toISOString()
+      motivo_cancelacion: String(action) === 'cancelar' ? String(motivo).slice(0, 500) : null,
     }
 
     const { error: updateError } = await sb.from('reservas').update(cambios).eq('id', reservaId)
@@ -181,43 +144,17 @@ export async function POST(request: NextRequest) {
     }
 
     const titulo = (reserva as any).producto?.titulo || 'el anuncio'
-    const avisos: Record<string, { para: 'comprador' | 'vendedor'; title: string; body: string }> = {
-      activar: {
-        para: 'comprador',
-        title: '✅ Reserva activada',
-        body: `${titulo}: tu señal está verificada y el anuncio queda reservado. Contacta con el vendedor para la entrega.`,
-      },
-      rechazar: {
-        para: 'comprador',
-        title: 'Comprobante rechazado',
-        body: `${titulo}: no hemos podido validar el comprobante. Sube uno nuevo desde tu panel para mantener la reserva.`,
-      },
-      completar: {
-        para: 'vendedor',
-        title: 'Operación completada',
-        body: `${titulo}: la reserva se ha cerrado como venta. Recuerda descontar la señal del precio.`,
-      },
-      reembolsar: {
-        para: 'comprador',
-        title: 'Señal devuelta',
-        body: `${titulo}: la reserva se ha cerrado y el vendedor debe devolverte la señal.`,
-      },
-      cancelar: {
-        para: 'comprador',
-        title: 'Reserva cancelada',
-        body: `${titulo}: la reserva se ha cancelado y el anuncio vuelve a estar disponible.`,
-      },
-    }
-    const aviso = avisos[String(action)]
-    if (aviso) {
-      const destinatario = aviso.para === 'comprador' ? reserva.comprador_id : reserva.vendedor_id
-      notifyUser(sb, destinatario, {
-        title: aviso.title,
-        body: aviso.body,
-        tag: `reserva-${reservaId}`,
-        click_url: '/dashboard?tab=reservas',
-      }).catch(() => {})
-    }
+    const para = String(action) === 'completar' ? 'vendedor' : 'comprador'
+    const textoNotif = String(action) === 'completar'
+      ? `${titulo}: la reserva se ha cerrado como venta. Recuerda descontar la señal del precio.`
+      : `${titulo}: la reserva se ha cancelado y el anuncio vuelve a estar disponible.`
+    const destinatario = para === 'vendedor' ? reserva.vendedor_id : reserva.comprador_id
+    notifyUser(sb, destinatario, {
+      title: String(action) === 'completar' ? 'Operación completada' : 'Reserva cancelada',
+      body: textoNotif,
+      tag: `reserva-${reservaId}`,
+      click_url: '/dashboard?tab=reservas',
+    }).catch(() => {})
 
     return NextResponse.json({ ok: true, estado: destino })
   } catch (err: any) {

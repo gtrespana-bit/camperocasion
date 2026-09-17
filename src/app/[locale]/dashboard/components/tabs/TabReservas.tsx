@@ -1,20 +1,20 @@
 'use client'
 
 /**
- * Pestaña "Reservas" del dashboard (Fase 1.2 — reserva con señal).
+ * Pestaña "Reservas" del dashboard (Fase 1.2 — reserva con señal, confirmación
+ * del vendedor).
  *
  * Dos vistas en la misma pestaña porque el interesado casi siempre es el mismo:
- *  - "Como comprador": reservas que yo he hecho; desde aquí subo el comprobante
- *    de la señal y sigo el estado (pendiente → en revisión → activa).
- *  - "Como vendedor": reservas que afectan a mis anuncios; desde aquí reviso el
- *    comprobante, contacto al comprador o cancelo (y la reserva pasa a
- *    "reembolsada" si ya estaba activa, para dejar constancia de la devolución).
+ *  - "Como comprador": solicitudes que yo he enviado; sigo el estado
+ *    (solicitada → activa cuando el vendedor confirma la señal).
+ *  - "Como vendedor": solicitudes de mis anuncios; aquí confirmo cuando recibo
+ *    la señal (la reserva pasa a activa y bloquea el anuncio) o la rechazo.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
-import { CalendarClock, FileText, Loader2, Upload, X } from 'lucide-react'
+import { CalendarClock, CheckCircle2, Loader2, X } from 'lucide-react'
 import { ETIQUETAS_ESTADO_RESERVA, normalizarEstadoReserva, type EstadoReserva } from '@/lib/reservas'
 import { formatPrecio } from '@/lib/precio'
 
@@ -28,8 +28,6 @@ interface Reserva {
   metodo_pago: string
   mensaje?: string | null
   motivo_cancelacion?: string | null
-  comprobante_url?: string | null
-  comprobante_signed_url?: string | null
   expira_en: string
   created_at: string
   productos?: { id: string; titulo: string; precio_usd: number; imagen_url?: string | null; slug?: string | null } | null
@@ -47,9 +45,7 @@ export default function TabReservas({ userId }: { userId: string }) {
   const [cargando, setCargando] = useState(true)
   const [pendienteMigracion, setPendienteMigracion] = useState(false)
   const [aviso, setAviso] = useState('')
-  const [subiendo, setSubiendo] = useState<string | null>(null)
-  const archivo = useRef<HTMLInputElement | null>(null)
-  const reservaSeleccionada = useRef<Reserva | null>(null)
+  const [trabajando, setTrabajando] = useState<string | null>(null)
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -67,31 +63,36 @@ export default function TabReservas({ userId }: { userId: string }) {
 
   useEffect(() => { cargar() }, [cargar])
 
-  async function subir(file: File) {
-    const reserva = reservaSeleccionada.current
-    if (!reserva) return
+  async function confirmar(reserva: Reserva, accion: 'confirmar' | 'rechazar') {
     setAviso('')
-    setSubiendo(reserva.id)
+    setTrabajando(reserva.id)
     try {
-      const fd = new FormData()
-      fd.append('reservaId', reserva.id)
-      fd.append('file', file)
-      const res = await fetch('/api/reservas/comprobante', { method: 'POST', body: fd })
+      let motivo: string | null = null
+      if (accion === 'rechazar') {
+        const entrada = window.prompt('Motivo del rechazo (se lo mostramos al comprador):')
+        if (entrada === null) return
+        motivo = entrada.trim()
+        if (!motivo) { setAviso('El motivo es obligatorio'); return }
+      }
+      const res = await fetch('/api/reservas/confirmar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reservaId: reserva.id, accion, motivo }),
+      })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok || !json.ok) setAviso(json.error || 'No se pudo subir el comprobante')
+      if (!res.ok || !json.ok) setAviso(json.error || 'No se pudo actualizar la reserva')
       else await cargar()
     } catch {
-      setAviso('No se pudo subir el comprobante')
+      setAviso('No se pudo actualizar la reserva')
     } finally {
-      setSubiendo(null)
+      setTrabajando(null)
     }
   }
 
   async function cancelar(reserva: Reserva) {
-    const esActiva = normalizarEstadoReserva(reserva.estado) === 'activa'
-    const texto = esActiva
-      ? 'Ya has recibido la señal: al cancelar quedará constancia de que debes devolverla. ¿Continuar?'
-      : '¿Cancelar la reserva? El anuncio volverá a estar disponible.'
+    const texto = normalizarEstadoReserva(reserva.estado) === 'activa'
+      ? 'La señal ya está confirmada: al cancelar quedará constancia de que debes devolverla. ¿Continuar?'
+      : '¿Cancelar la solicitud de reserva?'
     if (!window.confirm(texto)) return
     await fetch('/api/reservas/cancelar', {
       method: 'POST',
@@ -131,14 +132,6 @@ export default function TabReservas({ userId }: { userId: string }) {
 
       {aviso && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{aviso}</p>}
 
-      <input
-        ref={archivo}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,application/pdf"
-        className="hidden"
-        onChange={e => { const f = e.target.files?.[0]; if (f) subir(f); e.target.value = '' }}
-      />
-
       {cargando ? (
         <div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">
           <Loader2 size={20} className="animate-spin mx-auto" />
@@ -151,8 +144,8 @@ export default function TabReservas({ userId }: { userId: string }) {
           </h3>
           <p className="text-sm text-gray-500">
             {vista === 'comprador'
-              ? 'Cuando reserves un vehículo con señal, podrás subir el comprobante y seguir aquí el estado.'
-              : 'Cuando un comprador pague la señal de uno de tus anuncios, la verás aquí con su comprobante.'}
+              ? 'Cuando solicites una reserva con señal, el vendedor la confirmará al recibir el pago y la verás aquí.'
+              : 'Cuando un comprador solicite reservar uno de tus anuncios, lo verás aquí para confirmar la señal cuando te llegue el pago.'}
           </p>
         </div>
       ) : (
@@ -188,53 +181,40 @@ export default function TabReservas({ userId }: { userId: string }) {
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {vista === 'vendedor' && r.perfiles ? `${r.perfiles.nombre || r.perfiles.email || 'Comprador'} · ` : ''}
-                      Reserva del {fecha(r.created_at)} · válida hasta {fecha(r.expira_en)}
+                      Del {fecha(r.created_at)} · {estado === 'activa' ? `válida hasta ${fecha(r.expira_en)}` : 'a la espera de confirmación'}
                     </p>
                     {etiqueta?.descripcion && <p className="text-xs text-gray-600 mt-1">{etiqueta.descripcion}</p>}
                     {r.motivo_cancelacion && <p className="text-xs text-red-700 mt-1">Motivo: {r.motivo_cancelacion}</p>}
                     {r.mensaje && <p className="text-xs text-gray-600 mt-1 italic">“{r.mensaje}”</p>}
 
                     <div className="flex flex-wrap gap-2 mt-3">
-                      {estado === 'pendiente_pago' && (
-                        <button
-                          type="button"
-                          onClick={() => { reservaSeleccionada.current = r; archivo.current?.click() }}
-                          disabled={subiendo === r.id}
-                          className="inline-flex items-center gap-1.5 bg-brand-primary text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-dark disabled:opacity-50"
-                        >
-                          {subiendo === r.id ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                          Subir comprobante
-                        </button>
+                      {estado === 'solicitada' && vista === 'vendedor' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => confirmar(r, 'confirmar')}
+                            disabled={trabajando === r.id}
+                            className="inline-flex items-center gap-1.5 bg-brand-accent text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-accent-dark disabled:opacity-50"
+                          >
+                            {trabajando === r.id ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                            Confirmar señal
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => confirmar(r, 'rechazar')}
+                            disabled={trabajando === r.id}
+                            className="inline-flex items-center gap-1.5 border border-red-200 text-red-700 text-xs font-semibold px-3 py-2 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                          >
+                            <X size={13} /> Rechazar
+                          </button>
+                        </>
                       )}
 
-                      {estado === 'rechazada' && vista === 'comprador' && (
-                        <button
-                          type="button"
-                          onClick={() => { reservaSeleccionada.current = r; archivo.current?.click() }}
-                          disabled={subiendo === r.id}
-                          className="inline-flex items-center gap-1.5 bg-brand-primary text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-dark disabled:opacity-50"
-                        >
-                          {subiendo === r.id ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                          Subir otro comprobante
-                        </button>
-                      )}
-
-                      {r.comprobante_signed_url && (
-                        <a
-                          href={r.comprobante_signed_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 border border-gray-300 text-gray-700 text-xs font-semibold px-3 py-2 rounded-lg hover:bg-gray-50"
-                        >
-                          <FileText size={13} /> Ver comprobante
-                        </a>
-                      )}
-
-                      {['pendiente_pago', 'en_revision', 'activa'].includes(estado) && (
+                      {['solicitada', 'activa'].includes(estado) && (
                         <button
                           type="button"
                           onClick={() => cancelar(r)}
-                          className="inline-flex items-center gap-1.5 border border-red-200 text-red-700 text-xs font-semibold px-3 py-2 rounded-lg hover:bg-red-50"
+                          className="inline-flex items-center gap-1.5 border border-gray-200 text-gray-600 text-xs font-semibold px-3 py-2 rounded-lg hover:bg-gray-50"
                         >
                           <X size={13} /> Cancelar
                         </button>

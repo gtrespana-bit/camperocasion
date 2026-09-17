@@ -6,23 +6,14 @@ import { clientCache } from '@/lib/clientCache';
 import {
   CATALOG_PRODUCT_COLUMNS,
   CATALOG_FILTRO_MODERACION,
-  aplicarFiltrosCatalogo,
+  aplicarFiltrosBase,
   ordenarProductosCatalogo,
   ProductoCatalogo,
+  tieneRangosNumericos,
+  quitarRangos,
+  esErrorColumnasRango,
+  type FiltrosCatalogo,
 } from '@/lib/catalog-consulta';
-
-interface ProductFilter {
-  categoria?: string;
-  subcategoria?: string;
-  marca?: string;
-  q?: string;
-  precioMin?: string;
-  precioMax?: string;
-  ubicacionEstado?: string;
-  ubicacionCiudad?: string;
-  // Filtros técnicos camper: parámetro del registro `filtros-tecnicos` → valor.
-  [key: string]: string | number | boolean | undefined;
-}
 
 /**
  * Precarga en segundo plano la página siguiente del catálogo.
@@ -37,7 +28,7 @@ export const usePrefetch = () => {
   const prefetchPage = useCallback(async (
     page: number,
     itemsPerPage: number,
-    filters: ProductFilter = {}
+    filters: FiltrosCatalogo = {}
   ) => {
     // Verificar si ya está en caché
     const cacheKey = clientCache.generateKey({
@@ -50,60 +41,45 @@ export const usePrefetch = () => {
       return;
     }
 
-    try {
+    const ejecutar = async (filtros: FiltrosCatalogo) => {
       let query = supabase
         .from('productos')
         .select(CATALOG_PRODUCT_COLUMNS, { count: 'exact' })
         .eq('activo', true)
         .or(CATALOG_FILTRO_MODERACION);
 
-      if (filters.categoria) {
+      if (filtros.categoria) {
         // maybeSingle(): evita el 406 de single() con cero filas.
         const { data: catRow } = await supabase
           .from('categorias')
           .select('id')
-          .eq('nombre', filters.categoria)
+          .eq('nombre', filtros.categoria)
           .maybeSingle();
         if (catRow) {
           query = query.eq('categoria_id', catRow.id);
         }
       }
 
-      if (filters.subcategoria) {
-        query = query.eq('subcategoria', filters.subcategoria);
-      }
-
-      if (filters.marca) {
-        query = query.eq('marca', filters.marca);
-      }
-
-      if (filters.q) {
-        query = query.textSearch('search_vector', filters.q, { config: 'spanish', type: 'plain' });
-      }
-
-      if (filters.ubicacionCiudad) {
-        query = query.eq('ubicacion_ciudad', filters.ubicacionCiudad);
-      } else if (filters.ubicacionEstado) {
-        query = query.eq('ubicacion_estado', filters.ubicacionEstado);
-      }
-
-      if (filters.precioMin) {
-        query = query.gte('precio_usd', parseFloat(filters.precioMin));
-      }
-      if (filters.precioMax) {
-        query = query.lte('precio_usd', parseFloat(filters.precioMax));
-      }
-
-      // Mismos filtros que el loader: si aquí se filtrara distinto, la caché
-      // (clave = filtros + página) serviría una página incoherente.
-      query = aplicarFiltrosCatalogo(query, filters);
+      const { categoria: _categoria, ...resto } = filtros;
+      query = aplicarFiltrosBase(query, resto) as typeof query;
 
       // Aplicar offset para la página específica
       const offset = (page - 1) * itemsPerPage;
       query = query.order('creado_en', { ascending: false })
                    .range(offset, offset + itemsPerPage - 1);
 
-      const { data, count, error } = await query;
+      return await query;
+    };
+
+    try {
+      let result = await ejecutar(filters);
+
+      // Misma red de seguridad que el loader ante migración de rangos ausente.
+      if (result.error && esErrorColumnasRango(result.error) && tieneRangosNumericos(filters)) {
+        result = await ejecutar(quitarRangos(filters) as FiltrosCatalogo);
+      }
+
+      const { data, count, error } = result;
 
       if (error) {
         console.error('Error prefetching page:', error);

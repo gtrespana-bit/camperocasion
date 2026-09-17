@@ -37,7 +37,7 @@ with checks(nombre, ok) as (
   select 'Fase 0.2 · bucket documentos-vehiculo',
          exists (select 1 from storage.buckets where id = 'documentos-vehiculo')
 
-  -- Fase 1.2 — reserva con señal
+  -- Fase 1.2 — reserva con señal (confirmación del vendedor)
   union all
   select 'Fase 1.2 · tabla reservas',
          to_regclass('public.reservas') is not null
@@ -52,17 +52,21 @@ with checks(nombre, ok) as (
                   where table_schema = 'public' and table_name = 'productos'
                     and column_name = 'reservado_hasta')
   union all
-  select 'Fase 1.2 · índice único reservas_producto_viva_key (una reserva viva)',
-         exists (select 1 from pg_indexes where indexname = 'reservas_producto_viva_key')
+  select 'Fase 1.2 · índice único reservas_producto_activa_key (una reserva activa)',
+         exists (select 1 from pg_indexes where indexname = 'reservas_producto_activa_key')
+  union all
+  select 'Fase 1.2 · índice único reservas_solicitud_unica_key',
+         exists (select 1 from pg_indexes where indexname = 'reservas_solicitud_unica_key')
+  union all
+  select 'Fase 1.2 · check de estados (solicitada → activa → …)',
+         exists (select 1 from pg_constraint
+                  where conname = 'reservas_estado_check' and contype = 'c')
   union all
   select 'Fase 1.2 · función fn_propagar_reserva()',
          to_regprocedure('public.fn_propagar_reserva()') is not null
   union all
   select 'Fase 1.2 · función fn_completar_reservas_al_vender()',
          to_regprocedure('public.fn_completar_reservas_al_vender()') is not null
-  union all
-  select 'Fase 1.2 · función fn_soy_parte_de_la_reserva(uuid)',
-         to_regprocedure('public.fn_soy_parte_de_la_reserva(uuid)') is not null
   union all
   select 'Fase 1.2 · trigger trg_propagar_reserva',
          exists (select 1 from pg_trigger
@@ -80,13 +84,10 @@ with checks(nombre, ok) as (
          (select count(*) from pg_policies
            where schemaname = 'public' and tablename = 'reservas') >= 2
   union all
-  select 'Fase 1.2 · bucket comprobantes-reserva',
-         exists (select 1 from storage.buckets where id = 'comprobantes-reserva')
-  union all
-  select 'Fase 1.2 · políticas de storage del comprobante (5)',
+  select 'Fase 1.2 · sin políticas de storage del comprobante (modelo nuevo)',
          (select count(*) from pg_policies
            where schemaname = 'storage' and tablename = 'objects'
-             and policyname like 'comprobantes-reserva:%') >= 5
+             and policyname like 'comprobantes-reserva:%') = 0
 
   -- Plan §4 — inspección precompra + gestoría (202609170002)
   union all
@@ -111,6 +112,36 @@ with checks(nombre, ok) as (
          (select count(*) from pg_policies
            where schemaname = 'public'
              and tablename in ('solicitudes_inspeccion', 'solicitudes_gestoria')) >= 4
+
+  -- Fase 0.1 (cierre) — rangos numéricos del catálogo (202609170003)
+  union all
+  select 'Rangos · función fn_espec_numero(text)',
+         to_regprocedure('public.fn_espec_numero(text)') is not null
+  union all
+  select 'Rangos · columna productos.espec_km',
+         exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'productos'
+                    and column_name = 'espec_km')
+  union all
+  select 'Rangos · columna productos.espec_anio',
+         exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'productos'
+                    and column_name = 'espec_anio')
+  union all
+  select 'Rangos · columna productos.espec_placa_w',
+         exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'productos'
+                    and column_name = 'espec_placa_w')
+  union all
+  select 'Rangos · columna productos.espec_inversor_w',
+         exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'productos'
+                    and column_name = 'espec_inversor_w')
+  union all
+  select 'Rangos · índices espec_km / espec_anio / espec_placa_w / espec_inversor_w',
+         (select count(*) from pg_indexes
+           where indexname in ('productos_espec_km_idx', 'productos_espec_anio_idx',
+                               'productos_espec_placa_w_idx', 'productos_espec_inversor_w_idx')) = 4
 )
 select case when ok then '✅ OK' else '❌ FALTA' end as estado, nombre
 from checks

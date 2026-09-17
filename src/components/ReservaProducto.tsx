@@ -4,30 +4,30 @@
  * Reserva con señal — interfaz del comprador en la ficha del anuncio.
  *
  * Dos piezas:
- *  - `BotonReservar`: el CTA + el modal con importe, método de pago, condiciones
- *    y (si la reserva ya existe en estado pendiente o rechazada) la subida del
- *    comprobante.
- *  - `AvisoReservado`: el cartel "Reservado" para el resto de visitantes.
+ *  - `BotonReservar`: el CTA + el modal con importe, método de pago y
+ *    condiciones. Crear una reserva manda una SOLICITUD al vendedor: él la
+ *    confirma cuando recibe el pago (no hay comprobantes ni espera al equipo).
+ *  - `AvisoReservado`: el cartel "Reservado" cuando hay una reserva ACTIVA
+ *    (señal ya confirmada por el vendedor).
  *
  * Decisiones de UX:
  *  - El importe se sugiere (2 % del precio, entre 300 y 1.000 €) pero se puede
  *    ajustar: hay vendedores que prefieren pedir menos.
  *  - Las condiciones se muestran ANTES de pagar, con el dinero explícito (paga
  *    directamente al vendedor, se descuenta del precio, cuándo se devuelve).
- *  - El estado de la reserva se refresca contra la API: si otro comprador acaba
- *    de reservar el anuncio, el botón se apaga y se explica por qué.
+ *  - El estado se refresca contra la API: si aparece una reserva activa de
+ *    otro comprador, el botón se apaga y se explica por qué.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { CalendarClock, CheckCircle2, Info, Loader2, Lock, Upload, X } from 'lucide-react'
+import { CalendarClock, CheckCircle2, Info, Loader2, Lock, X } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import {
   CONDICIONES_SEÑAL,
   ETIQUETAS_ESTADO_RESERVA,
   importeSeñalValido,
   normalizarEstadoReserva,
-  puedeReservar,
   reservaVigente,
   sugerirImporteSeñal,
   type EstadoReserva,
@@ -45,8 +45,7 @@ interface Reserva {
   estado: string
   importe: number
   expira_en: string
-  comprobante_url?: string | null
-  comprobante_signed_url?: string | null
+  comprador_id?: string | null
   motivo_cancelacion?: string | null
 }
 
@@ -90,15 +89,13 @@ export default function BotonReservar({
   const [abierto, setAbierto] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [enviando, setEnviando] = useState(false)
-  const [subiendo, setSubiendo] = useState(false)
   const [error, setError] = useState('')
-  const [misReserva, setMisReserva] = useState<Reserva | null>(null)
+  const [miReserva, setMiReserva] = useState<Reserva | null>(null)
   const [ajenaVigente, setAjenaVigente] = useState(reservadoInicial)
   const [hastaAjeno, setHastaAjeno] = useState<string | null>(reservadoHastaInicial)
   const [importe, setImporte] = useState(sugerirImporteSeñal(producto.precio_usd))
   const [metodo, setMetodo] = useState<string>('bizum')
   const [mensaje, setMensaje] = useState('')
-  const inputArchivo = useRef<HTMLInputElement | null>(null)
 
   const cargar = useCallback(async () => {
     try {
@@ -106,26 +103,21 @@ export default function BotonReservar({
       const json = await res.json().catch(() => ({}))
       if (!json.ok) return
       const todas: Reserva[] = json.reservas || []
-      const mia = todas.find(r => reservaVigente(r.estado, r.expira_en))
-      const otra = todas.find(r => r.id !== mia?.id && reservaVigente(r.estado, r.expira_en))
-      setMisReserva(mia || null)
+      const mia = todas.find(r => r.comprador_id === userId
+        && (r.estado === 'solicitada' || (r.estado === 'activa' && reservaVigente(r.estado, r.expira_en))))
+      const otra = todas.find(r => r.comprador_id !== userId && reservaVigente(r.estado, r.expira_en))
+      setMiReserva(mia || null)
       setAjenaVigente(!!otra)
       setHastaAjeno(otra?.expira_en || null)
-      onEstadoReserva?.(mia?.estado || otra?.estado || null)
+      onEstadoReserva?.(otra?.estado || mia?.estado || null)
     } catch {
       // Sin red: el CTA se queda como está; la API volverá a decidir al pulsar.
     } finally {
       setCargando(false)
     }
-  }, [producto.id, onEstadoReserva])
+  }, [producto.id, userId, onEstadoReserva])
 
   useEffect(() => { cargar() }, [cargar])
-
-  const veredicto = puedeReservar(
-    producto as any,
-    misReserva || (ajenaVigente ? { id: 'otra', estado: 'activa', expira_en: hastaAjeno } : null),
-    userId,
-  )
 
   async function reservar() {
     setError('')
@@ -142,50 +134,30 @@ export default function BotonReservar({
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok || !json.ok) {
-        setError(json.error || 'No se pudo crear la reserva')
+        setError(json.error || 'No se pudo crear la solicitud')
         return
       }
+      setAbierto(false)
+      setError('')
       await cargar()
     } catch {
-      setError('No se pudo crear la reserva')
+      setError('No se pudo crear la solicitud')
     } finally {
       setEnviando(false)
     }
   }
 
-  async function subirComprobante(file: File) {
-    if (!misReserva) return
-    setError('')
-    setSubiendo(true)
-    try {
-      const fd = new FormData()
-      fd.append('reservaId', misReserva.id)
-      fd.append('file', file)
-      const res = await fetch('/api/reservas/comprobante', { method: 'POST', body: fd })
-      const json = await res.json().catch(() => ({}))
-      if (!res.ok || !json.ok) {
-        setError(json.error || 'No se pudo subir el comprobante')
-        return
-      }
-      await cargar()
-    } catch {
-      setError('No se pudo subir el comprobante')
-    } finally {
-      setSubiendo(false)
-    }
-  }
-
   async function cancelar() {
-    if (!misReserva) return
-    if (!window.confirm('¿Cancelar la reserva? El anuncio volverá a estar disponible.')) return
+    if (!miReserva) return
+    if (!window.confirm('¿Cancelar la solicitud de reserva?')) return
     setEnviando(true)
     try {
       const res = await fetch('/api/reservas/cancelar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reservaId: misReserva.id, motivo: 'Cancelada por el comprador' }),
+        body: JSON.stringify({ reservaId: miReserva.id, motivo: 'Cancelada por el comprador' }),
       })
-      if (res.ok) { setMisReserva(null); setAbierto(false); setAjenaVigente(false) }
+      if (res.ok) { setMiReserva(null); setAbierto(false); setAjenaVigente(false) }
     } finally {
       setEnviando(false)
     }
@@ -193,56 +165,32 @@ export default function BotonReservar({
 
   if (cargando) return null
 
-  // Un anuncio reservado no se puede reservar: se explica, no se esconde.
-  if (!misReserva && ajenaVigente) {
+  // Un anuncio reservado por otro no se puede reservar: se explica, no se esconde.
+  if (!miReserva && ajenaVigente) {
     return <AvisoReservado hasta={hastaAjeno} />
   }
 
-  const estado = misReserva ? normalizarEstadoReserva(misReserva.estado) : null
+  const estado = miReserva ? normalizarEstadoReserva(miReserva.estado) : null
   const etiqueta = estado ? ETIQUETAS_ESTADO_RESERVA[estado as EstadoReserva] : null
 
-  if (misReserva && estado !== 'rechazada') {
+  if (miReserva && estado && estado !== 'rechazada') {
     return (
       <div className={`rounded-xl border p-3.5 mb-5 ${etiqueta?.tono || 'bg-gray-50 border-gray-200'}`}>
         <p className="text-sm font-bold flex items-center gap-2">
-          <CalendarClock size={16} aria-hidden="true" /> {etiqueta?.label} · {misReserva.importe} € de señal
+          <CalendarClock size={16} aria-hidden="true" /> {etiqueta?.label} · {miReserva.importe} € de señal
         </p>
         <p className="text-xs mt-1">{etiqueta?.descripcion}</p>
 
-        {estado === 'pendiente_pago' && (
-          <>
-            <p className="text-xs mt-2">
-              Paga la señal al vendedor ({METODOS.find(m => m.id === 'bizum')?.label}, transferencia o en mano) y sube el
-              comprobante aquí para que el equipo la verifique.
-            </p>
-            <button
-              type="button"
-              onClick={() => inputArchivo.current?.click()}
-              disabled={subiendo}
-              className="mt-2 inline-flex items-center gap-1.5 bg-brand-primary text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-brand-dark disabled:opacity-50"
-            >
-              {subiendo ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-              {subiendo ? 'Subiendo…' : 'Subir comprobante de la señal'}
-            </button>
-            <input
-              ref={inputArchivo}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,application/pdf"
-              className="hidden"
-              onChange={e => { const f = e.target.files?.[0]; if (f) subirComprobante(f); e.target.value = '' }}
-            />
-          </>
-        )}
-
-        {estado === 'en_revision' && (
+        {estado === 'solicitada' && (
           <p className="text-xs mt-2 flex items-center gap-1.5">
-            <Info size={13} aria-hidden="true" /> Comprobante subido. Te avisamos en cuanto esté verificado.
+            <Info size={13} aria-hidden="true" /> Paga la señal al vendedor ({METODOS.find(m => m.id === metodo)?.label} u otro método) y
+            confirma que lo has hecho en el chat. Cuando reciba el pago, validará la reserva.
           </p>
         )}
 
         {estado === 'activa' && (
           <p className="text-xs mt-2 flex items-center gap-1.5">
-            <CheckCircle2 size={13} aria-hidden="true" /> Señal verificada. Contacta con el vendedor para la entrega y
+            <CheckCircle2 size={13} aria-hidden="true" /> Señal confirmada por el vendedor. Contacta con él para la entrega y
             descuenta el importe del precio final.
           </p>
         )}
@@ -272,7 +220,7 @@ export default function BotonReservar({
         className="w-full flex items-center justify-center gap-2 border-2 border-brand-accent text-brand-accent-dark bg-brand-accent/5 text-sm font-bold px-4 py-3 rounded-xl hover:bg-brand-accent/10 transition mb-5"
       >
         <Lock size={16} aria-hidden="true" />
-        {misReserva ? 'Volver a subir el comprobante' : t('reservarCta')}
+        {estado === 'rechazada' ? 'Volver a solicitar la reserva' : t('reservarCta')}
       </button>
 
       {abierto && (
@@ -289,13 +237,6 @@ export default function BotonReservar({
             </div>
 
             <p className="text-sm text-gray-600 mb-4">{producto.titulo}</p>
-
-            {misReserva && (
-              <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
-                Tu comprobante fue rechazado{misReserva.motivo_cancelacion ? `: ${misReserva.motivo_cancelacion}` : ''}.
-                Sube uno nuevo para mantener la reserva.
-              </p>
-            )}
 
             <label htmlFor="reserva-importe" className="block text-sm font-semibold text-gray-800 mb-1.5">
               Importe de la señal
@@ -359,35 +300,19 @@ export default function BotonReservar({
 
             {error && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{error}</p>}
 
-            {misReserva ? (
-              <button
-                type="button"
-                onClick={() => { inputArchivo.current?.click(); }}
-                disabled={subiendo}
-                className="w-full inline-flex items-center justify-center gap-2 bg-brand-primary text-white text-sm font-bold px-4 py-3 rounded-xl hover:bg-brand-dark disabled:opacity-50"
-              >
-                {subiendo ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
-                {subiendo ? 'Subiendo…' : 'Subir comprobante'}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={reservar}
-                disabled={enviando || !veredicto.ok}
-                className="w-full inline-flex items-center justify-center gap-2 bg-brand-accent text-white text-sm font-bold px-4 py-3 rounded-xl hover:bg-brand-accent-dark disabled:opacity-50"
-              >
-                {enviando ? <Loader2 size={15} className="animate-spin" /> : <Lock size={15} />}
-                {enviando ? 'Reservando…' : `Reservar por ${importe} €`}
-              </button>
-            )}
-
-            {!veredicto.ok && veredicto.motivo && (
-              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3">{veredicto.motivo}</p>
-            )}
+            <button
+              type="button"
+              onClick={reservar}
+              disabled={enviando}
+              className="w-full inline-flex items-center justify-center gap-2 bg-brand-accent text-white text-sm font-bold px-4 py-3 rounded-xl hover:bg-brand-accent-dark disabled:opacity-50"
+            >
+              {enviando ? <Loader2 size={15} className="animate-spin" /> : <Lock size={15} />}
+              {enviando ? 'Enviando…' : `Solicitar reserva por ${importe} €`}
+            </button>
 
             <p className="text-[11px] text-gray-500 mt-3 flex items-start gap-1.5">
               <Info size={12} className="mt-0.5 flex-shrink-0" aria-hidden="true" />
-              Al reservar aceptas las condiciones de la señal. Este servicio no es una custodia de fondos:{' '}
+              Al solicitar la reserva aceptas las condiciones de la señal. Este servicio no es una custodia de fondos:{' '}
               <LocalLink href="/compra-segura-camper" className="underline hover:text-brand-primary">cómo comprar de forma segura</LocalLink>.
             </p>
           </div>

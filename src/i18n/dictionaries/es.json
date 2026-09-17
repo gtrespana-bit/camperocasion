@@ -336,12 +336,17 @@
       "heating": "Calefacción estacionaria",
       "hotWater": "Agua caliente",
       "bathroom": "Baño / Ducha",
-      "battery": "Batería auxiliar",
-      "solar": "Placa solar",
-      "inverter": "Inversor 220V",
-      "fridge": "Nevera",
-      "verified": "Solo homologación verificada"
-    }
+   "battery": "Batería auxiliar",
+   "solar": "Placa solar",
+   "inverter": "Inversor 220V",
+   "fridge": "Nevera",
+   "verified": "Solo homologación verificada",
+   "rangeTitle": "Rangos numéricos",
+   "kmMax": "Kilómetros máximos",
+   "anioMin": "Año mínimo",
+   "placaWatiosMin": "Placa solar mínima (W)",
+   "inversorWatiosMin": "Inversor mínimo (W)"
+  }
   },
   "productCard": {
     "featured": "Destacado",

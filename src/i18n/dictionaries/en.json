@@ -336,12 +336,17 @@
       "heating": "Stationary heater",
       "hotWater": "Hot water",
       "bathroom": "Bathroom / Shower",
-      "battery": "Leisure battery",
-      "solar": "Solar panel",
-      "inverter": "220V inverter",
-      "fridge": "Fridge",
-      "verified": "Verified type approval only"
-    }
+   "battery": "Leisure battery",
+   "solar": "Solar panel",
+   "inverter": "220V inverter",
+   "fridge": "Fridge",
+   "verified": "Verified type approval only",
+   "rangeTitle": "Numeric ranges",
+   "kmMax": "Max kilometres",
+   "anioMin": "Minimum year",
+   "placaWatiosMin": "Min solar panel (W)",
+   "inversorWatiosMin": "Min inverter (W)"
+  }
   },
   "productCard": {
     "featured": "Featured",

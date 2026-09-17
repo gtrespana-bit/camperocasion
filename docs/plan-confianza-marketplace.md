@@ -12,7 +12,7 @@
 | 3. Venta + alquiler P2P | 🔴 Nada | — |
 | 4. Filtros de arquitectura furgonetera | ✅ Hecho (2026-09) | 16 filtros técnicos en el catálogo, agrupados en mecánica/habitabilidad/autonomía, y captura de tracción, MMA, longitud y altura exterior en `/publicar`. Registro único en `src/lib/filtros-tecnicos.ts`. Ver §2.1. |
 | 5. Escrow + financiación | 🔴 Nada | Solo créditos para destacar con pago manual (Bizum/transferencia/PayPal + comprobante). |
-| 6. Gestoría digital | 🟡 Medio (2026-09) | Calculadora de ITP con los 19 territorios, 19 landings por comunidad y checklist de compra segura (`/calcular-itp`, `/compra-segura-camper`). **Falta**: contrato de compraventa descargable y gestoría del cambio de nombre. |
+| 6. Gestoría digital | 🟢 Alto (2026-09-17) | Calculadora de ITP con los 19 territorios, 19 landings por comunidad y checklist de compra segura (`/calcular-itp`, `/compra-segura-camper`). Más contrato de compraventa descargable (`/contrato-compraventa`) y captación de leads de gestoría (`/gestoria-cambio-nombre`) — ambos hechos el 2026-09-17. **Falta**: el partner real de gestoría y el cobro del servicio (hoy reenvío manual). |
 
 **Ya tenemos además** (activos sobre los que construir): vendedor verificado con
 badge (`BadgeVerificado.tsx` + `solicitudes_verificacion`), moderación, reseñas,
@@ -79,9 +79,14 @@ generen confianza. El orden correcto **minimiza riesgo y maximiza aprendizaje**:
 
 **Pendiente de esta fase (siguiente iteración):**
 
-- Filtros por rango numérico (`kilómetros máximos`, `año mínimo`, watios de
-  placa/inversor). Requieren comparar números, no texto: o se capturan como
-  tramos (como MMA/longitud/altura) o se añaden columnas generadas.
+- ~~Filtros por rango numérico (`kilómetros máximos`, `año mínimo`, watios de
+  placa/inversor)~~ ✅ **hecho (2026-09-17)**: columnas GENERATED `espec_km` /
+  `espec_anio` / `espec_placa_w` / `espec_inversor_w` con índice funcional. La
+  comparación numérica real se hace sobre esas columnas (no sobre `->>` del
+  JSONB, que compara texto alfabéticamente). Registro en
+  `RANGOS_NUMERICOS` (`src/lib/filtros-tecnicos.ts`) y migración
+  `supabase/migrations/202609170003_rangos_numericos.sql`. Los mismos filtros
+  se ofrecen también en `/buscar`.
 - Normalización de las claves del JSONB a slugs (`plazas_dormir`). **Se aplaza
   a propósito**: hoy las claves son los labels del formulario (con espacios y
   acentos) pero todas viven en un único registro, y con `@>` el índice GIN sí se
@@ -177,11 +182,19 @@ revisar, y el `user_id` de un documento no se puede cambiar.
    páginas de ITP empujan al catálogo filtrado por **homologación verificada**
    (`/catalogo?verificada=1`), que es la Fase 0.2. Así la utilidad fiscal lleva
    tráfico hacia los anuncios que ya tienen el expediente revisado.
+7. **Normalización de la etiqueta DGT (fix 2026-09-17)**: el cálculo comparaba
+   el texto del select en mayúsculas con las formas largas ("C (Verde)"), así
+   que elegir "ECO" o "Cero Emisiones" NUNCA aplicaba los tipos reducidos de
+   cero emisiones/ECO (ni en el resultado ni en la comparativa por comunidad).
+   `normalizarEtiquetaDGT()` (`src/lib/itp.ts`) reduce ahora cualquier forma a
+   `'0' | 'ECO' | 'C' | 'B'` y el select ofrece las mismas opciones que el
+   catálogo (`OPCIONES_DGT`). Si la comunidad bonifica por etiqueta y no se
+   indica, el resultado lo avisa en lugar de dar el tipo general como cerrado.
 
 **Mantenimiento:** los tipos cambian por ley autonómica (Cantabria bajó del 8 %
 al 6 % en 2024 y todavía hay webs con el dato viejo). Actualizar `TIPOS_ITP`,
 `REVISADO_EN` y `EJERCICIO_FISCAL` una vez al año; `tests/unit/itp.test.ts`
-(28 pruebas) comprueba la forma del registro y el cálculo.
+comprueba la forma del registro, el cálculo y la normalización de la etiqueta.
 
 **Monetización desde la Fase 0:** el paquete "Destacado Premium" existente
 (sistema de créditos) pasa a incluir la verificación de homologación → el
@@ -216,21 +229,29 @@ create table if not exists public.documentos_vehiculo (
   proyecto de homologación → aviso al vendedor y al comprador ("pendiente de
   verificar").
 
-### 3.2 Señal de reserva online (mini-escrow, viable ya)
+### 3.2 Señal de reserva online (confirmación del vendedor) ✅ (hecho)
 
 El escrow completo de 80.000 € no es viable al principio (límites de tarjeta,
-SEPA, entidad de pago). Pero una **señal de 300-500 €** vía Bizum/Stripe sí:
+SEPA, entidad de pago), y **fingir un "mini-escrow" sería peor**: la plataforma
+no custodia el dinero, así que no puede ni bloquearlo ni "verificar" un pago que
+no ve. Por eso la reserva funciona así (revisado el 2026-09-17):
 
-1. Comprador pulsa "Reservar con señal" en la ficha → paga la señal.
-2. El anuncio se marca como `reservado` (visible para todos).
-3. La señal se descuenta del precio en la reunión presencial (reembolso si el
-  vendedor cancela o el vehículo no se ajusta a lo anunciado).
-4. Comisión de plataforma sobre la señal + prioridad en el flujo de gestoría.
+1. Comprador pulsa "Reservar con señal" en la ficha → se **solicita** con un
+   importe (sugerido 2 % del precio, entre 300 y 1.000 €). La solicitud **no
+   bloquea** el anuncio.
+2. El comprador paga la señal **directamente al vendedor** (Bizum/transferencia/
+   en mano). El vendedor recibe un aviso push con la solicitud.
+3. El **vendedor confirma** la solicitud desde su dashboard cuando ve el pago
+   entrar → la reserva pasa a `activa`, el anuncio se marca `reservado` para
+   todos y caduca a los 7 días.
+4. La señal se descuenta del precio en la reunión presencial (devolución si el
+   vendedor cancela o el vehículo no se ajusta a lo anunciado).
 
- Esto resuelve el dolor real nº1 de los vendedores (pisos y compradores
- fantasma que "ya van en camino") y nos da un primer flujo de pago real con
- Stripe (fase 1) sin necesitar licencia de entidad de pago: la señal con
- reembolso es un cobro de servicio, no custodia de fondos del vehículo.
+Esto resuelve el dolor real nº1 de los vendedores (pisos y compradores fantasma
+que "ya van en camino") sin que la plataforma simule un pago que no gestiona:
+pagarla es un compromiso real, y bloquear el anuncio depende de quien de verdad
+recibe el dinero. Con pasarela (Fase 3) el botón podrá cobrar la señal de verdad;
+la tabla ya tiene las columnas para ello (`comision_pct`, `comision`).
 
 ---
 
@@ -358,8 +379,9 @@ riesgo operativo.
 
 1. ✅ `feat/filtros-tecnicos` — **hecho**: 16 filtros agrupados en catálogo,
    captura de tracción/MMA/longitud/altura, registro único y contención JSONB
-   con índice GIN (ver §2.1). Queda para la siguiente iteración lo listado como
-   pendiente en ese apartado (rangos numéricos y normalización de claves).
+   con índice GIN (ver §2.1). El cierre de la fase (rangos numéricos con
+   columnas generadas + filtros en `/buscar`) quedó listo el 2026-09-17; lo
+   único que sigue aplazado es la normalización de claves del JSONB a slugs.
 2. ✅ `feat/verificacion-homologacion` — **hecho**: bucket
    `documentos-vehiculo`, columna `verificacion_homologacion`, expediente del
    vendedor, revisión admin (pestaña *Homologación*), sello en card/ficha y

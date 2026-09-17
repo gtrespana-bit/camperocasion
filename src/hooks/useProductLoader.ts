@@ -8,28 +8,19 @@ import { getCatalogPageRange } from '@/lib/catalog-pagination';
 import {
   CATALOG_PRODUCT_COLUMNS,
   CATALOG_FILTRO_MODERACION,
-  aplicarFiltrosCatalogo,
+  aplicarFiltrosBase,
   ordenarProductosCatalogo,
   ProductoCatalogo,
+  tieneRangosNumericos,
+  quitarRangos,
+  esErrorColumnasRango,
+  type FiltrosCatalogo,
 } from '@/lib/catalog-consulta';
-
-interface ProductFilter {
-  categoria?: string;
-  subcategoria?: string;
-  marca?: string;
-  q?: string;
-  precioMin?: string;
-  precioMax?: string;
-  ubicacionEstado?: string;
-  ubicacionCiudad?: string;
-  // Filtros técnicos camper: parámetro del registro `filtros-tecnicos` → valor.
-  [key: string]: string | number | boolean | undefined;
-}
 
 interface LoadPageOptions {
   page: number;
   pageSize: number;
-  filters?: ProductFilter;
+  filters?: FiltrosCatalogo;
 }
 
 interface UseProductLoaderResult {
@@ -63,63 +54,51 @@ export const useProductLoader = (): UseProductLoaderResult => {
     setLoading(true);
     setError(null);
 
-    try {
+    const ejecutar = async (filtros: FiltrosCatalogo) => {
       let query = supabase
         .from('productos')
         .select(CATALOG_PRODUCT_COLUMNS, { count: 'exact' })
         .eq('activo', true)
         .or(CATALOG_FILTRO_MODERACION);
 
-      if (filters.categoria) {
+      // La categoría se traduce a `categoria_id` (la columna FK), y el resto
+      // de filtros se aplica con el helper compartido (mismo contrato que el
+      // SSR inicial y el prefetch).
+      if (filtros.categoria) {
         // maybeSingle(): si la categoría no existe en la tabla, single()
         // devolvería HTTP 406. Con maybeSingle() son 0 filas y ya está.
         const { data: catRow } = await supabase
           .from('categorias')
           .select('id')
-          .eq('nombre', filters.categoria)
+          .eq('nombre', filtros.categoria)
           .maybeSingle();
         if (catRow) {
           query = query.eq('categoria_id', catRow.id);
         }
       }
 
-      if (filters.subcategoria) {
-        query = query.eq('subcategoria', filters.subcategoria);
-      }
+      const { categoria: _categoria, ...resto } = filtros;
+      query = aplicarFiltrosBase(query, resto) as typeof query;
 
-      if (filters.marca) {
-        query = query.eq('marca', filters.marca);
-      }
-
-      if (filters.q) {
-        query = query.textSearch('search_vector', filters.q, { config: 'spanish', type: 'plain' });
-      }
-
-      if (filters.ubicacionCiudad) {
-        query = query.eq('ubicacion_ciudad', filters.ubicacionCiudad);
-      } else if (filters.ubicacionEstado) {
-        query = query.eq('ubicacion_estado', filters.ubicacionEstado);
-      }
-
-      if (filters.precioMin) {
-        query = query.gte('precio_usd', parseFloat(filters.precioMin));
-      }
-      if (filters.precioMax) {
-        query = query.lte('precio_usd', parseFloat(filters.precioMax));
-      }
-
-      // Filtros técnicos (una sola contención JSONB, índice GIN) + el filtro
-      // de homologación verificada (columna de `productos`).
-      query = aplicarFiltrosCatalogo(query, filters);
-
-      // Página real desde el servidor. El mismo tamaño se comparte con el
-      // SSR inicial para no dejar filas sin mostrar entre páginas.
       const { from, to } = getCatalogPageRange(page, pageSize);
       query = query
         .order('creado_en', { ascending: false })
         .range(from, to);
 
-      const { data, count, error: fetchError } = await query;
+      return await query;
+    };
+
+    try {
+      let result = await ejecutar(filters);
+
+      // Plan B: si la base de datos todavía no tiene las columnas generadas de
+      // rangos (migración 202609170003 sin aplicar), la query con rangos falla.
+      // Reintentamos SIN rangos: el resto de filtros sigue funcionando.
+      if (result.error && esErrorColumnasRango(result.error) && tieneRangosNumericos(filters)) {
+        result = await ejecutar(quitarRangos(filters) as FiltrosCatalogo);
+      }
+
+      const { data, count, error: fetchError } = result;
 
       if (fetchError) {
         throw new Error(fetchError.message);
