@@ -42,8 +42,9 @@ $$;
 
 comment on function public.fn_espec_numero(text) is
   'Extrae un número (solo dígitos) de un valor de especificaciones. Uso interno '
-  'de las columnas generadas de rangos numéricos: los '.' de millares y las comas '
-  'decimales de la captura en español se normalizan a entero.';
+  'de las columnas generadas de rangos numéricos: por eso se ignoran los puntos '
+  'de millares y las comas decimales de la captura en español y se conservan '
+  'solo los dígitos.';
 
 -- ── 1. Kilómetros ───────────────────────────────────────────────────────────
 alter table public.productos
