@@ -40,6 +40,25 @@ create table if not exists storage.objects (
 create or replace function storage.foldername(fullpath text) returns text[]
 language sql immutable as $$ select string_to_array(fullpath, '/') $$;
 
+-- Mismo trigger que el Supabase real: prohíbe DELETE por SQL directo sobre
+-- storage.buckets/objects (solo vía Storage API). Sin este stub, una migración
+-- con `delete from storage.buckets` pasaría en CI y fallaría en producción —
+-- exactamente lo que ocurrió con 202609170004. (Los UPDATE sí están permitidos:
+-- el setup hace `update storage.buckets set public=false` y es legal.)
+create or replace function storage.protect_delete()
+returns trigger
+language plpgsql as $$
+begin
+  raise exception 'Direct deletion from storage tables is not allowed. Use the Storage API instead.'
+    using hint = 'This prevents accidental data loss from orphaned objects.';
+end $$;
+drop trigger if exists protect_storage_buckets_delete on storage.buckets;
+create trigger protect_storage_buckets_delete before delete on storage.buckets
+  for each row execute function storage.protect_delete();
+drop trigger if exists protect_storage_objects_delete on storage.objects;
+create trigger protect_storage_objects_delete before delete on storage.objects
+  for each row execute function storage.protect_delete();
+
 do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then
     create role anon nologin;

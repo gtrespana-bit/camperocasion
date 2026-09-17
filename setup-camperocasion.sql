@@ -5354,6 +5354,4 @@ drop policy if exists "comprobantes-reserva: owner delete" on storage.objects;
 drop policy if exists "comprobantes-reserva: seller read" on storage.objects;
 drop policy if exists "comprobantes-reserva: admin read" on storage.objects;
 
-delete from storage.buckets where id = 'comprobantes-reserva';
-
 drop function if exists public.fn_soy_parte_de_la_reserva(uuid);

@@ -126,14 +126,16 @@ create trigger trg_completar_reservas_al_vender
   after update on public.productos
   for each row execute function public.fn_completar_reservas_al_vender();
 
--- ── 5. El comprobante ya no se usa: se retira el bucket y sus políticas ────
+-- ── 5. El comprobante ya no se usa: se retiran sus políticas ───────────────
 --    (el dinero se ve en la cuenta del vendedor, no en una captura subida).
+--    NOTA: NO se borra la fila del bucket `comprobantes-reserva` con SQL: el
+--    trigger storage.protect_delete() de Supabase lo prohíbe (solo Storage API
+--    o el dashboard). El bucket vacío es inofensivo; lo relevante es que la
+--    app ya no escribe ni lee ahí.
 drop policy if exists "comprobantes-reserva: owner upload" on storage.objects;
 drop policy if exists "comprobantes-reserva: owner read" on storage.objects;
 drop policy if exists "comprobantes-reserva: owner delete" on storage.objects;
 drop policy if exists "comprobantes-reserva: seller read" on storage.objects;
 drop policy if exists "comprobantes-reserva: admin read" on storage.objects;
-
-delete from storage.buckets where id = 'comprobantes-reserva';
 
 drop function if exists public.fn_soy_parte_de_la_reserva(uuid);

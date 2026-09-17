@@ -84,8 +84,10 @@ with checks(nombre, ok) as (
          (select count(*) from pg_policies
            where schemaname = 'public' and tablename = 'reservas') >= 2
   union all
-  select 'Fase 1.2 · sin bucket de comprobantes (modelo nuevo)',
-         not exists (select 1 from storage.buckets where id = 'comprobantes-reserva')
+  select 'Fase 1.2 · sin políticas de storage del comprobante (modelo nuevo)',
+         (select count(*) from pg_policies
+           where schemaname = 'storage' and tablename = 'objects'
+             and policyname like 'comprobantes-reserva:%') = 0
 
   -- Plan §4 — inspección precompra + gestoría (202609170002)
   union all
