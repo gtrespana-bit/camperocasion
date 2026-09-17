@@ -148,6 +148,34 @@ aparecen solas:
 - El contrato se genera íntegro en el navegador (`/contrato-compraventa`):
   no toca base de datos ni servers. Enlazado desde ficha, ITP y compra-segura.
 
+### 1.2-quater Aplicar los rangos numéricos del catálogo (202609170003) — PENDIENTE en producción
+
+```bash
+# Opción A: solo esta migración
+supabase/migrations/202609170003_rangos_numericos.sql
+
+# Opción B: el setup completo (ya la incluye al final y es idempotente)
+setup-camperocasion.sql
+```
+
+Comprobación (la función más una columna; el resto sale con
+`scripts/verificar_despliegue.sql`, ahora **32** comprobaciones):
+
+```sql
+select to_regprocedure('public.fn_espec_numero(text)'),
+       (select 1 from information_schema.columns
+         where table_schema = 'public' and table_name = 'productos'
+           and column_name = 'espec_km');
+```
+
+Qué añade: 4 columnas **generadas** (`espec_km`, `espec_anio`, `espec_placa_w`,
+`espec_inversor_w`) que extraen el número del JSONB `especificaciones` con su
+índice funcional — la comparación numérica real de los filtros "km máximos",
+"año mínimo", "placa solar mínima" e "inversor mínimo" del catálogo y de
+`/buscar`. Si aún no está aplicada, los rangos se reintentan automáticamente sin
+ellos (plan B), así que nada se rompe: simplemente esos 4 filtros no acotan
+hasta que se aplique.
+
 ### 1.3 Variables de entorno en Vercel — ✅ APLICADAS el 2026-09-16
 
 Única comprobación que queda (10 s): `/admin` → *Estado*, o abrir
@@ -286,8 +314,15 @@ las 20 comprobaciones de despliegue). Los cuatro scripts ya pasan en local.
 
 ## 5. Pendientes de producto (sin fecha, sin SQL)
 
-- Rangos numéricos en los filtros (km máximos, año mínimo, watios de placa).
-- Llevar los filtros técnicos también a `/buscar`, que tiene su propia barra.
+- ~~Rangos numéricos en los filtros (km máximos, año mínimo, watios de placa)~~ ✅
+  **hecho (2026-09-17)**: `RANGOS_NUMERICOS` en `src/lib/filtros-tecnicos.ts`,
+  columnas generadas `espec_*` en `supabase/migrations/202609170003_rangos_numericos.sql`
+  (comparación numérica indexada, no texto), panel de rangos en catálogo y `/buscar`,
+  y reintento automático sin rangos si la migración aún no está aplicada.
+- ~~Llevar los filtros técnicos también a `/buscar`, que tiene su propia barra~~ ✅
+  **hecho (2026-09-17)**: `/buscar` reutiliza el mismo panel
+  (`FiltrosTecnicosPanel`) y la misma lógica de consulta compartida
+  (`aplicarFiltrosBase` en `src/lib/catalog-consulta.ts`), igual que catálogo.
 - Normalizar las claves del JSONB a slugs (`plazas_dormir`) — necesita backfill.
 - ~~Fase 1 restante: inspección precompra, contrato de compraventa descargable
   y gestoría del cambio de nombre~~ ✅ **hecho (2026-09-17, plan §4)**: botón

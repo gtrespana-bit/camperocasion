@@ -7,8 +7,9 @@ import {
   GRUPOS_FILTROS_TECNICOS,
   type FiltrosTecnicos,
 } from '@/lib/filtros-tecnicos'
+import { hayFiltrosRango } from '@/lib/filtros-tecnicos'
 import { FILTRO_VERIFICADA_PARAM } from '@/lib/catalog-consulta';
-import LocalLink from './LocalLink';
+import { FiltrosTecnicosPanel } from './FiltrosTecnicosPanel';
 
 interface CatalogFiltersProps {
   categoria: string;
@@ -24,6 +25,8 @@ interface CatalogFiltersProps {
    * define el registro `@/lib/filtros-tecnicos`.
    */
   filtrosTecnicos: FiltrosTecnicos;
+  /** Rangos numéricos activos tal como están en la URL (param → "150000"). */
+  rangos: Record<string, string>;
   /** '1' cuando solo se muestran anuncios con homologación verificada. */
   verificada: string;
   t: (key: string, vars?: Record<string, string | number>) => string;
@@ -42,6 +45,7 @@ export const CatalogFilters = ({
   ubicacionEstado,
   ubicacionCiudad,
   filtrosTecnicos,
+  rangos,
   verificada,
   t,
 }: CatalogFiltersProps) => {
@@ -63,26 +67,8 @@ export const CatalogFilters = ({
   const hasActiveFilters = !!(
     categoria || subcategoria || marca || precioMin || precioMax ||
     ubicacionEstado || ubicacionCiudad || verificada ||
-    GRUPOS_FILTROS_TECNICOS.some(g => g.filtros.some(f => filtrosTecnicos[f.param]))
-  );
-
-  const select = (
-    id: string,
-    label: string,
-    value: string,
-    param: string,
-    options: readonly string[],
-    allLabel: string
-  ) => (
-    <div className="mb-4" key={id}>
-      <label htmlFor={id} className={labelClass}>{label}</label>
-      <select id={id} value={value} onChange={e => setParam(param, e.target.value)} className={selectClass}>
-        <option value="">{allLabel}</option>
-        {options.map(o => (
-          <option key={o} value={o}>{o}</option>
-        ))}
-      </select>
-    </div>
+    GRUPOS_FILTROS_TECNICOS.some(g => g.filtros.some(f => filtrosTecnicos[f.param])) ||
+    hayFiltrosRango(rangos)
   );
 
   return (
@@ -203,26 +189,17 @@ export const CatalogFilters = ({
         {t('catalog.filters.verified')}
       </label>
 
-      {/* Bloques técnicos de la ficha camper: la lista de filtros y sus
-          opciones salen del registro @/lib/filtros-tecnicos, el mismo dato que
-          captura /publicar (captura y filtro no pueden divergir). */}
-      {GRUPOS_FILTROS_TECNICOS.map(grupo => (
-        <div key={grupo.grupo} className="mb-5 border-t border-gray-100 pt-4 first:border-t-0 first:pt-0">
-          <h4 className="text-xs font-black uppercase tracking-wide text-gray-500 mb-3">
-            {grupo.icono} {t(grupo.i18n)}
-          </h4>
-          {grupo.filtros.map(filtro =>
-            select(
-              `filter-${filtro.param}`,
-              t(filtro.i18n),
-              filtrosTecnicos[filtro.param] || '',
-              filtro.param,
-              filtro.opciones,
-              t('catalog.all')
-            )
-          )}
-        </div>
-      ))}
+      {/* Bloques técnicos de la ficha camper + rangos numéricos: la lista de
+          filtros, sus opciones y los rangos salen del registro único
+          @/lib/filtros-tecnicos, el mismo dato que captura /publicar (captura
+          y filtro no pueden divergir). El panel es el mismo componente que usa
+          /buscar. */}
+      <FiltrosTecnicosPanel
+        filtrosTecnicos={filtrosTecnicos}
+        rangos={rangos}
+        t={t}
+        onSetParam={setParam}
+      />
 
       {hasActiveFilters && (
         <button

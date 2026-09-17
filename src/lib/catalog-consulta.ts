@@ -15,7 +15,12 @@
  */
 
 import { CATALOG_PAGE_SIZE } from './catalog-pagination'
-import { especificacionesDeFiltros } from './filtros-tecnicos'
+import {
+  PARAMETROS_RANGO,
+  RANGOS_NUMERICOS,
+  especificacionesDeFiltros,
+  limpiarFiltrosRango,
+} from './filtros-tecnicos'
 
 /**
  * Filtro del catálogo "solo anuncios con homologación verificada". Es el único
@@ -32,12 +37,70 @@ export function filtroVerificadaActivo(valor: unknown): boolean {
 interface QueryCatalogo {
   contains: (column: string, value: Record<string, string>) => unknown
   eq: (column: string, value: string) => unknown
+  gte: (column: string, value: number) => unknown
+  lte: (column: string, value: number) => unknown
+  textSearch?: (column: string, query: string, opts?: unknown) => unknown
+}
+
+/** Filtros que entiende la consulta compartida del catálogo (y /buscar). */
+export type FiltrosCatalogo = {
+  categoria?: string
+  subcategoria?: string
+  marca?: string
+  q?: string
+  precioMin?: string
+  precioMax?: string
+  ubicacionEstado?: string
+  ubicacionCiudad?: string
+  condicion?: string
+  /** Rangos numéricos: kmMax, anioMin, placaWatiosMin, inversorWatiosMin. */
+} & Record<string, unknown>
+
+/**
+ * Aplica a una query los filtros comunes a catálogo y buscador:
+ * categoría, subcategoría, marca, búsqueda de texto, ubicación, precio,
+ * condición y el bloque de filtros técnicos propios del catálogo
+ * (contención JSONB + homologación verificada + rangos numéricos).
+ *
+ * Existía duplicado en `useProductLoader`, `usePrefetch` y `BuscarClient`,
+ * derivando en el mismo bug tres veces. Ahora vive aquí, una sola vez.
+ */
+export function aplicarFiltrosBase<T extends QueryCatalogo>(
+  query: T,
+  filters: FiltrosCatalogo
+): T {
+  let q: any = query
+
+  if (filters.subcategoria) q = q.eq('subcategoria', filters.subcategoria)
+  if (filters.marca) q = q.eq('marca', filters.marca)
+  if (filters.q) q = q.textSearch('search_vector', filters.q, { config: 'spanish', type: 'plain' })
+
+  if (filters.ubicacionCiudad) {
+    q = q.eq('ubicacion_ciudad', filters.ubicacionCiudad)
+  } else if (filters.ubicacionEstado) {
+    q = q.eq('ubicacion_estado', filters.ubicacionEstado)
+  }
+
+  if (filters.precioMin) q = q.gte('precio_usd', parseFloat(filters.precioMin))
+  if (filters.precioMax) q = q.lte('precio_usd', parseFloat(filters.precioMax))
+
+  if (filters.condicion) q = q.eq('estado', filters.condicion)
+
+  // Ficha técnica camper: contención JSONB + verificación + rangos numéricos.
+  q = aplicarFiltrosCatalogo(q, filters)
+  return q as T
+}
+
+/** ¿Tiene alguno de los filtros de rango numérico un valor activo? */
+export function tieneRangosNumericos(filtros?: Record<string, unknown> | null): boolean {
+  return Object.keys(limpiarFiltrosRango(filtros)).length > 0
 }
 
 /**
- * Aplica los filtros del catálogo a una consulta de productos:
+ * Aplica los filtros técnicos (JSONB + verificación + rangos) a la consulta:
  *  - filtros técnicos → una condición de contención sobre el JSONB (índice GIN);
- *  - "solo verificados" → igualdad sobre la columna de estado del expediente.
+ *  - "solo verificados" → igualdad sobre la columna de estado del expediente;
+ *  - rangos numéricos → `aplicarRangosNumericos` (abajo).
  */
 export function aplicarFiltrosCatalogo<T extends QueryCatalogo>(
   query: T,
@@ -50,7 +113,73 @@ export function aplicarFiltrosCatalogo<T extends QueryCatalogo>(
     // `eq` (no `contains`): es una columna de texto, no el JSONB.
     q = q.eq('verificacion_homologacion', 'verificada')
   }
+  return aplicarRangosNumericos(q as T, filtros)
+}
+
+/**
+ * Límites sugeridos para los rangos numéricos de la UI (kilómetros máximos,
+ * año mínimo y watios). Acotan el input a valores sensatos; la query acepta
+ * cualquier número.
+ */
+export const RANGOS_SUGERIDOS: Record<string, { min: number; max: number; step: number }> = {
+  kmMax: { min: 0, max: 500000, step: 5000 },
+  anioMin: { min: 1980, max: new Date().getFullYear(), step: 1 },
+  placaWatiosMin: { min: 0, max: 2000, step: 50 },
+  inversorWatiosMin: { min: 0, max: 5000, step: 250 },
+}
+
+/**
+ * Traduce los filtros de rango activos a condiciones sobre las columnas
+ * generadas `espec_km` / `espec_anio` / `espec_placa_w` / `espec_inversor_w`
+ * (migración 202609170003). Comparación NUMÉRICA y con índice funcional: es lo
+ * opuesto a filtrar por `especificaciones->>'Kilómetros'`, que compara texto
+ * alfabéticamente.
+ */
+export function aplicarRangosNumericos<T extends QueryCatalogo>(
+  query: T,
+  filtros?: Record<string, unknown> | null
+): T {
+  const activos = limpiarFiltrosRango(filtros)
+  if (Object.keys(activos).length === 0) return query
+
+  let q: any = query
+  for (const rango of RANGOS_NUMERICOS) {
+    const valor = activos[rango.param]
+    if (valor == null) continue
+    if (rango.operador === 'lte') q = q.lte(rango.columnaGenerada, valor)
+    else q = q.gte(rango.columnaGenerada, valor)
+  }
   return q as T
+}
+
+/**
+ * Copa los filtros quitando los rangos numéricos. Útil como plan B: si la base
+ * de datos aún no tiene las columnas generadas (migración sin aplicar), la
+ * query con rangos falla con "column does not exist" y se reintenta sin ellos,
+ * dejando funcionar el resto de filtros.
+ */
+export function quitarRangos(filtros?: Record<string, unknown> | null): Record<string, unknown> {
+  if (!filtros) return {}
+  const copia: Record<string, unknown> = { ...filtros }
+  for (const p of PARAMETROS_RANGO) delete copia[p]
+  return copia
+}
+
+/**
+ * ¿Es el error de "la columna de rangos no existe" (migración 202609170003 sin
+ * aplicar)? La comparación por nombre de columna es deliberada: cuando PostgREST
+ * no conoce `espec_km`/`espec_anio`/… responde con un error que menciona la
+ * columna. Si coincide, los cargadores reintentan sin rangos.
+ */
+export function esErrorColumnasRango(err: unknown): boolean {
+  const msg = err && typeof err === 'object'
+    ? String((err as { message?: unknown }).message || err)
+    : String(err)
+  if (!msg) return false
+  const nombre = msg.toLowerCase()
+  return ['espec_km', 'espec_anio', 'espec_placa_w', 'espec_inversor_w'].some(
+    c => nombre.includes(c.toLowerCase())
+  )
 }
 
 /**

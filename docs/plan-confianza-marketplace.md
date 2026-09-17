@@ -79,9 +79,14 @@ generen confianza. El orden correcto **minimiza riesgo y maximiza aprendizaje**:
 
 **Pendiente de esta fase (siguiente iteración):**
 
-- Filtros por rango numérico (`kilómetros máximos`, `año mínimo`, watios de
-  placa/inversor). Requieren comparar números, no texto: o se capturan como
-  tramos (como MMA/longitud/altura) o se añaden columnas generadas.
+- ~~Filtros por rango numérico (`kilómetros máximos`, `año mínimo`, watios de
+  placa/inversor)~~ ✅ **hecho (2026-09-17)**: columnas GENERATED `espec_km` /
+  `espec_anio` / `espec_placa_w` / `espec_inversor_w` con índice funcional. La
+  comparación numérica real se hace sobre esas columnas (no sobre `->>` del
+  JSONB, que compara texto alfabéticamente). Registro en
+  `RANGOS_NUMERICOS` (`src/lib/filtros-tecnicos.ts`) y migración
+  `supabase/migrations/202609170003_rangos_numericos.sql`. Los mismos filtros
+  se ofrecen también en `/buscar`.
 - Normalización de las claves del JSONB a slugs (`plazas_dormir`). **Se aplaza
   a propósito**: hoy las claves son los labels del formulario (con espacios y
   acentos) pero todas viven en un único registro, y con `@>` el índice GIN sí se
@@ -177,11 +182,19 @@ revisar, y el `user_id` de un documento no se puede cambiar.
    páginas de ITP empujan al catálogo filtrado por **homologación verificada**
    (`/catalogo?verificada=1`), que es la Fase 0.2. Así la utilidad fiscal lleva
    tráfico hacia los anuncios que ya tienen el expediente revisado.
+7. **Normalización de la etiqueta DGT (fix 2026-09-17)**: el cálculo comparaba
+   el texto del select en mayúsculas con las formas largas ("C (Verde)"), así
+   que elegir "ECO" o "Cero Emisiones" NUNCA aplicaba los tipos reducidos de
+   cero emisiones/ECO (ni en el resultado ni en la comparativa por comunidad).
+   `normalizarEtiquetaDGT()` (`src/lib/itp.ts`) reduce ahora cualquier forma a
+   `'0' | 'ECO' | 'C' | 'B'` y el select ofrece las mismas opciones que el
+   catálogo (`OPCIONES_DGT`). Si la comunidad bonifica por etiqueta y no se
+   indica, el resultado lo avisa en lugar de dar el tipo general como cerrado.
 
 **Mantenimiento:** los tipos cambian por ley autonómica (Cantabria bajó del 8 %
 al 6 % en 2024 y todavía hay webs con el dato viejo). Actualizar `TIPOS_ITP`,
 `REVISADO_EN` y `EJERCICIO_FISCAL` una vez al año; `tests/unit/itp.test.ts`
-(28 pruebas) comprueba la forma del registro y el cálculo.
+comprueba la forma del registro, el cálculo y la normalización de la etiqueta.
 
 **Monetización desde la Fase 0:** el paquete "Destacado Premium" existente
 (sistema de créditos) pasa a incluir la verificación de homologación → el
@@ -358,8 +371,9 @@ riesgo operativo.
 
 1. ✅ `feat/filtros-tecnicos` — **hecho**: 16 filtros agrupados en catálogo,
    captura de tracción/MMA/longitud/altura, registro único y contención JSONB
-   con índice GIN (ver §2.1). Queda para la siguiente iteración lo listado como
-   pendiente en ese apartado (rangos numéricos y normalización de claves).
+   con índice GIN (ver §2.1). El cierre de la fase (rangos numéricos con
+   columnas generadas + filtros en `/buscar`) quedó listo el 2026-09-17; lo
+   único que sigue aplazado es la normalización de claves del JSONB a slugs.
 2. ✅ `feat/verificacion-homologacion` — **hecho**: bucket
    `documentos-vehiculo`, columna `verificacion_homologacion`, expediente del
    vendedor, revisión admin (pestaña *Homologación*), sello en card/ficha y

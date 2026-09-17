@@ -11,6 +11,9 @@ import {
   CATALOG_PRODUCT_COLUMNS,
   FILTRO_VERIFICADA_PARAM,
   aplicarFiltrosCatalogo,
+  aplicarRangosNumericos,
+  quitarRangos,
+  tieneRangosNumericos,
   filtroVerificadaActivo,
   marcarDestacados,
   ordenarProductosCatalogo,
@@ -39,6 +42,8 @@ describe('aplicarFiltrosCatalogo', () => {
       llamadas,
       contains: (columna: string, valor: unknown) => { llamadas.push(['contains', columna, valor]); return query },
       eq: (columna: string, valor: unknown) => { llamadas.push(['eq', columna, valor]); return query },
+      gte: (columna: string, valor: unknown) => { llamadas.push(['gte', columna, valor]); return query },
+      lte: (columna: string, valor: unknown) => { llamadas.push(['lte', columna, valor]); return query },
     }
     return query
   }
@@ -74,6 +79,33 @@ describe('aplicarFiltrosCatalogo', () => {
       ['contains', 'especificaciones', { 'MMA / Peso máximo autorizado': 'Hasta 3.500 kg (carnet B)' }],
       ['eq', 'verificacion_homologacion', 'verificada'],
     ])
+  })
+
+  test('los rangos numéricos se aplican sobre las columnas generadas (no el JSONB)', () => {
+    const query = crearQuery()
+    aplicarFiltrosCatalogo(query, { kmMax: '150000', anioMin: '2019', placaWatiosMin: '200' })
+
+    expect(query.llamadas).toEqual([
+      ['lte', 'espec_km', 150000],
+      ['gte', 'espec_anio', 2019],
+      ['gte', 'espec_placa_w', 200],
+    ])
+  })
+
+  test('sin rangos no se toca la consulta', () => {
+    const query = crearQuery()
+    expect(aplicarRangosNumericos(query, {})).toBe(query)
+    expect(aplicarRangosNumericos(query, { precioMin: '20000' })).toBe(query)
+    expect(query.llamadas).toEqual([])
+  })
+
+  test('quitarRangos y tieneRangosNumericos', () => {
+    expect(tieneRangosNumericos({ kmMax: 1 })).toBe(true)
+    expect(tieneRangosNumericos({ q: 'x' })).toBe(false)
+
+    const sinRangos = quitarRangos({ q: 'ducato', kmMax: 150000, anioMin: 2019 })
+    expect(sinRangos).toEqual({ q: 'ducato' })
+    expect(quitarRangos(null)).toEqual({})
   })
 
   test('solo se considera activo con valores afirmativos', () => {

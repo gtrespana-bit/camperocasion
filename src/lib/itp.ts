@@ -113,8 +113,6 @@ export interface ComunidadITP {
   fuente: string
 }
 
-const CAMPERS = 'furgonetas, autocaravanas y campers'
-
 /**
  * Tipos de ITP por comunidad autónoma, revisados en septiembre de 2026.
  *
@@ -446,6 +444,31 @@ export function edadVehiculo(anioMatriculacion: number, anioReferencia = EJERCIC
   return Math.max(0, anioReferencia - anioMatriculacion)
 }
 
+/**
+ * Normaliza la etiqueta DGT del usuario a su forma corta ('0' | 'ECO' | 'C' |
+ * 'B' | nulo), para que dé igual si escribe "0", "cero emisiones",
+ * "C (Verde)", "B (Amarillo)", "ECO", "eco" o lo deja en blanco.
+ *
+ * Antes la calculadora comparaba el texto del usuario en mayúsculas con las
+ * formas largas del select ("C (Verde)"), así que elegir "ECO" o "Cero
+ * emisiones" (mayúscula o minúscula) NUNCA activaba los tipos reducidos: ni la
+ * suma de cabecera ni la comparativa por comunidades. Esta función es la
+ * fuente única de esa normalización y la usan tanto el cálculo como la
+ * comparativa.
+ */
+export function normalizarEtiquetaDGT(valor: string | number | null | undefined): string | null {
+  if (valor == null) return null
+  const v = String(valor).trim().toLowerCase()
+
+  if (!v) return null
+  if (v === '0' || v.startsWith('cero') || v.includes('zero') || v.startsWith('c0')) return '0'
+  if (v.startsWith('eco')) return 'ECO'
+  if (v.startsWith('c')) return 'C'
+  if (v.startsWith('b')) return 'B'
+  if (v.includes('sin') || v.includes('no ') || v === 'no') return null // sin distintivo
+  return null
+}
+
 /** Coeficiente de depreciación aplicable a la edad (anexo IV). */
 export function coeficienteDepreciacion(edadAnios: number): number {
   const tramo = COEFICIENTES_DEPRECIACION.find(t => edadAnios < t.hasta)
@@ -564,7 +587,7 @@ export function calcularITP(entrada: EntradaITP): ResultadoITP {
     )
   }
 
-  const etiqueta = (entrada.etiquetaDGT || '').trim().toUpperCase()
+  const etiqueta = normalizarEtiquetaDGT(entrada.etiquetaDGT)
   const cvFiscales = Number(entrada.cvFiscales) > 0 ? Number(entrada.cvFiscales) : null
   const cilindrada = Number(entrada.cilindrada) > 0 ? Number(entrada.cilindrada) : null
 
@@ -657,6 +680,18 @@ export function calcularITP(entrada: EntradaITP): ResultadoITP {
         clave: 'tipoGeneral',
         descripcion: `Tipo general de ${comunidad.nombre}: ${tipoAplicado} %.`,
       })
+      // Si la comunidad tiene tipo reducido por distintivo ambiental y el
+      // usuario no ha indicado la etiqueta, se lo avisamos: la cifra que ve es
+      // el tipo general, no necesariamente el suyo.
+      if (etiqueta == null && (comunidad.tipoCeroEmisiones != null || comunidad.tipoEco != null)) {
+        avisos.push(
+          comunidad.tipoCeroEmisiones != null && comunidad.tipoEco != null
+            ? `En ${comunidad.nombre} los vehículos cero emisiones tributan al ${comunidad.tipoCeroEmisiones} % y los ECO al ${comunidad.tipoEco} %. Indica la etiqueta DGT para ver si te corresponde.`
+            : comunidad.tipoCeroEmisiones != null
+              ? `En ${comunidad.nombre} los vehículos con distintivo cero emisiones tributan al ${comunidad.tipoCeroEmisiones} %. Indica la etiqueta DGT para ver si te corresponde.`
+              : `En ${comunidad.nombre} los vehículos ECO tributan al ${comunidad.tipoEco} %. Indica la etiqueta DGT para ver si te corresponde.`,
+        )
+      }
       if (comunidad.tipoIncrementado) {
         const inc = comunidad.tipoIncrementado
         if (inc.masDeCVFiscales != null) {

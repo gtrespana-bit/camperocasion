@@ -5199,3 +5199,60 @@ create policy "gestoria: admin" on public.solicitudes_gestoria
 revoke all on public.solicitudes_gestoria from anon;
 grant select on public.solicitudes_gestoria to authenticated;
 grant all on public.solicitudes_gestoria to service_role;
+
+
+-- ============================================================================
+-- CamperOcasión — Filtros de rango numérico del catálogo (202609170003)
+-- Cierre del pendiente de la Fase 0.1: columnas generadas espec_km / espec_anio
+-- / espec_placa_w / espec_inversor_w + función fn_espec_numero. Ver
+-- supabase/migrations/202609170003_rangos_numericos.sql.
+-- ============================================================================
+
+create or replace function public.fn_espec_numero(v text)
+returns numeric
+language sql
+immutable
+parallel safe
+as $$
+  select nullif(regexp_replace(trim(v), '[^0-9]', '', 'g'), '')::numeric
+$$;
+
+comment on function public.fn_espec_numero(text) is
+  'Extrae un número (solo dígitos) de un valor de especificaciones. Uso interno '
+  'de las columnas generadas de rangos numéricos.';
+
+alter table public.productos
+  add column if not exists espec_km numeric generated always as (
+    public.fn_espec_numero(coalesce(
+      especificaciones->>'Kilómetros',
+      especificaciones->>'Kilometraje (km)',
+      especificaciones->>'Kilometraje'
+    ))
+  ) stored;
+
+create index if not exists productos_espec_km_idx on public.productos (espec_km);
+
+alter table public.productos
+  add column if not exists espec_anio numeric generated always as (
+    public.fn_espec_numero(coalesce(
+      especificaciones->>'Año de matriculación',
+      especificaciones->>'Año',
+      especificaciones->>'Ano de matriculación'
+    ))
+  ) stored;
+
+create index if not exists productos_espec_anio_idx on public.productos (espec_anio);
+
+alter table public.productos
+  add column if not exists espec_placa_w numeric generated always as (
+    public.fn_espec_numero(especificaciones->>'Placa solar (watios)')
+  ) stored;
+
+create index if not exists productos_espec_placa_w_idx on public.productos (espec_placa_w);
+
+alter table public.productos
+  add column if not exists espec_inversor_w numeric generated always as (
+    public.fn_espec_numero(especificaciones->>'Inversor 220V (watios)')
+  ) stored;
+
+create index if not exists productos_espec_inversor_w_idx on public.productos (espec_inversor_w);

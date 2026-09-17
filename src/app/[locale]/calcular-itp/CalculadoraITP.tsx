@@ -21,10 +21,20 @@ import {
   TIPOS_ITP,
   calcularITP,
   compararComunidades,
+  normalizarEtiquetaDGT,
 } from '@/lib/itp'
 import { formatPrecioObligatorio } from '@/lib/precio'
 
-const ETIQUETAS_DGT = ['C', 'B', 'ECO', '0'] as const
+// Mismas formas que el select del catálogo (OPCIONES_DGT), para que el usuario
+// vea siempre el mismo vocabulario. `normalizarEtiquetaDGT` las reduce a
+// '0' | 'ECO' | 'C' | 'B' antes de calcular.
+const ETIQUETAS_DGT = [
+  'Cero Emisiones',
+  'ECO',
+  'C (Verde)',
+  'B (Amarillo)',
+  'Sin distintivo',
+] as const
 
 interface Props {
   /** Comunidad preseleccionada (en las landings por CCAA). */
@@ -132,7 +142,7 @@ export default function CalculadoraITP({ ccaaInicial, precioInicial, compacta = 
                 <select id="itp-dgt" value={etiquetaDGT} onChange={e => setEtiquetaDGT(e.target.value)} className={claseInput}>
                   <option value="">Sin distintivo / no lo sé</option>
                   {ETIQUETAS_DGT.map(e => (
-                    <option key={e} value={e}>{e === '0' ? 'Cero emisiones (0)' : e === 'ECO' ? 'ECO' : e}</option>
+                    <option key={e} value={e}>{e}</option>
                   ))}
                 </select>
               </div>

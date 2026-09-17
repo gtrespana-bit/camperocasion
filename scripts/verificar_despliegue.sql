@@ -111,6 +111,36 @@ with checks(nombre, ok) as (
          (select count(*) from pg_policies
            where schemaname = 'public'
              and tablename in ('solicitudes_inspeccion', 'solicitudes_gestoria')) >= 4
+
+  -- Fase 0.1 (cierre) — rangos numéricos del catálogo (202609170003)
+  union all
+  select 'Rangos · función fn_espec_numero(text)',
+         to_regprocedure('public.fn_espec_numero(text)') is not null
+  union all
+  select 'Rangos · columna productos.espec_km',
+         exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'productos'
+                    and column_name = 'espec_km')
+  union all
+  select 'Rangos · columna productos.espec_anio',
+         exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'productos'
+                    and column_name = 'espec_anio')
+  union all
+  select 'Rangos · columna productos.espec_placa_w',
+         exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'productos'
+                    and column_name = 'espec_placa_w')
+  union all
+  select 'Rangos · columna productos.espec_inversor_w',
+         exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'productos'
+                    and column_name = 'espec_inversor_w')
+  union all
+  select 'Rangos · índices espec_km / espec_anio / espec_placa_w / espec_inversor_w',
+         (select count(*) from pg_indexes
+           where indexname in ('productos_espec_km_idx', 'productos_espec_anio_idx',
+                               'productos_espec_placa_w_idx', 'productos_espec_inversor_w_idx')) = 4
 )
 select case when ok then '✅ OK' else '❌ FALTA' end as estado, nombre
 from checks
