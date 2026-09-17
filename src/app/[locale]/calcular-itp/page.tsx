@@ -147,6 +147,9 @@ export default async function CalcularITPPage({ searchParams }: PageProps) {
             <LocalLink href="/catalogo?verificada=1" className="bg-brand-accent text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-brand-accent-dark transition">
               Campers con homologación verificada
             </LocalLink>
+            <LocalLink href="/gestoria-cambio-nombre" className="bg-white/10 text-white border border-white/30 text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-white/20 transition">
+              ¿No quieres papeleos? Tramita el ITP y el cambio de nombre con gestoría
+            </LocalLink>
           </div>
         </section>
       </div>

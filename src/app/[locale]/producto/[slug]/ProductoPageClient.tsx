@@ -11,6 +11,8 @@ import ReportarButton from '@/components/ReportarButton'
 import BadgeVerificado from '@/components/BadgeVerificado'
 import BadgeHomologacion from '@/components/BadgeHomologacion'
 import BotonReservar, { AvisoReservado } from '@/components/ReservaProducto'
+import BotonInspeccion from '@/components/BotonInspeccion'
+import { FileText } from 'lucide-react'
 import { esHomologacionVivienda, resumenExpediente } from '@/lib/verificacion-homologacion'
 import ImageGallery from '@/components/ImageGallery'
 import SellerReputation from '@/components/SellerReputation'
@@ -477,6 +479,25 @@ function ProductoPageClientInner({
                 <ChevronRight size={16} className="ml-auto text-gray-400 flex-shrink-0" aria-hidden="true" />
               </LocalLink>
             )}
+
+            {/* Contrato de compraventa: utilidad pública (también tras venderse),
+                precargada con los datos del anuncio. El siguiente paso natural
+                de cualquier operación cerrada desde la ficha. */}
+            <LocalLink
+              href={`/contrato-compraventa?producto=${slug}`}
+              className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl p-3.5 mb-5 hover:border-brand-primary transition group"
+            >
+              <span className="w-9 h-9 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center flex-shrink-0">
+                <FileText size={17} aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-gray-900 group-hover:text-brand-primary">
+                  {t('contratoCtaTitulo')}
+                </span>
+                <span className="block text-xs text-gray-500">{t('contratoCtaDesc')}</span>
+              </span>
+              <ChevronRight size={16} className="ml-auto text-gray-400 flex-shrink-0" aria-hidden="true" />
+            </LocalLink>
 
             {vendedor && (
               <div className="bg-gray-50 rounded-xl p-4 mb-5">

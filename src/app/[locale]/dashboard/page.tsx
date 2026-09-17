@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
-import { Package, MessageSquare, CreditCard, Eye, Heart, LogOut, X, Zap, Star, ShieldCheck, BarChart3, Settings, CalendarClock } from 'lucide-react'
+import { Package, MessageSquare, CreditCard, Eye, Heart, LogOut, X, Zap, Star, ShieldCheck, BarChart3, Settings, CalendarClock, ClipboardCheck } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { routing } from '@/i18n/routing'
 
@@ -21,6 +21,7 @@ import DestacadoModal from './components/modals/DestacadoModal'
 // Lazy-load heavy tabs
 const TabProductos = lazy(() => import('./components/tabs/TabProductos'))
 const TabReservas = lazy(() => import('./components/tabs/TabReservas'))
+const TabInspecciones = lazy(() => import('./components/tabs/TabInspecciones'))
 const SolicitarVerificacion = dynamic(() => import('@/components/SolicitarVerificacion'), { ssr: false })
 const TabReputacion = dynamic(() => import('./components/tabs/TabReputacion'), { ssr: false })
 
@@ -315,6 +316,7 @@ export default function DashboardPage() {
           { id: 'mensajes', label: t('tabMessages'), icon: MessageSquare },
           { id: 'creditos', label: t('tabCredits'), icon: CreditCard },
           { id: 'reservas', label: t('tabReservations'), icon: CalendarClock },
+          { id: 'inspecciones', label: t('tabInspecciones'), icon: ClipboardCheck },
           { id: 'favoritos', label: t('tabFavorites'), icon: Heart },
           { id: 'verificacion', label: t('tabVerification'), icon: ShieldCheck },
           { id: 'reputacion', label: t('tabReputation'), icon: Star },
@@ -351,6 +353,11 @@ export default function DashboardPage() {
       {activeTab === 'reservas' && (
         <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando…</div>}>
           <TabReservas userId={user!.id} />
+        </Suspense>
+      )}
+      {activeTab === 'inspecciones' && (
+        <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando…</div>}>
+          <TabInspecciones />
         </Suspense>
       )}
       {activeTab === 'favoritos' && <TabFavoritos favoritos={data.favoritos} />}

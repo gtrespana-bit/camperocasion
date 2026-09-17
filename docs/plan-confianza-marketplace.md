@@ -236,12 +236,27 @@ SEPA, entidad de pago). Pero una **señal de 300-500 €** vía Bizum/Stripe sí
 
 ## 4. Fase 2 — Inspección a domicilio, contrato y gestoría
 
+> **Estado (2026-09-17):** el MVP concierge de §4.1 (botón en ficha, tabla,
+> cola en el panel, pestaña en el dashboard), el **generador de contrato**
+> (§4.2, `/contrato-compraventa`, 100% navegador sin guardar nada) y la
+> **captación de leads de gestoría** (§4.2, `/gestoria-cambio-nombre` +
+> pestaña en el panel) están implementados. Migración:
+> `202609170002_inspecciones_gestoria.sql`. Falta: red de inspectores con
+> informe de 50 puntos (la columna `informe` jsonb ya espera) y gestoría
+> partner con API.
+
 ### 4.1 Inspección: primero concierge, luego red
 
 **Concierge (mes 3-5):** alianza con 2-3 camperizadores/talleres por ciudad.
 Botón "Solicitar inspección" en la ficha → tabla `solicitudes_inspeccion` →
 el equipo coordina email/teléfono. Precio fijo 150-250 €, comisión ~20%.
 Con esto validamos demanda y precio sin construir casi nada.
+**→ Implementado el MVP (2026-09-17)**: solicitud desde la ficha (no bloquea
+el anuncio, coexiste con la reserva), flujo concierge completo en
+`/admin?tab=inspecciones` (presupuestar → pago directo confirmado → en curso
+→ completada/cancelada, con push al comprador en cada paso) y seguimiento en
+`/dashboard?tab=inspecciones`. Sin bucket de informes todavía: el informe va
+por email hasta que exista la red.
 
 ```sql
 create table if not exists public.solicitudes_inspeccion (
@@ -268,11 +283,15 @@ más vendedores lo piden → ciclo virtuoso.
 
 ### 4.2 Contrato de compraventa + gestoría
 
-- Generador de **contrato PDF** autofirmado con los datos del anuncio y de las
-  partes (100% software, sin partner).
-- Cambio de nombre DGT vía gestoría partner con fee (89-149 €): el usuario
-  rellena el formulario, la gestoría tramita. Integración con API de gestoría
-  o, al principio, reenvío manual.
+- ✅ Generador de **contrato PDF** (`/contrato-compraventa`): precarga los
+  datos del anuncio (`?producto=<slug>`; matrícula y bastidor nunca, que no
+  son públicos), cláusulas completas de compraventa ES y descarga por
+  impresión del navegador. Los datos de las partes no salen del dispositivo.
+- ✅ Cambio de nombre DGT, fase de captación (`/gestoria-cambio-nombre`):
+  formulario de lead (sin login, validado en `src/lib/gestoria.ts`,
+  rate-limitado, aviso por Telegram y email al equipo) + cola en
+  `/admin?tab=gestoria`. El cobro lo hace la gestoría partner; falta
+  el partner y su API (reenvío manual al principio).
 - La calculadora ITP de la Fase 0 se conecta aquí: "tu ITP estimado es X,
   trámitalo con nosotros".
 

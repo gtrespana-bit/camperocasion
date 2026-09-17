@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import {
   LayoutDashboard, Package, ShieldAlert, Users, ShieldCheck, CreditCard, History,
   Tag, Megaphone, Download, Settings2, LogIn, LogOut, ArrowLeft, Menu, X, Sparkles, FileCheck2, Handshake,
+  ClipboardCheck, FileSignature,
 } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { useAuth } from '@/components/AuthProvider'
@@ -22,6 +23,8 @@ import AdminAjustes from './components/AdminAjustes'
 import VerificacionTab from './VerificacionTab'
 import AdminHomologacion from './AdminHomologacion'
 import AdminReservas from './AdminReservas'
+import AdminInspecciones from './AdminInspecciones'
+import AdminGestoria from './AdminGestoria'
 import { Badge } from './components/AdminUi'
 import { apiJson, type Perfil } from './components/admin-utils'
 
@@ -33,6 +36,8 @@ const NAV = [
   { id: 'verificacion', label: 'Verificación', icon: ShieldCheck, description: 'Vendedores' },
   { id: 'homologacion', label: 'Homologación', icon: FileCheck2, description: 'Expediente del vehículo' },
   { id: 'reservas', label: 'Reservas', icon: Handshake, description: 'Señales y comprobantes' },
+  { id: 'inspecciones', label: 'Inspecciones', icon: ClipboardCheck, description: 'Inspección precompra' },
+  { id: 'gestoria', label: 'Gestoría', icon: FileSignature, description: 'Cambio de nombre DGT' },
   { id: 'transacciones', label: 'Transacciones', icon: CreditCard, description: 'Pagos y créditos' },
   { id: 'auditoria', label: 'Auditoría', icon: History, description: 'Historial de cambios' },
   { id: 'categorias', label: 'Categorías', icon: Tag, description: 'Organización' },
@@ -49,7 +54,7 @@ export default function AdminPage() {
   const [toast, setToast] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [perfiles, setPerfiles] = useState<Record<string, Perfil>>({})
-  const [counts, setCounts] = useState({ transacciones: 0, publicaciones: 0, moderacion: 0, verificacion: 0, homologacion: 0 })
+  const [counts, setCounts] = useState({ transacciones: 0, publicaciones: 0, moderacion: 0, verificacion: 0, homologacion: 0, inspecciones: 0, gestoria: 0 })
 
   const isAdmin = ADMIN_EMAILS.includes((user?.email || '').toLowerCase())
   const activeNav = NAV.find((n) => n.id === tab) || NAV[0]
@@ -93,6 +98,8 @@ export default function AdminPage() {
         moderacion: (c.publicaciones || 0) + (c.denuncias || 0),
         verificacion: c.verificacion || 0,
         homologacion: c.homologacion || 0,
+        inspecciones: c.inspecciones || 0,
+        gestoria: c.gestoria || 0,
       })
     } catch {
       // Sin contadores la navegación sigue disponible.
@@ -137,6 +144,8 @@ export default function AdminPage() {
     if (tabKey === 'moderacion') return counts.moderacion
     if (tabKey === 'verificacion') return counts.verificacion
     if (tabKey === 'homologacion') return counts.homologacion
+    if (tabKey === 'inspecciones') return (counts as any).inspecciones || 0
+    if (tabKey === 'gestoria') return (counts as any).gestoria || 0
     return 0
   }
 

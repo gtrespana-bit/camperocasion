@@ -10,8 +10,13 @@
 > **Vercel ya despliega producción** (el bloqueo §6 se resolvió: hay deployments
 > de Production sobre `main` en cada push). **Nuevo dominio canónico:
 > `camperocasion.online`** (cambiado el 2026-09-16, antes `camperocasion.es`,
-> que nunca llegó a servir tráfico). Quedan: **DNS del dominio en Vercel** y las
-> **variables de entorno** (§1.3), y verificar la producción cuando propague.
+> que nunca llegó a servir tráfico).
+>
+> **Cierre del cambio de dominio (2026-09-16/17):** DNS apuntado a Vercel, env
+> vars aplicadas y Supabase Auth con la URL nueva. **Verificado en producción**
+> (home, catálogo, robots/sitemap y guard de diagnóstico OK — detalle en
+> §6-bis.6). Solo quedan las comprobaciones con token, los crons en el
+> dashboard y la prueba de humo de §2.
 
 ## 0. Resumen en cuatro líneas
 
@@ -110,7 +115,45 @@ Nota de producto: el dinero **no pasa por la plataforma**; el comprador paga la
 señal por Bizum/transferencia/en mano y el admin verifica el comprobante. No hay
 Stripe ni custodia, así que no hace falta ninguna variable nueva de pago.
 
-### 1.3 Variables de entorno en Vercel — PENDIENTE
+### 1.2-ter Aplicar la Fase §4 (inspección + gestoría) — PENDIENTE en producción
+
+```bash
+# Opción A: solo esta migración
+supabase/migrations/202609170002_inspecciones_gestoria.sql
+
+# Opción B: el setup completo (ya la incluye al final y es idempotente)
+setup-camperocasion.sql
+```
+
+Comprobación (dos valores no nulos; el resto sale con
+`scripts/verificar_despliegue.sql`, ahora **26** comprobaciones):
+
+```sql
+select to_regclass('public.solicitudes_inspeccion'),
+       to_regclass('public.solicitudes_gestoria');
+```
+
+Sin aplicarla el sitio funciona igual: el botón de inspección de la ficha no
+aparece, la pestaña *Inspecciones* del dashboard avisa de que falta y el
+formulario de la gestoría responde con un 503 amable. Cuando esté aplicada
+aparecen solas:
+
+- Ficha del anuncio → botón **Inspección precompra** (concierge: presupuesto
+  150–250 €, el comprador paga directo al taller) + CTA **Contrato de
+  compraventa** precargado con los datos del anuncio.
+- `/dashboard` → pestaña **Inspecciones** (seguimiento y cancelación).
+- `/admin` → pestañas **Inspecciones** (cola FIFO con presupuesto, pago,
+  curso, informe y cancelación, con push al comprador en cada paso) y
+  **Gestoría** (leads de la landing `/gestoria-cambio-nombre`).
+- El contrato se genera íntegro en el navegador (`/contrato-compraventa`):
+  no toca base de datos ni servers. Enlazado desde ficha, ITP y compra-segura.
+
+### 1.3 Variables de entorno en Vercel — ✅ APLICADAS el 2026-09-16
+
+Única comprobación que queda (10 s): `/admin` → *Estado*, o abrir
+`/api/diagnostico/supabase?token=<CRON_SECRET>`, y confirmar que `supabase` y
+el canal de correo (`emailResend`/`emailSmtp`) salen activos — sin canal de
+email el registro no envía el correo de verificación.
 
 Reglas del dashboard: nombre **exacto** (mayúsculas, sin espacios ni comillas),
 marcar **Production + Preview**, y tras cambiar cualquier `NEXT_PUBLIC_*` hay
@@ -246,8 +289,13 @@ las 20 comprobaciones de despliegue). Los cuatro scripts ya pasan en local.
 - Rangos numéricos en los filtros (km máximos, año mínimo, watios de placa).
 - Llevar los filtros técnicos también a `/buscar`, que tiene su propia barra.
 - Normalizar las claves del JSONB a slugs (`plazas_dormir`) — necesita backfill.
-- Fase 1 restante: inspección precompra, contrato de compraventa descargable y
-  gestoría del cambio de nombre.
+- ~~Fase 1 restante: inspección precompra, contrato de compraventa descargable
+  y gestoría del cambio de nombre~~ ✅ **hecho (2026-09-17, plan §4)**: botón
+  de inspección concierge (tabla + API + panel + dashboard), generador de
+  contrato PDF (`/contrato-compraventa`, 100% navegador) y captación de leads
+  de gestoría (`/gestoria-cambio-nombre`). Lo que queda de esa fase es el
+  **informe de 50 puntos** (columna `informe` jsonb ya espera) y el partner
+  real de gestoría — ver `docs/plan-confianza-marketplace.md` §4.
 
 ---
 
@@ -273,28 +321,28 @@ emails, `NEXT_PUBLIC_URL` default, plantillas Supabase) y `next.config.js`
 301-redirectea `vendet.online` y `camperocasion.es` (apex + www) hacia
 `camperocasion.online`.
 
-Pendiente **fuera del código**:
+**Aplicado el 2026-09-16/17 y verificado en producción:**
 
-1. **Vercel → Project → Settings → Domains**: añadir `camperocasion.online` y
-   `www.camperocasion.online`.
-2. **DNS en el proveedor del dominio** (donde se compró el `.online`):
-   - `www` → `CNAME` `cname.vercel-dns.com`
-   - `@` (apex) → `CNAME` `cname.vercel-dns.com` (Vercel hace *CNAME
-     flattening*; si el registro no lo permite, `A` `76.76.21.21`)
-   - Vercel muestra los registros exactos y los verifica automáticamente.
-3. **Env var `NEXT_PUBLIC_URL`** = `https://camperocasion.online` en Vercel
-   (Production + Preview) y **redeploy**: se incrusta en el bundle en build
-   time. (El default del código ya es `.online`, pero mejor tenerla puesta.)
-4. **Supabase → Authentication → URL Configuration**: Site URL =
-   `https://camperocasion.online` y añadir `https://camperocasion.online/confirm`
-   y `https://camperocasion.online/reset-password` (o equivalentes) a Redirect
-   URLs; revisar también las plantillas de email de Supabase (las de referencia
-   están en `supabase-email-templates/`, ya actualizadas).
-5. **Correo**: si se van a usar cajas en el dominio (soporte@, noreply@…),
-   crearlas en el proveedor y dejar `EMAIL_FROM`/`CONTACTO_EMAIL` con el
-   `.online` (los defaults del código ya son `.online`).
-6. **Verificación tras la propagación**: home y catálogo cargando anuncios,
-   `/api/diagnostico/supabase?token=<CRON_SECRET>` y `/admin` → estado.
+1. ✅ **Vercel → Domains**: `camperocasion.online` y `www` añadidos; el
+   proyecto sirve el `.online` como dominio primario
+   (`camperocasion.vercel.app` 301-redirectea al apex).
+2. ✅ **DNS (GoDaddy — NS `domaincontrol.com`)**: apex `A` → `216.150.1.1`
+   (anycast de Vercel) y `www` `CNAME` → apex. Sirviendo globalmente ~1 h
+   después del cambio.
+3. ✅ **Env var `NEXT_PUBLIC_URL`** aplicada en Vercel (Production + Preview).
+4. ✅ **Supabase → Authentication → URL Configuration**: Site URL y Redirect
+   URLs con el `.online` (plantillas ya actualizadas en
+   `supabase-email-templates/`).
+5. **Correo (opcional, sigue abierto)**: cajas soporte@/noreply@ en el
+   proveedor si se van a usar; `EMAIL_FROM`/`CONTACTO_EMAIL` ya usan `.online`
+   por defecto en el código.
+6. **Verificación en producción** — ✅ hecha (2026-09-16/17): home y
+   `/catalogo` renderizan (estados vacíos, **sin** el error 401 «Invalid API
+   key»), `robots.txt` y `sitemap.xml` con el dominio nuevo, y el guard de
+   `/api/diagnostico/supabase` responde correctamente. **Queda:** abrir
+   `/api/diagnostico/supabase?token=<CRON_SECRET>` (o `/admin` → *Estado*)
+   para confirmar claves y canal de email, revisar *Settings → Cron Jobs*
+   (los 4 activos) y la prueba funcional de registro/reserva (§2).
 
 ### 6.1 Diagnóstico (dato duro, no intuición)
 

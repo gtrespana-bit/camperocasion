@@ -87,6 +87,30 @@ with checks(nombre, ok) as (
          (select count(*) from pg_policies
            where schemaname = 'storage' and tablename = 'objects'
              and policyname like 'comprobantes-reserva:%') >= 5
+
+  -- Plan §4 — inspección precompra + gestoría (202609170002)
+  union all
+  select 'Fase §4 · tabla solicitudes_inspeccion',
+         to_regclass('public.solicitudes_inspeccion') is not null
+  union all
+  select 'Fase §4 · índice único solicitudes_inspeccion_viva_key',
+         exists (select 1 from pg_indexes where indexname = 'solicitudes_inspeccion_viva_key')
+  union all
+  select 'Fase §4 · RLS activada en solicitudes_inspeccion',
+         exists (select 1 from pg_class
+                  where oid = to_regclass('public.solicitudes_inspeccion') and relrowsecurity)
+  union all
+  select 'Fase §4 · tabla solicitudes_gestoria',
+         to_regclass('public.solicitudes_gestoria') is not null
+  union all
+  select 'Fase §4 · RLS activada en solicitudes_gestoria',
+         exists (select 1 from pg_class
+                  where oid = to_regclass('public.solicitudes_gestoria') and relrowsecurity)
+  union all
+  select 'Fase §4 · políticas RLS de inspección y gestoría (4)',
+         (select count(*) from pg_policies
+           where schemaname = 'public'
+             and tablename in ('solicitudes_inspeccion', 'solicitudes_gestoria')) >= 4
 )
 select case when ok then '✅ OK' else '❌ FALTA' end as estado, nombre
 from checks
