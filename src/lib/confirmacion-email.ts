@@ -31,7 +31,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { randomBytes } from 'crypto'
 import { emailLayout } from '@/lib/email-layout'
-import { enviarEmailSMTP } from '@/lib/server-email'
+import { enviarEmailDetallado } from '@/lib/server-email'
 
 const SITIO_URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'
 /** Página de la app que completa la verificación (token en URL). */
@@ -41,7 +41,10 @@ export type CanalEnvio = 'app' | 'supabase'
 
 export type ResultadoConfirmacion =
   | { ok: true; canal: CanalEnvio }
-  | { ok: false; codigo: 'registrado' | 'smtp' | 'auth'; mensaje: string }
+  // `detalle`: error técnico del proveedor de email (Resend/SMTP). NO lleva
+  // secretos; se enseña solo en la respuesta JSON (F12 → Network) para poder
+  // diagnosticar el 'smtp' genérico sin entrar a los logs de Vercel.
+  | { ok: false; codigo: 'registrado' | 'smtp' | 'auth'; mensaje: string; detalle?: string }
 
 function getAdminClient() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -135,15 +138,16 @@ export async function enviarConfirmacion(email: string, nombre: string, password
   const enlace = await generarEnlaceConfirmacion(email, nombre, password)
   if (!enlace.ok) return enlace
 
-  const enviado = await enviarEmailSMTP(
+  const envio = await enviarEmailDetallado(
     email,
     '🔐 Confirma tu cuenta en CamperOcasión',
     htmlConfirmacion(nombre, enlace.actionLink),
   )
 
-  if (enviado) {
+  if (envio.ok) {
     return { ok: true, canal: 'app' }
   }
+  const detalle = envio.error
 
   // Sin credenciales SMTP en la app → último recurso: mailer de Supabase.
   if (!smtpConfigurado()) {
@@ -166,6 +170,7 @@ export async function enviarConfirmacion(email: string, nombre: string, password
     ok: false,
     codigo: 'smtp',
     mensaje: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.online',
+    detalle,
   }
 }
 
@@ -178,7 +183,7 @@ export async function enviarConfirmacion(email: string, nombre: string, password
  */
 export async function reenviarConfirmacion(email: string): Promise<
   { ok: true; canal?: CanalEnvio; yaRegistrado?: boolean }
-  | { ok: false; codigo: 'smtp' | 'auth'; mensaje: string }
+  | { ok: false; codigo: 'smtp' | 'auth'; mensaje: string; detalle?: string }
 > {
   const sb = getAdminClient()
 
@@ -206,8 +211,9 @@ export async function reenviarConfirmacion(email: string): Promise<
     return { ok: false, codigo: enlace.codigo === 'registrado' ? 'auth' : enlace.codigo, mensaje: enlace.mensaje }
   }
 
-  const enviado = await enviarEmailSMTP(email, '🔐 Confirma tu cuenta en CamperOcasión', htmlConfirmacion(nombre, enlace.actionLink))
-  if (enviado) return { ok: true, canal: 'app' }
+  const envio = await enviarEmailDetallado(email, '🔐 Confirma tu cuenta en CamperOcasión', htmlConfirmacion(nombre, enlace.actionLink))
+  if (envio.ok) return { ok: true, canal: 'app' }
+  const detalle = envio.error
   if (!smtpConfigurado()) {
     try {
       const { error } = await sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: REDIRECT_CONFIRMACION } })
@@ -221,5 +227,6 @@ export async function reenviarConfirmacion(email: string): Promise<
     ok: false,
     codigo: 'smtp',
     mensaje: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.online',
+    detalle,
   }
 }

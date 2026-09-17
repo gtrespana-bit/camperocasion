@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
   try {
     const resultado = await reenviarConfirmacion(email)
     if (!resultado.ok) {
-      return NextResponse.json({ error: resultado.mensaje }, { status: 502 })
+      return NextResponse.json(
+        { error: resultado.mensaje, detalle: (resultado as any).detalle || null },
+        { status: 502 },
+      )
     }
     // ok:true aunque no exista la cuenta o ya esté confirmada: respuesta
     // idéntica para no revelar si un email está registrado.

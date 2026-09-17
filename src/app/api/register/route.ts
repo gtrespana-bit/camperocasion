@@ -61,8 +61,12 @@ export async function POST(req: NextRequest) {
       if (resultado.codigo === 'auth') {
         return NextResponse.json({ error: resultado.mensaje }, { status: 500 })
       }
-      // smtp
-      return NextResponse.json({ error: resultado.mensaje }, { status: 502 })
+      // smtp: incluimos el detalle técnico del proveedor (sin secretos) para
+      // diagnosticarlo en F12 → Network sin abrir los logs de Vercel.
+      return NextResponse.json(
+        { error: resultado.mensaje, detalle: resultado.detalle || null },
+        { status: 502 },
+      )
     }
 
     return NextResponse.json({ ok: true, canal: resultado.canal })
