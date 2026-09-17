@@ -24,7 +24,9 @@
 
 1. ~~Aplicar **dos migraciones** en Supabase~~ ✅ **hecho**: `setup-camperocasion.sql`
    completo y migraciones individuales aplicadas; verificado en producción con
-   `scripts/verificar_despliegue.sql` (**32/32 ✅** a 2026-09-17).
+   `scripts/verificar_despliegue.sql` (**32/32 ✅** a 2026-09-17). Incluye la
+   Fase 1.2 de reservas con confirmación del vendedor
+   (`202609170004`, aplicada el 2026-09-17).
 2. Revisar las **variables de entorno** en Vercel (§1.3) — **PENDIENTE**.
 3. ~~Activar la **CI**~~ ✅ **hecho** el 2026-09-16: el workflow ya vive en
    `.github/workflows/ci.yml`, los dos jobs pasan en `main` y desde el
@@ -86,7 +88,7 @@ expediente sale vacío en `/producto/editar/[id]`, la pestaña **Homologación**
 panel avisa de que falta la migración y el filtro "Solo homologación verificada"
 no devuelve nada.
 
-### 1.2-bis Aplicar la Fase 1.2 (reserva con señal)
+### 1.2-bis Aplicar la Fase 1.2 (reserva con señal) — ✅ APLICADA en producción
 
 ```bash
 # Opción A: solo estas dos migraciones (en orden)
@@ -103,7 +105,8 @@ la plataforma no custodia el dinero, no puede "verificar" el pago: el comprador
 **confirma** cuando recibe la señal (`activa` — solo entonces el anuncio queda
 reservado). Se eliminaron los comprobantes, el bucket y la revisión del admin:
 era un proceso de 8 estados que no podíamos respaldar (no veíamos ese pago) y
-solo añadía fricción.
+solo añadía fricción. Aplicada y verificada con `scripts/verificar_despliegue.sql`
+en producción el 2026-09-17.
 
 Comprobación:
 
