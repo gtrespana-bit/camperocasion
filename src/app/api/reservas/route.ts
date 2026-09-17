@@ -1,7 +1,7 @@
 /**
- * Reservas con señal — API de las partes (Fase 1.2).
+ * Reservas con señal — API de las partes (Fase 1.2, confirmación del vendedor).
  *
- *   GET  /api/reservas?scope=comprador|vendedor   → mis reservas (URLs firmadas)
+ *   GET  /api/reservas?scope=comprador|vendedor   → mis reservas
  *   GET  /api/reservas?productoId=<uuid>          → la reserva de un anuncio
  *   POST /api/reservas  { productoId, importe, metodoPago, mensaje? }
  *
@@ -9,11 +9,13 @@
  *  - Las escrituras van con service_role: el navegador no tiene INSERT/UPDATE
  *    sobre `reservas` (políticas + grants de la migración). Así nadie se activa
  *    su propia reserva ni se inventa una señal pagada.
- *  - El comprobante vive en el bucket privado `comprobantes-reserva`; aquí solo
- *    se devuelven URLs firmadas de vida corta a las partes de la reserva.
- *  - Al crear una reserva se "barre" de forma perezosa cualquier reserva
- *    caducada del mismo anuncio (no hay cron): así el anuncio queda libre y el
- *    índice único parcial no bloquea una reserva nueva legítima.
+ *  - El comprador crea una SOLICITUD (no bloquea el anuncio). El vendedor la
+ *    CONFIRMA cuando recibe la señal (ver /api/reservas/confirmar): solo
+ *    entonces el anuncio queda reservado. Ya no hay comprobantes ni revisión
+ *    del equipo sobre un dinero que la plataforma no ve.
+ *  - Al crear una solicitud se "barre" de forma perezosa cualquier reserva
+ *    caducada del mismo anuncio (no hay cron): así el índice único parcial no
+ *    bloquea una solicitud nueva legítima.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -32,12 +34,9 @@ import {
 import { notificarAdminTelegram } from '@/lib/telegram-admin'
 import { notifyUser } from '@/lib/push-notify'
 
-const BUCKET = 'comprobantes-reserva'
-const URL_FIRMADA_SEGUNDOS = 300
-
 const COLUMNAS = `
   id, producto_id, comprador_id, vendedor_id, importe, comision_pct, metodo_pago,
-  estado, comprobante_url, mensaje, motivo_cancelacion, revisado_en, expira_en,
+  estado, mensaje, motivo_cancelacion, revisado_en, expira_en,
   creado_en, actualizado_en,
   producto:productos ( id, slug, titulo, precio_usd, imagen_url )
 `
@@ -50,13 +49,13 @@ function serviceClient() {
   )
 }
 
-/** Caduca las reservas vencidas de un anuncio (barrido perezoso, sin cron). */
+/** Caduca las solicitudes/reservas vencidas de un anuncio (barrido perezoso). */
 async function caducarReservasVencidas(sb: any, productoId: string) {
   const { data } = await sb
     .from('reservas')
     .select('id, estado, expira_en')
     .eq('producto_id', productoId)
-    .in('estado', ['pendiente_pago', 'en_revision', 'activa'])
+    .in('estado', ['solicitada', 'activa'])
 
   const vencidas = (data || []).filter((r: any) => !reservaVigente(r.estado, r.expira_en))
   if (vencidas.length === 0) return
@@ -65,19 +64,6 @@ async function caducarReservasVencidas(sb: any, productoId: string) {
     .from('reservas')
     .update({ estado: 'expirada', actualizado_en: new Date().toISOString() })
     .in('id', vencidas.map((r: any) => r.id))
-}
-
-/** Firma los comprobantes (bucket privado) para las partes de la reserva. */
-async function conComprobanteFirmado(sb: any, reservas: any[]) {
-  return Promise.all(
-    (reservas || []).map(async (r: any) => {
-      if (!r.comprobante_url) return { ...r, comprobante_signed_url: null }
-      const { data } = await sb.storage
-        .from(BUCKET)
-        .createSignedUrl(r.comprobante_url, URL_FIRMADA_SEGUNDOS)
-      return { ...r, comprobante_signed_url: data?.signedUrl || null }
-    }),
-  )
 }
 
 export async function GET(request: NextRequest) {
@@ -107,11 +93,9 @@ export async function GET(request: NextRequest) {
         }
         return NextResponse.json({ error: error.message }, { status: 500 })
       }
-      // Solo las partes ven los comprobantes; el resto no los necesita.
-      const propias = (data || []).filter((r: any) =>
-        r.comprador_id === auth.user.id || r.vendedor_id === auth.user.id)
+      // Sin comprobantes: cualquier parte puede ver la reserva de su anuncio.
       return NextResponse.json(
-        { ok: true, reservas: await conComprobanteFirmado(sb, propias) },
+        { ok: true, reservas: data || [] },
         { headers: { 'Cache-Control': 'no-store, private' } },
       )
     }
@@ -132,7 +116,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { ok: true, reservas: await conComprobanteFirmado(sb, data || []) },
+      { ok: true, reservas: data || [] },
       { headers: { 'Cache-Control': 'no-store, private' } },
     )
   } catch (err: any) {
@@ -182,14 +166,14 @@ export async function POST(request: NextRequest) {
 
     await caducarReservasVencidas(sb, productoId)
 
-    const { data: reservaViva } = await sb
+    const { data: reservaActiva } = await sb
       .from('reservas')
       .select('id, estado, comprador_id, expira_en')
       .eq('producto_id', productoId)
-      .in('estado', ['pendiente_pago', 'en_revision', 'activa'])
+      .eq('estado', 'activa')
       .maybeSingle()
 
-    const veredicto = puedeReservar(producto, reservaViva as any, auth.user.id)
+    const veredicto = puedeReservar(producto, reservaActiva as any, auth.user.id)
     if (!veredicto.ok) {
       return NextResponse.json({ error: veredicto.motivo }, { status: 409 })
     }
@@ -204,7 +188,7 @@ export async function POST(request: NextRequest) {
         comision_pct: 0,
         comision: comisionDe(importeNum),
         metodo_pago: metodo,
-        estado: 'pendiente_pago',
+        estado: 'solicitada',
         mensaje: mensaje ? String(mensaje).slice(0, 500) : null,
         expira_en: fechaExpiracion(),
       })
@@ -212,9 +196,9 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (insertError || !reserva) {
-      // El índice único parcial es la última red: dos reservas a la vez.
+      // El índice único parcial es la última red: dos solicitudes a la vez.
       if (/duplicate|unique/i.test(insertError?.message || '')) {
-        return NextResponse.json({ error: 'Alguien acaba de reservar este anuncio' }, { status: 409 })
+        return NextResponse.json({ error: 'Ya tienes una solicitud en este anuncio' }, { status: 409 })
       }
       if (/reservas/i.test(insertError?.message || '')) {
         return NextResponse.json(
@@ -225,16 +209,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No se pudo crear la reserva' }, { status: 500 })
     }
 
-    // Avisos (best-effort: nunca bloquean la reserva del comprador).
+    // Aviso al VENDEDOR: es él quien debe confirmar al recibir la señal.
     notifyUser(sb, producto.user_id, {
-      title: '¡Tienes una reserva con señal!',
-      body: `${producto.titulo}: un comprador quiere reservarlo con ${importeNum} € de señal.`,
+      title: '🔔 Petición de reserva con señal',
+      body: `${producto.titulo}: un comprador quiere reservarlo con ${importeNum} € de señal. Confirma la reserva cuando recibas el pago.`,
       tag: `reserva-${reserva.id}`,
-      click_url: `/dashboard?tab=reservas`,
+      click_url: '/dashboard?tab=reservas',
+    }).catch(() => {})
+
+    notifyUser(sb, auth.user.id, {
+      title: 'Solicitud de reserva enviada',
+      body: `${producto.titulo}: paga la señal al vendedor y, cuando la reciba, confirmará la reserva.`,
+      tag: `reserva-${reserva.id}`,
+      click_url: '/dashboard?tab=reservas',
     }).catch(() => {})
 
     notificarAdminTelegram(
-      `🔒 Nueva reserva con señal\n${producto.titulo}\nImporte: ${importeNum} € · Método: ${metodo}\n` +
+      `🔔 Petición de reserva con señal\\n${producto.titulo}\\nImporte: ${importeNum} € · Método: ${metodo}\\n` +
       `Reserva: ${reserva.id}`,
     ).catch(() => {})
 

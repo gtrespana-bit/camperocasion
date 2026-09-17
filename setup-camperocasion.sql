@@ -5256,3 +5256,104 @@ alter table public.productos
   ) stored;
 
 create index if not exists productos_espec_inversor_w_idx on public.productos (espec_inversor_w);
+
+-- ============================================================================
+-- CamperOcasión — Reserva con señal: confirmación por el VENDEDOR (202609170004)
+-- Mismo bloque que supabase/migrations/202609170004_reservas_confirmacion_vendedor.sql,
+-- idempotente, para fresh installs.
+--
+-- La plataforma no custodia el dinero, así que no "verifica" el pago: el
+-- comprador envía la SOLICITUD; el vendedor la CONFIRMA cuando recibe la señal
+-- y solo entonces el anuncio queda reservado. Sin comprobantes ni bucket.
+-- ============================================================================
+
+alter table public.reservas
+  drop constraint if exists reservas_estado_check;
+
+update public.reservas
+   set estado = 'solicitada', actualizado_en = now()
+ where estado in ('pendiente_pago', 'en_revision');
+
+update public.reservas
+   set estado = 'cancelada', actualizado_en = now()
+ where estado = 'reembolsada';
+
+alter table public.reservas
+  add constraint reservas_estado_check
+  check (estado in ('solicitada', 'activa', 'completada', 'rechazada', 'cancelada', 'expirada'));
+
+alter table public.reservas
+  alter column estado set default 'solicitada';
+
+drop index if exists public.reservas_producto_viva_key;
+
+create unique index if not exists reservas_producto_activa_key
+  on public.reservas (producto_id)
+  where estado = 'activa';
+
+create unique index if not exists reservas_solicitud_unica_key
+  on public.reservas (producto_id, comprador_id)
+  where estado = 'solicitada';
+
+create or replace function public.fn_propagar_reserva()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_producto uuid := coalesce(new.producto_id, old.producto_id);
+  v_hasta timestamptz;
+begin
+  select r.expira_en into v_hasta
+    from public.reservas r
+   where r.producto_id = v_producto
+     and r.estado = 'activa'
+     and r.expira_en > now()
+   order by r.creado_en desc
+   limit 1;
+
+  update public.productos
+     set reservado = (v_hasta is not null),
+         reservado_hasta = v_hasta
+   where id = v_producto;
+
+  return null;
+end $$;
+
+drop trigger if exists trg_propagar_reserva on public.reservas;
+create trigger trg_propagar_reserva
+  after insert or update or delete on public.reservas
+  for each row execute function public.fn_propagar_reserva();
+
+create or replace function public.fn_completar_reservas_al_vender()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.vendido is true and coalesce(old.vendido, false) is false then
+    update public.reservas
+       set estado = 'completada',
+           actualizado_en = now()
+     where producto_id = new.id
+       and estado in ('solicitada', 'activa');
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists trg_completar_reservas_al_vender on public.productos;
+create trigger trg_completar_reservas_al_vender
+  after update on public.productos
+  for each row execute function public.fn_completar_reservas_al_vender();
+
+drop policy if exists "comprobantes-reserva: owner upload" on storage.objects;
+drop policy if exists "comprobantes-reserva: owner read" on storage.objects;
+drop policy if exists "comprobantes-reserva: owner delete" on storage.objects;
+drop policy if exists "comprobantes-reserva: seller read" on storage.objects;
+drop policy if exists "comprobantes-reserva: admin read" on storage.objects;
+
+delete from storage.buckets where id = 'comprobantes-reserva';
+
+drop function if exists public.fn_soy_parte_de_la_reserva(uuid);

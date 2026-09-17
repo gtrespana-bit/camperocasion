@@ -136,7 +136,7 @@ async function getEstadoReserva(productoId: string, userId?: string | null) {
         .select('estado')
         .eq('producto_id', productoId)
         .eq('comprador_id', userId)
-        .in('estado', ['pendiente_pago', 'en_revision', 'activa'])
+        .in('estado', ['solicitada', 'activa'])
         .maybeSingle()
       propia = reserva?.estado || null
     }

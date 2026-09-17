@@ -35,7 +35,7 @@ const NAV = [
   { id: 'usuarios', label: 'Usuarios', icon: Users, description: 'Perfiles y créditos' },
   { id: 'verificacion', label: 'Verificación', icon: ShieldCheck, description: 'Vendedores' },
   { id: 'homologacion', label: 'Homologación', icon: FileCheck2, description: 'Expediente del vehículo' },
-  { id: 'reservas', label: 'Reservas', icon: Handshake, description: 'Señales y comprobantes' },
+  { id: 'reservas', label: 'Reservas', icon: Handshake, description: 'Reservas con señal' },
   { id: 'inspecciones', label: 'Inspecciones', icon: ClipboardCheck, description: 'Inspección precompra' },
   { id: 'gestoria', label: 'Gestoría', icon: FileSignature, description: 'Cambio de nombre DGT' },
   { id: 'transacciones', label: 'Transacciones', icon: CreditCard, description: 'Pagos y créditos' },

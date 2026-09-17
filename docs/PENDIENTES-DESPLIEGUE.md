@@ -89,37 +89,46 @@ no devuelve nada.
 ### 1.2-bis Aplicar la Fase 1.2 (reserva con señal)
 
 ```bash
-# Opción A: solo esta migración
+# Opción A: solo estas dos migraciones (en orden)
 supabase/migrations/202609160001_reservas.sql
+supabase/migrations/202609170004_reservas_confirmacion_vendedor.sql
 
-# Opción B: el setup completo (ya la incluye al final y es idempotente)
+# Opción B: el setup completo (ya las incluye y es idempotente)
 setup-camperocasion.sql
 ```
 
-Comprobación (los tres valores, no nulos):
+**Modelo (revisado el 2026-09-17): la confirmación la hace el VENDEDOR.** Como
+la plataforma no custodia el dinero, no puede "verificar" el pago: el comprador
+**solicita** la reserva (`solicitada`, no bloquea el anuncio) y el vendedor la
+**confirma** cuando recibe la señal (`activa` — solo entonces el anuncio queda
+reservado). Se eliminaron los comprobantes, el bucket y la revisión del admin:
+era un proceso de 8 estados que no podíamos respaldar (no veíamos ese pago) y
+solo añadía fricción.
+
+Comprobación:
 
 ```sql
 select to_regclass('public.reservas'),
        to_regprocedure('public.fn_propagar_reserva()'),
-       (select 1 from storage.buckets where id = 'comprobantes-reserva');
+       (select 1 from pg_indexes where indexname = 'reservas_producto_activa_key');
 ```
 
 Sin aplicarla el sitio **no se rompe**: la ficha del anuncio simplemente no
 muestra el botón de reservar y las pestañas de reservas avisan de que falta la
 migración. Cuando esté aplicada aparecen solas:
 
-- Ficha del anuncio → botón "Reservar con señal" (100–1.000 €, sugerido 2 %),
-  modal con condiciones y subida del comprobante.
-- `/dashboard` → pestaña **Reservas** con "Mis reservas" y "En mis anuncios".
-- `/admin?tab=reservas` → cola de verificación: activar / rechazar / completar /
-  reembolsar / cancelar, con el comprobante en enlace firmado.
-- Sello **Reservado** en las tarjetas de catálogo, buscador y ficha.
-- Avisos por Telegram al admin si defines `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`
-  (opcionales: sin ellos todo funciona igual, solo no llega el aviso).
+- Ficha del anuncio → botón "Reservar con señal" (100–1.000 €, sugerido 2 %):
+  envía la solicitud al vendedor.
+- `/dashboard` → pestaña **Reservas**: el comprador sigue su solicitud; el
+  vendedor ve las solicitudes de sus anuncios y las **confirma** (recibió la
+  señal) o **rechaza**.
+- Sello **Reservado** solo cuando hay una reserva activa (confirmada).
+- Avisos push al vendedor cuando llega una solicitud; Telegram al admin si
+  defines `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` (opcionales).
 
 Nota de producto: el dinero **no pasa por la plataforma**; el comprador paga la
-señal por Bizum/transferencia/en mano y el admin verifica el comprobante. No hay
-Stripe ni custodia, así que no hace falta ninguna variable nueva de pago.
+señal por Bizum/transferencia/en mano y el vendedor confirma. No hay Stripe ni
+custodia, así que no hace falta ninguna variable nueva de pago.
 
 ### 1.2-ter Aplicar la Fase §4 (inspección + gestoría) — ✅ APLICADA en producción
 
@@ -249,10 +258,12 @@ en build time.
 
 - [ ] Subir un documento de prueba en un anuncio propio → aparece en el
       expediente y se abre con el enlace firmado.
-- [ ] Reservar un anuncio propio con otra cuenta → la tarjeta del catálogo pasa a
-      "Reservado", sube un comprobante de prueba y verifícalo desde
-      `/admin?tab=reservas` (activar). Luego cancela para liberar el anuncio.
-- [ ] Comprobar que el anuncio reservado **no** permite una segunda reserva.
+- [ ] Reservar un anuncio propio con otra cuenta → llega una solicitud a
+      `/dashboard?tab=reservas` del vendedor. Confirmarla desde ahí (recibió la
+      señal) → la tarjeta del catálogo pasa a "Reservado". Luego cancela para
+      liberar el anuncio.
+- [ ] Comprobar que una **solicitud sin confirmar NO bloquea** el anuncio (sigue
+      disponible para todos), y que una activa **no** permite una segunda reserva.
 - [ ] **Rangos numéricos**: en `/catalogo`, filtra "Kilómetros máximos" con un
       valor intermedio (p. ej. 150.000) y confirma que filtra por número: un
       anuncio de 1.500.000 km no aparece y uno de 145.000 km sí (si comparara
@@ -278,17 +289,24 @@ tipos cada año (la constante `REVISADO_EN` indica de cuándo son los datos).
 
 ## 3. Decisiones de producto ya tomadas (no volver a preguntarlas)
 
-- **Comisión de reserva: 0 %** mientras no haya pasarela de pago. Se verifica el
-  comprobante a mano; el importe de la señal va íntegro al vendedor.
-- **Caducidad de la reserva: 7 días**, renovados al activarla (el comprador puede
-  tardar en quedar para ver el vehículo).
-- **Una reserva viva por anuncio**, garantizado por índice único parcial en la
-  base de datos, no por la aplicación.
+- **Comisión de reserva: 0 %** mientras no haya pasarela de pago. El importe de
+  la señal va íntegro al vendedor.
+- **La confirmación la hace el VENDEDOR** (2026-09-17): como la plataforma no
+  custodia el dinero, no "verifica" el pago. El comprador solicita; el vendedor
+  confirma al recibir la señal y solo entonces el anuncio queda reservado. Sin
+  comprobantes.
+- **Una solicitud NO bloquea el anuncio** (si no, cualquiera logueado podría
+  "reservar" sin pagar). Solo una reserva **activa** lo bloquea.
+- **Caducidad de la reserva: 7 días**, contados desde la confirmación del
+  vendedor (el comprador puede tardar en quedar para ver el vehículo).
+- **Una reserva activa por anuncio** (y una solicitud por comprador/anuncio),
+  garantizado por índices únicos parciales en la base de datos, no por la app.
 - **Señal sugerida: 2 % del precio**, redondeo a 50 €, mínimo 300 € y máximo
   1.000 €. El límite duro es 100–1.000 €.
-- Si el **vendedor** cancela una reserva activa, queda en **"reembolsada"**: es la
-  constancia de que debe devolver la señal.
-- Las reservas caducadas se barren de forma **perezosa** en cada POST (sin cron).
+- Si el **vendedor** cancela una reserva activa, queda en **"cancelada"** con el
+  motivo: es la constancia de que debe devolver la señal.
+- Las solicitudes y reservas caducadas se barren de forma **perezosa** en cada
+  POST (sin cron).
 
 ---
 

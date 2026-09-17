@@ -1,12 +1,11 @@
 /**
  * POST /api/reservas/cancelar  { reservaId, motivo? }
  *
- * Cancela una reserva viva. Reglas:
- *  - El comprador puede cancelar mientras esté pendiente, en revisión o activa.
- *  - El vendedor puede cancelar; si la reserva estaba ACTIVA (señal verificada),
- *    se marca `reembolsada` porque él debe devolver la señal: el estado deja
- *    constancia de la devolución, que es lo que el comprador necesita para
- *    reclamar si no llega.
+ * Cancela una solicitud o reserva viva. Reglas:
+ *  - El comprador puede cancelar mientras esté solicitada o activa.
+ *  - El vendedor puede cancelar una solicitud o una reserva activa; si ya
+ *    recibió la señal, el estado queda `cancelada` con el motivo, que es la
+ *    constancia visible para el comprador de que debe devolvérsela.
  *  - El admin puede cancelar cualquiera (queda marcado quién y por qué).
  */
 
@@ -14,7 +13,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isAdminUser, requireUser } from '@/lib/require-auth'
 import { isValidUUID } from '@/lib/validation'
-import { ESTADOS_VIVOS, normalizarEstadoReserva } from '@/lib/reservas'
+import { ESTADOS_PENDIENTES, ESTADOS_VIVOS, normalizarEstadoReserva } from '@/lib/reservas'
 import { notifyUser } from '@/lib/push-notify'
 import { notificarAdminTelegram } from '@/lib/telegram-admin'
 
@@ -56,18 +55,15 @@ export async function POST(request: NextRequest) {
     }
 
     const estado = normalizarEstadoReserva(reserva.estado)
-    if (!ESTADOS_VIVOS.includes(estado)) {
+    const vivooPendiente = ESTADOS_VIVOS.includes(estado) || ESTADOS_PENDIENTES.includes(estado)
+    if (!vivooPendiente) {
       return NextResponse.json({ error: 'Esta reserva ya está cerrada' }, { status: 409 })
     }
-
-    // Si el vendedor cancela una reserva con la señal ya verificada, tiene que
-    // devolverla: el estado lo deja por escrito.
-    const nuevoEstado = esVendedor && !admin && estado === 'activa' ? 'reembolsada' : 'cancelada'
 
     const { error: updateError } = await sb
       .from('reservas')
       .update({
-        estado: nuevoEstado,
+        estado: 'cancelada',
         motivo_cancelacion: motivo,
         revisado_por: admin ? auth.user.id : null,
         revisado_en: admin ? new Date().toISOString() : null,
@@ -83,19 +79,17 @@ export async function POST(request: NextRequest) {
     const destinatario = esComprador ? reserva.vendedor_id : reserva.comprador_id
 
     notifyUser(sb, destinatario, {
-      title: nuevoEstado === 'reembolsada' ? 'El vendedor ha cancelado la reserva' : 'Reserva cancelada',
-      body: nuevoEstado === 'reembolsada'
-        ? `${titulo}: el vendedor cancela y debe devolverte la señal.`
-        : `${titulo}: la reserva se ha cancelado y el anuncio vuelve a estar disponible.`,
+      title: 'Reserva cancelada',
+      body: `${titulo}: la reserva se ha cancelado${motivo ? ` (${motivo})` : ''} y el anuncio vuelve a estar disponible.`,
       tag: `reserva-${reservaId}`,
       click_url: '/dashboard?tab=reservas',
     }).catch(() => {})
 
     if (admin) {
-      notificarAdminTelegram(`❌ Reserva cancelada por el equipo\n${titulo}\nReserva: ${reservaId}`).catch(() => {})
+      notificarAdminTelegram(`❌ Reserva cancelada por el equipo\\n${titulo}\\nReserva: ${reservaId}`).catch(() => {})
     }
 
-    return NextResponse.json({ ok: true, estado: nuevoEstado })
+    return NextResponse.json({ ok: true, estado: 'cancelada' })
   } catch (err: any) {
     console.error('reservas/cancelar error:', err)
     return NextResponse.json({ error: err.message || 'Error desconocido' }, { status: 500 })

@@ -229,21 +229,29 @@ create table if not exists public.documentos_vehiculo (
   proyecto de homologación → aviso al vendedor y al comprador ("pendiente de
   verificar").
 
-### 3.2 Señal de reserva online (mini-escrow, viable ya)
+### 3.2 Señal de reserva online (confirmación del vendedor) ✅ (hecho)
 
 El escrow completo de 80.000 € no es viable al principio (límites de tarjeta,
-SEPA, entidad de pago). Pero una **señal de 300-500 €** vía Bizum/Stripe sí:
+SEPA, entidad de pago), y **fingir un "mini-escrow" sería peor**: la plataforma
+no custodia el dinero, así que no puede ni bloquearlo ni "verificar" un pago que
+no ve. Por eso la reserva funciona así (revisado el 2026-09-17):
 
-1. Comprador pulsa "Reservar con señal" en la ficha → paga la señal.
-2. El anuncio se marca como `reservado` (visible para todos).
-3. La señal se descuenta del precio en la reunión presencial (reembolso si el
-  vendedor cancela o el vehículo no se ajusta a lo anunciado).
-4. Comisión de plataforma sobre la señal + prioridad en el flujo de gestoría.
+1. Comprador pulsa "Reservar con señal" en la ficha → se **solicita** con un
+   importe (sugerido 2 % del precio, entre 300 y 1.000 €). La solicitud **no
+   bloquea** el anuncio.
+2. El comprador paga la señal **directamente al vendedor** (Bizum/transferencia/
+   en mano). El vendedor recibe un aviso push con la solicitud.
+3. El **vendedor confirma** la solicitud desde su dashboard cuando ve el pago
+   entrar → la reserva pasa a `activa`, el anuncio se marca `reservado` para
+   todos y caduca a los 7 días.
+4. La señal se descuenta del precio en la reunión presencial (devolución si el
+   vendedor cancela o el vehículo no se ajusta a lo anunciado).
 
- Esto resuelve el dolor real nº1 de los vendedores (pisos y compradores
- fantasma que "ya van en camino") y nos da un primer flujo de pago real con
- Stripe (fase 1) sin necesitar licencia de entidad de pago: la señal con
- reembolso es un cobro de servicio, no custodia de fondos del vehículo.
+Esto resuelve el dolor real nº1 de los vendedores (pisos y compradores fantasma
+que "ya van en camino") sin que la plataforma simule un pago que no gestiona:
+pagarla es un compromiso real, y bloquear el anuncio depende de quien de verdad
+recibe el dinero. Con pasarela (Fase 3) el botón podrá cobrar la señal de verdad;
+la tabla ya tiene las columnas para ello (`comision_pct`, `comision`).
 
 ---
 
