@@ -98,6 +98,9 @@ jobs:
       - name: Aplicar setup-camperocasion.sql completo
         run: python3 scripts/validate_setup_sql.py
 
+      - name: Migraciones 202609* reaplicadas
+        run: python3 scripts/validate_migrations_sql.py
+
       - name: Garantías de RLS del expediente del vehículo
         run: python3 scripts/verify_rls_documentos_vehiculo.py
 
