@@ -5,12 +5,14 @@
 > reiniciarse el entorno, así que ahora está versionado aquí. El resumen corto
 > también está en la descripción del PR #3.
 
-> **Estado a 2026-09-16 (noche):** `setup-camperocasion.sql` aplicado y verificado
-> **20/20** con `scripts/verificar_despliegue.sql`. CI activada y en verde.
-> **Vercel ya despliega producción** (el bloqueo §6 se resolvió: hay deployments
-> de Production sobre `main` en cada push). **Nuevo dominio canónico:
-> `camperocasion.online`** (cambiado el 2026-09-16, antes `camperocasion.es`,
-> que nunca llegó a servir tráfico).
+> **Estado a 2026-09-17:** todas las migraciones de CamperOcasión aplicadas
+> en producción y verificadas **32/32** con `scripts/verificar_despliegue.sql`
+> (SQL ejecutado con éxito en el editor de Supabase; verificado por el usuario).
+> CI activada, en verde y —desde el 2026-09-17— con el paso
+> `Migraciones 202609* reaplicadas` (`scripts/validate_migrations_sql.py`), que
+> valida también los archivos individuales de `supabase/migrations/`.
+> **Vercel ya despliega producción.** Dominio canónico:
+> **`camperocasion.online`**.
 >
 > **Cierre del cambio de dominio (2026-09-16/17):** DNS apuntado a Vercel, env
 > vars aplicadas y Supabase Auth con la URL nueva. **Verificado en producción**
@@ -21,10 +23,12 @@
 ## 0. Resumen en cuatro líneas
 
 1. ~~Aplicar **dos migraciones** en Supabase~~ ✅ **hecho**: `setup-camperocasion.sql`
-   completo, verificado con `scripts/verificar_despliegue.sql` (20/20 ✅).
+   completo y migraciones individuales aplicadas; verificado en producción con
+   `scripts/verificar_despliegue.sql` (**32/32 ✅** a 2026-09-17).
 2. Revisar las **variables de entorno** en Vercel (§1.3) — **PENDIENTE**.
 3. ~~Activar la **CI**~~ ✅ **hecho** el 2026-09-16: el workflow ya vive en
-   `.github/workflows/ci.yml` y los dos jobs pasan en `main`.
+   `.github/workflows/ci.yml`, los dos jobs pasan en `main` y desde el
+   2026-09-17 incluye la validación de los archivos individuales de migración.
 4. ~~Que Vercel tenga **un despliegue de producción**~~ ✅ **resuelto el
    2026-09-16**: Vercel publica deployment de Production en cada push a `main`
    (verificado vía `gh api .../deployments`).
@@ -33,9 +37,10 @@
 
 ---
 
-## 1. SQL en Supabase (producción) — ✅ APLICADO el 2026-09-16
+## 1. SQL en Supabase (producción) — ✅ APLICADO (32/32 el 2026-09-17)
 
-Verificación completa: `scripts/verificar_despliegue.sql` → 20/20 ✅
+Verificación completa: `scripts/verificar_despliegue.sql` → **32/32 ✅** el
+2026-09-17 (incluye Fase 0.1, 0.2, 1.2, §4 y Rangos numéricos).
 
 ### 1.1 Verificar prerrequisitos de la Fase 0.1 (filtros técnicos)
 
@@ -64,7 +69,8 @@ supabase/migrations/202609150001_verificacion_homologacion.sql
 setup-camperocasion.sql
 ```
 
-Comprobación: `scripts/verificar_despliegue.sql` de una vez (20 comprobaciones),
+Comprobación: `scripts/verificar_despliegue.sql` de una vez (ahora 32
+comprobaciones en total),
 o al menos esta — **atención**: para funciones hay que usar `to_regprocedure()`,
 porque `to_regclass()` solo mira relaciones (tablas, índices, vistas) y devuelve
 NULL aunque la función exista:
@@ -115,7 +121,7 @@ Nota de producto: el dinero **no pasa por la plataforma**; el comprador paga la
 señal por Bizum/transferencia/en mano y el admin verifica el comprobante. No hay
 Stripe ni custodia, así que no hace falta ninguna variable nueva de pago.
 
-### 1.2-ter Aplicar la Fase §4 (inspección + gestoría) — PENDIENTE en producción
+### 1.2-ter Aplicar la Fase §4 (inspección + gestoría) — ✅ APLICADA en producción
 
 ```bash
 # Opción A: solo esta migración
@@ -148,7 +154,7 @@ aparecen solas:
 - El contrato se genera íntegro en el navegador (`/contrato-compraventa`):
   no toca base de datos ni servers. Enlazado desde ficha, ITP y compra-segura.
 
-### 1.2-quater Aplicar los rangos numéricos del catálogo (202609170003) — PENDIENTE en producción
+### 1.2-quater Aplicar los rangos numéricos del catálogo (202609170003) — ✅ APLICADA en producción
 
 ```bash
 # Opción A: solo esta migración
@@ -247,6 +253,20 @@ en build time.
       "Reservado", sube un comprobante de prueba y verifícalo desde
       `/admin?tab=reservas` (activar). Luego cancela para liberar el anuncio.
 - [ ] Comprobar que el anuncio reservado **no** permite una segunda reserva.
+- [ ] **Rangos numéricos**: en `/catalogo`, filtra "Kilómetros máximos" con un
+      valor intermedio (p. ej. 150.000) y confirma que filtra por número: un
+      anuncio de 1.500.000 km no aparece y uno de 145.000 km sí (si comparara
+      texto, `'9' > '10'` y el orden saldría mal). Prueba también "Año mínimo",
+      "Placa solar mínima" e "Inversor mínimo".
+- [ ] **Rangos en `/buscar`**: confirma que los mismos 4 filtros de rango
+      aparecen y acotan junto al resto de la ficha técnica camper.
+- [ ] **Inspección + gestoría**: pide una inspección desde la ficha de un
+      anuncio y confirma que llega a `/admin?tab=inspecciones`; envía un lead
+      desde `/gestoria-cambio-nombre` y confirma que llega a
+      `/admin?tab=gestoria`.
+- [ ] **Calculadora ITP**: elige etiqueta "ECO" o "Cero Emisiones" y confirma
+      que el ITP estimado cambia (tipos reducidos) y que la comparativa por
+      comunidades se actualiza.
 
 ## 2-bis. La Fase 0.3 (ITP) NO necesita SQL
 
@@ -306,7 +326,8 @@ ordenador, o reconectar Arena con el permiso `workflows`.
 Jobs: **calidad** (Node 22 → `npm ci` → `tsc --noEmit` → `eslint .` → `npm test`)
 y **sql** (Python 3.12 → `pgserver`, `psycopg2-binary`, `pglast` → valida el
 `setup-camperocasion.sql` completo + RLS de documentos + garantías de reservas +
-las 20 comprobaciones de despliegue). Los cuatro scripts ya pasan en local.
+migraciones `202609*` individuales + las 32 comprobaciones de despliegue). Los
+scripts ya pasan en local.
 
 </details>
 

@@ -12,7 +12,7 @@
 | 3. Venta + alquiler P2P | 🔴 Nada | — |
 | 4. Filtros de arquitectura furgonetera | ✅ Hecho (2026-09) | 16 filtros técnicos en el catálogo, agrupados en mecánica/habitabilidad/autonomía, y captura de tracción, MMA, longitud y altura exterior en `/publicar`. Registro único en `src/lib/filtros-tecnicos.ts`. Ver §2.1. |
 | 5. Escrow + financiación | 🔴 Nada | Solo créditos para destacar con pago manual (Bizum/transferencia/PayPal + comprobante). |
-| 6. Gestoría digital | 🟡 Medio (2026-09) | Calculadora de ITP con los 19 territorios, 19 landings por comunidad y checklist de compra segura (`/calcular-itp`, `/compra-segura-camper`). **Falta**: contrato de compraventa descargable y gestoría del cambio de nombre. |
+| 6. Gestoría digital | 🟢 Alto (2026-09-17) | Calculadora de ITP con los 19 territorios, 19 landings por comunidad y checklist de compra segura (`/calcular-itp`, `/compra-segura-camper`). Más contrato de compraventa descargable (`/contrato-compraventa`) y captación de leads de gestoría (`/gestoria-cambio-nombre`) — ambos hechos el 2026-09-17. **Falta**: el partner real de gestoría y el cobro del servicio (hoy reenvío manual). |
 
 **Ya tenemos además** (activos sobre los que construir): vendedor verificado con
 badge (`BadgeVerificado.tsx` + `solicitudes_verificacion`), moderación, reseñas,
