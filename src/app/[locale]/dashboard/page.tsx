@@ -252,6 +252,7 @@ export default function DashboardPage() {
         telefono={data.telefono} setTelefono={data.setTelefono}
         estado={data.estado} setEstado={data.setEstado}
         ciudad={data.ciudad} setCiudad={data.setCiudad}
+        tipoVendedor={data.tipoVendedor} setTipoVendedor={data.setTipoVendedor}
         fotoUrl={data.fotoUrl} setFotoUrl={data.setFotoUrl}
         verificado={data.verificado}
         nivelConfianza={data.nivelConfianza}

@@ -6,15 +6,24 @@ import { useRouter, usePathname } from 'next/navigation'
 import { AlertCircle } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { routing } from '@/i18n/routing'
+import { TIPOS_VENDEDOR, type TipoVendedor } from '@/components/BadgeTipoVendedor'
+
+const ICONOS_TIPO: Record<TipoVendedor, string> = {
+  particular: '👤',
+  camperizador: '🔧',
+  profesional: '🏢',
+}
 
 export default function RegisterPage() {
   const t = useTranslations('auth')
+  const tTipos = useTranslations('tiposVendedor')
   const router = useRouter()
   const pathname = usePathname()
   const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
+  const [tipoVendedor, setTipoVendedor] = useState<TipoVendedor>('particular')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -63,7 +72,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, email, password }),
+        body: JSON.stringify({ nombre, email, password, tipo: tipoVendedor }),
       })
 
       const data = await res.json().catch(() => ({}))
@@ -167,6 +176,36 @@ export default function RegisterPage() {
                 required
                 className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-accent bg-white text-gray-900"
               />
+            </div>
+
+            {/* Tipo de vendedor: se muestra junto a sus anuncios (Fase 2).
+                Por defecto "particular" — registrarse sigue siendo rápido. */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                {t('register.sellerTypeLabel')}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {TIPOS_VENDEDOR.map(tipo => (
+                  <button
+                    key={tipo}
+                    type="button"
+                    onClick={() => setTipoVendedor(tipo)}
+                    aria-pressed={tipoVendedor === tipo}
+                    className={`text-left rounded-xl border px-3 py-2.5 transition ${
+                      tipoVendedor === tipo
+                        ? 'border-brand-primary ring-1 ring-brand-primary bg-brand-primary/5'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="block text-sm font-semibold text-gray-900">
+                      <span aria-hidden="true">{ICONOS_TIPO[tipo]}</span> {tTipos(tipo)}
+                    </span>
+                    <span className="block text-[11px] text-gray-500 mt-0.5">
+                      {tTipos(`${tipo}Desc`)}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <button

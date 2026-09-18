@@ -2,6 +2,7 @@
 
 import Avatar from '@/components/Avatar'
 import BadgeVerificado from '@/components/BadgeVerificado'
+import BadgeTipoVendedor, { TIPOS_VENDEDOR } from '@/components/BadgeTipoVendedor'
 import { getMunicipiosNombres, ESTADOS } from '@/lib/ubicaciones'
 import { Camera, Edit, Key, LogOut, X, Save, Phone, MapPin, Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -20,6 +21,7 @@ const NIVELES: Record<number, { nombreKey: string; bg: string; text: string; bor
 export default function DashboardHeader({
   user,
   nombre, setNombre, telefono, setTelefono, estado, setEstado, ciudad, setCiudad,
+  tipoVendedor, setTipoVendedor,
   fotoUrl, setFotoUrl,
   verificado, nivelConfianza, resenasCount, promedioResenas,
   setToast, setGuardando, onPassword, onLogout, onFotoChange,
@@ -29,6 +31,7 @@ export default function DashboardHeader({
   telefono: string; setTelefono: (s: string) => void
   estado: string; setEstado: (s: string) => void
   ciudad: string; setCiudad: (s: string) => void
+  tipoVendedor: string; setTipoVendedor: (s: string) => void
   fotoUrl: string | null; setFotoUrl: (s: string | null) => void
   verificado: boolean
   nivelConfianza: number
@@ -42,6 +45,7 @@ export default function DashboardHeader({
   onFotoChange: (e: any) => Promise<void>
 }) {
   const t = useTranslations('dashboard')
+  const tTipos = useTranslations('tiposVendedor')
   const [editando, setEditando] = useState(false)
   const municipiosDisponibles = estado ? getMunicipiosNombres(estado) : []
 
@@ -52,12 +56,13 @@ export default function DashboardHeader({
       const response = await fetch('/api/perfil', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, telefono, estado, ciudad }),
+        body: JSON.stringify({ nombre, telefono, estado, ciudad, tipo_vendedor: tipoVendedor }),
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) {
         setToast(t('saveError') + (result.error || 'Error desconocido'))
       } else {
+        if (result.profile?.tipo_vendedor) setTipoVendedor(result.profile.tipo_vendedor)
         setEditando(false)
         setToast(t('profileSaved'))
       }
@@ -110,6 +115,31 @@ export default function DashboardHeader({
                   </select>
                 </div>
               </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-2">{t('sellerTypeLabel')}</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {TIPOS_VENDEDOR.map(tipo => (
+                    <button
+                      key={tipo}
+                      type="button"
+                      onClick={() => setTipoVendedor(tipo)}
+                      className={`text-left rounded-xl border px-3 py-2.5 transition ${
+                        tipoVendedor === tipo
+                          ? 'border-brand-primary ring-1 ring-brand-primary bg-brand-primary/5'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="block text-sm font-semibold text-gray-900">
+                        {tTipos(tipo)}
+                      </span>
+                      <span className="block text-xs text-gray-500 mt-0.5">
+                        {tTipos(`${tipo}Desc`)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400 mt-1.5">{t('sellerTypeHint')}</p>
+              </div>
               <div className="flex gap-2">
                 <button onClick={handleGuardar} className="flex items-center gap-2 bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-medium">
                   <Save size={14} /> {t('save')}
@@ -129,6 +159,7 @@ export default function DashboardHeader({
                 {(ciudad || estado) && <p className="text-sm text-gray-500 flex items-center gap-1"><MapPin size={12} /> {[ciudad, estado].filter(Boolean).join(', ')}</p>}
                 {/* Badges */}
                 <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <BadgeTipoVendedor tipo={tipoVendedor} />
                   {verificado && <BadgeVerificado size="sm" />}
                   <div className="inline-flex items-center gap-1.5 text-xs">
                     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border ${cfg.bg} ${cfg.border}`}>

@@ -3,13 +3,14 @@ import { formatPrecio } from '@/lib/precio'
 
 import LocalLink from '@/components/LocalLink'
 import BadgeHomologacion from '@/components/BadgeHomologacion'
+import BadgeTipoVendedor, { TIPOS_VENDEDOR } from '@/components/BadgeTipoVendedor'
 import { Search, ChevronRight, XCircle, Loader2, Bell, BellRing } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback, useMemo, use } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
-import { categoriasData } from '@/lib/categorias'
+import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import UbicacionSelector from '@/components/UbicacionSelector'
 import { useTranslations } from 'next-intl'
 import { productUrl } from '@/lib/product-url'
@@ -21,8 +22,11 @@ import {
 import {
   aplicarFiltrosBase,
   esErrorColumnasRango,
+  FILTRO_VENDEDOR_PARAM,
+  tipoVendedorFiltro,
   type FiltrosCatalogo,
 } from '@/lib/catalog-consulta'
+import { SelectorMarca } from '@/components/SelectorMarca'
 
 type Producto = {
   id: string
@@ -39,6 +43,7 @@ type Producto = {
   destacado: boolean | null
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
+  vendedor_tipo?: string | null
   verificacion_homologacion?: string | null
   reservado?: boolean | null
   descripcion?: string
@@ -114,6 +119,11 @@ function ProductCard({ p }: { p: Producto }) {
             <BadgeHomologacion estado={p.verificacion_homologacion} size="sm" />
           </div>
         )}
+        {p.vendedor_tipo && (
+          <div className="mt-1">
+            <BadgeTipoVendedor tipo={p.vendedor_tipo} />
+          </div>
+        )}
         {p.vendedor_verificado && (
           <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full mt-1">
             <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -150,6 +160,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
   const router = useRouter()
   const t = useTranslations('search')
   const tc = useTranslations('catalog')
+  const t2 = useTranslations()
   // Traductor universal para el panel técnico (resolve 'catalog.*' y, si la
   // clave no está en 'search', cae a 'catalog').
   const tu = (key: string) => {
@@ -170,6 +181,9 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
   const precioMin = searchParams?.precio_min || ''
   const precioMax = searchParams?.precio_max || ''
   const orden = searchParams?.orden || ''
+  // ¿Quién vende? (Fase 3): solo se acepta un tipo válido; cualquier otra
+  // cosa que venga en la URL se ignora para no romper la búsqueda.
+  const vendedor = tipoVendedorFiltro(searchParams?.[FILTRO_VENDEDOR_PARAM]) || ''
 
   // Filtros técnicos camper (los mismos del catálogo): opciones + rangos.
   // Se memoizan por la referencia de `searchParams`: `use()` devuelve la misma
@@ -260,8 +274,13 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
   }
 
   const cat = categoria ? categoriasData[categoria] : undefined
-  const subs = cat ? cat.subs : []
-  const allMarcas = subs.flatMap((s) => s.marcas || []).filter((v, i, a) => a.indexOf(v) === i).sort()
+  // El buscador es 100% camper: los tipos se ofrecen siempre aunque no haya
+  // categoría en la URL (`categoria` solo queda como parámetro legado).
+  const subs = cat ? cat.subs : categoriasData.camper.subs
+  // Marcas/modelos estructurados por fabricante (ver @/lib/marcas). Con
+  // subcategoría activa solo se ofrecen los modelos aptos para ella.
+  const subActiva = subcategoria ? subs.find((s) => s.label === subcategoria) : undefined
+  const modelosMarca = subActiva ? subActiva.marcas : subs.flatMap((s) => s.marcas || [])
 
   const setParam = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams ? Object.entries(searchParams).filter(([_, v]) => v).map(([k, v]) => [k, v!]) : [])
@@ -280,7 +299,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
       const ejecutar = async (conRangos: boolean) => {
         let sq = supabase
           .from('productos')
-          .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, verificacion_homologacion, reservado', { count: 'exact' })
+          .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, vendedor_tipo, verificacion_homologacion, reservado', { count: 'exact' })
           .eq('activo', true)
           .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado')
 
@@ -301,6 +320,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
           precioMin,
           precioMax,
           condicion,
+          [FILTRO_VENDEDOR_PARAM]: vendedor,
           ...filtrosTecnicos,
         }
         if (conRangos) Object.assign(filtros, filtrosRango)
@@ -354,7 +374,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
 
     buscar()
     return () => { cancelled = true }
-  }, [query, categoria, subcategoria, marca, condicion, ubicacionEstado, ubicacionCiudad, precioMin, precioMax, orden, filtrosTecnicos, filtrosRango])
+  }, [query, categoria, subcategoria, marca, condicion, ubicacionEstado, ubicacionCiudad, precioMin, precioMax, orden, vendedor, filtrosTecnicos, filtrosRango])
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -423,29 +443,26 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
             </div>
 
             <div className="space-y-4">
+              {/* Tipo de vehículo: 7 tipos agrupados por familia (Campers /
+                  Autocaravanas / Overland). El buscador es 100% camper, así
+                  que no hay selector de categoría. */}
               <div>
-                <label className="block text-sm font-bold text-gray-900 mb-1.5">{t('category')}</label>
-                <select value={categoria} onChange={(e) => setParam('categoria', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-accent">
-                  <option value="">Todas</option>
-                  {Object.entries(categoriasData).map(([key, c]) => (
-                    <option key={key} value={key}>{c.label} {c.icon}</option>
+                <label className="block text-sm font-bold text-gray-900 mb-1.5">{tc('typeLabel')}</label>
+                <select value={subcategoria} onChange={(e) => setParam('subcategoria', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-accent">
+                  <option value="">{tc('allTypes')}</option>
+                  {FAMILIAS.map((f) => (
+                    <optgroup key={f.key} label={`${f.icon} ${t2(`familias.${f.key}.label`)}`}>
+                      {f.subs.map((slug) => {
+                        const s = subs.find((x) => x.slug === slug)
+                        if (!s) return null
+                        return <option key={s.label} value={s.label}>{s.icon} {s.label}</option>
+                      })}
+                    </optgroup>
                   ))}
                 </select>
               </div>
 
-              {subs.length > 0 && (
-                <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-1.5">Subcategoria</label>
-                  <select value={subcategoria} onChange={(e) => setParam('subcategoria', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-accent">
-                    <option value="">Todas</option>
-                    {subs.map((s) => (
-                      <option key={s.label} value={s.label}>{s.icon} {s.label}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {allMarcas.length > 0 && (
+              {modelosMarca.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between">
                     <label className="block text-sm font-bold text-gray-900 mb-1.5">{t('brand')}</label>
@@ -455,12 +472,13 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
                       </button>
                     )}
                   </div>
-                  <select value={marca} onChange={(e) => setParam('marca', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-accent">
-                    <option value="">Todas</option>
-                    {allMarcas.map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
+                  <SelectorMarca
+                    value={marca}
+                    modelos={modelosMarca}
+                    allLabel={tc('allBrands')}
+                    onChange={(v) => setParam('marca', v)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                  />
                 </div>
               )}
 
@@ -512,6 +530,31 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
                     placeholder="Max"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white"
                   />
+                </div>
+              </div>
+
+              {/* ¿Quién vende? (Fase 3): particulares, camperizadores o pros. */}
+              <div className="mt-4 pt-4 border-t">
+                <label className="block text-sm font-bold text-gray-900 mb-1.5">{tc('whoSells')}</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {TIPOS_VENDEDOR.map(tipo => {
+                    const activo = vendedor === tipo
+                    return (
+                      <button
+                        key={tipo}
+                        type="button"
+                        aria-pressed={activo}
+                        onClick={() => setParam(FILTRO_VENDEDOR_PARAM, activo ? '' : tipo)}
+                        className={`text-xs font-semibold px-2.5 py-1.5 rounded-full border transition ${
+                          activo
+                            ? 'bg-brand-primary text-white border-brand-primary'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                        }`}
+                      >
+                        {t2(`tiposVendedor.${tipo}`)}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 

@@ -17,7 +17,10 @@ const PROFILE_COLUMNS = [
   'creado_en',
   'credito_balance',
   'emprendedor_dado',
+  'tipo_vendedor',
 ].join(', ')
+
+const TIPOS_VENDEDOR = ['particular', 'camperizador', 'profesional'] as const
 
 function getAdminClient() {
   return createClient(
@@ -36,6 +39,7 @@ async function getOrCreateProfile(user: any) {
     .maybeSingle()
 
   if (!profile && !error) {
+    const tipoMeta = user.user_metadata?.tipo_vendedor
     const { data: created, error: createError } = await sb
       .from('perfiles')
       .insert({
@@ -44,6 +48,10 @@ async function getOrCreateProfile(user: any) {
         telefono: sanitizeString(user.user_metadata?.telefono || '', 40),
         estado: sanitizeString(user.user_metadata?.estado || '', 50),
         ciudad: sanitizeString(user.user_metadata?.ciudad || '', 80),
+        // Si eligió tipo al registrarse, el perfil nace con él (Fase 2).
+        ...(TIPOS_VENDEDOR.includes(tipoMeta as (typeof TIPOS_VENDEDOR)[number])
+          ? { tipo_vendedor: tipoMeta }
+          : {}),
       })
       .select(PROFILE_COLUMNS)
       .maybeSingle()
@@ -90,6 +98,16 @@ export async function PATCH(request: NextRequest) {
       }
       updates[field] = sanitizeString(body[field], field === 'nombre' ? 100 : field === 'telefono' ? 40 : 80)
     }
+  }
+
+  if (body.tipo_vendedor !== undefined) {
+    if (
+      typeof body.tipo_vendedor !== 'string' ||
+      !TIPOS_VENDEDOR.includes(body.tipo_vendedor as (typeof TIPOS_VENDEDOR)[number])
+    ) {
+      return NextResponse.json({ error: 'tipo_vendedor inválido' }, { status: 400 })
+    }
+    updates.tipo_vendedor = body.tipo_vendedor
   }
 
   if (updates.nombre !== undefined && updates.nombre.length < 2) {

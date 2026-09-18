@@ -6,11 +6,13 @@ import { useRouter } from 'next/navigation'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { productUrl } from '@/lib/product-url'
 import { useAuth } from '@/components/AuthProvider'
-import { categoriasData, resolverCampos, esCampoMarca } from '@/lib/categorias'
+import { categoriasData, resolverCampos, esCampoMarca, FAMILIAS } from '@/lib/categorias'
+import { agruparPorFabricante, etiquetaModelo } from '@/lib/marcas'
 import { ESTADOS, getMunicipiosNombres } from '@/lib/ubicaciones'
 import { formatPrecio } from '@/lib/precio'
 import { Camera, X, UploadCloud, AlertCircle, Phone, Mail, MapPin, MessageSquare } from 'lucide-react'
 import { verificarContenido, formatearAlertaModeracion } from '@/lib/moderacion'
+import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
 import { emailProductoPublicado } from '@/lib/server-email'
 import { compressImages } from '@/lib/compress-image'
 import { useTranslations } from 'next-intl'
@@ -33,14 +35,14 @@ interface ImageFile {
 
 export default function PublicarPage() {
   const t = useTranslations('publicar')
-  const tc = useTranslations('catalog')
+  const tRoot = useTranslations()
   const { session, user, loading: authLoading } = useAuth()
   const router = useRouter()
 
   const [step, setStep] = useState(1)
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
-  const [categoria, setCategoria] = useState('')
+  const [familia, setFamilia] = useState('')
   const [subcategoria, setSubcategoria] = useState('')
   const [marca, setMarca] = useState('')
   const [estadoProd, setEstadoProd] = useState('')
@@ -61,6 +63,7 @@ export default function PublicarPage() {
   const [moderacionResultado, setModeracionResultado] = useState<{ nivel: string; palabras: string[] } | null>(null)
   const [showEmprendedor, setShowEmprendedor] = useState(false)
   const [pubCount, setPubCount] = useState(0)
+  const [tipoVendedor, setTipoVendedor] = useState<string | null>(null)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -75,6 +78,14 @@ export default function PublicarPage() {
         .eq('user_id', user.id)
         .eq('activo', true)
         .then(({ count }) => setPubCount(count || 0))
+
+      // Con qué tipo de vendedor está publicando (Fase 2)
+      fetch('/api/perfil')
+        .then(r => (r.ok ? r.json() : null))
+        .then(result => {
+          if (result?.profile?.tipo_vendedor) setTipoVendedor(result.profile.tipo_vendedor)
+        })
+        .catch(() => {})
     }
   }, [authLoading, session, router, user])
 
@@ -96,16 +107,20 @@ export default function PublicarPage() {
   if (authLoading) return <div className="min-h-[60vh] flex items-center justify-center"><p>{t('loading')}</p></div>
   if (!session) return null
 
-  const cat = categoriasData[categoria]
-  const sub = cat?.subs.find(s => s.label === subcategoria)
+  // Marketplace 100% camper: la categoría es siempre `camper` (se envía fija
+  // al API); lo que elige el usuario es la FAMILIA y luego el tipo.
+  const cat = categoriasData.camper
+  const familiaCfg = FAMILIAS.find(f => f.key === familia)
+  const tiposFamilia = familiaCfg ? cat.subs.filter(s => familiaCfg.subs.includes(s.slug)) : []
+  const sub = tiposFamilia.find(s => s.label === subcategoria) || cat.subs.find(s => s.label === subcategoria)
 
   // Los campos de "Año" y "Marca" resuelven sus opciones dinámicamente
   // (ver resolverCampos). Antes, un campo Marca sin `options` — como el de
   // repuestos — quedaba con la lista vacía y solo mostraba "Otra marca".
   const camposEspeciales = resolverCampos(sub)
 
-  const handleCatChange = (val: string) => {
-    setCategoria(val); setSubcategoria(''); setMarca(''); setSpecs({})
+  const handleFamiliaChange = (val: string) => {
+    setFamilia(val); setSubcategoria(''); setMarca(''); setSpecs({})
   }
   const handleSubChange = (val: string) => {
     setSubcategoria(val); setMarca(''); setSpecs({})
@@ -287,7 +302,7 @@ export default function PublicarPage() {
           user_id: user?.id,
           titulo,
           descripcion,
-          categoria: categoria || null,
+          categoria: 'camper',
           subcategoria,
           marca: marcaFinal,
           modelo: modeloFinal,
@@ -361,12 +376,22 @@ export default function PublicarPage() {
     setLoading(false)
   }
 
-  const canGoToStep2 = categoria && subcategoria
+  const canGoToStep2 = familia && subcategoria
   const canGoToStep3 = titulo && descripcion && estadoProd && precioUsd
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('title')}</h1>
+
+      {/* Publicando como… (Fase 2: el comprador verá este chip en el anuncio) */}
+      {tipoVendedor && (
+        <p className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+          {t('asLabel')} <BadgeTipoVendedor tipo={tipoVendedor} />
+          <LocalLink href="/dashboard" className="text-brand-primary hover:underline text-xs">
+            {t('changeTipo')}
+          </LocalLink>
+        </p>
+      )}
 
       {/* Banner: siempre gratis */}
       <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
@@ -424,43 +449,56 @@ export default function PublicarPage() {
             <h2 className="text-xl font-bold text-gray-900">{t('whatToPublish')}</h2>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1.5">{t('category')}</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {Object.entries(categoriasData).map(([key, cfg]) => {
-                  let displayLabel = cfg.label
+              <label className="block text-sm font-semibold text-gray-900 mb-1.5">{t('family')}</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {FAMILIAS.map(f => {
+                  let displayLabel = f.label
+                  let displayDesc = ''
                   try {
-                    const translated = tc('categories.' + key)
-                    if (translated && translated !== 'categories.' + key) {
-                      displayLabel = translated
-                    }
+                    const translated = tRoot(`familias.${f.key}.label`)
+                    if (translated && translated !== `familias.${f.key}.label`) displayLabel = translated
+                    const desc = tRoot(`familias.${f.key}.desc`)
+                    if (desc && desc !== `familias.${f.key}.desc`) displayDesc = desc
                   } catch (e) {}
                   return (
-                  <button key={key} onClick={() => handleCatChange(key)} className={`p-4 rounded-xl border-2 text-center transition ${categoria === key ? 'border-brand-primary bg-blue-50' : 'border-gray-200 hover:border-brand-accent'}`}>
-                    <span className="text-3xl block mb-2">{cfg.icon}</span>
-                    <span className="text-sm font-bold text-gray-800">{displayLabel}</span>
-                  </button>
+                    <button key={f.key} onClick={() => handleFamiliaChange(f.key)} className={`p-4 rounded-xl border-2 text-center transition ${familia === f.key ? 'border-brand-primary bg-green-50' : 'border-gray-200 hover:border-brand-accent'}`}>
+                      <span className="text-3xl block mb-2">{f.icon}</span>
+                      <span className="text-sm font-bold text-gray-800 block">{displayLabel}</span>
+                      {displayDesc && <span className="text-xs text-gray-500 mt-1 block leading-snug">{displayDesc}</span>}
+                    </button>
                   )
                 })}
               </div>
             </div>
 
-            {cat && (
+            {familiaCfg && (
               <>
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-1.5">{t('type')}</label>
                   <select value={subcategoria} onChange={e => handleSubChange(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white text-gray-800">
                     <option value="">{t('selectType')}</option>
-                    {cat.subs.map(s => (
+                    {tiposFamilia.map(s => (
                       <option key={s.label} value={s.label}>{s.icon} {s.label}</option>
                     ))}
                   </select>
                 </div>
-                {subcategoria && sub?.marcas.length && sub.marcas.length > 0 && (
+                {subcategoria && sub && sub.marcas.length > 0 && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-900 mb-1.5">{t('brand')}</label>
-                    <select value={marca.startsWith('otra:') ? 'otra:' : marca} onChange={e => setMarca(e.target.value === 'otra:' ? '' : e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-800 bg-white">
+                    {/* Marca/modelo agrupados por fabricante: Fiat → Ducato ·
+                        Doblò · Scudo… El valor guardado es el canónico de
+                        productos.marca (ver @/lib/marcas). */}
+                    <select value={marca.startsWith('otra:') ? 'otra:' : marca} onChange={e => setMarca(e.target.value === 'otra:' ? 'otra:' : e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-800 bg-white">
                       <option value="">{t('selectBrand')}</option>
-                      {sub.marcas.map(m => <option key={m} value={m}>{m}</option>)}
+                      {agruparPorFabricante(sub.marcas).map(g =>
+                        g.modelos.length === 1 && !g.modelos[0].modelo ? (
+                          <option key={g.modelos[0].valor} value={g.modelos[0].valor}>{g.modelos[0].valor}</option>
+                        ) : (
+                          <optgroup key={g.fabricante} label={g.fabricante}>
+                            {g.modelos.map(m => <option key={m.valor} value={m.valor}>{etiquetaModelo(m)}</option>)}
+                          </optgroup>
+                        )
+                      )}
                       <option value="otra:">{t('otherBrand')}</option>
                     </select>
                     {marca.startsWith('otra:') && (
@@ -708,7 +746,7 @@ export default function PublicarPage() {
               {imagenes.length > 0 && <div className="aspect-square max-h-56 bg-gray-100 rounded-lg overflow-hidden"><img src={imagenes[0].preview} alt="" className="w-full h-full object-cover" /></div>}
               <h3 className="text-lg font-bold text-gray-900">{titulo}</h3>
               <div className="space-y-1 text-sm">
-                <p><span className="text-gray-500">{t('category')}:</span> {categoria} → {subcategoria}</p>
+                <p><span className="text-gray-500">{t('family')}:</span> {familiaCfg ? familiaCfg.label : '—'} → {subcategoria}</p>
                 {marca && <p><span className="text-gray-500">{t('brand')}:</span> {marca.replace('otra:', '').trim()}</p>}
                 {Object.entries(specs).filter(([,v]) => v).map(([k,v]) => <p key={k}><span className="text-gray-500">{k}:</span> {v}</p>)}
                 <p><span className="text-gray-500">{t('condition')}:</span> {estadoProd}</p>

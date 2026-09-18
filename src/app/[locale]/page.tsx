@@ -1,12 +1,13 @@
 import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
-import { ArrowRight, Search, Star, Truck, ShieldCheck, MapPin, ChevronRight } from 'lucide-react'
+import { ArrowRight, Search, Star, FileCheck, ShieldCheck, MapPin, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase-server-client'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { productUrl } from '@/lib/product-url'
 import { formatPrecio } from '@/lib/precio'
-import { categoriasData } from '@/lib/categorias'
+import { categoriasData, FAMILIAS } from '@/lib/categorias'
+import { resumenFabricantes } from '@/lib/marcas'
 import { CIUDADES_SEO } from '@/lib/ubicaciones-seo'
 
 // ── Metadata ──────────────────────────────────────────────────────────────
@@ -103,7 +104,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 // ── Datos ─────────────────────────────────────────────────────────────────
 
 const MODERACION = 'estado_moderacion.is.null,estado_moderacion.eq.aprobado'
-const PRODUCT_COLS = 'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, subcategoria, creado_en, boosteado_en, destacado, destacado_hasta'
+const PRODUCT_COLS = 'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, subcategoria, creado_en, boosteado_en, destacado, destacado_hasta, vendedor_tipo'
 
 async function getProductos(limit = 8, subcategorias?: string[]) {
   if (!supabase) return []
@@ -266,15 +267,60 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       {/* ═══════════ HERO ═══════════ */}
       <section className="relative bg-brand-primary text-white overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(22,163,74,0.25),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(234,88,12,0.18),transparent_50%)]" aria-hidden="true" />
+        {/* Fotografía lifestyle de fondo + doble velo para legibilidad */}
+        <Image
+          src="/hero-camper.jpg"
+          alt={t('home.hero.heroImageAlt')}
+          fill
+          priority
+          quality={80}
+          fetchPriority="high"
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-dark/95 via-brand-primary/85 to-brand-dark/30" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/70 via-transparent to-brand-dark/40" aria-hidden="true" />
         <div className="relative max-w-7xl mx-auto px-4 py-14 md:py-20">
-          <span className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 py-1 text-xs font-semibold mb-5">
-            🇪🇸 {t('home.hero.chip')}
+          <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1 text-xs font-semibold mb-5">
+            {t('home.hero.chip')}
           </span>
-          <h1 className="text-4xl md:text-5xl font-black leading-tight max-w-3xl">
+          <h1 className="text-4xl md:text-6xl font-black leading-tight max-w-3xl drop-shadow-sm">
             {t('home.hero.title1')} <span className="text-brand-accent-light">{t('home.hero.title2')}</span>
           </h1>
-          <p className="mt-4 text-lg text-gray-200 max-w-2xl">{t('home.hero.subtitle')}</p>
+          <p className="mt-4 text-lg text-gray-100 max-w-2xl">{t('home.hero.subtitle')}</p>
+
+          {/* Públicos: nadie debe dudar de que este mercado también es suyo */}
+          <div className="mt-5 flex flex-wrap gap-2">
+            {[
+              t('home.hero.audiencePrivate'),
+              t('home.hero.audienceCamperizers'),
+              t('home.hero.audiencePro'),
+              t('home.hero.audienceBuyers'),
+            ].map(a => (
+              <span
+                key={a}
+                className="text-xs font-semibold bg-brand-dark/40 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5"
+              >
+                {a}
+              </span>
+            ))}
+          </div>
+
+          {/* CTAs duales: comprar / vender desde el primer segundo */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <LocalLink
+              href="/catalogo"
+              className="bg-brand-accent hover:bg-brand-accent-dark text-white font-bold px-6 py-3 rounded-xl transition shadow-lg"
+            >
+              🔍 {t('home.hero.findCamper')}
+            </LocalLink>
+            <LocalLink
+              href="/publicar"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/25 text-white font-bold px-6 py-3 rounded-xl transition"
+            >
+              📢 {t('home.hero.sellFree')}
+            </LocalLink>
+          </div>
 
           {/* Buscador: tipo + provincia + precio → /catalogo */}
           <form action="/catalogo" method="GET" className="mt-8 bg-white rounded-2xl p-3 shadow-2xl flex flex-col lg:flex-row gap-2">
@@ -291,8 +337,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="flex flex-col sm:flex-row gap-2">
               <select name="subcategoria" className="px-3 py-2.5 text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-accent" aria-label={t('home.hero.filterType')}>
                 <option value="">{t('home.hero.allTypes')}</option>
-                {subs.map(s => (
-                  <option key={s.slug} value={s.label}>{s.icon} {s.label}</option>
+                {FAMILIAS.map(f => (
+                  <optgroup key={f.key} label={`${f.icon} ${t(`familias.${f.key}.label`)}`}>
+                    {f.subs.map(slug => {
+                      const s = subs.find(x => x.slug === slug)
+                      if (!s) return null
+                      return <option key={s.slug} value={s.label}>{s.icon} {s.label}</option>
+                    })}
+                  </optgroup>
                 ))}
               </select>
               <select name="ciudad" className="px-3 py-2.5 text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-accent" aria-label={t('home.hero.filterProvince')}>
@@ -311,12 +363,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </button>
           </form>
 
-          {/* Chips rápidos por subcategoría */}
+          {/* Chips rápidos por tipo de vehículo */}
           <div className="mt-5 flex flex-wrap gap-2">
             {subs.map(s => (
               <LocalLink
                 key={s.slug}
-                href={`/catalogo?categoria=camper&subcategoria=${encodeURIComponent(s.label)}`}
+                href={`/catalogo?subcategoria=${encodeURIComponent(s.label)}`}
                 className="text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/15 rounded-full px-3 py-1.5 transition"
               >
                 {s.icon} {s.label}
@@ -344,10 +396,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </div>
           </div>
           <div className="flex items-center justify-center gap-3">
-            <Truck size={28} className="text-brand-accent shrink-0" />
+            <FileCheck size={28} className="text-brand-accent shrink-0" />
             <div className="text-left">
-              <p className="font-black text-gray-900 text-sm">{t('home.stats.range')}</p>
-              <p className="text-xs text-gray-500">{t('home.stats.rangeDesc')}</p>
+              <p className="font-black text-gray-900 text-sm">{t('home.stats.homologation')}</p>
+              <p className="text-xs text-gray-500">{t('home.stats.homologationDesc')}</p>
             </div>
           </div>
           <div className="flex items-center justify-center gap-3">
@@ -361,22 +413,88 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       <div className="max-w-7xl mx-auto px-4">
-        {/* ═══════════ SUBCATEGORÍAS ═══════════ */}
+        {/* ═══════════ FAMILIAS ═══════════ */}
         <section className="py-10">
-          <SectionHeader title={t('home.categories.title')} subtitle={t('home.categories.subtitle')} href="/catalogo" viewAll={t('home.categories.viewAll')} />
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {subs.map(s => (
-              <LocalLink
-                key={s.slug}
-                href={`/catalogo?categoria=camper&subcategoria=${encodeURIComponent(s.label)}`}
-                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition p-5"
+          <SectionHeader title={t('home.categories.title')} subtitle={t('home.categories.subtitle')} href="/marcas" viewAll={t('home.categories.viewAll')} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {FAMILIAS.map(f => (
+              <div
+                key={f.key}
+                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition p-6 flex flex-col"
               >
-                <span className="text-3xl block mb-3">{s.icon}</span>
-                <h3 className="font-bold text-gray-900 group-hover:text-brand-accent transition">{s.label}</h3>
-                <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                  {s.marcas.slice(0, 3).join(' · ')}
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{f.icon}</span>
+                  <h3 className="text-lg font-black text-gray-900 group-hover:text-brand-accent transition">
+                    {t(`familias.${f.key}.label`)}
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-500 mt-2 mb-4 leading-relaxed">
+                  {t(`familias.${f.key}.desc`)}
                 </p>
-              </LocalLink>
+                <div className="flex flex-wrap gap-2 mt-auto">
+                  {f.subs.map(slug => {
+                    const s = subs.find(x => x.slug === slug)
+                    if (!s) return null
+                    return (
+                      <LocalLink
+                        key={s.slug}
+                        href={`/catalogo?subcategoria=${encodeURIComponent(s.label)}`}
+                        title={resumenFabricantes(s.marcas, 4)}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold bg-gray-50 hover:bg-green-50 hover:text-brand-primary border border-gray-200 hover:border-brand-accent rounded-full px-3 py-1.5 transition"
+                      >
+                        {s.icon} {s.label}
+                      </LocalLink>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ═══════════ ¿QUIÉN VENDE AQUÍ? ═══════════ */}
+        <section className="pb-10">
+          <SectionHeader
+            title={t('home.audiences.title')}
+            subtitle={t('home.audiences.subtitle')}
+            href="/publicar"
+            viewAll={t('home.audiences.viewAll')}
+            icon="🤝"
+          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { icon: '👤', key: 'private', vendedor: 'particular', plural: 'particulares' },
+              { icon: '🔧', key: 'camperizer', vendedor: 'camperizador', plural: 'camperizadores' },
+              { icon: '🏢', key: 'pro', vendedor: 'profesional', plural: 'profesionales' },
+            ].map(a => (
+              <div
+                key={a.key}
+                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition p-6 flex flex-col"
+              >
+                <span className="w-12 h-12 rounded-2xl bg-green-50 border border-green-100 flex items-center justify-center text-2xl mb-4" aria-hidden="true">
+                  {a.icon}
+                </span>
+                <h3 className="font-black text-gray-900 text-lg">{t(`home.audiences.${a.key}.title`)}</h3>
+                <p className="text-sm text-gray-500 mt-2 leading-relaxed flex-1">
+                  {t(`home.audiences.${a.key}.desc`)}
+                </p>
+                <div className="mt-4 flex flex-col gap-1.5">
+                  <LocalLink
+                    href="/publicar"
+                    className="inline-flex items-center gap-1 text-sm font-bold text-brand-accent hover:text-brand-dark transition"
+                  >
+                    {t('home.audiences.cta')} <ArrowRight size={14} />
+                  </LocalLink>
+                  {/* Enlace profundo al catálogo filtrado por tipo de vendedor
+                      (Fase 3): también hay camino para el comprador. */}
+                  <LocalLink
+                    href={`/catalogo?vendedor=${a.vendedor}`}
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-brand-primary transition"
+                  >
+                    {t('home.audiences.buyCta', { tipo: t(`tiposVendedor.${a.plural}`) })}
+                  </LocalLink>
+                </div>
+              </div>
             ))}
           </div>
         </section>
@@ -389,19 +507,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
         {/* ═══════════ GRAN VOLUMEN ═══════════ */}
         <section className="pb-10">
-          <SectionHeader title={t('home.granVolumen.title')} subtitle={t('home.granVolumen.subtitle')} href="/catalogo?categoria=camper&subcategoria=Gran%20Volumen" viewAll={t('home.viewAll')} icon="🚐" />
+          <SectionHeader title={t('home.granVolumen.title')} subtitle={t('home.granVolumen.subtitle')} href="/catalogo?subcategoria=Gran%20Volumen" viewAll={t('home.viewAll')} icon="🚐" />
           <SectionGrid items={granVolumen} t={t} />
         </section>
 
         {/* ═══════════ CAMPERS MEDIANAS ═══════════ */}
         <section className="pb-10">
-          <SectionHeader title={t('home.medianas.title')} subtitle={t('home.medianas.subtitle')} href="/catalogo?categoria=camper&subcategoria=Camper%20Mediana%20%2F%20Compacta" viewAll={t('home.viewAll')} icon="🏕️" />
+          <SectionHeader title={t('home.medianas.title')} subtitle={t('home.medianas.subtitle')} href="/catalogo?subcategoria=Camper%20Mediana%20%2F%20Compacta" viewAll={t('home.viewAll')} icon="🏕️" />
           <SectionGrid items={medianas} t={t} />
         </section>
 
         {/* ═══════════ AUTOCARAVANAS ═══════════ */}
         <section className="pb-10">
-          <SectionHeader title={t('home.autocaravanas.title')} subtitle={t('home.autocaravanas.subtitle')} href="/catalogo?categoria=camper&subcategoria=Autocaravana%20Integral" viewAll={t('home.viewAll')} icon="🏭" />
+          <SectionHeader title={t('home.autocaravanas.title')} subtitle={t('home.autocaravanas.subtitle')} href="/catalogo?subcategoria=Autocaravana%20Integral" viewAll={t('home.viewAll')} icon="🏭" />
           <SectionGrid items={autocaravanas} t={t} />
         </section>
 

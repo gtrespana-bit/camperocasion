@@ -3,13 +3,13 @@
 import LocalLink from '@/components/LocalLink'
 import SiteAnnouncement from '@/components/SiteAnnouncement'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { usePathname } from 'next/navigation'
 import { Menu, X, Search, PlusCircle, MessageCircle, Zap, ChevronLeft, Globe } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 import Avatar from '@/components/Avatar'
 import { useTranslations } from 'next-intl'
-import { categoriasData } from '@/lib/categorias'
+import { categoriasData, FAMILIAS } from '@/lib/categorias'
 
 export function Header() {
   const { user } = useAuth()
@@ -28,15 +28,22 @@ export function Header() {
     : `/en${pathname === '/' ? '' : pathname}`
 
   // Subcategorías camper (mercado vertical 100% camper)
-  const categorias = [
-    { id: 'ver-todo', nombre: t('header.allCategories'), icon: '🔍', href: '/catalogo' },
-    ...categoriasData.camper.subs.map(s => ({
-      id: s.slug,
-      nombre: s.label,
-      icon: s.icon,
-      href: `/catalogo?categoria=camper&subcategoria=${encodeURIComponent(s.label)}`,
-    })),
-  ]
+  // Navegación del vertical camper: familias (Campers / Autocaravanas /
+  // Overland) con sus tipos dentro. La categoría única `camper` no se expone.
+  const familiasNav = FAMILIAS.map(f => ({
+    key: f.key,
+    icon: f.icon,
+    nombre: t(`familias.${f.key}.label`),
+    tipos: f.subs
+      .map(slug => categoriasData.camper.subs.find(s => s.slug === slug))
+      .filter((s): s is NonNullable<typeof s> => Boolean(s))
+      .map(s => ({
+        id: s.slug,
+        nombre: s.label,
+        icon: s.icon,
+        href: `/catalogo?subcategoria=${encodeURIComponent(s.label)}`,
+      })),
+  }))
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -322,24 +329,45 @@ export function Header() {
         </div>
       </header>
 
-      {/* ============ SUB-HEADER: CATEGORIES ============ */}
+      {/* ============ SUB-HEADER: FAMILIAS → TIPOS ============ */}
       <div className="hidden md:block bg-white border-b border-gray-200 shadow-sm sticky top-14 z-40">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-1 h-11 overflow-x-auto hide-scrollbar">
-            {categorias.map((cat) => (
-              <LocalLink
-                key={cat.id}
-                href={cat.href}
-                className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition font-medium whitespace-nowrap ${
-                  cat.id === 'ver-todo'
-                    ? 'text-brand-primary bg-green-50 hover:bg-green-100 font-bold'
-                    : 'text-gray-600 hover:text-brand-accent-dark hover:bg-green-50'
-                }`}
-              >
-                <span className="text-base">{cat.icon}</span>
-                {cat.nombre}
-              </LocalLink>
+            <LocalLink
+              href="/catalogo"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition font-bold whitespace-nowrap text-brand-primary bg-green-50 hover:bg-green-100"
+            >
+              <span className="text-base">🔍</span>
+              {t('header.allCategories')}
+            </LocalLink>
+
+            {familiasNav.map((f) => (
+              <Fragment key={f.key}>
+                <span aria-hidden="true" className="mx-1 text-gray-300 select-none">•</span>
+                <span className="flex items-center gap-1 px-1.5 text-[11px] font-black uppercase tracking-wide text-gray-400 whitespace-nowrap">
+                  <span className="text-sm">{f.icon}</span> {f.nombre}
+                </span>
+                {f.tipos.map((tipo) => (
+                  <LocalLink
+                    key={tipo.id}
+                    href={tipo.href}
+                    className="flex items-center gap-1.5 px-2.5 py-2 text-sm rounded-lg transition font-medium whitespace-nowrap text-gray-600 hover:text-brand-accent-dark hover:bg-green-50"
+                  >
+                    <span className="text-base">{tipo.icon}</span>
+                    {tipo.nombre}
+                  </LocalLink>
+                ))}
+              </Fragment>
             ))}
+
+            <span aria-hidden="true" className="mx-1 text-gray-300 select-none">•</span>
+            <LocalLink
+              href="/marcas"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition font-medium whitespace-nowrap text-gray-600 hover:text-brand-accent-dark hover:bg-green-50"
+            >
+              <span className="text-base">🏷️</span>
+              {t('header.brands')}
+            </LocalLink>
           </div>
         </div>
       </div>

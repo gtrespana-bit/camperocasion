@@ -9,12 +9,13 @@ import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { Search, ChevronRight, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { categoriasData } from '@/lib/categorias'
+import { categoriasData, familiaDeSub } from '@/lib/categorias'
 import UbicacionSelector from '@/components/UbicacionSelector'
 import { Pagination } from '@/components/Pagination'
 import { OptimizedProductGrid } from '@/components/OptimizedProductGrid'
 import { CatalogFilters } from '@/components/CatalogFilters'
 import BadgeHomologacion from '@/components/BadgeHomologacion'
+import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
 import { useProductPagination } from '@/hooks/useProductPagination'
 import { useProductLoader } from '@/hooks/useProductLoader'
 import { CATALOG_PAGE_SIZE } from '@/lib/catalog-pagination'
@@ -26,7 +27,7 @@ import {
   leerFiltrosTecnicos,
   leerFiltrosRango,
 } from '@/lib/filtros-tecnicos'
-import { FILTRO_VERIFICADA_PARAM } from '@/lib/catalog-consulta'
+import { FILTRO_VERIFICADA_PARAM, FILTRO_VENDEDOR_PARAM } from '@/lib/catalog-consulta'
 import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { usePrefetch } from '@/hooks/usePrefetch'
 import { productUrl } from '@/lib/product-url'
@@ -47,6 +48,7 @@ type Producto = {
   destacado: boolean
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
+  vendedor_tipo?: string | null
   verificacion_homologacion?: string | null
   reservado?: boolean | null
 }
@@ -140,6 +142,11 @@ const ProductCard = memo(({ p, priority = false, t }: { p: Producto; priority?: 
             <BadgeHomologacion estado={p.verificacion_homologacion} size="sm" />
           </div>
         )}
+        {p.vendedor_tipo && (
+          <div className="mt-1">
+            <BadgeTipoVendedor tipo={p.vendedor_tipo} />
+          </div>
+        )}
         {p.vendedor_verificado && (
           <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full mt-1">
             <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -158,6 +165,8 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const tc = useTranslations('catalog')
   const tp = useTranslations('product')
   const tcm = useTranslations('common')
+  const tfam = useTranslations('familias')
+  const ttv = useTranslations('tiposVendedor')
   // Universal translator function (supports any namespace with variables)
   const t = (key: string, vars?: Record<string, string | number>) => {
     const parts = key.split('.')
@@ -166,6 +175,8 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
     if (ns === 'catalog') return tc(rest, vars as any)
     if (ns === 'product') return tp(rest, vars as any)
     if (ns === 'common') return tcm(rest, vars as any)
+    if (ns === 'familias') return tfam(rest, vars as any)
+    if (ns === 'tiposVendedor') return ttv(rest, vars as any)
     return key
   }
   const searchParams = useSearchParams()
@@ -196,6 +207,9 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   // (es una columna de `productos`), así que se lee aparte.
   const verificada = searchParams.get(FILTRO_VERIFICADA_PARAM) || ''
 
+  // Filtro "¿Quién vende?" (Fase 3): particular, camperizador o profesional.
+  const vendedor = searchParams.get(FILTRO_VENDEDOR_PARAM) || ''
+
   const queryString = searchParams.toString()
   const filtrosTecnicos = useMemo(() => leerFiltrosTecnicos(new URLSearchParams(queryString)), [queryString])
   const firmaTecnica = firmaFiltrosTecnicos(filtrosTecnicos)
@@ -217,7 +231,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
 
   const hasActiveFilters = !!(
     categoria || subcategoria || marca || q || precioMin || precioMax ||
-    ubicacionEstado || ubicacionCiudad || verificada || hayFiltrosTecnicos(filtrosTecnicos) ||
+    ubicacionEstado || ubicacionCiudad || verificada || vendedor || hayFiltrosTecnicos(filtrosTecnicos) ||
     hayFiltrosRango(filtrosRango)
   )
 
@@ -240,12 +254,8 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const totalPages = Math.max(1, Math.ceil(totalCountToUse / itemsPerPage))
 
   // Firma de filtros para detectar cambios y resetear la página.
-  const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, firmaTecnica, firmaRango, verificada].join('|')
+  const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, firmaTecnica, firmaRango, verificada, vendedor].join('|')
   const prevFilterSig = useRef(filterSig)
-
-  const cat = categoriasData[categoria]
-  const subs = cat ? cat.subs : []
-  const allMarcas = subs.flatMap(s => s.marcas || []).filter((v, i, a) => a.indexOf(v) === i).sort()
 
   const setParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -283,11 +293,12 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
         ubicacionEstado,
         ubicacionCiudad,
         [FILTRO_VERIFICADA_PARAM]: verificada || undefined,
+        [FILTRO_VENDEDOR_PARAM]: vendedor || undefined,
         ...filtrosTecnicos,
         ...filtrosRango
       }
     });
-  }, [filterSig, currentPage, itemsPerPage, hasActiveFilters, useServerData, goToPage, loadPage, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada]);
+  }, [filterSig, currentPage, itemsPerPage, hasActiveFilters, useServerData, goToPage, loadPage, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada, vendedor]);
 
   // Precargar la siguiente página cuando sea apropiado
   useEffect(() => {
@@ -307,6 +318,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
             ubicacionEstado,
             ubicacionCiudad,
             [FILTRO_VERIFICADA_PARAM]: verificada || undefined,
+            [FILTRO_VENDEDOR_PARAM]: vendedor || undefined,
             ...filtrosTecnicos,
             ...filtrosRango
           }
@@ -315,34 +327,35 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
 
       return () => clearTimeout(prefetchTimer);
     }
-  }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada, itemsPerPage, prefetchPage]);
+  }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada, vendedor, itemsPerPage, prefetchPage]);
 
+  const subActiva = categoriasData.camper.subs.find(s => s.label === subcategoria)
   const subLabel = subcategoria
-    ? (cat?.subs.find(s => s.label === subcategoria)?.label || subcategoria)
+    ? (subActiva?.label || subcategoria)
     : ''
 
   const tituloMostrar = q
     ? t('catalog.resultsFor', { q })
     : subcategoria
       ? subLabel
-      : cat
-        ? t('catalog.categories.' + categoria)
-        : t('catalog.allProducts')
+      : t('catalog.allProducts')
 
   // Generar breadcrumbs jerárquicos con schema.org
   const breadcrumbs = [
     { label: t('catalog.breadcrumb'), href: '/' },
     { label: t('catalog.title'), href: '/catalogo' }
   ]
-  
-  if (categoria && cat) {
-    breadcrumbs.push({ 
-      label: `${cat.icon} ${t('catalog.categories.' + categoria)}`, 
-      href: `/categoria/${categoria}`
-    })
-  }
-  
+
   if (subcategoria) {
+    // Jerarquía real del vertical: Familia → Tipo (la categoría única
+    // `camper` ya no se expone en la UI).
+    const familia = subActiva ? familiaDeSub(subActiva.slug) : undefined
+    if (familia) {
+      breadcrumbs.push({
+        label: `${familia.icon} ${t('familias.' + familia.key + '.label')}`,
+        href: '' // Agrupación, sin página propia
+      })
+    }
     breadcrumbs.push({ 
       label: subLabel, 
       href: '' // Página actual
@@ -397,7 +410,6 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
       <div className="flex flex-col lg:flex-row gap-6">
         <aside className="w-full lg:w-72 flex-shrink-0">
           <CatalogFilters
-            categoria={categoria}
             subcategoria={subcategoria}
             marca={marca}
             precioMin={precioMin}
@@ -407,6 +419,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
             filtrosTecnicos={filtrosTecnicos}
             rangos={rangosEnBruto}
             verificada={verificada}
+            vendedor={vendedor}
             t={t}
           />
         </aside>
@@ -455,7 +468,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
                     : error}
                 </p>
                 <button
-                  onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, [FILTRO_VERIFICADA_PARAM]: verificada || undefined, ...filtrosTecnicos, ...filtrosRango } })}
+                  onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, [FILTRO_VERIFICADA_PARAM]: verificada || undefined, [FILTRO_VENDEDOR_PARAM]: vendedor || undefined, ...filtrosTecnicos, ...filtrosRango } })}
                   className="mt-3 text-sm font-semibold text-red-700 underline hover:text-red-900"
                 >
                   {t('catalog.retry')}

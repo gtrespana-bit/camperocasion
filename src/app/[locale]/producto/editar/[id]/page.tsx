@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
-import { categoriasData, resolverCampos } from '@/lib/categorias'
+import { categoriasData, resolverCampos, FAMILIAS } from '@/lib/categorias'
 import { ESTADOS, getMunicipiosNombres } from '@/lib/ubicaciones'
 import { Camera, X, ArrowLeft, Save, AlertCircle, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -305,21 +305,22 @@ export default function EditarPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1.5">{t('category')}</label>
-            <select value={categoria} onChange={e => { setCategoria(e.target.value); setSubcategoria('') }} className="w-full border rounded-lg px-4 py-3 bg-white">
-              <option value="">...</option>
-              {Object.entries(categoriasData).map(([k, v]: any) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Subcategoría</label>
-            <select value={subcategoria} onChange={e => setSubcategoria(e.target.value)} disabled={!categoria} className="w-full border rounded-lg px-4 py-3 bg-white disabled:bg-gray-100">
-              <option value="">...</option>
-              {cat?.subs.map((s: any) => <option key={s.label} value={s.label}>{s.icon} {s.label}</option>)}
-            </select>
-          </div>
+        <div>
+          {/* Tipo de vehículo agrupado por familia (Campers / Autocaravanas /
+              Overland). La categoría única `camper` ya no se expone. */}
+          <label className="block text-sm font-semibold text-gray-900 mb-1.5">Tipo de vehículo</label>
+          <select value={subcategoria} onChange={e => setSubcategoria(e.target.value)} className="w-full border rounded-lg px-4 py-3 bg-white">
+            <option value="">...</option>
+            {FAMILIAS.map((f: any) => (
+              <optgroup key={f.key} label={`${f.icon} ${f.label}`}>
+                {f.subs.map((slug: string) => {
+                  const s = categoriasData.camper.subs.find((x: any) => x.slug === slug)
+                  if (!s) return null
+                  return <option key={s.label} value={s.label}>{s.icon} {s.label}</option>
+                })}
+              </optgroup>
+            ))}
+          </select>
         </div>
 
         {marca && <div><label className="block text-sm font-semibold text-gray-900 mb-1.5">Marca</label><input type="text" value={marca} onChange={e => setMarca(e.target.value)} className="w-full border rounded-lg px-4 py-3" /></div>}

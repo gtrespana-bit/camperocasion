@@ -18,6 +18,7 @@ interface Producto {
   destacado: boolean;
   destacado_hasta: string | null;
   vendedor_verificado: boolean | null;
+  vendedor_tipo?: string | null;
   verificacion_homologacion?: string | null
   reservado?: boolean | null;
 }

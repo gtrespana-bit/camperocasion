@@ -34,6 +34,22 @@ export function filtroVerificadaActivo(valor: unknown): boolean {
   return valor === '1' || valor === true || valor === 'si' || valor === 'sí'
 }
 
+/**
+ * Filtro "¿Quién vende?" (Fase 3): particulares, camperizadores o pros.
+ * El valor viaja en la URL (`?vendedor=particular`) y se valida aquí para que
+ * un valor inventado no rompa la query ni filtre de más.
+ */
+export const FILTRO_VENDEDOR_PARAM = 'vendedor'
+
+const TIPOS_VENDEDOR_FILTRO = ['particular', 'camperizador', 'profesional'] as const
+
+export function tipoVendedorFiltro(valor: unknown): string | null {
+  return typeof valor === 'string' &&
+    (TIPOS_VENDEDOR_FILTRO as readonly string[]).includes(valor)
+    ? valor
+    : null
+}
+
 interface QueryCatalogo {
   contains: (column: string, value: Record<string, string>) => unknown
   eq: (column: string, value: string) => unknown
@@ -113,6 +129,8 @@ export function aplicarFiltrosCatalogo<T extends QueryCatalogo>(
     // `eq` (no `contains`): es una columna de texto, no el JSONB.
     q = q.eq('verificacion_homologacion', 'verificada')
   }
+  const tipoVendedor = tipoVendedorFiltro(filtros?.[FILTRO_VENDEDOR_PARAM])
+  if (tipoVendedor) q = q.eq('vendedor_tipo', tipoVendedor)
   return aplicarRangosNumericos(q as T, filtros)
 }
 
@@ -187,7 +205,7 @@ export function esErrorColumnasRango(err: unknown): boolean {
  * canónica del producto se construye con él (`productUrl`).
  */
 export const CATALOG_PRODUCT_COLUMNS =
-  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, verificacion_homologacion, reservado'
+  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, vendedor_tipo, verificacion_homologacion, reservado'
 
 /**
  * Visibilidad pública: aprobados, pendientes de moderación (aún no revisados)
@@ -211,6 +229,8 @@ export interface ProductoCatalogo {
   destacado: boolean
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
+  /** Tipo del vendedor: particular, camperizador o profesional (Fase 2). */
+  vendedor_tipo?: string | null
   /** Estado del expediente de homologación (Fase 0.2). */
   verificacion_homologacion?: string | null
   /** Reserva con señal vigente (Fase 1.2): el anuncio está comprometido. */

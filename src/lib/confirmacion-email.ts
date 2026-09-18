@@ -90,7 +90,12 @@ function escapeHtml(s: string): string {
 }
 
 /** Genera el enlace de confirmación vía service-role (sin enviar nada). */
-async function generarEnlaceConfirmacion(email: string, nombre: string, password?: string) {
+async function generarEnlaceConfirmacion(
+  email: string,
+  nombre: string,
+  password?: string,
+  tipoVendedor?: string,
+) {
   const sb = getAdminClient()
   // Contraseña del usuario: se usa SOLO si el usuario NO existe (primera vez).
   // Si el usuario ya existe sin confirmar, GoTrue ignora la contraseña y solo
@@ -103,7 +108,10 @@ async function generarEnlaceConfirmacion(email: string, nombre: string, password
     email,
     password: clave,
     options: {
-      data: { nombre },
+      // `tipo_vendedor` viaja en la metadata del usuario; el trigger
+      // `crear_perfil()` lo copia a perfiles.tipo_vendedor al confirmar
+      // (migración 202609180002).
+      data: { nombre, ...(tipoVendedor ? { tipo_vendedor: tipoVendedor } : {}) },
       redirectTo: REDIRECT_CONFIRMACION,
     },
   })
@@ -134,8 +142,13 @@ async function generarEnlaceConfirmacion(email: string, nombre: string, password
  * guardada en la cuenta creada. Sin ella el usuario confirmaría su email
  * pero nunca podría entrar (la cuenta quedaría en el limbo).
  */
-export async function enviarConfirmacion(email: string, nombre: string, password?: string): Promise<ResultadoConfirmacion> {
-  const enlace = await generarEnlaceConfirmacion(email, nombre, password)
+export async function enviarConfirmacion(
+  email: string,
+  nombre: string,
+  password?: string,
+  tipoVendedor?: string,
+): Promise<ResultadoConfirmacion> {
+  const enlace = await generarEnlaceConfirmacion(email, nombre, password, tipoVendedor)
   if (!enlace.ok) return enlace
 
   const envio = await enviarEmailDetallado(

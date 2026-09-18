@@ -37,10 +37,10 @@
   },
   "home": {
     "hero": {
-      "chip": "🇪🇸 Spain's camper marketplace",
-      "title1": "Your next camper van",
-      "title2": "is waiting",
-      "subtitle": "The marketplace specialised in used camper vans and motorhomes in Spain. Large volume, medium campers, minicampers, profile, cab-over and integrated motorhomes, and 4x4 overland, from €20,000 to €80,000.",
+      "chip": "🇪 Buying & selling campers and motorhomes · All Spain",
+      "title1": "The meeting point",
+      "title2": "of the camper world in Spain",
+      "subtitle": "Buy or sell your camper van, motorhome or 4x4. From private seller to private buyer, from builder to adventurer. Listing is free, with no commissions.",
       "searchPlaceholder": "Which camper are you looking for? Ducato, California, Adria…",
       "searchButton": "Search",
       "publishFree": "List for free",
@@ -50,7 +50,14 @@
       "filterProvince": "Province",
       "allProvinces": "All of Spain",
       "priceMin": "Min (€)",
-      "priceMax": "Max (€)"
+      "priceMax": "Max (€)",
+      "audiencePrivate": "👤 Private sellers",
+      "audienceCamperizers": "🔧 Converters & builders",
+      "audiencePro": "🏢 Dealers & professionals",
+      "audienceBuyers": "🧭 Buyers",
+      "findCamper": "Find my camper",
+      "sellFree": "Sell for free",
+      "heroImageAlt": "Camper van overlooking the Mediterranean at sunset"
     },
     "stats": {
       "verified": "Verified sellers",
@@ -59,13 +66,15 @@
       "allSpainDesc": "50 provinces + Ceuta and Melilla",
       "range": "€20,000 – €80,000",
       "rangeDesc": "The typical used-camper price range",
-      "free": "Listing is free",
-      "freeDesc": "No commission when you sell"
+      "free": "0% commissions",
+      "freeDesc": "Listing and selling are free",
+      "homologation": "Reviewed paperwork",
+      "homologationDesc": "Vehicle file checked by our team"
     },
     "categories": {
-      "title": "Shop by camper type",
-      "subtitle": "7 subcategories to find exactly what you're looking for",
-      "viewAll": "Browse the full catalog"
+      "title": "Explore by family",
+      "subtitle": "Camper vans, motorhomes and overland: pick your world, then narrow by type",
+      "viewAll": "Brands & models"
     },
     "recent": {
       "title": "Newly listed",
@@ -103,8 +112,8 @@
       "views": "views"
     },
     "cta": {
-      "title": "Selling your camper van?",
-      "subtitle": "List it free in under 5 minutes and reach thousands of buyers across Spain.",
+      "title": "Got a camper someone is looking for?",
+      "subtitle": "Private seller, builder or professional: list it free in under 5 minutes and reach buyers across Spain.",
       "publishNow": "List for free",
       "explore": "Browse campers",
       "note": "No commission · List today, sell today"
@@ -136,6 +145,25 @@
       "step3Desc": "Agree delivery and direct payment with the buyer. You keep 100%.",
       "cta": "List now — it's free",
       "moreInfo": "See how it works"
+    },
+    "audiences": {
+      "title": "Who sells on CamperOcasión?",
+      "subtitle": "The marketplace is open to everyone who lives the camper world",
+      "viewAll": "List my camper",
+      "private": {
+        "title": "Private sellers",
+        "desc": "Sell your camper with no commissions and no middlemen. List for free in 5 minutes with full specs and photos."
+      },
+      "camperizer": {
+        "title": "Converters & workshops",
+        "desc": "Show your builds and conversions to qualified buyers across Spain."
+      },
+      "pro": {
+        "title": "Dealers & professionals",
+        "desc": "Rotate your camper and motorhome stock with a verified profile and reach buyers looking for exactly what you sell."
+      },
+      "cta": "Sell for free",
+      "buyCta": "Buy from {tipo}"
     }
   },
   "notFound": {
@@ -190,7 +218,8 @@
       "password_mismatch": "Passwords do not match",
       "error": "Registration error",
       "subtitle": "Join for free. Start selling today.",
-      "creating": "Creating account..."
+      "creating": "Creating account...",
+      "sellerTypeLabel": "What kind of seller are you?"
     },
     "confirmacion": {
       "title": "Almost there!",
@@ -224,6 +253,7 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "allCategories": "See All",
+    "brands": "Brands & models",
     "categories": {
       "camper": "Camper Vans and Motorhomes",
       "gran-volumen": "Large Volume",
@@ -247,11 +277,48 @@
     "madeWithLove": "Made with ❤️ in Spain",
     "allRightsReserved": "All rights reserved.",
     "cities": "Provinces",
-    "classifiedsIn": "Campers in {city}"
+    "classifiedsIn": "Campers in {city}",
+    "brands": "Brands & models"
+  },
+  "familias": {
+    "campers": {
+      "label": "Camper Vans",
+      "desc": "Factory-built or custom-converted vans: large volume, medium and minicampers."
+    },
+    "autocaravanas": {
+      "label": "Motorhomes",
+      "desc": "Low-profile, overcab and integrated motorhomes from the great European builders."
+    },
+    "overland": {
+      "label": "Overland & 4x4",
+      "desc": "Pickups and 4x4s with slide-in cells to travel without limits."
+    }
+  },
+  "marcasPage": {
+    "home": "Home",
+    "breadcrumb": "Brands & models",
+    "heroTitle": "Camper van and motorhome brands and models",
+    "heroSubtitle": "The full catalog organized by manufacturer and model: base vehicles to convert, factory campers, motorhomes and 4x4 overland rigs. Each model shows which types it suits.",
+    "statsBrands": "{count} manufacturers",
+    "statsModels": "{count} brands & models",
+    "viewAds": "View listings",
+    "viewCatalog": "Browse the full catalog",
+    "publishCta": "List your camper for free",
+    "ctaTitle": "Looking for a specific brand?",
+    "ctaSubtitle": "Filter the catalog by type, brand and model, or list your camper or motorhome for free in under 5 minutes.",
+    "desc": {
+      "gran-volumen": "Large vans (L2H2 and up), converted or ready to convert, plus factory campervans on van chassis: the flagship category of the camper world.",
+      "camper-mediana": "Medium and compact campers, factory-built or converted: Volkswagen California, Mercedes Marco Polo, Ford Nugget and friends. Easy to park, ready to travel.",
+      "minicamper": "Compact minivans converted into campers: the most affordable and agile way to travel, with bed and kitchen module in the footprint of a car.",
+      "perfilada": "Low-profile motorhomes built by manufacturers on Fiat, Ford or Mercedes chassis: the best sellers, balancing price and aerodynamics.",
+      "capuchina": "Overcab motorhomes with a fixed bed above the cabin: the family classic with the most sleeping berths.",
+      "integral": "Integrated motorhomes from the great European manufacturers: own bodywork and cab, maximum comfort on wheels.",
+      "overland": "Pickups and 4x4s with slide-in cells or overland builds for off-grid adventure and total self-sufficiency."
+    }
   },
   "catalog": {
     "title": "Catalog",
-    "allProducts": "All products",
+    "allProducts": "Full camper catalog",
     "results": "{count} results",
     "category": "Category",
     "all": "All",
@@ -275,6 +342,7 @@
     "retry": "Retry",
     "serviceUnavailable": "The catalogue is temporarily unavailable. Please try again in a few minutes.",
     "clearFilters": "Clear filters",
+    "whoSells": "Who is selling?",
     "search": "Search",
     "states": {
       "Andalucía": "Andalucía",
@@ -336,17 +404,19 @@
       "heating": "Stationary heater",
       "hotWater": "Hot water",
       "bathroom": "Bathroom / Shower",
-   "battery": "Leisure battery",
-   "solar": "Solar panel",
-   "inverter": "220V inverter",
-   "fridge": "Fridge",
-   "verified": "Verified type approval only",
-   "rangeTitle": "Numeric ranges",
-   "kmMax": "Max kilometres",
-   "anioMin": "Minimum year",
-   "placaWatiosMin": "Min solar panel (W)",
-   "inversorWatiosMin": "Min inverter (W)"
-  }
+      "battery": "Leisure battery",
+      "solar": "Solar panel",
+      "inverter": "220V inverter",
+      "fridge": "Fridge",
+      "verified": "Verified type approval only",
+      "rangeTitle": "Numeric ranges",
+      "kmMax": "Max kilometres",
+      "anioMin": "Minimum year",
+      "placaWatiosMin": "Min solar panel (W)",
+      "inversorWatiosMin": "Min inverter (W)"
+    },
+    "typeLabel": "Vehicle type",
+    "allTypes": "All types"
   },
   "productCard": {
     "featured": "Featured",
@@ -357,6 +427,41 @@
     "homologacionRechazada": "Documents rejected",
     "homologacionSinExpediente": "No documents yet",
     "reserved": "Reserved"
+  },
+  "tiposVendedor": {
+    "particular": "Private seller",
+    "camperizador": "Camper builder",
+    "profesional": "Pro",
+    "particularDesc": "Selling my camper or gear",
+    "camperizadorDesc": "I build and sell camper projects",
+    "profesionalDesc": "Company, workshop or dealership",
+    "particulares": "Private sellers",
+    "camperizadores": "Camper builders",
+    "profesionales": "Pros"
+  },
+  "vendedorLanding": {
+    "particular": {
+      "title": "Campervans from private sellers",
+      "metaTitle": "Buy a camper from private sellers | CamperOcasión",
+      "metaDescription": "Buy campervans and motorhomes directly from their owners. No middlemen: person-to-person deals across Spain.",
+      "intro": "Buy directly from the owners: no middlemen, real history and person-to-person deals. Every listing carries the \"Private seller\" badge so you always know who you are talking to."
+    },
+    "camperizador": {
+      "title": "Campers from builders",
+      "metaTitle": "Buy a camper from builders | CamperOcasión",
+      "metaDescription": "Hand-built conversions and custom projects from people who live the camper life. Straight from the builder's workshop to you.",
+      "intro": "Projects built by people who live on the road: hand-built conversions, solutions tested on real trips and sellers who know every detail of their build."
+    },
+    "profesional": {
+      "title": "Campers and motorhomes from pros",
+      "metaTitle": "Buy a camper from professionals | CamperOcasión",
+      "metaDescription": "Workshops, professional converters and dealers specialised in campers. Inspected vehicles and professional backing across Spain.",
+      "intro": "Workshops and dealers specialised in campers: fresh stock, vehicles inspected before sale and professional backing."
+    },
+    "gridTitle": "Listings from {tipo} right now",
+    "empty": "No listings of this type right now. Check back soon… or be the first to post.",
+    "publishCta": "Post for free",
+    "catalogCta": "Browse the full catalog"
   },
   "product": {
     "featured": "Featured",
@@ -572,7 +677,10 @@
     "conditionGood": "Good",
     "conditionUsed": "Used",
     "optimizing": "Optimizing images…",
-    "priceEur": "Price (€)"
+    "priceEur": "Price (€)",
+    "family": "Vehicle family",
+    "asLabel": "Listing as",
+    "changeTipo": "Change"
   },
   "dashboard": {
     "passwordTitle": "Change password",
@@ -653,7 +761,9 @@
     "reviews": "Reviews",
     "noReviews": "No reviews yet. Buyers can leave one after a transaction.",
     "tabReservations": "Reservations",
-    "tabInspecciones": "Inspections"
+    "tabInspecciones": "Inspections",
+    "sellerTypeLabel": "What kind of seller are you?",
+    "sellerTypeHint": "Shown next to your listings so buyers know who is selling."
   },
   "contact": {
     "title": "Contact Us",
