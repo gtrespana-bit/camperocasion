@@ -5,7 +5,18 @@
  * (Furgonetas Camper y Autocaravanas) con 7 subcategorías y campos técnicos
  * específicos (mecánica, distintivo DGT, homologación, habitabilidad y
  * equipamiento/autonomía camper).
+ *
+ * Las marcas y modelos de cada subcategoría NO viven aquí: se derivan del
+ * catálogo maestro `@/lib/marcas` (fabricante → modelo → para qué es apto),
+ * que es la fuente única de verdad de filtros, /publicar y la página /marcas.
  */
+
+import {
+  modelosDeSubcategoria,
+  valoresUnicos,
+  type MarcaModelo,
+  type SubSlug,
+} from './marcas'
 
 export interface CatField {
   label: string
@@ -18,8 +29,13 @@ export interface CatSub {
   label: string
   icon: string
   /** Slug para URLs de SEO programático (/[provincia]/gran-volumen). */
-  slug: string
-  marcas: string[]
+  slug: SubSlug
+  /**
+   * Marcas y modelos aptos para esta subcategoría, ya estructuradas por
+   * fabricante (ver `@/lib/marcas`). El valor canónico de cada una
+   * (`m.valor`) es lo que se guarda en `productos.marca`.
+   */
+  marcas: MarcaModelo[]
   campos: CatField[]
 }
 
@@ -28,6 +44,50 @@ export interface CatConfig {
   icon: string
   slug: string
   subs: CatSub[]
+}
+
+// ── Familias: el primer nivel de la taxonomía ────────────────────────────
+//
+// CamperOcasión es un vertical 100% camper: la "categoría" única es `camper`
+// (se mantiene por compatibilidad con `productos.categoria_id` y el flujo de
+// publicación), así que el nivel que organiza la navegación son las FAMILIAS:
+// tres mundos que agrupan los 7 tipos. Es lo que ve el usuario en portada,
+// filtros, publicar y menús; la categoría ya no se presenta nunca en la UI.
+
+export interface FamiliaCamper {
+  /** Clave estable para i18n y keys de React. */
+  key: string
+  /** Etiqueta por defecto (es-ES); la UI puede traducirla vía `familias.<key>.label`. */
+  label: string
+  icon: string
+  /** Slugs de los tipos (subcategorías) que agrupa. */
+  subs: SubSlug[]
+}
+
+export const FAMILIAS: FamiliaCamper[] = [
+  {
+    key: 'campers',
+    label: 'Furgonetas Camper',
+    icon: '🚐',
+    subs: ['gran-volumen', 'camper-mediana', 'minicamper'],
+  },
+  {
+    key: 'autocaravanas',
+    label: 'Autocaravanas',
+    icon: '🏡',
+    subs: ['perfilada', 'capuchina', 'integral'],
+  },
+  {
+    key: 'overland',
+    label: 'Overland y 4x4',
+    icon: '🌍',
+    subs: ['overland'],
+  },
+]
+
+/** Familia a la que pertenece un tipo (slug de subcategoría). */
+export function familiaDeSub(slug: string): FamiliaCamper | undefined {
+  return FAMILIAS.find(f => f.subs.includes(slug as SubSlug))
 }
 
 let _anos: string[] | undefined
@@ -158,7 +218,7 @@ export const categoriasData: Record<string, CatConfig> = {
         label: 'Gran Volumen',
         icon: '🚐',
         slug: 'gran-volumen',
-        marcas: ['Fiat Ducato', 'Citroën Jumper', 'Peugeot Boxer', 'Renault Master', 'Volkswagen Crafter', 'Mercedes-Benz Sprinter', 'MAN TGE', 'Iveco Daily', 'Ford Transit'],
+        marcas: modelosDeSubcategoria('gran-volumen'),
         campos: [
           ...camposMecanica(TAMANOS_GRAN_VOLUMEN),
           ...camposHabitabilidad(),
@@ -169,7 +229,7 @@ export const categoriasData: Record<string, CatConfig> = {
         label: 'Camper Mediana / Compacta',
         icon: '🏕️',
         slug: 'camper-mediana',
-        marcas: ['Volkswagen California', 'Volkswagen Transporter', 'Volkswagen Multivan', 'Mercedes Marco Polo', 'Mercedes Vito', 'Ford Transit Custom', 'Renault Trafic', 'Toyota Proace', 'Peugeot Expert Camper', 'Citroën Jumpy Camper'],
+        marcas: modelosDeSubcategoria('camper-mediana'),
         campos: [
           ...camposMecanica(TAMANOS_MEDIANA),
           ...camposHabitabilidad(),
@@ -180,7 +240,7 @@ export const categoriasData: Record<string, CatConfig> = {
         label: 'Minicamper',
         icon: '🚙',
         slug: 'minicamper',
-        marcas: ['Citroën Berlingo', 'Peugeot Rifter', 'Peugeot Partner', 'Renault Kangoo', 'Volkswagen Caddy', 'Dacia Dokker', 'Fiat Doblò', 'Toyota Proace City'],
+        marcas: modelosDeSubcategoria('minicamper'),
         campos: [
           ...camposMecanica(TAMANOS_MINI),
           ...camposHabitabilidad(),
@@ -191,7 +251,7 @@ export const categoriasData: Record<string, CatConfig> = {
         label: 'Autocaravana Perfilada',
         icon: '🛖',
         slug: 'perfilada',
-        marcas: ['Fiat Ducato Autocaravana', 'Ford Transit Autocaravana', 'Volkswagen Crafter Autocaravana', 'Mercedes-Benz Sprinter Autocaravana', 'Renault Master Autocaravana', 'Iveco Daily Autocaravana', 'Opel Movano Autocaravana'],
+        marcas: modelosDeSubcategoria('perfilada'),
         campos: [
           ...camposMecanica(TAMANOS_GRAN_VOLUMEN),
           ...camposHabitabilidad(),
@@ -202,7 +262,7 @@ export const categoriasData: Record<string, CatConfig> = {
         label: 'Autocaravana Capuchina',
         icon: '🚌',
         slug: 'capuchina',
-        marcas: ['Fiat Ducato Capuchina', 'Ford Transit Capuchina', 'Volkswagen Crafter Capuchina', 'Renault Master Capuchina', 'Opel Movano Capuchina'],
+        marcas: modelosDeSubcategoria('capuchina'),
         campos: [
           ...camposMecanica(TAMANOS_GRAN_VOLUMEN),
           ...camposHabitabilidad(),
@@ -213,7 +273,7 @@ export const categoriasData: Record<string, CatConfig> = {
         label: 'Autocaravana Integral',
         icon: '🏭',
         slug: 'integral',
-        marcas: ['Adria', 'Hymer', 'Challenger', 'Laika', 'Swift', 'Profile', 'Autocamper', 'PIK', 'Benimar', 'BMC', 'Niesmann + Bissel', 'Knaus'],
+        marcas: modelosDeSubcategoria('integral'),
         campos: [
           ...camposMecanica(),
           ...camposHabitabilidad(),
@@ -224,7 +284,7 @@ export const categoriasData: Record<string, CatConfig> = {
         label: 'Célula y 4x4 Overland',
         icon: '🌍',
         slug: 'overland',
-        marcas: ['Toyota Hilux Overland', 'Mitsubishi L200', 'Nissan Navara', 'Volkswagen Amarok', 'Ford Ranger', 'Land Rover Defender', 'Dacia Pik-Pik Célula', 'RAM ProMaster Célula'],
+        marcas: modelosDeSubcategoria('overland'),
         campos: [
           ...camposMecanica(),
           ...camposHabitabilidad(),
@@ -255,9 +315,14 @@ export function getSubBySlug(catKey: string, subSlug: string): CatSub | undefine
   return cat.subs.find(s => s.slug === subSlug)
 }
 
+/**
+ * Valores canónicos de marca/modelo de una subcategoría (lo que se guarda en
+ * `productos.marca` y viaja en `?marca=`). Para renderizar agrupado por
+ * fabricante usa `agruparPorFabricante(sub.marcas)` de `@/lib/marcas`.
+ */
 export function getMarcaOptions(catKey: string, subLabel: string): string[] {
   const sub = getSubConfig(catKey, subLabel)
-  return sub ? sub.marcas : []
+  return sub ? valoresUnicos(sub.marcas) : []
 }
 
 /** ¿Es este campo el selector de marca de la subcategoría? */
@@ -286,7 +351,7 @@ export function resolverCampos(sub: CatSub | undefined): CatField[] {
       return { ...campo, options: aniosSelect() }
     }
     if (esCampoMarca(campo) && !campo.options?.length) {
-      return { ...campo, options: [...sub.marcas] }
+      return { ...campo, options: valoresUnicos(sub.marcas) }
     }
     return { ...campo, options: campo.options || [] }
   })

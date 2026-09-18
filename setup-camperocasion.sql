@@ -5355,3 +5355,26 @@ drop policy if exists "comprobantes-reserva: seller read" on storage.objects;
 drop policy if exists "comprobantes-reserva: admin read" on storage.objects;
 
 drop function if exists public.fn_soy_parte_de_la_reserva(uuid);
+
+-- ═══════════════════════════════════════════════════════════════════════
+-- CamperOcasión — Limpieza de categorías legadas (202609170005)
+-- Mismo bloque que supabase/migrations/202609170005_limpieza_categorias_legado.sql,
+-- anexado aquí para instalaciones frescas: el vertical es 100% camper y la
+-- única categoría real es `camper`. Se borran las del marketplace
+-- generalista original SOLO si ningún producto las referencia.
+-- ═══════════════════════════════════════════════════════════════════════
+
+delete from public.categorias c
+where c.nombre in (
+  'vehiculos',
+  'tecnologia',
+  'moda',
+  'hogar',
+  'herramientas',
+  'otros',
+  'repuestos',
+  'materiales'
+)
+and not exists (
+  select 1 from public.productos p where p.categoria_id = c.id
+);

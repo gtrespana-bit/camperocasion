@@ -3,13 +3,21 @@
 import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
-import { categoriasData } from '@/lib/categorias'
+import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import { CIUDADES_SEO } from '@/lib/ubicaciones-seo'
 
-// Subcategorías camper → filtros del catálogo
-const SUBCATEGORIAS_FOOTER = categoriasData.camper.subs.map(s => ({
-  label: s.label,
-  href: `/catalogo?categoria=camper&subcategoria=${encodeURIComponent(s.label)}`,
+// Familias → tipos: la navegación del footer refleja la taxonomía real del
+// vertical (la categoría única `camper` no se expone en la UI).
+const FAMILIAS_FOOTER = FAMILIAS.map(f => ({
+  key: f.key,
+  icon: f.icon,
+  tipos: f.subs
+    .map(slug => categoriasData.camper.subs.find(s => s.slug === slug))
+    .filter((s): s is NonNullable<typeof s> => Boolean(s))
+    .map(s => ({
+      label: s.label,
+      href: `/catalogo?subcategoria=${encodeURIComponent(s.label)}`,
+    })),
 }))
 
 // Provincias principales → landing pages SEO locales (/[provincia])
@@ -35,11 +43,20 @@ export function Footer() {
             <nav aria-label={t('footer.categories')}>
               <h3 className="text-white font-bold mb-3">{t('footer.categories')}</h3>
               <ul className="space-y-2 text-sm">
-                {SUBCATEGORIAS_FOOTER.map(c => (
-                  <li key={c.label}>
-                    <LocalLink href={c.href} className="hover:text-green-400 transition">
-                      {c.label}
-                    </LocalLink>
+                {FAMILIAS_FOOTER.map(f => (
+                  <li key={f.key}>
+                    <p className="text-gray-400 text-xs font-bold uppercase tracking-wide mt-2 first:mt-0">
+                      {f.icon} {t(`familias.${f.key}.label`)}
+                    </p>
+                    <ul className="mt-1 space-y-1">
+                      {f.tipos.map(c => (
+                        <li key={c.label}>
+                          <LocalLink href={c.href} className="hover:text-green-400 transition">
+                            {c.label}
+                          </LocalLink>
+                        </li>
+                      ))}
+                    </ul>
                   </li>
                 ))}
               </ul>
@@ -60,6 +77,7 @@ export function Footer() {
               <h3 className="text-white font-bold mb-3">{t('footer.information')}</h3>
               <ul className="space-y-2 text-sm">
                 {[
+                  [t('footer.brands'), '/marcas'],
                   ['Blog', '/blog'],
                   ['Calcular el ITP', '/calcular-itp'],
                   ['Compra segura', '/compra-segura-camper'],

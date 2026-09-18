@@ -73,6 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/compra-segura-camper', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/contrato-compraventa', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/gestoria-cambio-nombre', changeFrequency: 'monthly', priority: 0.7 },
+    { path: '/marcas', changeFrequency: 'weekly', priority: 0.8 },
     { path: '/como-funciona', changeFrequency: 'monthly', priority: 0.6 },
     { path: '/como-instalar-app', changeFrequency: 'monthly', priority: 0.5 },
     { path: '/contacto', changeFrequency: 'monthly', priority: 0.5 },

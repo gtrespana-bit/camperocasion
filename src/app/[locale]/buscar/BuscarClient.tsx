@@ -9,7 +9,7 @@ import { useEffect, useState, useCallback, useMemo, use } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
-import { categoriasData } from '@/lib/categorias'
+import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import UbicacionSelector from '@/components/UbicacionSelector'
 import { useTranslations } from 'next-intl'
 import { productUrl } from '@/lib/product-url'
@@ -23,6 +23,7 @@ import {
   esErrorColumnasRango,
   type FiltrosCatalogo,
 } from '@/lib/catalog-consulta'
+import { SelectorMarca } from '@/components/SelectorMarca'
 
 type Producto = {
   id: string
@@ -150,6 +151,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
   const router = useRouter()
   const t = useTranslations('search')
   const tc = useTranslations('catalog')
+  const t2 = useTranslations()
   // Traductor universal para el panel técnico (resolve 'catalog.*' y, si la
   // clave no está en 'search', cae a 'catalog').
   const tu = (key: string) => {
@@ -260,8 +262,13 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
   }
 
   const cat = categoria ? categoriasData[categoria] : undefined
-  const subs = cat ? cat.subs : []
-  const allMarcas = subs.flatMap((s) => s.marcas || []).filter((v, i, a) => a.indexOf(v) === i).sort()
+  // El buscador es 100% camper: los tipos se ofrecen siempre aunque no haya
+  // categoría en la URL (`categoria` solo queda como parámetro legado).
+  const subs = cat ? cat.subs : categoriasData.camper.subs
+  // Marcas/modelos estructurados por fabricante (ver @/lib/marcas). Con
+  // subcategoría activa solo se ofrecen los modelos aptos para ella.
+  const subActiva = subcategoria ? subs.find((s) => s.label === subcategoria) : undefined
+  const modelosMarca = subActiva ? subActiva.marcas : subs.flatMap((s) => s.marcas || [])
 
   const setParam = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams ? Object.entries(searchParams).filter(([_, v]) => v).map(([k, v]) => [k, v!]) : [])
@@ -423,29 +430,26 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
             </div>
 
             <div className="space-y-4">
+              {/* Tipo de vehículo: 7 tipos agrupados por familia (Campers /
+                  Autocaravanas / Overland). El buscador es 100% camper, así
+                  que no hay selector de categoría. */}
               <div>
-                <label className="block text-sm font-bold text-gray-900 mb-1.5">{t('category')}</label>
-                <select value={categoria} onChange={(e) => setParam('categoria', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-accent">
-                  <option value="">Todas</option>
-                  {Object.entries(categoriasData).map(([key, c]) => (
-                    <option key={key} value={key}>{c.label} {c.icon}</option>
+                <label className="block text-sm font-bold text-gray-900 mb-1.5">{tc('typeLabel')}</label>
+                <select value={subcategoria} onChange={(e) => setParam('subcategoria', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-accent">
+                  <option value="">{tc('allTypes')}</option>
+                  {FAMILIAS.map((f) => (
+                    <optgroup key={f.key} label={`${f.icon} ${t2(`familias.${f.key}.label`)}`}>
+                      {f.subs.map((slug) => {
+                        const s = subs.find((x) => x.slug === slug)
+                        if (!s) return null
+                        return <option key={s.label} value={s.label}>{s.icon} {s.label}</option>
+                      })}
+                    </optgroup>
                   ))}
                 </select>
               </div>
 
-              {subs.length > 0 && (
-                <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-1.5">Subcategoria</label>
-                  <select value={subcategoria} onChange={(e) => setParam('subcategoria', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-accent">
-                    <option value="">Todas</option>
-                    {subs.map((s) => (
-                      <option key={s.label} value={s.label}>{s.icon} {s.label}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {allMarcas.length > 0 && (
+              {modelosMarca.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between">
                     <label className="block text-sm font-bold text-gray-900 mb-1.5">{t('brand')}</label>
@@ -455,12 +459,13 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
                       </button>
                     )}
                   </div>
-                  <select value={marca} onChange={(e) => setParam('marca', e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-accent">
-                    <option value="">Todas</option>
-                    {allMarcas.map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
+                  <SelectorMarca
+                    value={marca}
+                    modelos={modelosMarca}
+                    allLabel={tc('allBrands')}
+                    onChange={(v) => setParam('marca', v)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-accent"
+                  />
                 </div>
               )}
 

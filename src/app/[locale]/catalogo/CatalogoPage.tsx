@@ -9,7 +9,7 @@ import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { Search, ChevronRight, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { categoriasData } from '@/lib/categorias'
+import { categoriasData, familiaDeSub } from '@/lib/categorias'
 import UbicacionSelector from '@/components/UbicacionSelector'
 import { Pagination } from '@/components/Pagination'
 import { OptimizedProductGrid } from '@/components/OptimizedProductGrid'
@@ -158,6 +158,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const tc = useTranslations('catalog')
   const tp = useTranslations('product')
   const tcm = useTranslations('common')
+  const tfam = useTranslations('familias')
   // Universal translator function (supports any namespace with variables)
   const t = (key: string, vars?: Record<string, string | number>) => {
     const parts = key.split('.')
@@ -166,6 +167,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
     if (ns === 'catalog') return tc(rest, vars as any)
     if (ns === 'product') return tp(rest, vars as any)
     if (ns === 'common') return tcm(rest, vars as any)
+    if (ns === 'familias') return tfam(rest, vars as any)
     return key
   }
   const searchParams = useSearchParams()
@@ -243,10 +245,6 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, firmaTecnica, firmaRango, verificada].join('|')
   const prevFilterSig = useRef(filterSig)
 
-  const cat = categoriasData[categoria]
-  const subs = cat ? cat.subs : []
-  const allMarcas = subs.flatMap(s => s.marcas || []).filter((v, i, a) => a.indexOf(v) === i).sort()
-
   const setParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
     if (value) params.set(key, value); else params.delete(key)
@@ -317,32 +315,33 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
     }
   }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada, itemsPerPage, prefetchPage]);
 
+  const subActiva = categoriasData.camper.subs.find(s => s.label === subcategoria)
   const subLabel = subcategoria
-    ? (cat?.subs.find(s => s.label === subcategoria)?.label || subcategoria)
+    ? (subActiva?.label || subcategoria)
     : ''
 
   const tituloMostrar = q
     ? t('catalog.resultsFor', { q })
     : subcategoria
       ? subLabel
-      : cat
-        ? t('catalog.categories.' + categoria)
-        : t('catalog.allProducts')
+      : t('catalog.allProducts')
 
   // Generar breadcrumbs jerárquicos con schema.org
   const breadcrumbs = [
     { label: t('catalog.breadcrumb'), href: '/' },
     { label: t('catalog.title'), href: '/catalogo' }
   ]
-  
-  if (categoria && cat) {
-    breadcrumbs.push({ 
-      label: `${cat.icon} ${t('catalog.categories.' + categoria)}`, 
-      href: `/categoria/${categoria}`
-    })
-  }
-  
+
   if (subcategoria) {
+    // Jerarquía real del vertical: Familia → Tipo (la categoría única
+    // `camper` ya no se expone en la UI).
+    const familia = subActiva ? familiaDeSub(subActiva.slug) : undefined
+    if (familia) {
+      breadcrumbs.push({
+        label: `${familia.icon} ${t('familias.' + familia.key + '.label')}`,
+        href: '' // Agrupación, sin página propia
+      })
+    }
     breadcrumbs.push({ 
       label: subLabel, 
       href: '' // Página actual
@@ -397,7 +396,6 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
       <div className="flex flex-col lg:flex-row gap-6">
         <aside className="w-full lg:w-72 flex-shrink-0">
           <CatalogFilters
-            categoria={categoria}
             subcategoria={subcategoria}
             marca={marca}
             precioMin={precioMin}

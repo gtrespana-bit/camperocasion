@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { XCircle } from 'lucide-react';
-import { categoriasData } from '@/lib/categorias';
+import { categoriasData, FAMILIAS } from '@/lib/categorias';
 import {
   GRUPOS_FILTROS_TECNICOS,
   type FiltrosTecnicos,
@@ -10,9 +10,9 @@ import {
 import { hayFiltrosRango } from '@/lib/filtros-tecnicos'
 import { FILTRO_VERIFICADA_PARAM } from '@/lib/catalog-consulta';
 import { FiltrosTecnicosPanel } from './FiltrosTecnicosPanel';
+import { SelectorMarca } from './SelectorMarca';
 
 interface CatalogFiltersProps {
-  categoria: string;
   subcategoria: string;
   marca: string;
   precioMin: string;
@@ -37,7 +37,6 @@ const selectClass =
 const labelClass = 'block text-sm font-bold text-gray-900 mb-1.5';
 
 export const CatalogFilters = ({
-  categoria,
   subcategoria,
   marca,
   precioMin,
@@ -53,19 +52,23 @@ export const CatalogFilters = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const cat = categoriasData[categoria];
-  const subs = cat ? cat.subs : [];
-  const allMarcas = subs.flatMap(s => s.marcas || []).filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a.localeCompare(b, 'es'));
+  // Marketplace 100% camper: no hay selector de categoría (solo existe
+  // `camper` y ya se aplica implícitamente). La navegación la organizan las
+  // familias → tipos → marca/modelo.
+  const subs = categoriasData.camper.subs;
+  // Con subcategoría elegida solo se ofrecen los modelos aptos para ella:
+  // una Benimar no tiene sentido filtrando furgones de Gran Volumen.
+  const subActiva = subcategoria ? subs.find(s => s.label === subcategoria) : undefined;
+  const modelosMarca = subActiva ? subActiva.marcas : subs.flatMap(s => s.marcas || []);
 
   const setParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value); else params.delete(key);
-    if (key === 'categoria') params.delete('subcategoria');
     router.push(`${pathname}?${params.toString()}`);
   };
 
   const hasActiveFilters = !!(
-    categoria || subcategoria || marca || precioMin || precioMax ||
+    subcategoria || marca || precioMin || precioMax ||
     ubicacionEstado || ubicacionCiudad || verificada ||
     GRUPOS_FILTROS_TECNICOS.some(g => g.filtros.some(f => filtrosTecnicos[f.param])) ||
     hayFiltrosRango(rangos)
@@ -78,74 +81,58 @@ export const CatalogFilters = ({
     <div className="bg-white rounded-xl p-5 shadow-sm sticky top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
       <h3 className="font-bold text-lg text-gray-900 mb-4">🔍 {t('catalog.filtersTitle')}</h3>
 
+      {/* Tipo de vehículo: los 7 tipos agrupados por familia (Campers /
+          Autocaravanas / Overland), siempre visible. */}
       <div className="mb-4">
-        <label htmlFor="filter-categoria" className={labelClass}>
-          {t('catalog.category')}
+        <label htmlFor="filter-subcategoria" className={labelClass}>
+          {t('catalog.typeLabel')}
         </label>
         <select
-          id="filter-categoria"
-          value={categoria}
-          onChange={e => setParam('categoria', e.target.value)}
+          id="filter-subcategoria"
+          value={subcategoria}
+          onChange={e => setParam('subcategoria', e.target.value)}
           className={selectClass}
         >
-          <option value="">{t('catalog.all')}</option>
-          {Object.entries(categoriasData).map(([key, c]) => (
-            <option key={key} value={key}>
-              {c.icon} {t('catalog.categories.' + key)}
-            </option>
+          <option value="">{t('catalog.allTypes')}</option>
+          {FAMILIAS.map(f => (
+            <optgroup key={f.key} label={`${f.icon} ${t(`familias.${f.key}.label`)}`}>
+              {f.subs.map(slug => {
+                const s = subs.find(x => x.slug === slug);
+                if (!s) return null;
+                return (
+                  <option key={s.label} value={s.label}>
+                    {s.icon} {s.label}
+                  </option>
+                );
+              })}
+            </optgroup>
           ))}
         </select>
       </div>
 
-      {subs.length > 0 && (
-        <div className="mb-4">
-          <label htmlFor="filter-subcategoria" className={labelClass}>
-            {t('catalog.subcategory')}
+      <div className="mb-4">
+        <div className="flex items-center justify-between">
+          <label htmlFor="filter-marca" className={labelClass}>
+            {t('catalog.brandLabel')}
           </label>
-          <select
-            id="filter-subcategoria"
-            value={subcategoria}
-            onChange={e => setParam('subcategoria', e.target.value)}
-            className={selectClass}
-          >
-            <option value="">{t('catalog.allSubs')}</option>
-            {subs.map(s => (
-              <option key={s.label} value={s.label}>
-                {s.icon} {s.label}
-              </option>
-            ))}
-          </select>
+          {marca && (
+            <button
+              onClick={() => setParam('marca', '')}
+              className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+            >
+              <XCircle size={12} /> {t('catalog.remove')}
+            </button>
+          )}
         </div>
-      )}
-
-      {allMarcas.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between">
-            <label htmlFor="filter-marca" className={labelClass}>
-              {t('catalog.brandLabel')}
-            </label>
-            {marca && (
-              <button
-                onClick={() => setParam('marca', '')}
-                className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
-              >
-                <XCircle size={12} /> {t('catalog.remove')}
-              </button>
-            )}
-          </div>
-          <select
-            id="filter-marca"
-            value={marca}
-            onChange={e => setParam('marca', e.target.value)}
-            className={selectClass}
-          >
-            <option value="">{t('catalog.allBrands')}</option>
-            {allMarcas.map(m => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        </div>
-      )}
+        <SelectorMarca
+          id="filter-marca"
+          value={marca}
+          modelos={modelosMarca}
+          allLabel={t('catalog.allBrands')}
+          onChange={v => setParam('marca', v)}
+          className={selectClass}
+        />
+      </div>
 
       <div className="mb-4">
         <label htmlFor="filter-precio-min" className={labelClass}>

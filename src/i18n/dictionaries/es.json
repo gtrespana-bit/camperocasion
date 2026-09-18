@@ -37,10 +37,10 @@
   },
   "home": {
     "hero": {
-      "chip": "🇪🇸 El marketplace camper de España",
-      "title1": "Tu próxima furgoneta",
-      "title2": "camper te espera",
-      "subtitle": "El marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Gran volumen, camper medianas, minicamper, perfiladas, capuchinas, integrales y 4x4 overland, de 20.000 € a 80.000 €.",
+      "chip": "🇪🇸 Compra-venta de campers y autocaravanas · Toda España",
+      "title1": "El punto de encuentro",
+      "title2": "del mundo camper en España",
+      "subtitle": "Compra o vende tu furgoneta camper, autocaravana o 4x4. De particular a particular, de camperizador a aventurero. Publicar es gratis y sin comisiones.",
       "searchPlaceholder": "¿Qué camper buscas? Ducato, California, Adria…",
       "searchButton": "Buscar",
       "publishFree": "Publicar gratis",
@@ -50,7 +50,14 @@
       "filterProvince": "Provincia",
       "allProvinces": "Toda España",
       "priceMin": "Mínimo (€)",
-      "priceMax": "Máximo (€)"
+      "priceMax": "Máximo (€)",
+      "audiencePrivate": "👤 Particulares",
+      "audienceCamperizers": "🔧 Camperizadores",
+      "audiencePro": "🏢 Profesionales y concesionarios",
+      "audienceBuyers": "🧭 Compradores",
+      "findCamper": "Encontrar mi camper",
+      "sellFree": "Vender gratis",
+      "heroImageAlt": "Furgoneta camper con vistas al Mediterráneo al atardecer"
     },
     "stats": {
       "verified": "Vendedores verificados",
@@ -59,13 +66,15 @@
       "allSpainDesc": "50 provincias + Ceuta y Melilla",
       "range": "20.000 € – 80.000 €",
       "rangeDesc": "El rango habitual de un camper de ocasión",
-      "free": "Publicar es gratis",
-      "freeDesc": "Sin comisiones por vender"
+      "free": "0% comisiones",
+      "freeDesc": "Publicar y vender es gratis",
+      "homologation": "Homologación revisada",
+      "homologationDesc": "Expediente del vehículo revisado por el equipo"
     },
     "categories": {
-      "title": "Compra por tipo de camper",
-      "subtitle": "7 subcategorías para encontrar exactamente lo que buscas",
-      "viewAll": "Ver todo el catálogo"
+      "title": "Explora por familia",
+      "subtitle": "Furgonetas camper, autocaravanas y overland: elige tu mundo y afina por tipo",
+      "viewAll": "Ver marcas y modelos"
     },
     "recent": {
       "title": "Recién publicadas",
@@ -103,8 +112,8 @@
       "views": "vistas"
     },
     "cta": {
-      "title": "¿Vendes tu furgoneta camper?",
-      "subtitle": "Publica gratis en menos de 5 minutos y llega a miles de compradores en toda España.",
+      "title": "¿Tienes una camper que alguien está buscando?",
+      "subtitle": "Particular, camperizador o profesional: publica gratis en menos de 5 minutos y llega a compradores de toda España.",
       "publishNow": "Publicar gratis",
       "explore": "Explorar campers",
       "note": "Sin comisiones · Publica hoy y vende hoy"
@@ -136,6 +145,24 @@
       "step3Desc": "Acuerda la entrega y el pago directo con el comprador. Te quedas con el 100%.",
       "cta": "Publicar ahora — es gratis",
       "moreInfo": "Ver cómo funciona"
+    },
+    "audiences": {
+      "title": "¿Quién vende en CamperOcasión?",
+      "subtitle": "El marketplace abierto a todo el que vive y trabaja el mundo camper",
+      "viewAll": "Publicar mi camper",
+      "private": {
+        "title": "Particulares",
+        "desc": "Vende tu camper sin comisiones ni intermediarios. Publica gratis en 5 minutos con ficha técnica completa y fotos."
+      },
+      "camperizer": {
+        "title": "Camperizadores y talleres",
+        "desc": "Muestra tus construcciones y camperizaciones ante compradores cualificados de toda España."
+      },
+      "pro": {
+        "title": "Profesionales y concesionarios",
+        "desc": "Rota tu stock de campers y autocaravanas con perfil verificado y llega a compradores que buscan justo lo que vendes."
+      },
+      "cta": "Vender gratis"
     }
   },
   "notFound": {
@@ -224,6 +251,7 @@
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
     "allCategories": "Ver Todo",
+    "brands": "Marcas y modelos",
     "categories": {
       "camper": "Furgonetas Camper y Autocaravanas",
       "gran-volumen": "Gran Volumen",
@@ -247,11 +275,48 @@
     "madeWithLove": "Hecho con ❤️ en España",
     "allRightsReserved": "Todos los derechos reservados.",
     "cities": "Provincias",
-    "classifiedsIn": "Camper en {city}"
+    "classifiedsIn": "Camper en {city}",
+    "brands": "Marcas y modelos"
+  },
+  "familias": {
+    "campers": {
+      "label": "Furgonetas Camper",
+      "desc": "Furgones camperizados de fábrica o a medida: gran volumen, medianas y minicampers."
+    },
+    "autocaravanas": {
+      "label": "Autocaravanas",
+      "desc": "Perfiladas, capuchinas e integrales de los grandes fabricantes europeos."
+    },
+    "overland": {
+      "label": "Overland y 4x4",
+      "desc": "Pickups y todoterrenos con célula para viajar sin límites."
+    }
+  },
+  "marcasPage": {
+    "home": "Inicio",
+    "breadcrumb": "Marcas y modelos",
+    "heroTitle": "Marcas y modelos de campers y autocaravanas",
+    "heroSubtitle": "Todo el catálogo organizado por fabricante y modelo: vehículos base para camperizar, campers de fábrica, autocaravanas y 4x4 overland. Cada modelo indica para qué tipos es apto.",
+    "statsBrands": "{count} fabricantes",
+    "statsModels": "{count} marcas y modelos",
+    "viewAds": "Ver anuncios",
+    "viewCatalog": "Ver todo el catálogo",
+    "publishCta": "Publica tu camper gratis",
+    "ctaTitle": "¿Buscas una marca concreta?",
+    "ctaSubtitle": "Filtra el catálogo por tipo, marca y modelo, o publica tu camper o autocaravana gratis en menos de 5 minutos.",
+    "desc": {
+      "gran-volumen": "Furgones grandes (L2H2 en adelante) camperizados o listos para camperizar, y campers de fábrica sobre base furgón: la categoría reina del mundo camper.",
+      "camper-mediana": "Campers medianas y compactas, de fábrica o camperizadas: Volkswagen California, Mercedes Marco Polo, Ford Nugget y compañía. Fáciles de aparcar y listas para viajar.",
+      "minicamper": "Monovolúmenes compactos camperizados: la forma más económica y ágil de viajar en camper, con cama y módulo cocina en el tamaño de un turismo.",
+      "perfilada": "Autocaravanas perfiladas construidas por los fabricantes sobre chasis Fiat, Ford o Mercedes: las más vendidas por su equilibrio entre precio y aerodinámica.",
+      "capuchina": "Autocaravanas capuchinas con cama fija sobre la cabina: el clásico familiar con el máximo de plazas para dormir.",
+      "integral": "Autocaravanas integrales de los grandes fabricantes europeos: carrocería y cabina propias, el máximo confort sobre ruedas.",
+      "overland": "Pickups y todoterrenos con célula o preparación overland para aventura fuera de ruta y autonomía total."
+    }
   },
   "catalog": {
     "title": "Catálogo",
-    "allProducts": "Todos los productos",
+    "allProducts": "Todo el catálogo camper",
     "results": "{count} resultados",
     "category": "Categoría",
     "all": "Todas",
@@ -336,17 +401,19 @@
       "heating": "Calefacción estacionaria",
       "hotWater": "Agua caliente",
       "bathroom": "Baño / Ducha",
-   "battery": "Batería auxiliar",
-   "solar": "Placa solar",
-   "inverter": "Inversor 220V",
-   "fridge": "Nevera",
-   "verified": "Solo homologación verificada",
-   "rangeTitle": "Rangos numéricos",
-   "kmMax": "Kilómetros máximos",
-   "anioMin": "Año mínimo",
-   "placaWatiosMin": "Placa solar mínima (W)",
-   "inversorWatiosMin": "Inversor mínimo (W)"
-  }
+      "battery": "Batería auxiliar",
+      "solar": "Placa solar",
+      "inverter": "Inversor 220V",
+      "fridge": "Nevera",
+      "verified": "Solo homologación verificada",
+      "rangeTitle": "Rangos numéricos",
+      "kmMax": "Kilómetros máximos",
+      "anioMin": "Año mínimo",
+      "placaWatiosMin": "Placa solar mínima (W)",
+      "inversorWatiosMin": "Inversor mínimo (W)"
+    },
+    "typeLabel": "Tipo de vehículo",
+    "allTypes": "Todos los tipos"
   },
   "productCard": {
     "featured": "Destacado",
@@ -572,7 +639,8 @@
     "conditionGood": "Bueno",
     "conditionUsed": "Usado",
     "optimizing": "Optimizando imágenes…",
-    "priceEur": "Precio (€)"
+    "priceEur": "Precio (€)",
+    "family": "Familia de vehículo"
   },
   "dashboard": {
     "passwordTitle": "Cambiar contraseña",
