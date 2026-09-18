@@ -7,11 +7,11 @@
 
 ## ⚠️ Antes de desplegar el código del 2026-09-18
 
-1. **Aplicar en Supabase** `supabase/migrations/202609180003_anuncios_demo.sql`
-   (idempotente). Marca los anuncios de demostración (`es_demo`), **vacía los
-   teléfonos inventados** de la semilla y retira los «verificado» falsos de esos
-   perfiles. El código tolera que no esté aplicada, pero sin ella los anuncios de
-   ejemplo siguen pareciendo reales.
+1. ~~**Aplicar en Supabase** `202609180003_anuncios_demo.sql` y
+   `202609180004_boost_no_doble_cobro.sql`~~ ✅ **hecho** (confirmado por el
+   propietario el 2026-09-18). Con las dos aplicadas: los anuncios de ejemplo
+   quedan marcados, sin teléfonos inventados ni «verificado» falsos, y la RPC
+   `usar_boost` ya no cobra un segundo crédito mientras la subida sigue vigente.
 2. **Cron nuevo:** `vercel.json` añade `/api/cron/expirar-prioridades`
    (diario 03:41 UTC). Vercel lo registra solo al desplegar; comprobar en
    *Settings → Cron Jobs* que aparece y que devuelve 200 (necesita
@@ -26,12 +26,8 @@
    `/contacto` (sin teléfono falso) y `/creditos` (sin IBAN falso), y comprobar
    que el botón de WhatsApp de un anuncio abre un número **+34**.
 
-### Dos cosas que solo se pueden hacer a mano (fuera del alcance del agente)
+### Lo que sigue en manos del propietario (fuera del alcance del agente)
 
-- **Aplicar también `supabase/migrations/202609180004_boost_no_doble_cobro.sql`**
-  (idempotente). Impide que «Subir al nº 1» cobre un segundo crédito mientras la
-  subida sigue vigente; el arnés del proyecto lo demuestra en un Postgres real
-  (`python3 scripts/verify_boost_sql.py` → TODO OK).
 - **Añadir el nuevo paso al workflow de CI** (`.github/workflows/ci.yml`, job
   `sql`), justo detrás de «Garantías de la reserva con señal»:
 
