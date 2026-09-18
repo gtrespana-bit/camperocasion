@@ -26,6 +26,24 @@
    `/contacto` (sin teléfono falso) y `/creditos` (sin IBAN falso), y comprobar
    que el botón de WhatsApp de un anuncio abre un número **+34**.
 
+### Dos cosas que solo se pueden hacer a mano (fuera del alcance del agente)
+
+- **Aplicar también `supabase/migrations/202609180004_boost_no_doble_cobro.sql`**
+  (idempotente). Impide que «Subir al nº 1» cobre un segundo crédito mientras la
+  subida sigue vigente; el arnés del proyecto lo demuestra en un Postgres real
+  (`python3 scripts/verify_boost_sql.py` → TODO OK).
+- **Añadir el nuevo paso al workflow de CI** (`.github/workflows/ci.yml`, job
+  `sql`), justo detrás de «Garantías de la reserva con señal»:
+
+  ```yaml
+      - name: Promoción sin doble cobro
+        run: python3 scripts/verify_boost_sql.py
+  ```
+
+  El archivo del workflow no lo puede tocar el agente (el token de GitHub no
+  tiene el permiso `workflows`), por eso el script ya está en el repo pero el
+  paso lo tienes que pegar tú una vez.
+
 > **Estado a 2026-09-17:** todas las migraciones de CamperOcasión aplicadas
 > en producción y verificadas **32/32** con `scripts/verificar_despliegue.sql`
 > (SQL ejecutado con éxito en el editor de Supabase; verificado por el usuario).
