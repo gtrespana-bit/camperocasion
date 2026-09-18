@@ -278,7 +278,9 @@
     "allRightsReserved": "Todos los derechos reservados.",
     "cities": "Provincias",
     "classifiedsIn": "Camper en {city}",
-    "brands": "Marcas y modelos"
+    "brands": "Marcas y modelos",
+    "cookies": "Cookies",
+    "legalNotice": "Aviso legal"
   },
   "familias": {
     "campers": {
@@ -828,52 +830,6 @@
     "beFirst": "¡Sé el primero en publicar!",
     "postFree": "Publicar gratis",
     "seeMore": "Ver más {category} en {city} →"
-  },
-  "terms": {
-    "title": "Términos y Condiciones",
-    "updated": "Última actualización: Abril 2026",
-    "s1_title": "1. Introducción",
-    "s1_text": "Bienvenido a CamperOcasión. Al usar nuestra plataforma, aceptas estos términos y condiciones. Si no estás de acuerdo con alguno de estos términos, no utilices nuestros servicios.",
-    "s2_title": "2. Descripción del servicio",
-    "s2_text": "CamperOcasión es una plataforma de publicación de anuncios que conecta compradores y vendedores. No somos parte de las transacciones: no manejamos pagos ni entregas, y no nos hacemos responsables de los productos publicados.",
-    "s3_title": "3. Publicación de anuncios",
-    "s3_text": "Los usuarios pueden publicar anuncios de forma gratuita. Al publicar un anuncio, declaras que:",
-    "s3_li1": "El producto es legítimo y legal para la venta.",
-    "s3_li2": "Las fotos y descripciones son veraces y corresponden al producto real.",
-    "s3_li3": "Tienes derecho legal de vender el producto.",
-    "s3_text2": "Están prohibidos los productos ilegales, robados, falsificados, de naturaleza peligrosa, o que violen derechos de terceros.",
-    "s4_title": "4. Sistema de créditos",
-    "s4_text": "Los créditos son una moneda virtual utilizada para destacar publicaciones. Los créditos no son reembolsables y no tienen valor fuera de la plataforma.",
-    "s5_title": "5. Conducta del usuario",
-    "s5_text": "No se permiten: spam, estafas, publicaciones falsas, contenido ofensivo, ni la publicación de datos personales de terceros sin su consentimiento.",
-    "s6_title": "6. Responsabilidad",
-    "s6_text": "CamperOcasión no garantiza la veracidad de los anuncios ni la calidad de las transacciones. Los usuarios actúan bajo su propio riesgo. Recomendamos tomar precauciones durante las transacciones.",
-    "s7_title": "7. Modificación de los términos",
-    "s7_text": "Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor al ser publicados.",
-    "s8_title": "8. Contacto",
-    "s8_text": "Para dudas sobre estos términos: legal@camperocasion.online"
-  },
-  "privacy": {
-    "title": "Política de Privacidad",
-    "updated": "Última actualización: Abril 2026",
-    "s1_title": "1. Qué información recogemos",
-    "s1_text": "Recogemos la información que nos proporcionas al registrarte (nombre, email, teléfono, ubicación) y la información de tus publicaciones (fotos, descripciones, precios).",
-    "s2_title": "2. Para qué usamos tu información",
-    "s2_li1": "Crear y gestionar tu cuenta",
-    "s2_li2": "Publicar tus anuncios",
-    "s2_li3": "Facilitar la comunicación entre usuarios",
-    "s2_li4": "Mejorar el servicio",
-    "s2_li5": "Enviar notificaciones relevantes",
-    "s3_title": "3. Compartimos tu información",
-    "s3_text": "No vendemos ni compartimos tus datos personales con terceros. Tu email nunca es visible públicamente a menos que tú lo decidas. Tu información de contacto solo se comparte con tu consentimiento.",
-    "s4_title": "4. Seguridad",
-    "s4_text": "Utilizamos medidas de seguridad estándar de la industria para proteger tus datos, incluyendo conexiones cifradas (HTTPS) y almacenamiento seguro.",
-    "s5_title": "5. Tus derechos",
-    "s5_text": "Puedes solicitar la eliminación de tu cuenta y todos tus datos en cualquier momento desde la configuración de tu perfil o escribiéndonos a privacidad@camperocasion.online.",
-    "s6_title": "6. Cookies",
-    "s6_text": "Utilizamos cookies esenciales para el funcionamiento del sitio y cookies opcionales para analíticas. Puedes gestionar tus preferencias en la configuración de tu navegador.",
-    "s7_title": "7. Contacto",
-    "s7_text": "Para preguntas sobre privacidad: privacidad@camperocasion.online"
   },
   "about": {
     "title": "Sobre CamperOcasión",

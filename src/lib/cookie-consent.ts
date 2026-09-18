@@ -23,6 +23,13 @@ export const CONSENT_KEY = 'cookie-consent'
 /** Evento que se dispara al aceptar o rechazar, para no recargar la página. */
 export const CONSENT_EVENT = 'camperocasion:consent'
 
+/**
+ * Evento para volver a mostrar el aviso: lo usa el botón «Cambiar mi decisión»
+ * de la política de cookies. Es distinto del anterior a propósito — rechazar o
+ * aceptar no debe reabrir el banner, solo olvidar la elección lo hace.
+ */
+export const CONSENT_REOPEN_EVENT = 'camperocasion:consent-reopen'
+
 export function leerConsentimiento(): Consentimiento | null {
   if (typeof window === 'undefined') return null
   try {
@@ -55,4 +62,22 @@ export function alCambiarConsentimiento(
   const handler = (evento: Event) => callback((evento as CustomEvent).detail as Consentimiento)
   window.addEventListener(CONSENT_EVENT, handler)
   return () => window.removeEventListener(CONSENT_EVENT, handler)
+}
+
+/**
+ * Olvida la decisión y vuelve a mostrar el aviso de cookies.
+ *
+ * Mientras no haya una decisión nueva, la medición se queda descargada (el
+ * banner reaparece), así que retirar el consentimiento tiene efecto inmediato,
+ * sin necesidad de recargar.
+ */
+export function reiniciarConsentimiento(): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(CONSENT_KEY)
+  } catch {
+    // Almacenamiento bloqueado: con recargar la página basta para volver a
+    // preguntar, porque `leerConsentimiento()` devolverá null.
+  }
+  window.dispatchEvent(new CustomEvent(CONSENT_REOPEN_EVENT))
 }

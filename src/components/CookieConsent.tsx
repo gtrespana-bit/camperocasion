@@ -3,7 +3,11 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import LocalLink from '@/components/LocalLink'
-import { guardarConsentimiento, leerConsentimiento } from '@/lib/cookie-consent'
+import {
+  CONSENT_REOPEN_EVENT,
+  guardarConsentimiento,
+  leerConsentimiento,
+} from '@/lib/cookie-consent'
 
 /**
  * Banner de cookies.
@@ -49,6 +53,11 @@ export default function CookieConsent() {
   useEffect(() => {
     // Solo aparece si no hay una decisión previa.
     if (leerConsentimiento() === null) setVisible(true)
+
+    // «Cambiar mi decisión» (política de cookies) reabre el aviso.
+    const reabrir = () => setVisible(true)
+    window.addEventListener(CONSENT_REOPEN_EVENT, reabrir)
+    return () => window.removeEventListener(CONSENT_REOPEN_EVENT, reabrir)
   }, [])
 
   if (!visible) return null

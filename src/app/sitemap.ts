@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { hayDatosTitular } from '@/lib/datos-legales'
 import { getSupabaseServerClient } from '@/lib/supabase-server-client'
 import fs from 'fs'
 import path from 'path'
@@ -89,6 +90,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/calcular-itp', changeFrequency: 'monthly', priority: 0.9 },
     { path: '/compra-segura-camper', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/contrato-compraventa', changeFrequency: 'monthly', priority: 0.7 },
+    { path: '/politica-de-privacidad', changeFrequency: 'yearly', priority: 0.3 },
+    { path: '/politica-de-cookies', changeFrequency: 'yearly', priority: 0.3 },
+    { path: '/terminos-y-condiciones', changeFrequency: 'yearly', priority: 0.3 },
+    ...(hayDatosTitular() ? [{ path: '/aviso-legal', changeFrequency: 'yearly' as const, priority: 0.3 }] : []),
     { path: '/gestoria-cambio-nombre', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/marcas', changeFrequency: 'weekly', priority: 0.8 },
     // Landings por tipo de vendedor (Fase 3): indexan "comprar camper a

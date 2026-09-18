@@ -2,6 +2,7 @@
 
 import BrandLogo from '@/components/BrandLogo'
 import LocalLink from '@/components/LocalLink'
+import { hayDatosTitular } from '@/lib/datos-legales'
 import { useTranslations } from 'next-intl'
 import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import { CIUDADES_SEO } from '@/lib/ubicaciones-seo'
@@ -92,6 +93,13 @@ export function Footer() {
               <ul className="space-y-2 text-sm">
                 <li><LocalLink href="/terminos-y-condiciones" className="hover:text-green-400 transition">{t('footer.terms')}</LocalLink></li>
                 <li><LocalLink href="/politica-de-privacidad" className="hover:text-green-400 transition">{t('footer.privacy')}</LocalLink></li>
+                <li><LocalLink href="/politica-de-cookies" className="hover:text-green-400 transition">{t('footer.cookies')}</LocalLink></li>
+                {/* El aviso legal solo se enlaza cuando el titular está
+                    configurado: antes de eso la página no está completa y no
+                    debe presentarse como si lo estuviera. */}
+                {hayDatosTitular() && (
+                  <li><LocalLink href="/aviso-legal" className="hover:text-green-400 transition">{t('footer.legalNotice')}</LocalLink></li>
+                )}
               </ul>
               <p className="text-xs text-gray-300 mt-4">{t('footer.madeWithLove')}</p>
             </div>

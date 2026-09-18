@@ -151,7 +151,7 @@ vigentes (7 días) en SQL, no solo dentro de la página descargada.
 | Seguridad | **Bien** | RLS, `requireUser`/`requireAdmin`, rate limit atómico (falla cerrado), validación de URLs de storage y de redirects, sin secretos en el cliente |
 | Confianza | **Excelente** | Homologación verificada con expediente documental, reserva con señal y confirmación del vendedor, inspección precompra, contrato de compraventa, gestoría, reputación |
 | Monetización | **Rota → arreglada** | Créditos + paquetes en €, pero boost eterno/inoperante y cobro manual con IBAN falso |
-| Legal | **Incompleto** | Faltan aviso legal con datos del titular e identificación como intermediario; el aviso de cookies no bloquea la analítica antes del consentimiento |
+| Legal | **Casi completo** | Páginas reescritas el 2026-09-18 (privacidad veraz, cookies con botón para cambiar la decisión, términos con intermediario y desistimiento, y aviso legal nuevo). Solo falta rellenar los datos del titular en Vercel (`NEXT_PUBLIC_TITULAR_*`) y el visto bueno de un abogado antes de facturar |
 
 ---
 
@@ -161,7 +161,7 @@ Esto es lo que un marketplace vertical español necesita para ganar, ordenado
 por efecto real. **No es una lista de deseos: son las siete cosas que cambian
 el resultado.**
 
-### 3.1 Cumplimiento para poder cobrar (bloqueante, coste bajo)
+### 3.1 Cumplimiento para poder cobrar (bloqueante, coste bajo) — *páginas legales ya escritas*
 
 Hoy la web **no puede cobrar legalmente**: falta el **aviso legal** con razón
 social, NIF y domicilio (Ley 34/2002, art. 10) y falta identificar la
@@ -176,7 +176,8 @@ página de aviso legal con datos reales → factura automática (Stripe Tax o
 Contasimple). Esto convierte la monetización en algo real y elimina el trabajo
 manual.
 
-### 3.2 El aviso de cookies no cumple (RGPD/LSSI-CE, 1 hora de trabajo)
+### 3.2 ~~El aviso de cookies no cumple~~ ✅ resuelto (2026-09-18)
+
 
 `CookieConsent` empieza a cargar **Vercel Analytics y Speed Insights antes de
 que el usuario acepte**. En España, la AEPD exige consentimiento **previo** a

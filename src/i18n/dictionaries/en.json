@@ -278,7 +278,9 @@
     "allRightsReserved": "All rights reserved.",
     "cities": "Provinces",
     "classifiedsIn": "Campers in {city}",
-    "brands": "Brands & models"
+    "brands": "Brands & models",
+    "cookies": "Cookies",
+    "legalNotice": "Legal notice"
   },
   "familias": {
     "campers": {
@@ -828,52 +830,6 @@
     "beFirst": "Be the first to post!",
     "postFree": "Post for free",
     "seeMore": "See more {category} in {city} →"
-  },
-  "terms": {
-    "title": "Terms and Conditions",
-    "updated": "Last updated: April 2026",
-    "s1_title": "1. Introduction",
-    "s1_text": "Welcome to CamperOcasión. By using our platform, you accept these terms and conditions. If you disagree with any of these terms, do not use our services.",
-    "s2_title": "2. Service description",
-    "s2_text": "CamperOcasión is a classified ads platform that connects buyers and sellers. We are not part of transactions: we don't handle payments or deliveries, and we're not responsible for listed products.",
-    "s3_title": "3. Posting ads",
-    "s3_text": "Users can post ads for free. By posting an ad, you declare that:",
-    "s3_li1": "The product is legitimate and legal for sale.",
-    "s3_li2": "Photos and descriptions are truthful and correspond to the actual product.",
-    "s3_li3": "You have the legal right to sell the product.",
-    "s3_text2": "Illegal, stolen, counterfeit, dangerous products, or those that violate third-party rights are prohibited.",
-    "s4_title": "4. Credit system",
-    "s4_text": "Credits are a virtual currency used to feature listings. Credits are non-refundable and have no value outside the platform.",
-    "s5_title": "5. User conduct",
-    "s5_text": "Not allowed: spam, scams, fake listings, offensive content, or posting personal data of others without their consent.",
-    "s6_title": "6. Liability",
-    "s6_text": "CamperOcasión does not guarantee the truthfulness of listings or the quality of transactions. Users act at their own risk. We recommend taking precautions during transactions.",
-    "s7_title": "7. Terms modification",
-    "s7_text": "We reserve the right to modify these terms at any time. Changes take effect when published.",
-    "s8_title": "8. Contact",
-    "s8_text": "For questions about these terms: legal@camperocasion.online"
-  },
-  "privacy": {
-    "title": "Privacy Policy",
-    "updated": "Last updated: April 2026",
-    "s1_title": "1. What information we collect",
-    "s1_text": "We collect the information you provide when registering (name, email, phone, location) and your listing information (photos, descriptions, prices).",
-    "s2_title": "2. How we use your information",
-    "s2_li1": "Create and manage your account",
-    "s2_li2": "Post your listings",
-    "s2_li3": "Facilitate communication between users",
-    "s2_li4": "Improve the service",
-    "s2_li5": "Send relevant notifications",
-    "s3_title": "3. Sharing your information",
-    "s3_text": "We don't sell or share your personal data with third parties. Your email is never publicly visible unless you choose so. Your contact information is only shared with your consent.",
-    "s4_title": "4. Security",
-    "s4_text": "We use industry-standard security measures to protect your data, including encrypted connections (HTTPS) and secure storage.",
-    "s5_title": "5. Your rights",
-    "s5_text": "You can request the deletion of your account and all your data at any time from your profile settings or by writing to privacidad@camperocasion.online.",
-    "s6_title": "6. Cookies",
-    "s6_text": "We use essential cookies for site functionality and optional cookies for analytics. You can manage your preferences in your browser settings.",
-    "s7_title": "7. Contact",
-    "s7_text": "For privacy questions: privacidad@camperocasion.online"
   },
   "about": {
     "title": "About CamperOcasión",
