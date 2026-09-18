@@ -6,9 +6,9 @@
  * solo si el anuncio tiene 7+ días sin renovar y sigue activo/sin vender.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
 import { createClient } from '@supabase/supabase-js'
 import { requireUser } from '@/lib/require-auth'
+import { revalidarListadosPublicos } from '@/lib/revalidar'
 
 const DIAS_RENOVACION = 7
 
@@ -63,10 +63,7 @@ export async function POST(req: NextRequest) {
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
   // Revalida las páginas donde el orden por fecha cambia al renovar
-  try {
-    revalidatePath('/')
-    revalidatePath('/catalogo')
-  } catch { /* revalidate fuera de contexto — no crítico */ }
+  revalidarListadosPublicos()
 
   return NextResponse.json({ ok: true })
 }

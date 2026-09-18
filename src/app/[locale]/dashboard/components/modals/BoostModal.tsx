@@ -37,7 +37,7 @@ export default function BoostModal({ titulo, onBoost, onClose }: { titulo: strin
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 id="boost-modal-title" className="text-xl font-bold text-gray-800">⚡ Boost — Subir al #1</h3>
+          <h3 id="boost-modal-title" className="text-xl font-bold text-gray-800">⚡ Subir al nº 1 — 7 días</h3>
           <button
             onClick={onClose}
             aria-label="Cerrar modal"
@@ -50,9 +50,13 @@ export default function BoostModal({ titulo, onBoost, onClose }: { titulo: strin
           <strong>{titulo}</strong>
         </p>
         <p className="text-sm text-gray-600 mb-2">
-          Esto subirá tu publicación a la <strong>posición #1</strong> de la lista.
+          Tu publicación pasará a la <strong>primera posición</strong> del catálogo y de la portada,
+          y se mantendrá ahí durante <strong>7 días</strong>.
         </p>
-        <p className="text-sm text-gray-600 mb-4">Si otra persona hace boost después, tomará tu lugar.</p>
+        <p className="text-sm text-gray-600 mb-4">
+          Si otra persona sube su anuncio después, compartiréis la parte alta de la lista: el orden
+          entre anuncios subidos lo decide la fecha de la subida.
+        </p>
         <div className="flex items-center gap-2 mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-3">
           <Zap size={20} className="text-yellow-600" aria-hidden="true" />
           <span className="font-bold text-brand-primary">Costo: 1 crédito</span>
@@ -68,7 +72,7 @@ export default function BoostModal({ titulo, onBoost, onClose }: { titulo: strin
             onClick={onBoost}
             className="flex-1 py-3 bg-brand-accent text-white rounded-lg font-bold hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
           >
-            ⚡ Boost (1 crédito)
+            ⚡ Subir al nº 1 (1 crédito)
           </button>
         </div>
       </div>

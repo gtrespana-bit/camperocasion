@@ -41,12 +41,12 @@ next-env.d.ts
 # Lighthouse & performance reports (kept in docs/lighthouse/)
 lh-*.json
 lh-*.html
-vendet.online_*.report.json
-vendet.online_*.report.html
+camperocasion.online_*.report.json
+camperocasion.online_*.report.html
 
 # Batch & URL generation scripts (dev utilities)
 batch_*.txt
-vendet_urls_*.txt
+urls_*.txt
 generate-*.sh
 generate-*.py
 copy-urls-to-gsc.py

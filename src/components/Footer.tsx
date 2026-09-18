@@ -1,7 +1,8 @@
 'use client'
 
+import BrandLogo from '@/components/BrandLogo'
 import LocalLink from '@/components/LocalLink'
-import Image from 'next/image'
+import { hayDatosTitular } from '@/lib/datos-legales'
 import { useTranslations } from 'next-intl'
 import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import { CIUDADES_SEO } from '@/lib/ubicaciones-seo'
@@ -34,10 +35,7 @@ export function Footer() {
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div>
-              <LocalLink href="/" className="inline-flex items-center gap-2 mb-3">
-                <Image src="/logo-camperocasion.png" alt="CamperOcasión" width={28} height={28} className="h-7 w-7 object-contain rounded-lg drop-shadow-[0_0_4px_rgba(255,255,255,0.4)] bg-white/80 p-0.5" />
-                <span className="font-black text-lg"><span className="text-white">Camper</span><span className="text-green-400">Ocasión</span></span>
-              </LocalLink>
+              <BrandLogo href="/" tone="light" size="md" className="mb-3" />
               <p className="text-sm leading-relaxed">{t('footer.description')}</p>
             </div>
             <nav aria-label={t('footer.categories')}>
@@ -95,6 +93,13 @@ export function Footer() {
               <ul className="space-y-2 text-sm">
                 <li><LocalLink href="/terminos-y-condiciones" className="hover:text-green-400 transition">{t('footer.terms')}</LocalLink></li>
                 <li><LocalLink href="/politica-de-privacidad" className="hover:text-green-400 transition">{t('footer.privacy')}</LocalLink></li>
+                <li><LocalLink href="/politica-de-cookies" className="hover:text-green-400 transition">{t('footer.cookies')}</LocalLink></li>
+                {/* El aviso legal solo se enlaza cuando el titular está
+                    configurado: antes de eso la página no está completa y no
+                    debe presentarse como si lo estuviera. */}
+                {hayDatosTitular() && (
+                  <li><LocalLink href="/aviso-legal" className="hover:text-green-400 transition">{t('footer.legalNotice')}</LocalLink></li>
+                )}
               </ul>
               <p className="text-xs text-gray-300 mt-4">{t('footer.madeWithLove')}</p>
             </div>

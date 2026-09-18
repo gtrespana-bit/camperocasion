@@ -1,6 +1,6 @@
 import eslintConfigNext from "eslint-config-next";
 
-export default [
+const config = [
   ...eslintConfigNext,
   {
     rules: {
@@ -13,4 +13,6 @@ export default [
       "react-hooks/purity": "off",
     },
   },
-];
+]
+
+export default config

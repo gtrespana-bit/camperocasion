@@ -218,7 +218,7 @@ export default function AdminModeracion({
                     <p className="mt-0.5 text-sm font-bold text-brand-primary">{formatMoney(p.precio_usd)}</p>
                     <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
                       <span>{p.subcategoria || '—'}</span>
-                      <span>· {p.ubicacion_ciudad || 'VE'}</span>
+                      <span>· {p.ubicacion_ciudad || 'España'}</span>
                       <span>· {formatDate(p.creado_en)}</span>
                     </div>
                     {p.motivo_moderacion && <p className="mt-2 rounded-lg bg-orange-50 px-2.5 py-1.5 text-xs text-orange-700">⚠️ {p.motivo_moderacion}</p>}

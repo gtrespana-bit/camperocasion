@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { hayDatosTitular } from '@/lib/datos-legales'
 import { getSupabaseServerClient } from '@/lib/supabase-server-client'
 import fs from 'fs'
 import path from 'path'
@@ -40,15 +41,32 @@ function getBlogSlugs(): { slug: string; lastModified: Date }[] {
 // si la columna aún no existe, cae a id para no dejar el sitemap vacío.
 async function getProductos(supabase: any) {
   const moderacion = 'estado_moderacion.is.null,estado_moderacion.eq.aprobado'
+  // Los anuncios de demostración (`es_demo`) quedan FUERA del sitemap: no son
+  // inventario real, no deben competir en Google ni llenar el índice de
+  // páginas sin valor. Si la migración 202609180003 no está aplicada, la
+  // consulta falla y se reintenta sin el filtro para no dejar el sitemap vacío.
   const withSlug = await supabase
     .from('productos')
     .select('id, slug, user_id, actualizado_en')
     .eq('activo', true)
+    .eq('es_demo', false)
     .or(moderacion)
     .limit(4000) // Reducir ligeramente para evitar límites de tamaño de sitemap
 
   if (!withSlug.error) return withSlug.data || []
 
+  // Sin `es_demo` (migración 202609180003 aún sin aplicar): se reintenta
+  // manteniendo el slug para no perder las URLs semánticas.
+  const sinDemo = await supabase
+    .from('productos')
+    .select('id, slug, user_id, actualizado_en')
+    .eq('activo', true)
+    .or(moderacion)
+    .limit(4000)
+
+  if (!sinDemo.error) return sinDemo.data || []
+
+  // Último recurso (sin `slug`): sitemap por id, mejor que vacío.
   const fallback = await supabase
     .from('productos')
     .select('id, user_id, actualizado_en')
@@ -72,6 +90,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/calcular-itp', changeFrequency: 'monthly', priority: 0.9 },
     { path: '/compra-segura-camper', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/contrato-compraventa', changeFrequency: 'monthly', priority: 0.7 },
+    { path: '/politica-de-privacidad', changeFrequency: 'yearly', priority: 0.3 },
+    { path: '/politica-de-cookies', changeFrequency: 'yearly', priority: 0.3 },
+    { path: '/terminos-y-condiciones', changeFrequency: 'yearly', priority: 0.3 },
+    ...(hayDatosTitular() ? [{ path: '/aviso-legal', changeFrequency: 'yearly' as const, priority: 0.3 }] : []),
     { path: '/gestoria-cambio-nombre', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/marcas', changeFrequency: 'weekly', priority: 0.8 },
     // Landings por tipo de vendedor (Fase 3): indexan "comprar camper a

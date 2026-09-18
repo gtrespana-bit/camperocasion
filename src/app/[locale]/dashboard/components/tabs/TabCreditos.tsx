@@ -1,5 +1,7 @@
 "use client"
 
+import LocalLink from '@/components/LocalLink'
+
 import { useState, useEffect } from 'react'
 import { CreditCard, Zap, Star, X, CheckCircle, Upload, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -14,7 +16,7 @@ interface MetodoPago {
   instrucciones: Record<string, string>
 }
 
-const metodosPagoCreditos: MetodoPago[] = [
+const METODOS_PAGO: MetodoPago[] = [
   { id: 'bizum', nombre: 'Bizum', emoji: '📱', instrucciones: {} },
   { id: 'transferencia', nombre: 'Transferencia', emoji: '🏦', instrucciones: {} },
   { id: 'paypal', nombre: 'PayPal', emoji: '💙', instrucciones: {} },
@@ -22,17 +24,22 @@ const metodosPagoCreditos: MetodoPago[] = [
 
 export default function TabCreditos({ creditos, refreshCreditos }: { creditos: number; refreshCreditos: () => void }) {
   const [paqueteSeleccionado, setPaqueteSeleccionado] = useState<any>(null)
+  const [configurado, setConfigurado] = useState<Record<string, boolean> | null>(null)
+  // Solo los métodos con datos REALES configurados en el servidor. Los que no
+  // lo están se ocultan: nunca se muestran IBAN/Bizum de ejemplo, porque el
+  // comprador pagaría a una cuenta que no existe.
+  const [metodosPago, setMetodosPago] = useState<MetodoPago[]>(METODOS_PAGO)
 
-  // Cargar datos de pago reales del servidor
   useEffect(() => {
     fetch('/api/datos-pago')
       .then(r => r.json())
       .then(d => {
-        metodosPagoCreditos.forEach(m => {
-          if (d?.[m.id] && typeof d[m.id] === 'object') {
-            m.instrucciones = d[m.id]
-          }
-        })
+        setMetodosPago(
+          METODOS_PAGO
+            .map(m => (d?.[m.id] && typeof d[m.id] === 'object' ? { ...m, instrucciones: d[m.id] } : m))
+            .filter(m => (d?.configurado ? d.configurado[m.id] !== false : true)),
+        )
+        setConfigurado(d?.configurado ?? null)
       })
       .catch(() => {})
   }, [])
@@ -53,7 +60,7 @@ export default function TabCreditos({ creditos, refreshCreditos }: { creditos: n
         <h3 className="font-bold text-lg mb-3">¿Para qué sirven?</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-            <p className="font-bold text-brand-primary flex items-center gap-2"><Zap size={18} className="text-yellow-500" /> Boost — 1 crédito</p>
+            <p className="font-bold text-brand-primary flex items-center gap-2"><Zap size={18} className="text-yellow-500" /> Subida al nº 1 — 1 crédito</p>
             <p className="text-sm text-gray-600 mt-1">Sube tu publicación al #1 de la lista</p>
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -79,7 +86,7 @@ export default function TabCreditos({ creditos, refreshCreditos }: { creditos: n
                 <p className="text-3xl font-black text-gray-800 mb-1">{formatPrecio(pkg.precio)}</p>
                 <p className="text-xs text-gray-500 mb-5 bg-gray-50 rounded-lg py-1 px-2 inline-block">{formatPrecio(porCredito)} por crédito</p>
                 <ul className="text-sm text-gray-600 space-y-2 mb-6 text-left">
-                  <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500 flex-shrink-0" /><strong>{pkg.creditos}</strong> boost(s) al #1</li>
+                  <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500 flex-shrink-0" /><strong>{pkg.creditos}</strong> subidas al nº 1</li>
                   <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500 flex-shrink-0" />o {Math.floor(pkg.creditos / 4)}× destacado 12h</li>
                   <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500 flex-shrink-0" />Sin expiración</li>
                 </ul>
@@ -94,7 +101,7 @@ export default function TabCreditos({ creditos, refreshCreditos }: { creditos: n
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <h3 className="font-bold text-lg mb-4 text-center">Métodos de pago aceptados</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {metodosPagoCreditos.map((m) => (
+          {metodosPago.map((m) => (
             <div key={m.id} className="rounded-xl p-4 text-center bg-gray-50">
               <span className="text-3xl block mb-2">{m.emoji}</span>
               <p className="text-sm font-medium text-gray-800">{m.nombre}</p>
@@ -106,6 +113,8 @@ export default function TabCreditos({ creditos, refreshCreditos }: { creditos: n
       {paqueteSeleccionado && (
         <ModalCompraCreditos
           paquete={paqueteSeleccionado}
+          metodosPago={metodosPago}
+          configurado={configurado}
           onClose={() => setPaqueteSeleccionado(null)}
           onCompraExitosa={refreshCreditos}
         />
@@ -114,7 +123,19 @@ export default function TabCreditos({ creditos, refreshCreditos }: { creditos: n
   )
 }
 
-function ModalCompraCreditos({ paquete, onClose, onCompraExitosa }: { paquete: any; onClose: () => void; onCompraExitosa: () => void }) {
+function ModalCompraCreditos({
+  paquete,
+  metodosPago,
+  configurado,
+  onClose,
+  onCompraExitosa,
+}: {
+  paquete: any
+  metodosPago: MetodoPago[]
+  configurado: Record<string, boolean> | null
+  onClose: () => void
+  onCompraExitosa: () => void
+}) {
   const [metodo, setMetodo] = useState('')
   const [copiado, setCopiado] = useState('')
   const [comprobanteFile, setComprobanteFile] = useState<File | null>(null)
@@ -122,7 +143,7 @@ function ModalCompraCreditos({ paquete, onClose, onCompraExitosa }: { paquete: a
   const [enviando, setEnviando] = useState(false)
   const [enviado, setEnviado] = useState(false)
 
-  const selectedMetodo = metodosPagoCreditos.find(m => m.id === metodo)
+  const selectedMetodo = metodosPago.find(m => m.id === metodo)
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -228,8 +249,16 @@ function ModalCompraCreditos({ paquete, onClose, onCompraExitosa }: { paquete: a
           {/* Método de pago */}
           <div>
             <h4 className="font-bold text-gray-800 mb-3">1. Elige cómo vas a pagar</h4>
+            {configurado && metodosPago.length === 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+                Estamos terminando de configurar los pagos con Bizum, transferencia y PayPal.
+                Escríbenos desde{' '}
+                <LocalLink href="/contacto" className="font-semibold underline">contacto</LocalLink> y te
+                damos los datos para comprar créditos ahora mismo.
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-3">
-              {metodosPagoCreditos.map(m => (
+              {metodosPago.map(m => (
                 <button key={m.id} onClick={() => setMetodo(m.id)}
                   className={`p-4 rounded-xl border-2 text-center transition ${metodo === m.id ? 'border-brand-accent bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
                   <span className="text-3xl block">{m.emoji}</span>

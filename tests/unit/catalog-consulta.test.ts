@@ -19,6 +19,9 @@ import {
   tipoVendedorFiltro,
   marcarDestacados,
   ordenarProductosCatalogo,
+  BOOST_DIAS,
+  boostVigente,
+  ORDEN_CATALOGO,
 } from '@/lib/catalog-consulta'
 
 describe('columnas y filtro de moderación', () => {
@@ -164,10 +167,12 @@ describe('orden del catálogo', () => {
     ...over,
   }) as any
 
-  test('prioriza boost > destacado vigente > fecha', () => {
+  test('prioriza boost vigente > destacado vigente > fecha', () => {
     const antiguo = producto({ creado_en: '2026-01-01T00:00:00.000Z' })
     const reciente = producto({ creado_en: '2026-09-10T00:00:00.000Z' })
-    const boosteado = producto({ boosteado_en: '2026-09-11T00:00:00.000Z' })
+    // Relativo a "ahora": un boost dura BOOST_DIAS, así que una fecha fija
+    // dejaría el test roto (o verde por casualidad) según el día que se corra.
+    const boosteado = producto({ boosteado_en: new Date(Date.now() - 3600e3).toISOString() })
     const destacado = producto({ destacado: true, destacado_hasta: '2099-01-01T00:00:00.000Z' })
 
     const orden = ordenarProductosCatalogo([antiguo, reciente, destacado, boosteado])
@@ -183,6 +188,31 @@ describe('orden del catálogo', () => {
     const reciente = producto({ creado_en: '2026-09-10T00:00:00.000Z' })
 
     expect(ordenarProductosCatalogo([caducado, reciente])[0]).toBe(reciente)
+  })
+
+  test('un boost caducado deja de adelantar (se puede volver a comprar)', () => {
+    const caducado = producto({
+      boosteado_en: new Date(Date.now() - (BOOST_DIAS + 1) * 864e5).toISOString(),
+      creado_en: '2026-01-01T00:00:00.000Z',
+    })
+    const reciente = producto({ creado_en: '2026-09-10T00:00:00.000Z' })
+
+    expect(ordenarProductosCatalogo([caducado, reciente])[0]).toBe(reciente)
+    expect(boostVigente(caducado.boosteado_en)).toBe(false)
+    expect(boostVigente(new Date(Date.now() - 3600e3).toISOString())).toBe(true)
+  })
+
+  test('el ORDER BY de SQL es el mismo orden que aplica el comparador', () => {
+    // La ventana de la página la define la consulta; si el orden de SQL no
+    // coincide con el de memoria, un anuncio pagado puede caer fuera de la
+    // primera página. Este test fija ese contrato.
+    expect(ORDEN_CATALOGO.map(o => o.column)).toEqual([
+      'boosteado_en',
+      'destacado',
+      'destacado_hasta',
+      'creado_en',
+    ])
+    expect(ORDEN_CATALOGO.every(o => o.ascending === false)).toBe(true)
   })
 
   test('no muta el array recibido y pre-computa el flag de destacado', () => {

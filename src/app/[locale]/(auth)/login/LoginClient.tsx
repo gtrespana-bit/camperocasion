@@ -1,5 +1,6 @@
 'use client'
 
+import BrandLogo from '@/components/BrandLogo'
 import { useState } from 'react'
 import LocalLink from '@/components/LocalLink'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
@@ -150,10 +151,8 @@ export default function LoginPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <LocalLink href="/" className="text-brand-primary font-black text-3xl">
-            Vende<span className="text-brand-accent">T</span><span className="text-sm ml-1 text-gray-500">-España</span>
-          </LocalLink>
-          <h1 className="text-2xl font-bold text-gray-800 mt-4">{t('login.title')}</h1>
+          <BrandLogo href="/" size="lg" className="justify-center" priority />
+          <h1 className="text-2xl font-bold text-gray-800 mt-5">{t('login.title')}</h1>
           <p className="text-gray-500 mt-1">{t('login.subtitle')}</p>
         </div>
 
@@ -170,6 +169,9 @@ export default function LoginPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('login.email')}</label>
               <input
                 type="email"
+                name="email"
+                autoComplete="email"
+                inputMode="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
@@ -182,6 +184,8 @@ export default function LoginPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('login.password')}</label>
               <input
                 type="password"
+                name="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Tu contraseña"
@@ -209,6 +213,9 @@ export default function LoginPage() {
                 <form onSubmit={handleResetPassword} className="space-y-3">
                   <input
                     type="email"
+                    name="email"
+                    autoComplete="email"
+                    inputMode="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="tu@email.com"
@@ -302,6 +309,9 @@ export default function LoginPage() {
                     </label>
                     <input
                       type="email"
+                      name="email"
+                      autoComplete="email"
+                      inputMode="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="tu@email.com"

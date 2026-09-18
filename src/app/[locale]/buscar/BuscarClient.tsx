@@ -21,7 +21,9 @@ import {
 } from '@/lib/filtros-tecnicos'
 import {
   aplicarFiltrosBase,
+  aplicarOrdenCatalogo,
   esErrorColumnasRango,
+  ordenarProductosCatalogo,
   FILTRO_VENDEDOR_PARAM,
   tipoVendedorFiltro,
   type FiltrosCatalogo,
@@ -329,7 +331,9 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
 
         if (orden === 'precio_asc') sq = sq.order('precio_usd', { ascending: true })
         else if (orden === 'precio_desc') sq = sq.order('precio_usd', { ascending: false })
-        else sq = sq.order('creado_en', { ascending: false })
+        // Por defecto, el mismo ORDER BY que el catálogo (prioridad pagada +
+        // fecha): el buscador también promete esa prioridad.
+        else sq = aplicarOrdenCatalogo(sq) as typeof sq
 
         return await sq
       }
@@ -346,20 +350,9 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
         if (!error) {
           let sorted = data as Producto[]
           if (orden !== 'precio_asc' && orden !== 'precio_desc') {
-            const now = new Date().toISOString()
-            sorted = sorted.sort((a, b) => {
-              const aBoost = a.boosteado_en || null
-              const bBoost = b.boosteado_en || null
-              if (aBoost && !bBoost) return -1
-              if (!aBoost && bBoost) return 1
-              if (aBoost && bBoost) return bBoost.localeCompare(aBoost)
-              const aDest = a.destacado && a.destacado_hasta && a.destacado_hasta > now
-              const bDest = b.destacado && b.destacado_hasta && b.destacado_hasta > now
-              if (aDest && !bDest) return -1
-              if (!aDest && bDest) return 1
-              if (aDest && bDest) return b.destacado_hasta!.localeCompare(a.destacado_hasta!)
-              return new Date(b.creado_en).getTime() - new Date(a.creado_en).getTime()
-            })
+            // Mismo comparador que el catálogo: una sola definición del orden
+            // (boost vigente > destacado vigente > fecha) en todo el sitio.
+            sorted = ordenarProductosCatalogo(sorted as any) as Producto[]
           }
           setResultCount(count ?? 0)
           setProductos(sorted)
@@ -386,38 +379,38 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
               Resultados de búsqueda para &ldquo;{query}&rdquo; en España
             </h1>
             <p className="text-gray-600">
-              Encuentra los mejores clasificados y productos relacionados con &ldquo;{query}&rdquo; en CamperOcasión.es. 
-              Compra y vende de forma segura en todo el país.
+              Furgonetas camper y autocaravanas de ocasión relacionadas con &ldquo;{query}&rdquo; en camperocasion.online.
+              Anuncios de particulares, camperizadores y profesionales de toda España.
             </p>
           </>
         ) : categoria ? (
           <>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {cat?.label || categoria} en España — Clasificados CamperOcasión.es
+              {cat?.label || categoria} de ocasión en España — camperocasion.online
             </h1>
             <p className="text-gray-600">
-              Explora {cat?.label || categoria.toLowerCase()} en venta. Los mejores clasificados de {cat?.label || categoria.toLowerCase()} en España. 
-              Publica gratis y llega a miles de compradores.
+              Explora {cat?.label || categoria.toLowerCase()} de segunda mano en toda España, con ficha técnica completa
+              (kilómetros, DGT, homologación, plazas y autonomía). Publicar tu anuncio es gratis.
             </p>
           </>
         ) : ubicacionCiudad || ubicacionEstado ? (
           <>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Clasificados en {ubicacionCiudad || ubicacionEstado}, España
+              Campers y autocaravanas de ocasión en {ubicacionCiudad || ubicacionEstado}, España
             </h1>
             <p className="text-gray-600">
-              Compra y vende en {ubicacionCiudad || ubicacionEstado}. Encuentra los mejores clasificados y productos 
-              en {ubicacionCiudad || ubicacionEstado}, España. Publica tu anuncio gratis hoy mismo.
+              Compra y vende furgonetas camper y autocaravanas en {ubicacionCiudad || ubicacionEstado}.
+              Anuncios con ficha técnica, contacto directo con el vendedor y publicación gratuita.
             </p>
           </>
         ) : (
           <>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Buscar productos — Clasificados España
+              Buscar furgonetas camper y autocaravanas de ocasión
             </h1>
             <p className="text-gray-600">
-              Busca y encuentra los mejores clasificados en España. Compra y vende productos nuevos y usados 
-              de forma segura en CamperOcasión.es, el marketplace líder español.
+              Busca por marca, tipo o provincia entre las furgonetas camper y autocaravanas de ocasión
+              publicadas en España. El marketplace especializado en el mundo camper.
             </p>
           </>
         )}

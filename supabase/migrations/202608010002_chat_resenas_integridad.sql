@@ -1,5 +1,5 @@
 -- ============================================================================
--- VendeT — Fase 2: chat y reseñas
+-- CamperOcasión — Fase 2: chat y reseñas
 --
 -- Aplicar después de 202608010001_hardening_integridad.sql.
 -- Las escrituras del navegador se trasladan a APIs autenticadas; las políticas

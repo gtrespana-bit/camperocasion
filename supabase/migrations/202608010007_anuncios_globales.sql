@@ -1,5 +1,5 @@
 -- ============================================================================
--- VendeT — Anuncios globales del sitio
+-- CamperOcasión — Anuncios globales del sitio
 -- Fecha: 2026-08-30
 --
 -- Permite al panel admin publicar un banner informativo visible en toda la

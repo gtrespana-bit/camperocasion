@@ -6,6 +6,7 @@ import LocalLink from './LocalLink';
 import BadgeHomologacion from './BadgeHomologacion';
 import BadgeTipoVendedor from './BadgeTipoVendedor';
 import Image from 'next/image';
+import { boostVigente } from '@/lib/catalog-consulta';
 import { productUrl } from '@/lib/product-url'
 
 interface Producto {
@@ -20,6 +21,8 @@ interface Producto {
   creado_en: string;
   subcategoria: string | null;
   boosteado_en: string | null;
+  /** Anuncio de demostración: se etiqueta para no confundirlo con stock real. */
+  es_demo?: boolean | null;
   destacado: boolean;
   destacado_hasta: string | null;
   vendedor_verificado: boolean | null;
@@ -44,7 +47,8 @@ export const ProductCardLazy = ({ p, t, priority = false }: ProductCardLazyProps
   // pero el contenido del producto SIEMPRE se muestra
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  const isBoosted = p.boosteado_en != null;
+  // Misma regla que el orden del catálogo: el boost caduca a los BOOST_DIAS.
+  const isBoosted = boostVigente(p.boosteado_en);
   // Usar flag pre-computado del servidor para evitar hydration mismatch
   const isFeatured = p._isFeatured !== undefined
     ? p._isFeatured
@@ -66,7 +70,12 @@ export const ProductCardLazy = ({ p, t, priority = false }: ProductCardLazyProps
         )}
         {isBoosted && !isFeatured && (
           <div className="absolute top-2 left-2 z-10 bg-green-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-            ⚡ <span className="text-white">Boost</span>
+            ⚡ <span className="text-white">{t('productCard.boost')}</span>
+          </div>
+        )}
+        {p.es_demo && (
+          <div className="absolute bottom-2 left-2 z-10 bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+            🧪 {t('productCard.demo')}
           </div>
         )}
         <Image

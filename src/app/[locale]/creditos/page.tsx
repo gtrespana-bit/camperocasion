@@ -1,5 +1,7 @@
 'use client'
 
+import LocalLink from '@/components/LocalLink'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -46,7 +48,17 @@ let metodosPago: MetodoPago[] = [
   },
 ]
 
-function ModalPago({ paquete, onClose }: { paquete: any; onClose: () => void }) {
+function ModalPago({
+  paquete,
+  metodos,
+  configurado,
+  onClose,
+}: {
+  paquete: any
+  metodos: MetodoPago[]
+  configurado: Record<string, boolean> | null
+  onClose: () => void
+}) {
   const t = useTranslations('creditos')
   const router = useRouter()
   const [metodo, setMetodo] = useState('')
@@ -56,7 +68,7 @@ function ModalPago({ paquete, onClose }: { paquete: any; onClose: () => void }) 
   const [enviando, setEnviando] = useState(false)
   const [enviado, setEnviado] = useState(false)
 
-  const selectedMetodo = metodosPago.find(m => m.id === metodo)
+  const selectedMetodo = metodos.find(m => m.id === metodo)
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -148,8 +160,15 @@ function ModalPago({ paquete, onClose }: { paquete: any; onClose: () => void }) 
           {/* Método de pago */}
           <div>
             <h4 className="font-bold text-gray-800 mb-3">{t('choosePayment')}</h4>
+            {configurado && metodos.length === 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+                Estamos terminando de configurar los pagos con Bizum, transferencia y PayPal.
+                Escríbenos y te damos los datos para comprar créditos ahora mismo:{' '}
+                <LocalLink href="/contacto" className="font-semibold underline">contacto</LocalLink>.
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-3">
-              {metodosPago.map(m => (
+              {metodos.map(m => (
                 <button key={m.id} onClick={() => setMetodo(m.id)}
                   className={`p-4 rounded-xl border-2 text-center transition ${metodo === m.id ? 'border-brand-accent bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
                   <span className="text-3xl block">{m.emoji}</span>
@@ -183,7 +202,8 @@ function ModalPago({ paquete, onClose }: { paquete: any; onClose: () => void }) 
                     telefono: t('phone'),
                     iban: 'IBAN',
                     banco: t('bank'),
-                    receptor: t('idCard'),
+                    receptor: t('holder'),
+                    titular: t('holder'),
                     email: 'PayPal (email)',
                   }
                   return (
@@ -243,31 +263,23 @@ function ModalPago({ paquete, onClose }: { paquete: any; onClose: () => void }) 
 export default function CreditosPage() {
   const t = useTranslations('creditos')
   const [paqueteSeleccionado, setPaqueteSeleccionado] = useState<any>(null)
-  const [datosPago, setDatosPago] = useState<Record<string, string>>({})
+  // Métodos de pago con datos REALES del servidor. Si una variable de entorno
+  // falta, ese método no se ofrece: antes la web mostraba un IBAN y un Bizum de
+  // ejemplo (dineros a una cuenta inexistente) porque el endpoint rellenaba los
+  // huecos con valores ficticios.
+  const [metodos, setMetodos] = useState<MetodoPago[]>(metodosPago)
+  const [configurado, setConfigurado] = useState<Record<string, boolean> | null>(null)
 
   // Cargar datos de pago reales del servidor (IBAN, teléfono Bizum, PayPal…)
   useEffect(() => {
     fetch('/api/datos-pago')
       .then(r => r.json())
       .then(d => {
-        if (d?.transferencia) {
-          metodosPago = metodosPago.map(m =>
-            m.id === 'transferencia'
-              ? { ...m, instrucciones: d.transferencia }
-              : m
-          )
-        }
-        if (d?.bizum) {
-          metodosPago = metodosPago.map(m =>
-            m.id === 'bizum' ? { ...m, instrucciones: d.bizum } : m
-          )
-        }
-        if (d?.paypal) {
-          metodosPago = metodosPago.map(m =>
-            m.id === 'paypal' ? { ...m, instrucciones: d.paypal } : m
-          )
-        }
-        setDatosPago({})
+        const conDatos = metodosPago
+          .map(m => (d?.[m.id] && typeof d[m.id] === 'object' ? { ...m, instrucciones: d[m.id] } : m))
+          .filter(m => (d?.configurado ? d.configurado[m.id] !== false : true))
+        setMetodos(conDatos)
+        setConfigurado(d?.configurado ?? null)
       })
       .catch(() => {})
   }, [])
@@ -374,7 +386,14 @@ export default function CreditosPage() {
         </div>
       </div>
 
-      {paqueteSeleccionado && <ModalPago paquete={paqueteSeleccionado} onClose={() => setPaqueteSeleccionado(null)} />}
+      {paqueteSeleccionado && (
+        <ModalPago
+          paquete={paqueteSeleccionado}
+          metodos={metodos}
+          configurado={configurado}
+          onClose={() => setPaqueteSeleccionado(null)}
+        />
+      )}
     </div>
   )
 }

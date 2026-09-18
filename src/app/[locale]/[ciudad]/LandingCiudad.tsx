@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase-server-client'
+import { aplicarOrdenCatalogo } from '@/lib/catalog-consulta'
 import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { MapPin, ChevronRight } from 'lucide-react'
@@ -17,13 +18,15 @@ interface Props {
 async function getProductos(ciudad: string, municipio?: string) {
   if (!supabase) return { productos: [], total: 0 }
   try {
-    let query = supabase
-      .from('productos')
-      .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, destacado, destacado_hasta', { count: 'exact' })
-      .eq('activo', true)
-      .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado')
-      .order('creado_en', { ascending: false })
-      .limit(24)
+    // Prioridad pagada primero, igual que el catálogo (mismo ORDER BY
+    // compartido: boost vigente > destacado vigente > fecha).
+    let query = aplicarOrdenCatalogo(
+      supabase
+        .from('productos')
+        .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, destacado, destacado_hasta', { count: 'exact' })
+        .eq('activo', true)
+        .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado'),
+    ).limit(24)
 
     if (municipio && municipio !== ciudad) {
       query = query.or(`ubicacion_ciudad.eq."${ciudad}",ubicacion_ciudad.eq."${municipio}"`)

@@ -46,11 +46,11 @@ function formatTime(iso: string | null): string {
   if (diffH < 24) return `${diffH}h`
   const diffD = Math.floor(diffH / 24)
   if (diffD < 7) return `${diffD}d`
-  return d.toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })
+  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
 }
 
 function formatHora(iso: string): string {
-  return new Date(iso).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 }
 
 function slugProducto(titulo: string, id: string): string {

@@ -51,7 +51,6 @@ export async function GET(request: NextRequest) {
   const localFonts = getLocalFonts()
   // Buffer es un Uint8Array válido para satori; `any` evita la fricción de
   // tipos Buffer<ArrayBufferLike> de TS 5.7+ y del union `Weight`.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fontOptions: any = localFonts.map(f => ({
     data: f.data,
     weight: f.weight,
@@ -73,7 +72,7 @@ export async function GET(request: NextRequest) {
         </div>
         <h1 style={{ fontSize: '58px', fontWeight: 'bold', textAlign: 'center', textShadow: '2px 2px 4px rgba(0,0,0,0.5)', lineHeight: 1.2 }}>{cat.name}</h1>
         <p style={{ fontSize: '34px', marginTop: '18px', textAlign: 'center', opacity: 0.9 }}>{cat.tagline}</p>
-        <div style={{ position: 'absolute', bottom: '20px', fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>CamperOcasión.es</div>
+        <div style={{ position: 'absolute', bottom: '20px', fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>camperocasion.online</div>
       </div>
     ),
     {

@@ -9,6 +9,7 @@ import { formatPrecio } from '@/lib/precio'
 import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import { resumenFabricantes } from '@/lib/marcas'
 import { CIUDADES_SEO } from '@/lib/ubicaciones-seo'
+import { aplicarOrdenCatalogo, ordenarProductosCatalogo } from '@/lib/catalog-consulta'
 
 // ── Metadata ──────────────────────────────────────────────────────────────
 
@@ -101,10 +102,17 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   }
 }
 
+// La home lista anuncios recién publicados: sin `revalidate` se prerenderizaba
+// una sola vez y el CDN la servía con `s-maxage=31536000`, así que un anuncio
+// nuevo no aparecía hasta el siguiente despliegue. Con 10 minutos (el mismo
+// margen que /catalogo) la portada se refresca sola y, además, cada publicación
+// la invalida al instante con `revalidarListadosPublicos()`.
+export const revalidate = 600
+
 // ── Datos ─────────────────────────────────────────────────────────────────
 
 const MODERACION = 'estado_moderacion.is.null,estado_moderacion.eq.aprobado'
-const PRODUCT_COLS = 'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, subcategoria, creado_en, boosteado_en, destacado, destacado_hasta, vendedor_tipo'
+const PRODUCT_COLS = 'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, subcategoria, creado_en, boosteado_en, destacado, destacado_hasta, vendedor_tipo, es_demo'
 
 async function getProductos(limit = 8, subcategorias?: string[]) {
   if (!supabase) return []
@@ -114,29 +122,16 @@ async function getProductos(limit = 8, subcategorias?: string[]) {
       .select(PRODUCT_COLS)
       .eq('activo', true)
       .or(MODERACION)
-      .order('creado_en', { ascending: false })
-      .limit(limit)
     if (subcategorias && subcategorias.length === 1) {
       q = q.eq('subcategoria', subcategorias[0])
     } else if (subcategorias && subcategorias.length > 1) {
       q = q.in('subcategoria', subcategorias)
     }
-    const { data, error } = await q
+    // El ORDER BY va en SQL (no solo en memoria): si solo ordenáramos los N
+    // más recientes, un boost sobre un anuncio antiguo no llegaría a portada.
+    const { data, error } = await aplicarOrdenCatalogo(q).limit(limit)
     if (error) return []
-    const now = new Date().toISOString()
-    return (data || []).sort((a: any, b: any) => {
-      const aBoost = a.boosteado_en || null
-      const bBoost = b.boosteado_en || null
-      if (aBoost && !bBoost) return -1
-      if (!aBoost && bBoost) return 1
-      if (aBoost && bBoost) return bBoost.localeCompare(aBoost)
-      const aDest = a.destacado && a.destacado_hasta && a.destacado_hasta > now
-      const bDest = b.destacado && b.destacado_hasta && b.destacado_hasta > now
-      if (aDest && !bDest) return -1
-      if (!aDest && bDest) return 1
-      if (aDest && bDest) return b.destacado_hasta.localeCompare(a.destacado_hasta)
-      return (b.creado_en || '').localeCompare(a.creado_en || '')
-    })
+    return ordenarProductosCatalogo((data || []) as any)
   } catch {
     return []
   }

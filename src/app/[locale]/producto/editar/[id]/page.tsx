@@ -378,11 +378,11 @@ export default function EditarPage() {
                 <span className="text-sm font-medium">💚 WhatsApp</span>
                 <button type="button" onClick={() => setShowWhatsApp(false)} className="text-red-500 text-xs hover:underline">Quitar</button>
               </div>
-              <input type="tel" value={contactWhatsApp} onChange={e => setContactWhatsApp(e.target.value)} placeholder="+58 412 1234567" className="mt-2 w-full border rounded px-2 py-1.5 text-sm" />
+              <input type="tel" value={contactWhatsApp} onChange={e => setContactWhatsApp(e.target.value)} placeholder="+34 600 123 456" className="mt-2 w-full border rounded px-2 py-1.5 text-sm" />
             </div>
           ) : (
             <label className="flex items-center gap-3 bg-white border rounded-lg p-3 cursor-pointer hover:bg-gray-50">
-              <input type="checkbox" onChange={() => { setShowWhatsApp(true); setContactWhatsApp('+58 ') }} className="rounded" />
+              <input type="checkbox" onChange={() => { setShowWhatsApp(true); setContactWhatsApp('+34 ') }} className="rounded" />
               <span className="text-sm">💚 WhatsApp</span>
             </label>
           )}
@@ -393,11 +393,11 @@ export default function EditarPage() {
                 <span className="text-sm font-medium">📞 Teléfono</span>
                 <button type="button" onClick={() => setShowPhone(false)} className="text-red-500 text-xs hover:underline">Quitar</button>
               </div>
-              <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="+58 412 1234567" className="mt-2 w-full border rounded px-2 py-1.5 text-sm" />
+              <input type="tel" value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="+34 600 123 456" className="mt-2 w-full border rounded px-2 py-1.5 text-sm" />
             </div>
           ) : (
             <label className="flex items-center gap-3 bg-white border rounded-lg p-3 cursor-pointer hover:bg-gray-50">
-              <input type="checkbox" onChange={() => { setShowPhone(true); setContactPhone('+58 ') }} className="rounded" />
+              <input type="checkbox" onChange={() => { setShowPhone(true); setContactPhone('+34 ') }} className="rounded" />
               <span className="text-sm">📞 Teléfono</span>
             </label>
           )}

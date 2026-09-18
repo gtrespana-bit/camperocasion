@@ -1,5 +1,5 @@
 -- ============================================================================
--- VendeT — Rate limit atómico
+-- CamperOcasión — Rate limit atómico
 -- Fecha: 2026-08-01
 --
 -- El código anterior hacía COUNT + INSERT asíncrono, por lo que varias

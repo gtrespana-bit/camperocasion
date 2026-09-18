@@ -2905,7 +2905,7 @@ GRANT EXECUTE ON FUNCTION obtener_detalle_producto(UUID, UUID) TO authenticated;
 
 -- ----- 202608010001_hardening_integridad.sql -----
 -- ============================================================================
--- VendeT — Hardening de permisos e integridad
+-- CamperOcasión — Hardening de permisos e integridad
 -- Fecha: 2026-08-01
 --
 -- Esta migración va DESPUÉS de las migraciones existentes. No elimina datos.
@@ -3561,7 +3561,7 @@ grant execute on function public.obtener_detalle_producto(uuid, uuid) to anon, a
 
 -- ----- 202608010002_chat_resenas_integridad.sql -----
 -- ============================================================================
--- VendeT — Fase 2: chat y reseñas
+-- CamperOcasión — Fase 2: chat y reseñas
 --
 -- Aplicar después de 202608010001_hardening_integridad.sql.
 -- Las escrituras del navegador se trasladan a APIs autenticadas; las políticas
@@ -3650,7 +3650,7 @@ revoke all on table public.notificaciones_push from anon, authenticated;
 
 -- ----- 202608010003_fix_reputacion_definer.sql -----
 -- ============================================================================
--- VendeT — Fix: fn_calcular_reputacion como SECURITY DEFINER
+-- CamperOcasión — Fix: fn_calcular_reputacion como SECURITY DEFINER
 -- Fecha: 2026-08-01
 --
 -- Contexto
@@ -3693,7 +3693,7 @@ alter function public.fn_calcular_reputacion() set search_path = public;
 
 -- ----- 202608010004_emprendedor_idempotente.sql -----
 -- ============================================================================
--- VendeT — Bonus emprendedor idempotente
+-- CamperOcasión — Bonus emprendedor idempotente
 -- Fecha: 2026-08-01
 --
 -- El trigger histórico de 011_credito_sistema.sql ponía emprendedor_dado=false
@@ -3816,7 +3816,7 @@ create trigger trg_pack_emprendedor
 
 -- ----- 202608010005_productos_edicion_segura.sql -----
 -- ============================================================================
--- VendeT — Las modificaciones de productos pasan por API server-side
+-- CamperOcasión — Las modificaciones de productos pasan por API server-side
 -- Fecha: 2026-08-01
 --
 -- El editor web ya no debe escribir productos directamente con la anon key.
@@ -3859,7 +3859,7 @@ alter table public.productos
 
 -- ----- 202608010006_rate_limit_atomico.sql -----
 -- ============================================================================
--- VendeT — Rate limit atómico
+-- CamperOcasión — Rate limit atómico
 -- Fecha: 2026-08-01
 --
 -- El código anterior hacía COUNT + INSERT asíncrono, por lo que varias
@@ -3956,7 +3956,7 @@ grant execute on function public.check_rate_limit_atomic(text, text, text, integ
 
 -- ----- 202608010007_anuncios_globales.sql -----
 -- ============================================================================
--- VendeT — Anuncios globales del sitio
+-- CamperOcasión — Anuncios globales del sitio
 -- Fecha: 2026-08-30
 --
 -- Permite al panel admin publicar un banner informativo visible en toda la
@@ -5628,3 +5628,168 @@ begin
   return new;
 end;
 $$;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- (misma sección que `supabase/migrations/202609180003_anuncios_demo.sql`;
+--  se mantiene aquí para que una instalación nueva quede al día de una vez)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ============================================================================
+-- 202609180003 — Anuncios de demostración identificados (`es_demo`)
+--
+-- PROBLEMA QUE RESUELVE
+-- =====================
+-- El proyecto trae una semilla con 20 anuncios y 14 vendedores de ejemplo
+-- (`src/lib/semilla-datos.js`, `/api/admin/semilla`) para que el sitio no se
+-- vea vacío al enseñarlo. Esos anuncios traían:
+--
+--   · teléfonos móviles españoles inventados (formato +34 6XX …) — números que
+--     hoy pertenecen a personas reales;
+--   · perfiles marcados como «verificado» sin ninguna verificación detrás;
+--   · textos escritos como si fueran anuncios reales de particulares;
+--   · nada que los distinguiera de un anuncio real.
+--
+-- En una web pública y monetizada eso es publicidad engañosa (Ley 3/1991) y,
+-- además, el peor arranque posible para un marketplace cuyo argumento es la
+-- confianza: el comprador llama, no le contestan o le contesta un desconocido.
+--
+-- SOLUCIÓN
+-- ========
+--   1) Marca explícita `es_demo` en `productos` y `perfiles`.
+--   2) Backfill de lo ya sembrado, detectando a los vendedores creados por la
+--      semilla (`auth.users.raw_user_meta_data->>'semilla' = 'true'`).
+--   3) Se vacían los teléfonos de esos perfiles/anuncios: son inventados y no
+--      deben poder marcarse nunca.
+--
+-- El código que la usa:
+--   · `src/app/sitemap.ts`               → los anuncios demo no se indexan.
+--   · `src/app/[locale]/producto/[slug]` → banner "anuncio de ejemplo" y sin
+--                                          datos de contacto.
+--   · tarjetas del catálogo              → etiqueta "Ejemplo".
+--   · `/api/admin/semilla`               → marca lo que siembra y ya no
+--                                          publica teléfonos ni verificados.
+--
+-- Idempotente: se puede aplicar más de una vez.
+-- ============================================================================
+
+-- ── 1. Columnas de marca ───────────────────────────────────────────────────
+alter table public.productos add column if not exists es_demo boolean not null default false;
+alter table public.perfiles  add column if not exists es_demo boolean not null default false;
+
+comment on column public.productos.es_demo is
+  'Anuncio de demostración (semilla). No se indexa en el sitemap, se etiqueta como ejemplo y no expone contacto.';
+comment on column public.perfiles.es_demo is
+  'Perfil de demostración (semilla). No se indexa y nunca debe mostrar el sello de verificado.';
+
+-- ── 2. Backfill: lo sembrado antes de esta migración ───────────────────────
+update public.perfiles p
+   set es_demo = true,
+       verificado = false,
+       verificado_desde = null,
+       telefono = null,
+       telefono_visible = false,
+       whatsapp_disponible = false
+  from auth.users u
+ where u.id = p.id
+   and coalesce(u.raw_user_meta_data->>'semilla', '') = 'true';
+
+update public.productos pr
+   set es_demo = true,
+       metodos_contacto = jsonb_build_object('email', coalesce(pr.metodos_contacto->>'email', ''))
+  from auth.users u
+ where u.id = pr.user_id
+   and coalesce(u.raw_user_meta_data->>'semilla', '') = 'true';
+
+-- ── 3. Índices: el sitemap y el catálogo filtran por esta columna ──────────
+create index if not exists productos_es_demo_idx on public.productos (es_demo);
+create index if not exists perfiles_es_demo_idx on public.perfiles (es_demo);
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- (misma sección que `supabase/migrations/202609180004_boost_no_doble_cobro.sql`)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Cobrar dos veces por el mismo boost.
+ *
+ * `usar_boost` (definida en `202608010001_hardening_integridad.sql`) descontaba
+ * 1 crédito y ponía `boosteado_en = now()` sin mirar si el anuncio ya estaba
+ * subido. Con la caducidad de `BOOST_DIAS = 7` día que ahora aplica la web, un
+ * vendedor podía pulsar «Subir al nº 1» dos veces seguidas y pagar 2 créditos
+ * por un solo efecto: la segunda pulsación solo reescribía la fecha.
+ *
+ * La regla nueva no cambia el precio ni la duración; solo impide el cobro
+ * inútil: si la subida sigue vigente, la RPC devuelve `ok: false` con un
+ * mensaje claro y **no toca el saldo**. Cuando caduca (o si nunca se subió),
+ * funciona igual que antes.
+ *
+ * `BOOST_DIAS` debe coincidir con `src/lib/catalog-consulta.ts`; si algún día
+ * cambia allí, hay que cambiarlo también aquí (y en ese caso conviene moverlo a
+ * una tabla de configuración).
+ */
+create or replace function public.usar_boost(
+  p_producto_id uuid,
+  p_user_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_owner uuid;
+  v_boosteado timestamptz;
+  v_balance integer;
+  v_boost_dias constant integer := 7;
+begin
+  if auth.uid() is null or auth.uid() <> p_user_id then
+    return jsonb_build_object('ok', false, 'error', 'No autorizado');
+  end if;
+
+  select user_id, boosteado_en
+    into v_owner, v_boosteado
+  from public.productos
+  where id = p_producto_id
+  for update;
+
+  if v_owner is null then
+    return jsonb_build_object('ok', false, 'error', 'Producto no encontrado');
+  end if;
+  if v_owner <> auth.uid() then
+    return jsonb_build_object('ok', false, 'error', 'No eres dueño de este producto');
+  end if;
+  if v_boosteado is not null
+     and v_boosteado > now() - (v_boost_dias || ' days')::interval then
+    return jsonb_build_object(
+      'ok', false,
+      'error', 'Tu publicación ya está en el nº 1 con la subida actual',
+      'ya_activo', true,
+      'vigente_hasta', v_boosteado + (v_boost_dias || ' days')::interval
+    );
+  end if;
+
+  update public.perfiles
+  set credito_balance = credito_balance - 1
+  where id = auth.uid() and coalesce(credito_balance, 0) >= 1
+  returning credito_balance into v_balance;
+
+  if v_balance is null then
+    return jsonb_build_object('ok', false, 'error', 'No tienes créditos suficientes');
+  end if;
+
+  update public.productos
+  set boosteado_en = now()
+  where id = p_producto_id and user_id = auth.uid();
+
+  insert into public.transacciones_creditos (user_id, tipo, monto, metodo_pago, estado)
+  values (auth.uid(), 'gasto', 1, 'boost', 'aprobado');
+
+  return jsonb_build_object(
+    'ok', true,
+    'balance', v_balance,
+    'vigente_hasta', now() + (v_boost_dias || ' days')::interval
+  );
+end;
+$$;
+
+grant execute on function public.usar_boost(uuid, uuid) to authenticated;
+revoke execute on function public.usar_boost(uuid, uuid) from anon;

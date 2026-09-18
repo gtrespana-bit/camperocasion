@@ -5,6 +5,76 @@
 > reiniciarse el entorno, así que ahora está versionado aquí. El resumen corto
 > también está en la descripción del PR #3.
 
+## ⚠️ Antes de desplegar el código del 2026-09-18
+
+1. ~~**Aplicar en Supabase** `202609180003_anuncios_demo.sql` y
+   `202609180004_boost_no_doble_cobro.sql`~~ ✅ **hecho** (confirmado por el
+   propietario el 2026-09-18). Con las dos aplicadas: los anuncios de ejemplo
+   quedan marcados, sin teléfonos inventados ni «verificado» falsos, y la RPC
+   `usar_boost` ya no cobra un segundo crédito mientras la subida sigue vigente.
+2. **Cron nuevo:** `vercel.json` añade `/api/cron/expirar-prioridades`
+   (diario 03:41 UTC). Vercel lo registra solo al desplegar; comprobar en
+   *Settings → Cron Jobs* que aparece y que devuelve 200 (necesita
+   `CRON_SECRET`, ya configurado para los otros cuatro).
+3. **Datos de pago (opcional, para vender créditos):** mientras
+   `PAGO_IBAN`, `PAGO_TITULAR`, `PAGO_BIZUM_TELEFONO` y `PAGO_PAYPAL_EMAIL` no
+   estén en Vercel, `/creditos` avisa de que los pagos aún no están abiertos en
+   lugar de mostrar un IBAN de relleno. Para recibir pagos hay que definirlas.
+4. **Teléfono de contacto (opcional):** `NEXT_PUBLIC_TELEFONO_CONTACTO`
+   (`+34 …`). Si no se define, `/contacto` muestra solo email y WhatsApp.
+5. **Verificación rápida después del despliegue:** abrir `/`, `/catalogo`,
+   `/contacto` (sin teléfono falso) y `/creditos` (sin IBAN falso), y comprobar
+   que el botón de WhatsApp de un anuncio abre un número **+34**.
+
+### Lo que sigue en manos del propietario (fuera del alcance del agente)
+
+- **Añadir el nuevo paso al workflow de CI** (`.github/workflows/ci.yml`, job
+  `sql`), justo detrás de «Garantías de la reserva con señal»:
+
+  ```yaml
+      - name: Promoción sin doble cobro
+        run: python3 scripts/verify_boost_sql.py
+  ```
+
+  El archivo del workflow no lo puede tocar el agente (el token de GitHub no
+  tiene el permiso `workflows`), por eso el script ya está en el repo pero el
+  paso lo tienes que pegar tú una vez.
+
+## Cumplimiento legal (2026-09-18)
+
+Las páginas legales se han reescrito para que digan **lo que el sitio hace de
+verdad** y se han completado los documentos que faltaban:
+
+| Documento | Estado |
+|---|---|
+| Política de privacidad | Reescrita: responsable, bases jurídicas, encargados reales (Supabase, Vercel, Resend, push, Telegram), transferencias internacionales, plazos de conservación, derechos y reclamación ante la AEPD |
+| Política de cookies | **Nueva** (`/politica-de-cookies`), con el inventario real (sesión de Supabase, `cookie-consent`, medición opcional) y botón para **cambiar la decisión** |
+| Términos y condiciones | Corregido: ya no dice que la plataforma no gestiona pagos (sí vende visibilidad), se declara **intermediaria** y se explica el desistimiento y la devolución de créditos no consumidos |
+| Aviso legal (LSSI art. 10) | **Nueva** página (`/aviso-legal`) con los datos del titular leídos del entorno |
+
+### Lo único que falta para publicar el aviso legal (2 minutos en Vercel)
+
+Rellenar estas variables (el pie solo enlaza la página y solo se indexa cuando
+están las tres primeras):
+
+```
+NEXT_PUBLIC_TITULAR_NOMBRE     = nombre y apellidos (autónomo) o razón social
+NEXT_PUBLIC_TITULAR_NIF        = NIF/DNI o CIF
+NEXT_PUBLIC_TITULAR_DOMICILIO  = calle, número, CP y provincia
+NEXT_PUBLIC_TITULAR_EMAIL      = (opcional; si falta, privacidad@camperocasion.online)
+NEXT_PUBLIC_TITULAR_TELEFONO   = (opcional; recomendable para atención al cliente)
+NEXT_PUBLIC_TITULAR_REGISTRO   = (solo sociedades: datos del Registro Mercantil)
+```
+
+Verifica además que los buzones que anuncian las páginas existen y se leen:
+**privacidad@** y **legal@camperocasion.online**. Una obligación de información
+que apunta a un correo que nadie contesta no cumple la norma.
+
+Los textos describen con exactitud el tratamiento y las condiciones del
+servicio, pero **no sustituyen una revisión profesional**: antes de empezar a
+facturar conviene el visto bueno de un abogado, sobre todo en la cláusula de
+desistimiento de los créditos.
+
 > **Estado a 2026-09-17:** todas las migraciones de CamperOcasión aplicadas
 > en producción y verificadas **32/32** con `scripts/verificar_despliegue.sql`
 > (SQL ejecutado con éxito en el editor de Supabase; verificado por el usuario).

@@ -54,7 +54,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <HtmlLangSetter lang={locale} />
-      <SiteChrome>{children}</SiteChrome>
+      <SiteChrome lang={locale}>{children}</SiteChrome>
       <LocaleClientEffects />
     </NextIntlClientProvider>
   )

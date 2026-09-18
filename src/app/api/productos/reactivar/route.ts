@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireUser } from '@/lib/require-auth'
 import { requireUUIDs } from '@/lib/validation'
+import { revalidarListadosPublicos } from '@/lib/revalidar'
 
 export async function POST(request: NextRequest) {
   const auth = await requireUser(request)
@@ -50,6 +51,9 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: 'No se pudo reactivar el producto' }, { status: 500 })
   }
+
+  // Vuelve a los listados públicos (portada, catálogo y buscador, es/en)
+  revalidarListadosPublicos()
 
   return NextResponse.json({ ok: true })
 }

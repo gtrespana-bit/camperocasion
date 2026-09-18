@@ -137,8 +137,8 @@ export default function AprobacionPage() {
                     <span className="text-lg font-bold text-gray-800">{t.monto} créditos</span>
                     <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full font-bold">PENDIENTE</span>
                   </div>
-                  <p className="text-sm text-gray-600">💲 ${t.precio_usd || '?'} USD — {t.metodo_pago || 'N/A'}</p>
-                  <p className="text-xs text-gray-500">{new Intl.DateTimeFormat('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(t.creado_en))} {new Intl.DateTimeFormat('es-VE', { hour: '2-digit', minute: '2-digit' }).format(new Date(t.creado_en))}</p>
+                  <p className="text-sm text-gray-600">💶 {t.precio_usd ? `${t.precio_usd} €` : '?'} — {t.metodo_pago || 'N/A'}</p>
+                  <p className="text-xs text-gray-500">{new Intl.DateTimeFormat('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(t.creado_en))} {new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(new Date(t.creado_en))}</p>
 
                   {/* Comprobante */}
                   {t.comprobante_url && (

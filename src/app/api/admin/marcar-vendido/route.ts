@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUUIDs, isValidUUID } from '@/lib/validation'
 import { requireUser, getAdminEmails } from '@/lib/require-auth'
+import { revalidarListadosPublicos } from '@/lib/revalidar'
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,6 +89,9 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // Un anuncio vendido sale de los listados y de la portada al instante
+    revalidarListadosPublicos()
 
     return NextResponse.json({ ok: true })
   } catch (err: any) {

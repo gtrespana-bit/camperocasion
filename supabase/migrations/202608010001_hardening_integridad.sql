@@ -1,5 +1,5 @@
 -- ============================================================================
--- VendeT — Hardening de permisos e integridad
+-- CamperOcasión — Hardening de permisos e integridad
 -- Fecha: 2026-08-01
 --
 -- Esta migración va DESPUÉS de las migraciones existentes. No elimina datos.

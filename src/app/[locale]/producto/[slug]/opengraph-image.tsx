@@ -56,7 +56,7 @@ export default async function Image({ params }: { params: { slug: string; locale
             </div>
           </div>
           <div style={{ position: 'absolute', bottom: '20px', fontSize: '24px', fontWeight: 'bold', color: 'white', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-            CamperOcasión.es
+            camperocasion.online
           </div>
         </div>
       ),

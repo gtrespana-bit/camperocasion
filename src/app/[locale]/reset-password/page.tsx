@@ -1,5 +1,6 @@
 'use client'
 
+import BrandLogo from '@/components/BrandLogo'
 import { useState, useEffect } from 'react'
 import LocalLink from '@/components/LocalLink'
 import { useRouter } from 'next/navigation'
@@ -92,9 +93,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <LocalLink href="/" className="text-brand-primary font-black text-3xl">
-            Vende<span className="text-brand-accent">T</span><span className="text-sm ml-1 text-gray-500">-España</span>
-          </LocalLink>
+          <BrandLogo href="/" size="lg" className="justify-center" priority />
           <h1 className="text-2xl font-bold text-gray-800 mt-4">
             {success ? t('titleSuccess') : t('title')}
           </h1>
@@ -129,7 +128,7 @@ export default function ResetPasswordPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('newPw')}</label>
                 <input
-                  type="password"
+                  type="password" autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t('newPwPlaceholder')}
@@ -142,7 +141,7 @@ export default function ResetPasswordPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('repeatPw')}</label>
                 <input
-                  type="password"
+                  type="password" autoComplete="new-password"
                   value={confirmedPassword}
                   onChange={(e) => setConfirmedPassword(e.target.value)}
                   placeholder={t('repeatPwPlaceholder')}

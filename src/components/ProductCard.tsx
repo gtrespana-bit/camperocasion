@@ -1,5 +1,6 @@
 'use client'
 import { formatPrecio } from '@/lib/precio'
+import { boostVigente } from '@/lib/catalog-consulta'
 
 import LocalLink from '@/components/LocalLink'
 import BadgeHomologacion from '@/components/BadgeHomologacion'
@@ -24,6 +25,8 @@ export interface ProductCardData {
   vendedor_tipo?: string | null
   verificacion_homologacion?: string | null
   reservado?: boolean | null
+  /** Anuncio de demostración: se etiqueta para no confundirlo con inventario real. */
+  es_demo?: boolean | null
 }
 
 const PLACEHOLDER_IMAGES = [
@@ -32,7 +35,9 @@ const PLACEHOLDER_IMAGES = [
 
 export default function ProductCard({ p, isPromoted, isFeatured, priority }: { p: ProductCardData; isPromoted?: boolean; isFeatured?: boolean; priority?: boolean }) {
   const t = useTranslations()
-  const isBoosted = p.boosteado_en != null
+  // El boost dura BOOST_DIAS (la misma regla que ordena el catálogo):
+  // si no se comprueba aquí, la etiqueta ⚡ quedaría para siempre.
+  const isBoosted = boostVigente(p.boosteado_en)
   const promoted = isPromoted ?? (isBoosted || isFeatured)
 
   const imgUrl = p.imagen_url || PLACEHOLDER_IMAGES[p.titulo.charCodeAt(0) % PLACEHOLDER_IMAGES.length]
@@ -56,6 +61,11 @@ export default function ProductCard({ p, isPromoted, isFeatured, priority }: { p
         {isBoosted && !isFeatured && (
           <div className="absolute top-2 left-2 z-10 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
             ⚡ {t('productCard.boost')}
+          </div>
+        )}
+        {p.es_demo && (
+          <div className="absolute bottom-2 left-2 z-10 bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+            🧪 {t('productCard.demo')}
           </div>
         )}
         <Image

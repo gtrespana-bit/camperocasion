@@ -1,5 +1,5 @@
 -- ============================================================================
--- VendeT — Las modificaciones de productos pasan por API server-side
+-- CamperOcasión — Las modificaciones de productos pasan por API server-side
 -- Fecha: 2026-08-01
 --
 -- El editor web ya no debe escribir productos directamente con la anon key.

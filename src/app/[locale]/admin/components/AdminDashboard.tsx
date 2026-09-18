@@ -161,7 +161,7 @@ export default function AdminDashboard({
         <div>
           <h2 className="text-xl font-black text-gray-900">Centro de operaciones</h2>
           <p className="text-sm text-gray-500">
-            Vista en vivo del marketplace. Última actualización: {lastRefreshed.current.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}
+            Vista en vivo del marketplace. Última actualización: {lastRefreshed.current.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
         <RefreshButton onClick={() => load(true)} loading={refreshing} title="Actualizar datos" />
@@ -232,7 +232,7 @@ export default function AdminDashboard({
                 {data.last7Products.map((v, i) => (
                   <div key={i} className="flex flex-1 flex-col items-center gap-1">
                     <div className="w-full rounded-t-lg bg-gradient-to-t from-brand-primary/80 to-brand-primary" style={{ height: `${Math.max(4, (v / maxProductsTrend) * 76)}px` }} />
-                    <span className="text-[10px] text-gray-400">{new Date(Date.now() - (6 - i) * 86400000).toLocaleDateString('es-VE', { weekday: 'short' })}</span>
+                    <span className="text-[10px] text-gray-400">{new Date(Date.now() - (6 - i) * 86400000).toLocaleDateString('es-ES', { weekday: 'short' })}</span>
                   </div>
                 ))}
               </div>
@@ -248,7 +248,7 @@ export default function AdminDashboard({
                 {data.last7Transactions.map((v, i) => (
                   <div key={i} className="flex flex-1 flex-col items-center gap-1">
                     <div className="w-full rounded-t-lg bg-gradient-to-t from-emerald-500 to-emerald-400" style={{ height: `${Math.max(4, (v / maxTxTrend) * 76)}px` }} />
-                    <span className="text-[10px] text-gray-400">{new Date(Date.now() - (6 - i) * 86400000).toLocaleDateString('es-VE', { weekday: 'short' })}</span>
+                    <span className="text-[10px] text-gray-400">{new Date(Date.now() - (6 - i) * 86400000).toLocaleDateString('es-ES', { weekday: 'short' })}</span>
                   </div>
                 ))}
               </div>

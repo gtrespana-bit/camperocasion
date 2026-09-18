@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
 import { requireUUIDs } from '@/lib/validation'
 import { requireAdmin } from '@/lib/require-auth'
+import { revalidarListadosPublicos } from '@/lib/revalidar'
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,9 +33,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Revalidate ISR cache so boosted product appears immediately
-    revalidatePath('/')
-    revalidatePath('/catalogo')
+    // El anuncio boosteado sube ya en portada y catálogo
+    revalidarListadosPublicos()
 
     return NextResponse.json({ ok: true })
   } catch (err: any) {

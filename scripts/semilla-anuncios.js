@@ -53,7 +53,11 @@ const RESET = ARGS.includes('--reset')
 const DRY_RUN = ARGS.includes('--dry-run')
 
 const BUCKET = 'productos-fotos'
-const FOTOS_DIR = path.join(__dirname, 'semilla', 'fotos')
+// Las fotos viven SOLO en public/semilla-fotos: es la ruta que sirve el
+// despliegue y la que usa POST /api/admin/semilla para sembrar desde el panel.
+// Antes había una copia idéntica en scripts/semilla/fotos (11 MB duplicados que
+// había que mantener sincronizados a mano en cada cambio de foto).
+const FOTOS_DIR = path.join(__dirname, '..', 'public', 'semilla-fotos')
 const CATEGORIA = 'camper'
 
 if (!DRY_RUN && (!SUPABASE_URL || !SERVICE_KEY)) {
@@ -201,7 +205,7 @@ async function main() {
   for (const a of ANUNCIOS) {
     for (const f of a.fotos) {
       if (!fs.existsSync(path.join(FOTOS_DIR, f))) {
-        console.error(`❌ Falta la foto: scripts/semilla/fotos/${f} (anuncio "${a.titulo}")`)
+        console.error(`❌ Falta la foto: public/semilla-fotos/${f} (anuncio "${a.titulo}")`)
         process.exit(1)
       }
       totalFotos++

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     'NUEVA SOLICITUD DE VERIFICACIÓN',
     '',
     `Usuario: ${nombre}`,
-    `Cédula: ${cedula || 'No disponible'}`,
+    `DNI/NIE: ${cedula || 'No disponible'}`,
     `Teléfono: ${telefono || 'No disponible'}`,
     `Banco: ${banco || 'No disponible'}`,
   ].join('\n')

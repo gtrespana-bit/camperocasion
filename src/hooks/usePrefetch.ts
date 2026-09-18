@@ -7,6 +7,7 @@ import {
   CATALOG_PRODUCT_COLUMNS,
   CATALOG_FILTRO_MODERACION,
   aplicarFiltrosBase,
+  aplicarOrdenCatalogo,
   ordenarProductosCatalogo,
   ProductoCatalogo,
   tieneRangosNumericos,
@@ -65,8 +66,10 @@ export const usePrefetch = () => {
 
       // Aplicar offset para la página específica
       const offset = (page - 1) * itemsPerPage;
-      query = query.order('creado_en', { ascending: false })
-                   .range(offset, offset + itemsPerPage - 1);
+      // Mismo ORDER BY que el SSR y el loader: si el prefetch ordenara
+      // distinto, la caché serviría páginas incoherentes.
+      query = aplicarOrdenCatalogo(query)
+                   .range(offset, offset + itemsPerPage - 1) as typeof query;
 
       return await query;
     };

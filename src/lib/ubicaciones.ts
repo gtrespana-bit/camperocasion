@@ -2,7 +2,7 @@
 // Fuente: División territorial oficial — 17 Comunidades Autónomas + 50
 // provincias (más Ceuta y Melilla) = 52 provincias.
 //
-// Compatibilidad: se mantienen los nombres de export del mercado anterior
+// Compatibilidad: se mantienen los nombres de export históricos
 // (ESTADOS, MUNICIPIOS_POR_ESTADO, getMunicipios...) con semántica española:
 //   ESTADOS  = Comunidades Autónomas
 //   municipio = Provincia (nombre), capital = capital de la provincia

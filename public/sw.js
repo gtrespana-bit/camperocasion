@@ -13,6 +13,14 @@
  */
 
 const CACHE_NAME = 'camperocasion-offline-v16'
+
+// Cachés que dejaron versiones anteriores de este service worker en los
+// dispositivos de los usuarios. El prefijo `vendet-` corresponde a la etapa
+// anterior del proyecto: los navegadores que instalaron aquella PWA siguen
+// guardando esas cachés y hay que borrarlas en `activate` para no arrastrar
+// contenido viejo (y para no dejar datos privados cacheados en el dispositivo).
+// No es código nuevo: es la limpieza de lo instalado.
+const PREFIJOS_CACHE_RETIRADOS = ['vendet-', 'camperocasion-offline-']
 const OFFLINE_URLS = ['/offline', '/en/offline']
 const PRIVATE_PREFIXES = [
   '/admin',
@@ -71,8 +79,8 @@ self.addEventListener('activate', (event) => {
     const names = await caches.keys()
     await Promise.all(
       names
-        // Borra cachés legacy (vendet-*) y versiones antiguas camperocasion-*
-        .filter((name) => (name.startsWith('vendet-') || name.startsWith('camperocasion-')) && name !== CACHE_NAME)
+        // Borra las cachés de versiones retiradas y deja solo la actual
+        .filter((name) => PREFIJOS_CACHE_RETIRADOS.some((p) => name.startsWith(p)) && name !== CACHE_NAME)
         .map((name) => caches.delete(name))
     )
     await self.clients.claim()

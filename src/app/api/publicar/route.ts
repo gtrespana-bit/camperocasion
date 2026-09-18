@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { createClient } from '@supabase/supabase-js'
 import { validateProductData, sanitizeObject } from '@/lib/validation'
 import { verificarContenido } from '@/lib/moderacion'
 import { requireUser } from '@/lib/require-auth'
+import { revalidarListadosPublicos } from '@/lib/revalidar'
 
 /**
  * Devuelve el id de una categoría por nombre, creándola si no existe.
@@ -169,9 +169,8 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // Revalidate ISR cache — product appears immediately on home/catalogo
-    revalidatePath('/')
-    revalidatePath('/catalogo')
+    // El anuncio aparece ya en portada, catálogo y buscador (es/en).
+    revalidarListadosPublicos()
 
     // Telegram alert if the server-side moderation marked the product pending.
     // Plain text avoids HTML/Markdown injection through user content.

@@ -73,7 +73,7 @@ export async function GET() {
     <title>Blog de CamperOcasión — Compra y venta en España</title>
     <link>${BASE_URL}/blog</link>
     <description>Guías para vender más rápido, evitar estafas y conocer precios en España. Publica gratis en CamperOcasión.</description>
-    <language>es-VE</language>
+    <language>es-ES</language>
     <atom:link href="${BASE_URL}/feed.xml" rel="self" type="application/rss+xml" />
 ${items}
   </channel>

@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireUUIDs } from '@/lib/validation'
 import { requireAdmin } from '@/lib/require-auth'
+import { revalidarListadosPublicos } from '@/lib/revalidar'
 
+// La portada y el catálogo listan anuncios desde caché (ISR): si no se
+// revalida aquí, aprobar/marcar vendido/eliminar no se ve hasta que otra
+// escritura cualquiera refresque la página.
 export async function POST(req: NextRequest) {
   try {
     // Solo admin con sesión real (antes se confiaba en un email enviado en el body)
@@ -39,6 +43,8 @@ export async function POST(req: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    revalidarListadosPublicos()
 
     return NextResponse.json({ ok: true })
   } catch (e: any) {

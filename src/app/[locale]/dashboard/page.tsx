@@ -163,9 +163,16 @@ export default function DashboardPage() {
   }
 
   async function handleBoost(productId: string) {
-    const { data: result, error } = await supabase.rpc('usar_boost', { p_producto_id: productId, p_user_id: user!.id })
-    if (error || !result?.ok) {
-      data.setToast(`Error: ${result?.error || error?.message || t('boostError')}`)
+    // Igual que el destacado: el boost lo aplica el servidor y de paso
+    // invalida la caché para que el anuncio suba al primer puesto al instante.
+    const res = await fetch('/api/productos/promocionar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, tipo: 'boost' }),
+    })
+    const result = await res.json().catch(() => ({}))
+    if (!res.ok || !result?.ok) {
+      data.setToast(`Error: ${result?.error || t('boostError')}`)
     } else {
       data.setCreditos(result.balance)
       data.setToast(t('boostApplied'))
@@ -177,9 +184,17 @@ export default function DashboardPage() {
   }
 
   async function handleDestacar(productId: string, horas: number) {
-    const { data: result, error } = await supabase.rpc('usar_destacado', { p_producto_id: productId, p_user_id: user!.id, p_horas: horas })
-    if (error || !result?.ok) {
-      data.setToast(`Error: ${result?.error || error?.message || t('featuredError')}`)
+    // El cobro va por el servidor: además de descontar los créditos invalida
+    // la portada y el catálogo, así que el anuncio aparece destacado al
+    // instante (antes el usuario pagaba y seguía viéndolo sin destacar).
+    const res = await fetch('/api/productos/promocionar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, tipo: 'destacado', horas }),
+    })
+    const result = await res.json().catch(() => ({}))
+    if (!res.ok || !result?.ok) {
+      data.setToast(`Error: ${result?.error || t('featuredError')}`)
     } else {
       data.setCreditos(result.balance)
       data.setToast(t('featuredActivated', { hours: horas }))

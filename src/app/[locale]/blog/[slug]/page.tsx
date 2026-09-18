@@ -72,7 +72,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
     alternates: {
       canonical: `https://camperocasion.online/blog/${post.slug}`,
       languages: {
-        'es-VE': `https://camperocasion.online/blog/${post.slug}`,
+        'es-ES': `https://camperocasion.online/blog/${post.slug}`,
         'x-default': `https://camperocasion.online/blog/${post.slug}`,
       },
     },
@@ -97,12 +97,12 @@ function generateArticleSchema(post: Post) {
     "dateModified": post.date,
     "author": {
       "@type": "Organization",
-      "name": "CamperOcasión.es",
+      "name": "camperocasion.online",
       "url": "https://camperocasion.online"
     },
     "publisher": {
       "@type": "Organization",
-      "name": "CamperOcasión.es",
+      "name": "camperocasion.online",
       "url": "https://camperocasion.online",
       "logo": {
         "@type": "ImageObject",
@@ -115,7 +115,7 @@ function generateArticleSchema(post: Post) {
     },
     "articleSection": post.category,
     "keywords": post.tags.join(', '),
-    "inLanguage": "es-VE"
+    "inLanguage": "es-ES"
   }
 }
 
@@ -352,17 +352,44 @@ export default async function BlogPost(props: { params: Promise<{ locale: string
             {(post.tags || [])
               .map((tag) => tag.toLowerCase())
               .map((tag) => {
-                if (/iphone|celular|tel[eé]fono|laptop|tecnolog|electr[oó]|comput|samsung/.test(tag)) {
-                  return { label: `💻 ${t('catTech')}`, href: '/categoria/tecnologia' }
+                // Destinos reales del vertical camper. Los enlaces internos del
+                // blog solo pueden apuntar a rutas que existen: las antiguas
+                // categorías generalistas (/categoria/vehiculos, /moda…) ya no
+                // existen y devolvían 404.
+                const sub = (label: string, icon: string) => ({
+                  label: `${icon} Ver ${label}`,
+                  href: `/catalogo?subcategoria=${encodeURIComponent(label)}`,
+                })
+                if (/gran volumen|ducato|boxer|jumper|master|crafter|sprinter|man tge|furg[oó]n/.test(tag)) {
+                  return sub('Gran Volumen', '🚐')
                 }
-                if (/carro|veh[ií]cul|moto|auto/.test(tag)) return { label: `🚗 ${t('catVehicles')}`, href: '/categoria/vehiculos' }
-                if (/ropa|moda|zapato|ropa usada|calzado|vestir/.test(tag)) return { label: `👗 ${t('catFashion')}`, href: '/categoria/moda' }
-                if (/mueble|hogar|casa|sof|electro/.test(tag)) return { label: `🛋 ${t('catHome')}`, href: '/categoria/hogar' }
-                if (/herramient|taladro|construcci|obra/.test(tag)) return { label: `🔧 ${t('catTools')}`, href: '/categoria/herramientas' }
+                if (/mediana|compacta|california|marco polo|transit|nugget/.test(tag)) {
+                  return sub('Camper Mediana / Compacta', '🏕️')
+                }
+                if (/minicamper|berlingo|rifter|partner|kangoo|caddy|dokker/.test(tag)) {
+                  return sub('Minicamper', '🚙')
+                }
+                if (/perfilada/.test(tag)) return sub('Autocaravana Perfilada', '🛖')
+                if (/capuchina/.test(tag)) return sub('Autocaravana Capuchina', '🚌')
+                if (/integral|adria|hymer|challenger|laika|swift/.test(tag)) {
+                  return sub('Autocaravana Integral', '🏭')
+                }
+                if (/overland|4x4|pick|celul|c[eé]lula|defender|hilux/.test(tag)) {
+                  return sub('Célula y 4x4 Overland', '🌍')
+                }
+                if (/homologaci[oó]n|2448|3148|legal|itv|veh[ií]culo vivienda|ficha t[eé]cnica/.test(tag)) {
+                  return { label: `🛡️ ${t('catSafeBuy')}`, href: '/compra-segura-camper' }
+                }
+                if (/itp|impuesto|tasa|matriculaci[oó]n|precio|coste|presupuesto/.test(tag)) {
+                  return { label: `🧮 ${t('catItp')}`, href: '/calcular-itp' }
+                }
+                if (/compra|checklist|segunda mano|consejo|ocasi[oó]n|usado|revisi[oó]n/.test(tag)) {
+                  return { label: `📋 ${t('catSafeBuy')}`, href: '/compra-segura-camper' }
+                }
                 return null
               })
               .filter((v, i, a) => v && a.findIndex(x => x && x.href === v.href) === i)
-              .slice(0, 3)
+              .slice(0, 4)
               .map((l: { label: string; href: string } | null) =>
                 l ? (
                   <LocalLink

@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase-server-client'
 import {
   CATALOG_PRODUCT_COLUMNS,
   CATALOG_FILTRO_MODERACION,
+  aplicarOrdenCatalogo,
   marcarDestacados,
   ordenarProductosCatalogo,
   type ProductoCatalogo,
@@ -58,14 +59,14 @@ export async function metadataParaTipo(locale: string, slug: SlugTipo): Promise<
 async function getProductosDeTipo(tipo: string) {
   if (!supabase) return [] as ProductoCatalogo[]
   try {
-    const { data, error } = await supabase
-      .from('productos')
-      .select(CATALOG_PRODUCT_COLUMNS, { count: 'exact' })
-      .eq('activo', true)
-      .or(CATALOG_FILTRO_MODERACION)
-      .eq('vendedor_tipo', tipo)
-      .order('creado_en', { ascending: false })
-      .limit(LIMITE)
+    const { data, error } = await aplicarOrdenCatalogo(
+      supabase
+        .from('productos')
+        .select(CATALOG_PRODUCT_COLUMNS, { count: 'exact' })
+        .eq('activo', true)
+        .or(CATALOG_FILTRO_MODERACION)
+        .eq('vendedor_tipo', tipo),
+    ).limit(LIMITE)
 
     if (error || !data) return []
     // Mismo orden que el catálogo: boost > destacado vigente > fecha.
@@ -74,6 +75,12 @@ async function getProductosDeTipo(tipo: string) {
     return []
   }
 }
+
+/**
+ * ISR de 5 minutos: estas landings también listan anuncios y se prerenderizan,
+ * así que sin `revalidate` se quedaban con los anuncios del día del build.
+ */
+export const revalidate = 300
 
 export default async function ComprarATipoPage({
   params,
