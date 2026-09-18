@@ -110,20 +110,29 @@
 
 ```
 npx tsc --noEmit      → 0 errores
-npx eslint .          → 0 errores, 6 avisos (todos conocidos: <img> en /publicar,
-                        un eslint-disable sin uso en el OG y un test)
-npx jest (unit)       → 30 suites, 316 tests, todos en verde
-npm run build         → compila; rutas nuevas: /api/cron/expirar-prioridades,
-                        /api/productos/prioridad
-curl a 11 páginas     → 200 y renderizado correcto (home, catálogo, buscar,
-                        provincia, categoría, créditos, contacto, publicar…)
+npx eslint .          → 0 errores, 0 avisos
+npx jest (unit)       → 31 suites, 321 tests, todos en verde
+npm run build         → compila (166/166 páginas estáticas + rutas dinámicas)
+python3 scripts/validate_setup_sql.py       → 814 statements, sin error
+python3 scripts/validate_migrations_sql.py  → 11 migraciones 202609* reaplicadas,
+                                              223 statements, sin error
+python3 scripts/verify_boost_sql.py         → TODO OK (10 comprobaciones)
 ```
 
-Comprobaciones visuales hechas sobre el HTML servido: las pantallas de
-autenticación ya no contienen «VendeT», muestran el logo real con su
-descriptor; `/contacto` no enseña teléfonos falsos; `/creditos` avisa de que
-los pagos aún no están abiertos en lugar de mostrar un IBAN inventado;
-`/como-funciona` renderiza la comparativa con las claves nuevas.
+`verify_boost_sql.py` es nuevo: levanta un Postgres de verdad con el arnés del
+proyecto y demuestra, crédito a crédito, que promocionar un anuncio no se puede
+cobrar dos veces — primer boost 3→2, segundo intento con el boost vigente
+`ok:false`/`ya_activo` y **saldo intacto**, caducado vuelve a cobrar, y sin saldo
+la operación falla con un error claro sin marcar el anuncio. Es la prueba que
+faltaba sobre el camino del dinero.
+
+Se han comprobado además, sobre el HTML/JSON servidos y con las consultas
+reales, que: las pantallas de autenticación ya no contienen «VendeT»; el botón
+de WhatsApp de cualquier anuncio genera un número **+34** (antes anteponía el
+prefijo de Venezuela y **no funcionaba con ningún móvil español**); `/contacto`
+y `/creditos` no muestran datos falsos; la ficha de un anuncio de ejemplo sale
+con `robots: noindex` y sin datos de contacto; y el catálogo ordena los boosts
+vigentes (7 días) en SQL, no solo dentro de la página descargada.
 
 ---
 

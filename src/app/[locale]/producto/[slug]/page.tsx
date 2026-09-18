@@ -86,7 +86,7 @@ function queryProducto(column: 'id' | 'slug', value: string, columns: string) {
  * Consulta aparte y tolerante a fallo, como la del expediente: si la columna
  * todavía no existe, el anuncio es normal y la ficha no se cae por un sello.
  */
-async function getEsDemo(productoId: string): Promise<boolean> {
+const getEsDemo = cache(async (productoId: string): Promise<boolean> => {
   if (!supabase || !productoId) return false
   try {
     const { data, error } = await supabase
@@ -99,7 +99,7 @@ async function getEsDemo(productoId: string): Promise<boolean> {
   } catch {
     return false
   }
-}
+})
 
 /**
  * Estado del expediente de homologación del anuncio (Fase 0.2).
@@ -344,6 +344,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // La canonical SIEMPRE usa el slug SEO aunque se haya entrado por UUID
   const canonicalSlug = producto.slug || slug
+  const esDemo = await getEsDemo(producto.id)
 
   const parts = [producto.titulo]
   if (producto.precio_usd) {
@@ -388,7 +389,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     // Vendido: la URL sigue viva (llega tráfico de WhatsApp/Google y hay
     // similares que mostrar) pero fuera del índice: contenido agotado.
-    robots: producto.vendido
+    // Demostración: tampoco se indexa — no es un vehículo real en venta y no
+    // debe competir en Google con anuncios de verdad (ni aparecer como si lo
+    // fuera si alguien llega desde un enlace directo).
+    robots: producto.vendido || esDemo
       ? { index: false, follow: true }
       : { index: true, follow: true },
   }

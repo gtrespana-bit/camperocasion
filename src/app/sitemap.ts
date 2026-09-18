@@ -54,6 +54,18 @@ async function getProductos(supabase: any) {
 
   if (!withSlug.error) return withSlug.data || []
 
+  // Sin `es_demo` (migración 202609180003 aún sin aplicar): se reintenta
+  // manteniendo el slug para no perder las URLs semánticas.
+  const sinDemo = await supabase
+    .from('productos')
+    .select('id, slug, user_id, actualizado_en')
+    .eq('activo', true)
+    .or(moderacion)
+    .limit(4000)
+
+  if (!sinDemo.error) return sinDemo.data || []
+
+  // Último recurso (sin `slug`): sitemap por id, mejor que vacío.
   const fallback = await supabase
     .from('productos')
     .select('id, user_id, actualizado_en')
