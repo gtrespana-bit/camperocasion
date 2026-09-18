@@ -2905,7 +2905,7 @@ GRANT EXECUTE ON FUNCTION obtener_detalle_producto(UUID, UUID) TO authenticated;
 
 -- ----- 202608010001_hardening_integridad.sql -----
 -- ============================================================================
--- VendeT — Hardening de permisos e integridad
+-- CamperOcasión — Hardening de permisos e integridad
 -- Fecha: 2026-08-01
 --
 -- Esta migración va DESPUÉS de las migraciones existentes. No elimina datos.
@@ -3561,7 +3561,7 @@ grant execute on function public.obtener_detalle_producto(uuid, uuid) to anon, a
 
 -- ----- 202608010002_chat_resenas_integridad.sql -----
 -- ============================================================================
--- VendeT — Fase 2: chat y reseñas
+-- CamperOcasión — Fase 2: chat y reseñas
 --
 -- Aplicar después de 202608010001_hardening_integridad.sql.
 -- Las escrituras del navegador se trasladan a APIs autenticadas; las políticas
@@ -3650,7 +3650,7 @@ revoke all on table public.notificaciones_push from anon, authenticated;
 
 -- ----- 202608010003_fix_reputacion_definer.sql -----
 -- ============================================================================
--- VendeT — Fix: fn_calcular_reputacion como SECURITY DEFINER
+-- CamperOcasión — Fix: fn_calcular_reputacion como SECURITY DEFINER
 -- Fecha: 2026-08-01
 --
 -- Contexto
@@ -3693,7 +3693,7 @@ alter function public.fn_calcular_reputacion() set search_path = public;
 
 -- ----- 202608010004_emprendedor_idempotente.sql -----
 -- ============================================================================
--- VendeT — Bonus emprendedor idempotente
+-- CamperOcasión — Bonus emprendedor idempotente
 -- Fecha: 2026-08-01
 --
 -- El trigger histórico de 011_credito_sistema.sql ponía emprendedor_dado=false
@@ -3816,7 +3816,7 @@ create trigger trg_pack_emprendedor
 
 -- ----- 202608010005_productos_edicion_segura.sql -----
 -- ============================================================================
--- VendeT — Las modificaciones de productos pasan por API server-side
+-- CamperOcasión — Las modificaciones de productos pasan por API server-side
 -- Fecha: 2026-08-01
 --
 -- El editor web ya no debe escribir productos directamente con la anon key.
@@ -3859,7 +3859,7 @@ alter table public.productos
 
 -- ----- 202608010006_rate_limit_atomico.sql -----
 -- ============================================================================
--- VendeT — Rate limit atómico
+-- CamperOcasión — Rate limit atómico
 -- Fecha: 2026-08-01
 --
 -- El código anterior hacía COUNT + INSERT asíncrono, por lo que varias
@@ -3956,7 +3956,7 @@ grant execute on function public.check_rate_limit_atomic(text, text, text, integ
 
 -- ----- 202608010007_anuncios_globales.sql -----
 -- ============================================================================
--- VendeT — Anuncios globales del sitio
+-- CamperOcasión — Anuncios globales del sitio
 -- Fecha: 2026-08-30
 --
 -- Permite al panel admin publicar un banner informativo visible en toda la

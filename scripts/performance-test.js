@@ -56,8 +56,8 @@ async function analyzeResults(filePath) {
 async function main() {
   try {
     // Ejecutar pruebas para la página principal y el catálogo
-    await runLighthouseTest('https://vendet.online', 'lighthouse-home.json');
-    await runLighthouseTest('https://vendet.online/catalogo', 'lighthouse-catalog.json');
+    await runLighthouseTest('https://camperocasion.online', 'lighthouse-home.json');
+    await runLighthouseTest('https://camperocasion.online/catalogo', 'lighthouse-catalog.json');
     
     // Analizar resultados
     const homeScore = await analyzeResults('lighthouse-home.json');

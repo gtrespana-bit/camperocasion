@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
 import { notifyUser } from '@/lib/push-notify'
 import { requireUUIDs } from '@/lib/validation'
 import { requireAdmin } from '@/lib/require-auth'
+import { revalidarListadosPublicos } from '@/lib/revalidar'
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,9 +50,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Revalidate ISR cache to show/hide destacado immediately
-    revalidatePath('/')
-    revalidatePath('/catalogo')
+    // Destacar/quitar destacado cambia los listados públicos
+    revalidarListadosPublicos()
 
     // Push notification to product owner
     if (product?.user_id && destacado) {

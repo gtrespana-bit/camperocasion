@@ -11,7 +11,7 @@ import { X, RefreshCw, Search, Loader2, type LucideIcon } from 'lucide-react'
 export function formatNumber(value: number | string | null | undefined): string {
   const n = Number(value || 0)
   if (!Number.isFinite(n)) return '0'
-  return new Intl.NumberFormat('es-VE', { maximumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(n)
 }
 
 export function formatMoney(value: number | string | null | undefined, decimals = 2): string {
@@ -27,7 +27,7 @@ export function formatDate(value: string | Date | null | undefined): string {
   if (!value) return '—'
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return '—'
-  return new Intl.DateTimeFormat('es-VE', {
+  return new Intl.DateTimeFormat('es-ES', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -38,7 +38,7 @@ export function formatDateTime(value: string | Date | null | undefined): string 
   if (!value) return '—'
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return '—'
-  return new Intl.DateTimeFormat('es-VE', {
+  return new Intl.DateTimeFormat('es-ES', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

@@ -1,5 +1,5 @@
 -- ============================================================================
--- VendeT — Fix: fn_calcular_reputacion como SECURITY DEFINER
+-- CamperOcasión — Fix: fn_calcular_reputacion como SECURITY DEFINER
 -- Fecha: 2026-08-01
 --
 -- Contexto

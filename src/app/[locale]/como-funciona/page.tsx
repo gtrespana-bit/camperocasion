@@ -43,7 +43,7 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
     { pregunta: t('faq6q'), respuesta: t('faq6a') },
   ]
 
-  const camperItems = ['vendet1','vendet2','vendet3','vendet4','vendet5'] as const
+  const camperItems = ['razon1','razon2','razon3','razon4','razon5'] as const
   const othersItems = ['others1','others2','others3','others4','others5'] as const
 
   return (
@@ -78,7 +78,7 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
             <h2 className="text-2xl font-black text-gray-900 mb-6 text-center">{t('vsTitle')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-                <h3 className="font-bold text-green-800 text-lg mb-3">✅ {t('vendetTitle')}</h3>
+                <h3 className="font-bold text-green-800 text-lg mb-3">✅ {t('razonTitle')}</h3>
                 <ul className="space-y-2 text-sm text-green-700">
                   {camperItems.map(k => (
                     <li key={k} className="flex items-center gap-2"><CheckCircle size={14} /> {t(k)}</li>

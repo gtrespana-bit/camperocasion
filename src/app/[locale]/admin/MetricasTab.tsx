@@ -143,7 +143,7 @@ export default function MetricasTab() {
                 </div>
                 <div className="text-right ml-4">
                   <p className="text-xs text-gray-500">
-                    {new Intl.DateTimeFormat('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(p.creado_en))}
+                    {new Intl.DateTimeFormat('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(p.creado_en))}
                   </p>
                   <p className="text-xs text-gray-500 flex items-center gap-1 justify-end">
                     <Eye size={10} /> {p.visitas || 0}

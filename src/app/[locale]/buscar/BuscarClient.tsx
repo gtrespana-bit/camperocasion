@@ -386,38 +386,38 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
               Resultados de búsqueda para &ldquo;{query}&rdquo; en España
             </h1>
             <p className="text-gray-600">
-              Encuentra los mejores clasificados y productos relacionados con &ldquo;{query}&rdquo; en CamperOcasión.es. 
-              Compra y vende de forma segura en todo el país.
+              Furgonetas camper y autocaravanas de ocasión relacionadas con &ldquo;{query}&rdquo; en camperocasion.online.
+              Anuncios de particulares, camperizadores y profesionales de toda España.
             </p>
           </>
         ) : categoria ? (
           <>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {cat?.label || categoria} en España — Clasificados CamperOcasión.es
+              {cat?.label || categoria} de ocasión en España — camperocasion.online
             </h1>
             <p className="text-gray-600">
-              Explora {cat?.label || categoria.toLowerCase()} en venta. Los mejores clasificados de {cat?.label || categoria.toLowerCase()} en España. 
-              Publica gratis y llega a miles de compradores.
+              Explora {cat?.label || categoria.toLowerCase()} de segunda mano en toda España, con ficha técnica completa
+              (kilómetros, DGT, homologación, plazas y autonomía). Publicar tu anuncio es gratis.
             </p>
           </>
         ) : ubicacionCiudad || ubicacionEstado ? (
           <>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Clasificados en {ubicacionCiudad || ubicacionEstado}, España
+              Campers y autocaravanas de ocasión en {ubicacionCiudad || ubicacionEstado}, España
             </h1>
             <p className="text-gray-600">
-              Compra y vende en {ubicacionCiudad || ubicacionEstado}. Encuentra los mejores clasificados y productos 
-              en {ubicacionCiudad || ubicacionEstado}, España. Publica tu anuncio gratis hoy mismo.
+              Compra y vende furgonetas camper y autocaravanas en {ubicacionCiudad || ubicacionEstado}.
+              Anuncios con ficha técnica, contacto directo con el vendedor y publicación gratuita.
             </p>
           </>
         ) : (
           <>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Buscar productos — Clasificados España
+              Buscar furgonetas camper y autocaravanas de ocasión
             </h1>
             <p className="text-gray-600">
-              Busca y encuentra los mejores clasificados en España. Compra y vende productos nuevos y usados 
-              de forma segura en CamperOcasión.es, el marketplace líder español.
+              Busca por marca, tipo o provincia entre las furgonetas camper y autocaravanas de ocasión
+              publicadas en España. El marketplace especializado en el mundo camper.
             </p>
           </>
         )}

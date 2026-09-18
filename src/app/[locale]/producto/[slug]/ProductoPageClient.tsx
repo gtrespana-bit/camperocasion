@@ -402,7 +402,7 @@ function ProductoPageClientInner({
                     const subio = Number(pct) > 0
                     return (
                       <div key={h.id} className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500">{new Intl.DateTimeFormat('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(h.creado_en))}</span>
+                        <span className="text-gray-500">{new Intl.DateTimeFormat('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(h.creado_en))}</span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-gray-500 line-through">{formatPrecio(h.precio_anterior)}</span>
                           <span className="font-bold text-brand-primary">{formatPrecio(h.precio_nuevo)}</span>

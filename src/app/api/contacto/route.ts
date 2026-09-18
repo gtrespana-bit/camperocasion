@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
           <strong>Mensaje:</strong><br>
           <div style="margin-top:8px;white-space:pre-wrap">${mensajeClean}</div>
         </div>
-        <p style="margin-top:24px;color:#999;font-size:12px">CamperOcasión · ${new Date().toLocaleString('es-VE')}</p>
+        <p style="margin-top:24px;color:#999;font-size:12px">CamperOcasión · ${new Date().toLocaleString('es-ES')}</p>
       </div>
     `
 

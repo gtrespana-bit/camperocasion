@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
 import { createClient } from '@supabase/supabase-js'
 import { requireUser } from '@/lib/require-auth'
 import { isValidUUID, isValidEmail, isValidLength, isValidPrice, isValidProductState, sanitizeObject, sanitizeString } from '@/lib/validation'
@@ -7,6 +6,7 @@ import { verificarContenido } from '@/lib/moderacion'
 import { categoriasData, getSubConfig } from '@/lib/categorias'
 import { ESTADOS, getMunicipiosNombres } from '@/lib/ubicaciones'
 import { normalizeMessengerUrl } from '@/lib/contact-methods'
+import { revalidarListadosPublicos, revalidarFichaProducto } from '@/lib/revalidar'
 
 const PRODUCT_COLUMNS = [
   'id',
@@ -228,10 +228,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'No se pudo actualizar el estado del producto' }, { status: 500 })
     }
 
-    revalidatePath('/')
-    revalidatePath('/en')
-    revalidatePath('/catalogo')
-    revalidatePath('/en/catalogo')
+    revalidarListadosPublicos()
     return NextResponse.json({ ok: true, product: data })
   }
 
@@ -373,14 +370,8 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'No se pudo guardar el producto' }, { status: 409 })
   }
 
-  revalidatePath('/')
-  revalidatePath('/en')
-  revalidatePath('/catalogo')
-  revalidatePath('/en/catalogo')
-  if (data.slug) {
-    revalidatePath(`/producto/${data.slug}`)
-    revalidatePath(`/en/producto/${data.slug}`)
-  }
+  revalidarListadosPublicos()
+  revalidarFichaProducto(data.slug)
 
   return NextResponse.json({ ok: true, product: data })
 }

@@ -122,7 +122,7 @@ export default async function CategoriaPage({ params }: Props) {
         url: canonical,
         name: categoria.titulo,
         description: categoria.descripcion,
-        inLanguage: 'es-VE',
+        inLanguage: 'es-ES',
         isPartOf: { '@id': `${BASE_URL}/#website` },
       },
       {

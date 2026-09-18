@@ -1,29 +1,13 @@
-# ⚠️ ESTE ARCHIVO TODAVÍA NO SE EJECUTA — hay que ACTIVARLO (30 segundos).
+# CI de CamperOcasión: tipos, lint, tests unitarios y migraciones SQL.
 #
-# GitHub solo ejecuta los workflows que están en `.github/workflows/`, y este
-# agente no puede crearlos ahí: GitHub rechaza el push de un workflow hecho por
-# una GitHub App sin el permiso `workflows`. Por eso vive aquí.
+# Se ejecuta en cada push y en cada pull request. El repo no tenía CI: un PR
+# podía mergearse con tipos rotos, lint sucio o tests en rojo y nadie se
+# enteraba hasta producción.
 #
-# FORMA RÁPIDA (recomendada, sin pegar código — vale desde el móvil):
-#   Abre este archivo en la web de GitHub y pulsa el lápiz (Edit):
-#   https://github.com/gtrespana-bit/camperocasion/edit/arena/01a0a7f4-camperocasion/docs/ci/ci.yml
-#   Cambia el nombre del archivo (campo de arriba) a:
-#       .github/workflows/ci.yml
-#   Y pulsa "Commit changes" → "Commit directly to the arena/... branch".
-#   Mover un archivo así ya crea la carpeta y no hay que copiar nada.
-#
-# FORMA CON PEGADO (si la anterior te da problemas):
-#   1. Abre https://github.com/gtrespana-bit/camperocasion/new/arena/01a0a7f4-camperocasion?filename=.github/workflows/ci.yml
-#   2. El nombre ya viene puesto; pega este archivo entero en el editor.
-#   3. "Commit changes" → commit directo a la rama.
-#
-# TERCERA OPCIÓN: desde el ordenador,
-#   mkdir -p .github/workflows && git mv docs/ci/ci.yml .github/workflows/ci.yml
-#   git commit -m 'ci: activar workflow' && git push
-#
-# Una vez activo, cada push y cada PR ejecutan los dos jobs (unos 3-5 minutos).
-# Si un job se pone en rojo, pásame el enlace del run y lo arreglo.
-#
+# El build (`next build`) NO está aquí a propósito: necesita Supabase
+# configurado y tarda minutos. Lo que sí protege el esquema es el job `sql`,
+# que aplica `setup-camperocasion.sql` y las migraciones en un Postgres real.
+
 name: CI
 
 # Comprobación de calidad en cada push y en cada PR.

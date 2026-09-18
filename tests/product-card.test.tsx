@@ -15,7 +15,8 @@ jest.mock('../src/components/LocalLink', () => {
 // en el repo. Añadimos un mock inline para que el test sea autosuficiente.
 jest.mock('next/image', () => {
   function MockImage(props: any) {
-    return <img {...props} />;
+    // eslint-disable-next-line @next/next/no-img-element -- es el mock de next/image, no markup real
+    return <img alt="" {...props} />;
   }
   MockImage.displayName = 'MockImage'
   return MockImage;

@@ -16,6 +16,7 @@ import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
 import { emailProductoPublicado } from '@/lib/server-email'
 import { compressImages } from '@/lib/compress-image'
 import { useTranslations } from 'next-intl'
+import Image from 'next/image'
 
 // Condition keys for translation (DB values are Spanish)
 const conditionKeys = [
@@ -676,7 +677,7 @@ export default function PublicarPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {imagenes.map((img, i) => (
                 <div key={img.preview} className="aspect-square relative rounded-lg overflow-hidden group border border-gray-200">
-                  <img src={img.preview} alt="" className="w-full h-full object-cover" />
+                  <Image src={img.preview} alt="" fill unoptimized sizes="200px" className="object-cover" />
                   {i === 0 && img.uploadedUrl && <span className="absolute top-1 left-1 bg-brand-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{t('cover')}</span>}
                   {img.uploading && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -743,7 +744,7 @@ export default function PublicarPage() {
           <div className="space-y-5 animate-fadeIn">
             <h2 className="text-xl font-bold text-gray-900">{t('reviewTitle')}</h2>
             <div className="border rounded-lg p-5 space-y-3">
-              {imagenes.length > 0 && <div className="aspect-square max-h-56 bg-gray-100 rounded-lg overflow-hidden"><img src={imagenes[0].preview} alt="" className="w-full h-full object-cover" /></div>}
+              {imagenes.length > 0 && <div className="aspect-square max-h-56 bg-gray-100 rounded-lg overflow-hidden relative"><Image src={imagenes[0].preview} alt="" fill unoptimized sizes="240px" className="object-cover" /></div>}
               <h3 className="text-lg font-bold text-gray-900">{titulo}</h3>
               <div className="space-y-1 text-sm">
                 <p><span className="text-gray-500">{t('family')}:</span> {familiaCfg ? familiaCfg.label : '—'} → {subcategoria}</p>

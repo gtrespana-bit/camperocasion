@@ -1,5 +1,5 @@
 -- ============================================================================
--- VendeT — Bonus emprendedor idempotente
+-- CamperOcasión — Bonus emprendedor idempotente
 -- Fecha: 2026-08-01
 --
 -- El trigger histórico de 011_credito_sistema.sql ponía emprendedor_dado=false

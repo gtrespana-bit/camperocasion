@@ -56,7 +56,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://camperocasion.online/blog',
     languages: {
-      'es-VE': 'https://camperocasion.online/blog',
+      'es-ES': 'https://camperocasion.online/blog',
       'x-default': 'https://camperocasion.online/blog',
     },
     types: {

@@ -361,7 +361,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: `https://camperocasion.online/producto/${canonicalSlug}`,
       languages: {
-        'es-VE': `https://camperocasion.online/producto/${canonicalSlug}`,
+        'es-ES': `https://camperocasion.online/producto/${canonicalSlug}`,
         'x-default': `https://camperocasion.online/producto/${canonicalSlug}`,
       },
     },

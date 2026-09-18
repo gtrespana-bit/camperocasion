@@ -143,7 +143,7 @@ export default function VendedorClient({
                 <div className="flex items-center gap-2 mb-1">
                   {estrellasRender(r.puntuacion, 14)}
                   <span className="text-xs text-gray-500 ml-auto">
-                    {new Date(r.creado_en).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {new Date(r.creado_en).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </span>
                 </div>
                 {r.producto?.titulo && (

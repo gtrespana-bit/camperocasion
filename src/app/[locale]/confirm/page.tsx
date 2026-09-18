@@ -1,5 +1,6 @@
 'use client'
 
+import BrandLogo from '@/components/BrandLogo'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
@@ -143,9 +144,7 @@ export default function ConfirmEmailPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <LocalLink href="/" className="text-brand-primary font-black text-3xl">
-            Vende<span className="text-brand-accent">T</span><span className="text-sm ml-1 text-gray-500">-España</span>
-          </LocalLink>
+          <BrandLogo href="/" size="lg" className="justify-center" priority />
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">

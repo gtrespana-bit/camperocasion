@@ -303,7 +303,7 @@ export default function TabProductos({
                         : '⏸️ Pausado'
                     }
                     {isFeatured && (
-                      <span className="text-brand-primary">⭐ Hasta {new Date(p.destacado_hasta).toLocaleDateString('es-VE')}</span>
+                      <span className="text-brand-primary">⭐ Hasta {new Date(p.destacado_hasta).toLocaleDateString('es-ES')}</span>
                     )}
                   </div>
                 </div>

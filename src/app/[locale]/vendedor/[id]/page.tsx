@@ -113,7 +113,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: `https://camperocasion.online/vendedor/${id}`,
       languages: {
-        'es-VE': `https://camperocasion.online/vendedor/${id}`,
+        'es-ES': `https://camperocasion.online/vendedor/${id}`,
         'x-default': `https://camperocasion.online/vendedor/${id}`,
       },
     },

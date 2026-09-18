@@ -101,6 +101,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   }
 }
 
+// La home lista anuncios recién publicados: sin `revalidate` se prerenderizaba
+// una sola vez y el CDN la servía con `s-maxage=31536000`, así que un anuncio
+// nuevo no aparecía hasta el siguiente despliegue. Con 10 minutos (el mismo
+// margen que /catalogo) la portada se refresca sola y, además, cada publicación
+// la invalida al instante con `revalidarListadosPublicos()`.
+export const revalidate = 600
+
 // ── Datos ─────────────────────────────────────────────────────────────────
 
 const MODERACION = 'estado_moderacion.is.null,estado_moderacion.eq.aprobado'

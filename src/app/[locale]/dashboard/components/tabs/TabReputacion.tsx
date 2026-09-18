@@ -81,7 +81,7 @@ export default function TabReputacion({
                     <span className="text-sm font-medium ml-2">{r.puntuacion}/5</span>
                   </div>
                   <span className="text-xs text-gray-500">
-                    {new Date(r.creado_en).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {new Date(r.creado_en).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </span>
                 </div>
                 {r.comentario && <p className="text-sm text-gray-600">{r.comentario}</p>}

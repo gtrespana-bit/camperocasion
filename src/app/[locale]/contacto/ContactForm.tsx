@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, MessageCircle, Phone, CheckCircle, AlertCircle, Send, Loader2 } from 'lucide-react'
+import { Mail, MessageCircle, CheckCircle, AlertCircle, Send, Loader2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 const ASUNTOS = [
   'Pregunta general',
@@ -178,17 +178,8 @@ export default function ContactPage() {
                   <MessageCircle size={20} />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-800">WhatsApp / Telegram</p>
-                  <p className="text-sm text-gray-500">@CamperOcasión</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-brand-accent/20 rounded-lg flex items-center justify-center text-brand-accent">
-                  <Phone size={20} />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-800">Teléfono</p>
-                  <p className="text-sm text-gray-500">+58 412 XXX XXXX</p>
+                  <p className="font-medium text-gray-800">Respuesta</p>
+                  <p className="text-sm text-gray-500">Te contestamos en menos de 24 h laborables</p>
                 </div>
               </div>
             </div>
@@ -198,7 +189,7 @@ export default function ContactPage() {
             <h3 className="font-bold text-brand-primary text-lg">{t('schedule')}</h3>
             <p className="text-brand-primary/80 mt-2">
               Lunes a sábado<br />
-              8:00 AM – 10:00 PM (hora España)
+              8:00 – 22:00 (hora peninsular)
             </p>
           </div>
         </div>

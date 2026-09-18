@@ -12,7 +12,7 @@ export default async function Image() {
         <div style={{ fontSize: '120px', marginBottom: '20px' }}>⭐</div>
         <h1 style={{ fontSize: '60px', fontWeight: 'bold', textAlign: 'center', textShadow: '2px 2px 4px rgba(255,255,255,0.5)', lineHeight: 1.2 }}>Destaca tus Productos</h1>
         <p style={{ fontSize: '36px', marginTop: '20px', textAlign: 'center', opacity: 0.9 }}>Desde 1 € — CamperOcasión</p>
-        <div style={{ position: 'absolute', bottom: '20px', fontSize: '24px', fontWeight: 'bold', color: '#0F172A', textShadow: '2px 2px 4px rgba(255,255,255,0.5)' }}>CamperOcasión.es</div>
+        <div style={{ position: 'absolute', bottom: '20px', fontSize: '24px', fontWeight: 'bold', color: '#0F172A', textShadow: '2px 2px 4px rgba(255,255,255,0.5)' }}>camperocasion.online</div>
       </div>
     ),
     { width: 1200, height: 630 }

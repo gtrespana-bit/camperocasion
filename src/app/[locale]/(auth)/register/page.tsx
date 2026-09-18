@@ -1,5 +1,6 @@
 'use client'
 
+import BrandLogo from '@/components/BrandLogo'
 import { useState } from 'react'
 import LocalLink from '@/components/LocalLink'
 import { useRouter, usePathname } from 'next/navigation'
@@ -105,9 +106,7 @@ export default function RegisterPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <LocalLink href="/" className="text-brand-primary font-black text-3xl">
-            Vende<span className="text-brand-accent">T</span><span className="text-sm ml-1 text-gray-500">-España</span>
-          </LocalLink>
+          <BrandLogo href="/" size="lg" className="justify-center" priority />
           <h1 className="text-2xl font-bold text-gray-800 mt-4">{t('register.title')}</h1>
           <p className="text-gray-500 mt-1">{t('register.subtitle')}</p>
 
@@ -134,6 +133,8 @@ export default function RegisterPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.name')}</label>
               <input
                 type="text"
+                name="name"
+                autoComplete="name"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Tu nombre"
@@ -146,6 +147,9 @@ export default function RegisterPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.email')}</label>
               <input
                 type="email"
+                name="email"
+                autoComplete="email"
+                inputMode="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
@@ -158,6 +162,8 @@ export default function RegisterPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.password')}</label>
               <input
                 type="password"
+                name="new-password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Mínimo 8 caracteres"
@@ -170,6 +176,8 @@ export default function RegisterPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.repeat_password')}</label>
               <input
                 type="password"
+                name="confirm-password"
+                autoComplete="new-password"
                 value={repeatPassword}
                 onChange={(e) => setRepeatPassword(e.target.value)}
                 placeholder="Repite tu contraseña"

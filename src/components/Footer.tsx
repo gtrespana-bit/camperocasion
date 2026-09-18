@@ -1,7 +1,7 @@
 'use client'
 
+import BrandLogo from '@/components/BrandLogo'
 import LocalLink from '@/components/LocalLink'
-import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import { CIUDADES_SEO } from '@/lib/ubicaciones-seo'
@@ -34,10 +34,7 @@ export function Footer() {
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div>
-              <LocalLink href="/" className="inline-flex items-center gap-2 mb-3">
-                <Image src="/logo-camperocasion.png" alt="CamperOcasión" width={28} height={28} className="h-7 w-7 object-contain rounded-lg drop-shadow-[0_0_4px_rgba(255,255,255,0.4)] bg-white/80 p-0.5" />
-                <span className="font-black text-lg"><span className="text-white">Camper</span><span className="text-green-400">Ocasión</span></span>
-              </LocalLink>
+              <BrandLogo href="/" tone="light" size="md" className="mb-3" />
               <p className="text-sm leading-relaxed">{t('footer.description')}</p>
             </div>
             <nav aria-label={t('footer.categories')}>

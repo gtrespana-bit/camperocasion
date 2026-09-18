@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     'Prueba de correo',
     `<p style="margin:0 0 16px">Hola,</p>
      <p style="margin:0 0 16px">Este es un correo de prueba de <strong>CamperOcasión</strong>. Si lo recibiste, el canal de email está funcionando. ✅</p>
-     <p style="margin:0;color:#64748B;font-size:13px">Enviado el ${new Date().toLocaleString('es-VE')} desde el panel admin.</p>`,
+     <p style="margin:0;color:#64748B;font-size:13px">Enviado el ${new Date().toLocaleString('es-ES')} desde el panel admin.</p>`,
   )
 
   const r = await enviarEmailDetallado(

@@ -2,11 +2,11 @@
 
 import LocalLink from '@/components/LocalLink'
 import SiteAnnouncement from '@/components/SiteAnnouncement'
-import Image from 'next/image'
 import { useState, useEffect, Fragment } from 'react'
 import { usePathname } from 'next/navigation'
 import { Menu, X, Search, PlusCircle, MessageCircle, Zap, ChevronLeft, Globe } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
+import BrandLogo from '@/components/BrandLogo'
 import Avatar from '@/components/Avatar'
 import { useTranslations } from 'next-intl'
 import { categoriasData, FAMILIAS } from '@/lib/categorias'
@@ -157,22 +157,7 @@ export function Header() {
               </button>
             )}
             {/* Logo */}
-            <LocalLink href="/" className="flex items-center gap-3 flex-shrink-0">
-              <Image
-                src="/logo-camperocasion.png"
-                alt="CamperOcasión"
-                width={44}
-                height={44}
-                className="h-11 w-auto drop-shadow-[0_0_6px_rgba(255,255,255,0.5)] bg-white/10 p-0.5 rounded-lg backdrop-blur"
-                fetchPriority="high"
-                decoding="async"
-              />
-              <span className="hidden sm:block">
-                <span className="font-black text-xl tracking-tight">
-                  <span className="text-white">Camper</span><span className="text-green-400">Ocasión</span>
-                </span>
-              </span>
-            </LocalLink>
+            <BrandLogo href="/" tone="light" size="md" showText="sm" priority />
 
             {/* Search (desktop) */}
             <form action="/buscar" method="GET" className="hidden md:flex flex-1 max-w-xl mx-8 relative">
