@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import BadgeVerificado from '@/components/BadgeVerificado'
+import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
 import Avatar from '@/components/Avatar'
 import { MapPin, Phone, Mail, MessageSquare, Star, ArrowLeft, ShoppingBag } from 'lucide-react'
 import SellerReputation from '@/components/SellerReputation'
@@ -62,6 +63,12 @@ export default function VendedorClient({
               {vendedor.nombre || t('seller')}
               {vendedor.verificado && <BadgeVerificado size="md" />}
             </h1>
+
+            {vendedor.tipo_vendedor && (
+              <div className="mt-1">
+                <BadgeTipoVendedor tipo={vendedor.tipo_vendedor} size="md" />
+              </div>
+            )}
 
             {(vendedor.ciudad || vendedor.estado) && (
               <p className="text-gray-500 text-sm flex items-center gap-1 mt-1">

@@ -4,6 +4,7 @@ import { formatPrecio } from '@/lib/precio'
 import { useState, useRef } from 'react';
 import LocalLink from './LocalLink';
 import BadgeHomologacion from './BadgeHomologacion';
+import BadgeTipoVendedor from './BadgeTipoVendedor';
 import Image from 'next/image';
 import { productUrl } from '@/lib/product-url'
 
@@ -22,6 +23,7 @@ interface Producto {
   destacado: boolean;
   destacado_hasta: string | null;
   vendedor_verificado: boolean | null;
+  vendedor_tipo?: string | null;
   verificacion_homologacion?: string | null
   reservado?: boolean | null;
   _isFeatured?: boolean;
@@ -100,6 +102,11 @@ export const ProductCardLazy = ({ p, t, priority = false }: ProductCardLazyProps
         {p.verificacion_homologacion === 'verificada' && (
           <div className="mt-1">
             <BadgeHomologacion estado={p.verificacion_homologacion} size="sm" />
+          </div>
+        )}
+        {p.vendedor_tipo && (
+          <div className="mt-1">
+            <BadgeTipoVendedor tipo={p.vendedor_tipo} />
           </div>
         )}
         {p.vendedor_verificado && (

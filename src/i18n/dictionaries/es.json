@@ -425,6 +425,14 @@
     "homologacionSinExpediente": "Sin expediente",
     "reserved": "Reservado"
   },
+  "tiposVendedor": {
+    "particular": "Particular",
+    "camperizador": "Camperizador",
+    "profesional": "Pro",
+    "particularDesc": "Vendo mi camper o equipamiento",
+    "camperizadorDesc": "Camperizo y vendo mis proyectos",
+    "profesionalDesc": "Empresa, taller o concesionario"
+  },
   "product": {
     "featured": "Destacado",
     "verified": "Verificado",
@@ -640,7 +648,9 @@
     "conditionUsed": "Usado",
     "optimizing": "Optimizando imágenes…",
     "priceEur": "Precio (€)",
-    "family": "Familia de vehículo"
+    "family": "Familia de vehículo",
+    "asLabel": "Publicando como",
+    "changeTipo": "Cambiar"
   },
   "dashboard": {
     "passwordTitle": "Cambiar contraseña",
@@ -721,7 +731,9 @@
     "reviews": "Resenas",
     "noReviews": "Aun no tienes resenas. Los compradores podran dejarte una despues de una transaccion.",
     "tabReservations": "Reservas",
-    "tabInspecciones": "Inspecciones"
+    "tabInspecciones": "Inspecciones",
+    "sellerTypeLabel": "¿Qué tipo de vendedor eres?",
+    "sellerTypeHint": "Se muestra junto a tus anuncios para que los compradores sepan quién vende."
   },
   "contact": {
     "title": "Contáctanos",

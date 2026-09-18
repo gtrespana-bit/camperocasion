@@ -15,6 +15,7 @@ import { Pagination } from '@/components/Pagination'
 import { OptimizedProductGrid } from '@/components/OptimizedProductGrid'
 import { CatalogFilters } from '@/components/CatalogFilters'
 import BadgeHomologacion from '@/components/BadgeHomologacion'
+import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
 import { useProductPagination } from '@/hooks/useProductPagination'
 import { useProductLoader } from '@/hooks/useProductLoader'
 import { CATALOG_PAGE_SIZE } from '@/lib/catalog-pagination'
@@ -47,6 +48,7 @@ type Producto = {
   destacado: boolean
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
+  vendedor_tipo?: string | null
   verificacion_homologacion?: string | null
   reservado?: boolean | null
 }
@@ -138,6 +140,11 @@ const ProductCard = memo(({ p, priority = false, t }: { p: Producto; priority?: 
         {p.verificacion_homologacion === 'verificada' && (
           <div className="mt-1">
             <BadgeHomologacion estado={p.verificacion_homologacion} size="sm" />
+          </div>
+        )}
+        {p.vendedor_tipo && (
+          <div className="mt-1">
+            <BadgeTipoVendedor tipo={p.vendedor_tipo} />
           </div>
         )}
         {p.vendedor_verificado && (

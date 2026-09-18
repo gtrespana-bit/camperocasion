@@ -425,6 +425,14 @@
     "homologacionSinExpediente": "No documents yet",
     "reserved": "Reserved"
   },
+  "tiposVendedor": {
+    "particular": "Private seller",
+    "camperizador": "Camper builder",
+    "profesional": "Pro",
+    "particularDesc": "Selling my camper or gear",
+    "camperizadorDesc": "I build and sell camper projects",
+    "profesionalDesc": "Company, workshop or dealership"
+  },
   "product": {
     "featured": "Featured",
     "verified": "Verified",
@@ -640,7 +648,9 @@
     "conditionUsed": "Used",
     "optimizing": "Optimizing images…",
     "priceEur": "Price (€)",
-    "family": "Vehicle family"
+    "family": "Vehicle family",
+    "asLabel": "Listing as",
+    "changeTipo": "Change"
   },
   "dashboard": {
     "passwordTitle": "Change password",
@@ -721,7 +731,9 @@
     "reviews": "Reviews",
     "noReviews": "No reviews yet. Buyers can leave one after a transaction.",
     "tabReservations": "Reservations",
-    "tabInspecciones": "Inspections"
+    "tabInspecciones": "Inspections",
+    "sellerTypeLabel": "What kind of seller are you?",
+    "sellerTypeHint": "Shown next to your listings so buyers know who is selling."
   },
   "contact": {
     "title": "Contact Us",

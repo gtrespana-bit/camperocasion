@@ -29,6 +29,9 @@ const TRANSLATIONS: Record<string, string> = {
   'productCard.featured': 'Destacado',
   'productCard.boost': 'Boost',
   'productCard.verified': 'Verificado',
+  'tiposVendedor.particular': 'Particular',
+  'tiposVendedor.camperizador': 'Camperizador',
+  'tiposVendedor.profesional': 'Pro',
 };
 
 jest.mock('next-intl', () => ({
@@ -54,7 +57,7 @@ describe('ProductCard', () => {
     render(<ProductCard p={mockProduct} />);
     
     expect(screen.getByText('Producto de prueba')).toBeInTheDocument();
-    expect(screen.getByText('$100')).toBeInTheDocument();
+    expect(screen.getByText('100 €')).toBeInTheDocument();
     expect(screen.getByText('Nuevo · Caracas')).toBeInTheDocument();
   });
 
@@ -85,5 +88,17 @@ describe('ProductCard', () => {
     render(<ProductCard p={verifiedSellerProduct} />);
     
     expect(screen.getByText('Verificado')).toBeInTheDocument();
+  });
+
+  it('muestra chip de tipo de vendedor cuando el anuncio trae vendedor_tipo', () => {
+    render(<ProductCard p={{ ...mockProduct, vendedor_tipo: 'camperizador' }} />);
+    expect(screen.getByText('Camperizador')).toBeInTheDocument();
+  });
+
+  it('no muestra chip de tipo de vendedor sin vendedor_tipo', () => {
+    render(<ProductCard p={mockProduct} />);
+    expect(screen.queryByText('Particular')).not.toBeInTheDocument();
+    expect(screen.queryByText('Camperizador')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pro')).not.toBeInTheDocument();
   });
 });

@@ -104,7 +104,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 // ── Datos ─────────────────────────────────────────────────────────────────
 
 const MODERACION = 'estado_moderacion.is.null,estado_moderacion.eq.aprobado'
-const PRODUCT_COLS = 'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, subcategoria, creado_en, boosteado_en, destacado, destacado_hasta'
+const PRODUCT_COLS = 'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, subcategoria, creado_en, boosteado_en, destacado, destacado_hasta, vendedor_tipo'
 
 async function getProductos(limit = 8, subcategorias?: string[]) {
   if (!supabase) return []

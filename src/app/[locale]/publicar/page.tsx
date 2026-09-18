@@ -12,6 +12,7 @@ import { ESTADOS, getMunicipiosNombres } from '@/lib/ubicaciones'
 import { formatPrecio } from '@/lib/precio'
 import { Camera, X, UploadCloud, AlertCircle, Phone, Mail, MapPin, MessageSquare } from 'lucide-react'
 import { verificarContenido, formatearAlertaModeracion } from '@/lib/moderacion'
+import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
 import { emailProductoPublicado } from '@/lib/server-email'
 import { compressImages } from '@/lib/compress-image'
 import { useTranslations } from 'next-intl'
@@ -62,6 +63,7 @@ export default function PublicarPage() {
   const [moderacionResultado, setModeracionResultado] = useState<{ nivel: string; palabras: string[] } | null>(null)
   const [showEmprendedor, setShowEmprendedor] = useState(false)
   const [pubCount, setPubCount] = useState(0)
+  const [tipoVendedor, setTipoVendedor] = useState<string | null>(null)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -76,6 +78,14 @@ export default function PublicarPage() {
         .eq('user_id', user.id)
         .eq('activo', true)
         .then(({ count }) => setPubCount(count || 0))
+
+      // Con qué tipo de vendedor está publicando (Fase 2)
+      fetch('/api/perfil')
+        .then(r => (r.ok ? r.json() : null))
+        .then(result => {
+          if (result?.profile?.tipo_vendedor) setTipoVendedor(result.profile.tipo_vendedor)
+        })
+        .catch(() => {})
     }
   }, [authLoading, session, router, user])
 
@@ -372,6 +382,16 @@ export default function PublicarPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('title')}</h1>
+
+      {/* Publicando como… (Fase 2: el comprador verá este chip en el anuncio) */}
+      {tipoVendedor && (
+        <p className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+          {t('asLabel')} <BadgeTipoVendedor tipo={tipoVendedor} />
+          <LocalLink href="/dashboard" className="text-brand-primary hover:underline text-xs">
+            {t('changeTipo')}
+          </LocalLink>
+        </p>
+      )}
 
       {/* Banner: siempre gratis */}
       <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">

@@ -36,6 +36,7 @@ export function useDashboard() {
   const [telefono, setTelefono] = useState('')
   const [estado, setEstado] = useState('')
   const [ciudad, setCiudad] = useState('')
+  const [tipoVendedor, setTipoVendedor] = useState<string>('particular')
   const [fotoUrl, setFotoUrl] = useState<string | null>(null)
   const [verificado, setVerificado] = useState(false)
   const [nivelConfianza, setNivelConfianza] = useState(0)
@@ -69,6 +70,7 @@ export function useDashboard() {
           setTelefono(data.telefono || '')
           setEstado(data.estado || '')
           setCiudad(data.ciudad || '')
+          setTipoVendedor(data.tipo_vendedor || 'particular')
           setFotoUrl(data.foto_perfil_url || null)
           setVerificado(data.verificado || false)
           setNivelConfianza(data.nivel_confianza ?? 0)
@@ -169,7 +171,7 @@ export function useDashboard() {
   return {
     productos, setProductos, visitasTotales, favoritos, favoritosCount,
     creditos, setCreditos, pubCount, nombre, setNombre, telefono, setTelefono,
-    estado, setEstado, ciudad, setCiudad, fotoUrl, setFotoUrl, verificado,
+    estado, setEstado, ciudad, setCiudad, tipoVendedor, setTipoVendedor, fotoUrl, setFotoUrl, verificado,
     nivelConfianza, badgesAuto, ultimaActividad, creadoEn, resenas,
     promedioResenas, loading, setToast, toast, refreshAll,
   }

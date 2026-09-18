@@ -24,6 +24,7 @@ describe('columnas y filtro de moderación', () => {
     const columnas = CATALOG_PRODUCT_COLUMNS.split(',').map(c => c.trim())
     expect(columnas).toContain('slug')
     expect(columnas).toContain('vendedor_verificado')
+    expect(columnas).toContain('vendedor_tipo')
     expect(columnas).toContain('verificacion_homologacion')
   })
 

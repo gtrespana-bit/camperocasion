@@ -88,20 +88,20 @@ const NEVERA_PORT = 'Portátil'
 // El email siempre es @camperocasion.online para no suplantar a nadie real;
 // se crean con email_confirm:true y no reciben ningún correo.
 const VENDEDORES = [
-  { slug: 'ana-martin', nombre: 'Ana Martín Soler', estado: 'Madrid', ciudad: 'Madrid', telefono: '+34 612 48 93 07', verificado: true },
-  { slug: 'jose-luis-ortega', nombre: 'José Luis Ortega Ramos', estado: 'Madrid', ciudad: 'Madrid', telefono: '+34 654 09 31 76', verificado: false },
-  { slug: 'carmen-ruiz', nombre: 'Carmen Ruiz Peña', estado: 'Comunitat Valenciana', ciudad: 'Alicante', telefono: '+34 687 25 14 90', verificado: true },
-  { slug: 'iker-mendizabal', nombre: 'Iker Mendizabal Urrutia', estado: 'País Vasco', ciudad: 'Vizcaya', telefono: '+34 699 41 87 22', verificado: false },
-  { slug: 'montse-vidal', nombre: 'Montse Vidal Ferrer', estado: 'Cataluña', ciudad: 'Girona', telefono: '+34 629 73 58 41', verificado: true },
-  { slug: 'pablo-sanz', nombre: 'Pablo Sanz Velasco', estado: 'Aragón', ciudad: 'Zaragoza', telefono: '+34 645 19 62 80', verificado: false },
-  { slug: 'lucia-herrero', nombre: 'Lucía Herrero Pazos', estado: 'Galicia', ciudad: 'A Coruña', telefono: '+34 671 38 24 95', verificado: false },
-  { slug: 'andres-molina', nombre: 'Andrés Molina Guerrero', estado: 'Andalucía', ciudad: 'Sevilla', telefono: '+34 633 57 81 14', verificado: false },
-  { slug: 'javi-fernandez', nombre: 'Javi Fernández Castro', estado: 'Andalucía', ciudad: 'Málaga', telefono: '+34 692 64 73 58', verificado: true },
-  { slug: 'elena-pons', nombre: 'Elena Pons Roig', estado: 'Comunitat Valenciana', ciudad: 'Valencia', telefono: '+34 618 92 47 63', verificado: false },
-  { slug: 'marc-girbau', nombre: 'Marc Girbau Font', estado: 'Cataluña', ciudad: 'Barcelona', telefono: '+34 660 31 85 29', verificado: true },
-  { slug: 'rafa-quesada', nombre: 'Rafa Quesada Serrano', estado: 'Andalucía', ciudad: 'Granada', telefono: '+34 677 46 92 18', verificado: false },
-  { slug: 'teresa-alarcon', nombre: 'Teresa Alarcón Domingo', estado: 'Castilla y León', ciudad: 'Valladolid', telefono: '+34 639 54 27 81', verificado: false },
-  { slug: 'luis-crespi', nombre: 'Lluís Crespí Marquès', estado: 'Baleares', ciudad: 'Baleares', telefono: '+34 608 76 13 42', verificado: false },
+  { slug: 'ana-martin', nombre: 'Ana Martín Soler', estado: 'Madrid', ciudad: 'Madrid', telefono: '+34 612 48 93 07', verificado: true, tipo: 'particular' },
+  { slug: 'jose-luis-ortega', nombre: 'José Luis Ortega Ramos', estado: 'Madrid', ciudad: 'Madrid', telefono: '+34 654 09 31 76', verificado: false, tipo: 'particular' },
+  { slug: 'carmen-ruiz', nombre: 'Carmen Ruiz Peña', estado: 'Comunitat Valenciana', ciudad: 'Alicante', telefono: '+34 687 25 14 90', verificado: true, tipo: 'camperizador' },
+  { slug: 'iker-mendizabal', nombre: 'Iker Mendizabal Urrutia', estado: 'País Vasco', ciudad: 'Vizcaya', telefono: '+34 699 41 87 22', verificado: false, tipo: 'camperizador' },
+  { slug: 'montse-vidal', nombre: 'Montse Vidal Ferrer', estado: 'Cataluña', ciudad: 'Girona', telefono: '+34 629 73 58 41', verificado: true, tipo: 'profesional' },
+  { slug: 'pablo-sanz', nombre: 'Pablo Sanz Velasco', estado: 'Aragón', ciudad: 'Zaragoza', telefono: '+34 645 19 62 80', verificado: false, tipo: 'particular' },
+  { slug: 'lucia-herrero', nombre: 'Lucía Herrero Pazos', estado: 'Galicia', ciudad: 'A Coruña', telefono: '+34 671 38 24 95', verificado: false, tipo: 'particular' },
+  { slug: 'andres-molina', nombre: 'Andrés Molina Guerrero', estado: 'Andalucía', ciudad: 'Sevilla', telefono: '+34 633 57 81 14', verificado: false, tipo: 'particular' },
+  { slug: 'javi-fernandez', nombre: 'Javi Fernández Castro', estado: 'Andalucía', ciudad: 'Málaga', telefono: '+34 692 64 73 58', verificado: true, tipo: 'camperizador' },
+  { slug: 'elena-pons', nombre: 'Elena Pons Roig', estado: 'Comunitat Valenciana', ciudad: 'Valencia', telefono: '+34 618 92 47 63', verificado: false, tipo: 'particular' },
+  { slug: 'marc-girbau', nombre: 'Marc Girbau Font', estado: 'Cataluña', ciudad: 'Barcelona', telefono: '+34 660 31 85 29', verificado: true, tipo: 'profesional' },
+  { slug: 'rafa-quesada', nombre: 'Rafa Quesada Serrano', estado: 'Andalucía', ciudad: 'Granada', telefono: '+34 677 46 92 18', verificado: false, tipo: 'particular' },
+  { slug: 'teresa-alarcon', nombre: 'Teresa Alarcón Domingo', estado: 'Castilla y León', ciudad: 'Valladolid', telefono: '+34 639 54 27 81', verificado: false, tipo: 'particular' },
+  { slug: 'luis-crespi', nombre: 'Lluís Crespí Marquès', estado: 'Baleares', ciudad: 'Baleares', telefono: '+34 608 76 13 42', verificado: false, tipo: 'particular' },
 ]
 const emailVendedor = v => `semilla+${v.slug}@camperocasion.online`
 

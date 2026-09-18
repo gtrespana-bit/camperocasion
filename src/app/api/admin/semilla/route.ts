@@ -109,6 +109,7 @@ async function asegurarVendedores(sb: any): Promise<{ ids: Record<string, string
         telefono_visible: true,
         email_visible: false,
         verificado: v.verificado,
+        tipo_vendedor: v.tipo || 'particular',
         ...(v.verificado ? { verificado_desde: haceHoras(24 * 200) } : {}),
         actualizado_en: new Date().toISOString(),
       },

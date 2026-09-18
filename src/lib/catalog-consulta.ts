@@ -187,7 +187,7 @@ export function esErrorColumnasRango(err: unknown): boolean {
  * canónica del producto se construye con él (`productUrl`).
  */
 export const CATALOG_PRODUCT_COLUMNS =
-  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, verificacion_homologacion, reservado'
+  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, vendedor_tipo, verificacion_homologacion, reservado'
 
 /**
  * Visibilidad pública: aprobados, pendientes de moderación (aún no revisados)
@@ -211,6 +211,8 @@ export interface ProductoCatalogo {
   destacado: boolean
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
+  /** Tipo del vendedor: particular, camperizador o profesional (Fase 2). */
+  vendedor_tipo?: string | null
   /** Estado del expediente de homologación (Fase 0.2). */
   verificacion_homologacion?: string | null
   /** Reserva con señal vigente (Fase 1.2): el anuncio está comprometido. */

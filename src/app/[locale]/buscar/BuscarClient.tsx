@@ -3,6 +3,7 @@ import { formatPrecio } from '@/lib/precio'
 
 import LocalLink from '@/components/LocalLink'
 import BadgeHomologacion from '@/components/BadgeHomologacion'
+import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
 import { Search, ChevronRight, XCircle, Loader2, Bell, BellRing } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback, useMemo, use } from 'react'
@@ -40,6 +41,7 @@ type Producto = {
   destacado: boolean | null
   destacado_hasta: string | null
   vendedor_verificado: boolean | null
+  vendedor_tipo?: string | null
   verificacion_homologacion?: string | null
   reservado?: boolean | null
   descripcion?: string
@@ -113,6 +115,11 @@ function ProductCard({ p }: { p: Producto }) {
         {p.verificacion_homologacion === 'verificada' && (
           <div className="mt-1">
             <BadgeHomologacion estado={p.verificacion_homologacion} size="sm" />
+          </div>
+        )}
+        {p.vendedor_tipo && (
+          <div className="mt-1">
+            <BadgeTipoVendedor tipo={p.vendedor_tipo} />
           </div>
         )}
         {p.vendedor_verificado && (
@@ -287,7 +294,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
       const ejecutar = async (conRangos: boolean) => {
         let sq = supabase
           .from('productos')
-          .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, verificacion_homologacion, reservado', { count: 'exact' })
+          .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, vendedor_tipo, verificacion_homologacion, reservado', { count: 'exact' })
           .eq('activo', true)
           .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado')
 

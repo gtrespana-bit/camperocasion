@@ -9,6 +9,7 @@ import { MapPin, Tag, MessageCircle, Phone, Mail, ChevronRight, Shield, Clock, H
 import Avatar from '@/components/Avatar'
 import ReportarButton from '@/components/ReportarButton'
 import BadgeVerificado from '@/components/BadgeVerificado'
+import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
 import BadgeHomologacion from '@/components/BadgeHomologacion'
 import BotonReservar, { AvisoReservado } from '@/components/ReservaProducto'
 import BotonInspeccion from '@/components/BotonInspeccion'
@@ -508,12 +509,8 @@ function ProductoPageClientInner({
                       <p className="font-semibold text-gray-900">{vendedor.nombre || 'Vendedor'}</p>
                       {vendedor.verificado && <BadgeVerificado size="sm" />}
                     </div>
-                    <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      (vendedorStats?.activas >= 3 || vendedor.verificado)
-                        ? 'bg-brand-accent/10 text-brand-accent-dark border border-brand-accent/30'
-                        : 'bg-gray-100 text-gray-600 border border-gray-200'
-                    }`}>
-                      {(vendedorStats?.activas >= 3 || vendedor.verificado) ? t('sellerPro') : t('sellerPrivate')}
+                    <span className="inline-block mt-1">
+                      <BadgeTipoVendedor tipo={vendedor.tipo_vendedor} />
                     </span>
                     {vendedor.ciudad && <p className="text-xs text-gray-500 mt-1">{vendedor.ciudad}{vendedor.estado ? `, ${vendedor.estado}` : ''}</p>}
                   </div>
