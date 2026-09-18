@@ -3,7 +3,7 @@ import { formatPrecio } from '@/lib/precio'
 
 import LocalLink from '@/components/LocalLink'
 import BadgeHomologacion from '@/components/BadgeHomologacion'
-import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
+import BadgeTipoVendedor, { TIPOS_VENDEDOR } from '@/components/BadgeTipoVendedor'
 import { Search, ChevronRight, XCircle, Loader2, Bell, BellRing } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback, useMemo, use } from 'react'
@@ -22,6 +22,8 @@ import {
 import {
   aplicarFiltrosBase,
   esErrorColumnasRango,
+  FILTRO_VENDEDOR_PARAM,
+  tipoVendedorFiltro,
   type FiltrosCatalogo,
 } from '@/lib/catalog-consulta'
 import { SelectorMarca } from '@/components/SelectorMarca'
@@ -179,6 +181,9 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
   const precioMin = searchParams?.precio_min || ''
   const precioMax = searchParams?.precio_max || ''
   const orden = searchParams?.orden || ''
+  // ¿Quién vende? (Fase 3): solo se acepta un tipo válido; cualquier otra
+  // cosa que venga en la URL se ignora para no romper la búsqueda.
+  const vendedor = tipoVendedorFiltro(searchParams?.[FILTRO_VENDEDOR_PARAM]) || ''
 
   // Filtros técnicos camper (los mismos del catálogo): opciones + rangos.
   // Se memoizan por la referencia de `searchParams`: `use()` devuelve la misma
@@ -315,6 +320,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
           precioMin,
           precioMax,
           condicion,
+          [FILTRO_VENDEDOR_PARAM]: vendedor,
           ...filtrosTecnicos,
         }
         if (conRangos) Object.assign(filtros, filtrosRango)
@@ -368,7 +374,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
 
     buscar()
     return () => { cancelled = true }
-  }, [query, categoria, subcategoria, marca, condicion, ubicacionEstado, ubicacionCiudad, precioMin, precioMax, orden, filtrosTecnicos, filtrosRango])
+  }, [query, categoria, subcategoria, marca, condicion, ubicacionEstado, ubicacionCiudad, precioMin, precioMax, orden, vendedor, filtrosTecnicos, filtrosRango])
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -524,6 +530,31 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
                     placeholder="Max"
                     className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white"
                   />
+                </div>
+              </div>
+
+              {/* ¿Quién vende? (Fase 3): particulares, camperizadores o pros. */}
+              <div className="mt-4 pt-4 border-t">
+                <label className="block text-sm font-bold text-gray-900 mb-1.5">{tc('whoSells')}</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {TIPOS_VENDEDOR.map(tipo => {
+                    const activo = vendedor === tipo
+                    return (
+                      <button
+                        key={tipo}
+                        type="button"
+                        aria-pressed={activo}
+                        onClick={() => setParam(FILTRO_VENDEDOR_PARAM, activo ? '' : tipo)}
+                        className={`text-xs font-semibold px-2.5 py-1.5 rounded-full border transition ${
+                          activo
+                            ? 'bg-brand-primary text-white border-brand-primary'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                        }`}
+                      >
+                        {t2(`tiposVendedor.${tipo}`)}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 

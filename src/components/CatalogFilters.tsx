@@ -8,7 +8,8 @@ import {
   type FiltrosTecnicos,
 } from '@/lib/filtros-tecnicos'
 import { hayFiltrosRango } from '@/lib/filtros-tecnicos'
-import { FILTRO_VERIFICADA_PARAM } from '@/lib/catalog-consulta';
+import { FILTRO_VERIFICADA_PARAM, FILTRO_VENDEDOR_PARAM } from '@/lib/catalog-consulta';
+import { TIPOS_VENDEDOR } from '@/components/BadgeTipoVendedor';
 import { FiltrosTecnicosPanel } from './FiltrosTecnicosPanel';
 import { SelectorMarca } from './SelectorMarca';
 
@@ -29,6 +30,8 @@ interface CatalogFiltersProps {
   rangos: Record<string, string>;
   /** '1' cuando solo se muestran anuncios con homologación verificada. */
   verificada: string;
+  /** Tipo de vendedor activo ('particular' | 'camperizador' | 'profesional'). */
+  vendedor: string;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
@@ -46,6 +49,7 @@ export const CatalogFilters = ({
   filtrosTecnicos,
   rangos,
   verificada,
+  vendedor,
   t,
 }: CatalogFiltersProps) => {
   const router = useRouter();
@@ -69,7 +73,7 @@ export const CatalogFilters = ({
 
   const hasActiveFilters = !!(
     subcategoria || marca || precioMin || precioMax ||
-    ubicacionEstado || ubicacionCiudad || verificada ||
+    ubicacionEstado || ubicacionCiudad || verificada || vendedor ||
     GRUPOS_FILTROS_TECNICOS.some(g => g.filtros.some(f => filtrosTecnicos[f.param])) ||
     hayFiltrosRango(rangos)
   );
@@ -175,6 +179,31 @@ export const CatalogFilters = ({
         />
         {t('catalog.filters.verified')}
       </label>
+
+      {/* ¿Quién vende? (Fase 3): particulares, camperizadores o pros. */}
+      <div className="mb-5">
+        <span className={labelClass}>{t('catalog.whoSells')}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {TIPOS_VENDEDOR.map(tipo => {
+            const activo = vendedor === tipo
+            return (
+              <button
+                key={tipo}
+                type="button"
+                aria-pressed={activo}
+                onClick={() => setParam(FILTRO_VENDEDOR_PARAM, activo ? '' : tipo)}
+                className={`text-xs font-semibold px-2.5 py-1.5 rounded-full border transition ${
+                  activo
+                    ? 'bg-brand-primary text-white border-brand-primary'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                }`}
+              >
+                {t(`tiposVendedor.${tipo}`)}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       {/* Bloques técnicos de la ficha camper + rangos numéricos: la lista de
           filtros, sus opciones y los rangos salen del registro único

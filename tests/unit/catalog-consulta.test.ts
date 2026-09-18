@@ -10,11 +10,13 @@ import {
   CATALOG_FILTRO_MODERACION,
   CATALOG_PRODUCT_COLUMNS,
   FILTRO_VERIFICADA_PARAM,
+  FILTRO_VENDEDOR_PARAM,
   aplicarFiltrosCatalogo,
   aplicarRangosNumericos,
   quitarRangos,
   tieneRangosNumericos,
   filtroVerificadaActivo,
+  tipoVendedorFiltro,
   marcarDestacados,
   ordenarProductosCatalogo,
 } from '@/lib/catalog-consulta'
@@ -80,6 +82,30 @@ describe('aplicarFiltrosCatalogo', () => {
       ['contains', 'especificaciones', { 'MMA / Peso máximo autorizado': 'Hasta 3.500 kg (carnet B)' }],
       ['eq', 'verificacion_homologacion', 'verificada'],
     ])
+  })
+
+  test('el filtro de tipo de vendedor usa la columna denormalizada', () => {
+    const query = crearQuery()
+    aplicarFiltrosCatalogo(query, { [FILTRO_VENDEDOR_PARAM]: 'camperizador' })
+
+    expect(query.llamadas).toEqual([['eq', 'vendedor_tipo', 'camperizador']])
+  })
+
+  test('un tipo de vendedor inventado en la URL no toca la consulta', () => {
+    const query = crearQuery()
+    aplicarFiltrosCatalogo(query, { [FILTRO_VENDEDOR_PARAM]: 'empresa' })
+    aplicarFiltrosCatalogo(query, { [FILTRO_VENDEDOR_PARAM]: 42 })
+
+    expect(query.llamadas).toEqual([])
+  })
+
+  test('tipoVendedorFiltro solo acepta los tres tipos válidos', () => {
+    expect(tipoVendedorFiltro('particular')).toBe('particular')
+    expect(tipoVendedorFiltro('camperizador')).toBe('camperizador')
+    expect(tipoVendedorFiltro('profesional')).toBe('profesional')
+    expect(tipoVendedorFiltro('profesionales')).toBeNull()
+    expect(tipoVendedorFiltro('')).toBeNull()
+    expect(tipoVendedorFiltro(undefined)).toBeNull()
   })
 
   test('los rangos numéricos se aplican sobre las columnas generadas (no el JSONB)', () => {

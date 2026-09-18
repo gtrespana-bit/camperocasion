@@ -27,7 +27,7 @@ import {
   leerFiltrosTecnicos,
   leerFiltrosRango,
 } from '@/lib/filtros-tecnicos'
-import { FILTRO_VERIFICADA_PARAM } from '@/lib/catalog-consulta'
+import { FILTRO_VERIFICADA_PARAM, FILTRO_VENDEDOR_PARAM } from '@/lib/catalog-consulta'
 import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { usePrefetch } from '@/hooks/usePrefetch'
 import { productUrl } from '@/lib/product-url'
@@ -166,6 +166,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const tp = useTranslations('product')
   const tcm = useTranslations('common')
   const tfam = useTranslations('familias')
+  const ttv = useTranslations('tiposVendedor')
   // Universal translator function (supports any namespace with variables)
   const t = (key: string, vars?: Record<string, string | number>) => {
     const parts = key.split('.')
@@ -175,6 +176,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
     if (ns === 'product') return tp(rest, vars as any)
     if (ns === 'common') return tcm(rest, vars as any)
     if (ns === 'familias') return tfam(rest, vars as any)
+    if (ns === 'tiposVendedor') return ttv(rest, vars as any)
     return key
   }
   const searchParams = useSearchParams()
@@ -205,6 +207,9 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   // (es una columna de `productos`), así que se lee aparte.
   const verificada = searchParams.get(FILTRO_VERIFICADA_PARAM) || ''
 
+  // Filtro "¿Quién vende?" (Fase 3): particular, camperizador o profesional.
+  const vendedor = searchParams.get(FILTRO_VENDEDOR_PARAM) || ''
+
   const queryString = searchParams.toString()
   const filtrosTecnicos = useMemo(() => leerFiltrosTecnicos(new URLSearchParams(queryString)), [queryString])
   const firmaTecnica = firmaFiltrosTecnicos(filtrosTecnicos)
@@ -226,7 +231,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
 
   const hasActiveFilters = !!(
     categoria || subcategoria || marca || q || precioMin || precioMax ||
-    ubicacionEstado || ubicacionCiudad || verificada || hayFiltrosTecnicos(filtrosTecnicos) ||
+    ubicacionEstado || ubicacionCiudad || verificada || vendedor || hayFiltrosTecnicos(filtrosTecnicos) ||
     hayFiltrosRango(filtrosRango)
   )
 
@@ -249,7 +254,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
   const totalPages = Math.max(1, Math.ceil(totalCountToUse / itemsPerPage))
 
   // Firma de filtros para detectar cambios y resetear la página.
-  const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, firmaTecnica, firmaRango, verificada].join('|')
+  const filterSig = [categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, firmaTecnica, firmaRango, verificada, vendedor].join('|')
   const prevFilterSig = useRef(filterSig)
 
   const setParam = (key: string, value: string) => {
@@ -288,11 +293,12 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
         ubicacionEstado,
         ubicacionCiudad,
         [FILTRO_VERIFICADA_PARAM]: verificada || undefined,
+        [FILTRO_VENDEDOR_PARAM]: vendedor || undefined,
         ...filtrosTecnicos,
         ...filtrosRango
       }
     });
-  }, [filterSig, currentPage, itemsPerPage, hasActiveFilters, useServerData, goToPage, loadPage, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada]);
+  }, [filterSig, currentPage, itemsPerPage, hasActiveFilters, useServerData, goToPage, loadPage, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada, vendedor]);
 
   // Precargar la siguiente página cuando sea apropiado
   useEffect(() => {
@@ -312,6 +318,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
             ubicacionEstado,
             ubicacionCiudad,
             [FILTRO_VERIFICADA_PARAM]: verificada || undefined,
+            [FILTRO_VENDEDOR_PARAM]: vendedor || undefined,
             ...filtrosTecnicos,
             ...filtrosRango
           }
@@ -320,7 +327,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
 
       return () => clearTimeout(prefetchTimer);
     }
-  }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada, itemsPerPage, prefetchPage]);
+  }, [currentPage, totalPages, loading, productosToShow.length, categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, filtrosTecnicos, filtrosRango, verificada, vendedor, itemsPerPage, prefetchPage]);
 
   const subActiva = categoriasData.camper.subs.find(s => s.label === subcategoria)
   const subLabel = subcategoria
@@ -412,6 +419,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
             filtrosTecnicos={filtrosTecnicos}
             rangos={rangosEnBruto}
             verificada={verificada}
+            vendedor={vendedor}
             t={t}
           />
         </aside>
@@ -460,7 +468,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
                     : error}
                 </p>
                 <button
-                  onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, [FILTRO_VERIFICADA_PARAM]: verificada || undefined, ...filtrosTecnicos, ...filtrosRango } })}
+                  onClick={() => loadPage({ page: currentPage, pageSize: itemsPerPage, filters: { categoria, subcategoria, marca, q, precioMin, precioMax, ubicacionEstado, ubicacionCiudad, [FILTRO_VERIFICADA_PARAM]: verificada || undefined, [FILTRO_VENDEDOR_PARAM]: vendedor || undefined, ...filtrosTecnicos, ...filtrosRango } })}
                   className="mt-3 text-sm font-semibold text-red-700 underline hover:text-red-900"
                 >
                   {t('catalog.retry')}

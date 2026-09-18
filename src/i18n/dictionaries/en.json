@@ -340,6 +340,7 @@
     "retry": "Retry",
     "serviceUnavailable": "The catalogue is temporarily unavailable. Please try again in a few minutes.",
     "clearFilters": "Clear filters",
+    "whoSells": "Who is selling?",
     "search": "Search",
     "states": {
       "Andalucía": "Andalucía",
