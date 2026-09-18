@@ -79,10 +79,15 @@
      del orden + `aplicarOrdenCatalogo`), orden **también en SQL** en el
      catálogo, buscador, landings de provincia/categoría, home y landings de
      tipo de vendedor; cron diario `/api/cron/expirar-prioridades` para limpiar
-     la base de datos; la compra pasa por `POST /api/productos/prioridad` (en
+     la base de datos; la compra pasa por `POST /api/productos/promocionar` (en
      servidor, con la RPC que ya validaba `auth.uid()`) y **revalida la caché**
      para que el efecto se vea al instante. Textos actualizados: «Subir al nº 1
      — 7 días».
+   - La RPC `usar_boost` cobraba aunque la subida siguiera vigente: dos clics
+     seguidos eran dos créditos por un solo efecto. La migración
+     `202609180004` lo impide (devuelve `ya_activo` sin tocar el saldo) y
+     `scripts/verify_boost_sql.py` lo demuestra crédito a crédito sobre un
+     Postgres real.
 
 5. **La portada y las landings se quedaban congeladas.**
    `/[locale]` se prerenderiza y **no tenía `revalidate`**: los anuncios que
@@ -277,7 +282,7 @@ todo lo anterior).
 
 ## 6. Resumen para decidir
 
-**Lo técnico está sano:** tipos, lint, 316 tests y build en verde; sin restos
+**Lo técnico está sano:** tipos, lint, 321 tests y build en verde; CI en verde; sin restos
 de la marca anterior en el producto; los tres bugs graves de esta pasada
 (WhatsApp roto, inspección inaccesible, boost inoperante) están corregidos con
 tests.
