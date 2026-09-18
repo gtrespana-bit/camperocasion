@@ -420,13 +420,14 @@
   },
   "productCard": {
     "featured": "Featured",
-    "boost": "Boost",
+    "boost": "Top spot",
     "verified": "Verified",
     "homologacionVerificada": "Type approval verified",
     "homologacionPendiente": "Verification in progress",
     "homologacionRechazada": "Documents rejected",
     "homologacionSinExpediente": "No documents yet",
-    "reserved": "Reserved"
+    "reserved": "Reserved",
+    "demo": "Sample"
   },
   "tiposVendedor": {
     "particular": "Private seller",
@@ -558,15 +559,17 @@
     "reservarCta": "Reserve with a deposit",
     "reservadoBadge": "Reserved",
     "contratoCtaTitulo": "Sale contract",
-    "contratoCtaDesc": "Print-ready template prefilled with this van’s details"
+    "contratoCtaDesc": "Print-ready template prefilled with this van’s details",
+    "demoBannerTitle": "Sample listing",
+    "demoBannerDesc": "This listing is a demo so you can see what a complete listing looks like: it is not a real vehicle for sale and has no contact details. Post yours for free in a couple of minutes."
   },
   "creditos": {
     "title1": "Buy credits and",
     "title2": "stand out",
     "subtitle": "Posting is always <strong>free</strong>. Credits are optional for visibility.",
     "whatFor": "What are credits for?",
-    "boostTitle": "⚡ Boost — Rise to #1",
-    "boostDesc": "Your listing appears <strong>first</strong> in the list.",
+    "boostTitle": "⚡ Top spot — 7 days",
+    "boostDesc": "Your listing appears <strong>first</strong> in the list for 7 days. You can boost it again once it expires.",
     "boostPrice": "1 credit",
     "featureTitle": "⭐ Feature — 2 in 1",
     "featureDesc": "<strong>Main page</strong> + priority in <strong>search</strong>.",
@@ -576,7 +579,7 @@
     "mostPopular": "⭐ MOST POPULAR",
     "credits": "credits",
     "perCredit": "per credit",
-    "boosts": "boost(s) to #1",
+    "boosts": "top-spot boosts (7 days)",
     "orFeatured": "or {count}× featured 12h",
     "noExpiration": "No expiration",
     "buy": "Buy",
@@ -600,12 +603,12 @@
     "sendReceipt": "Send receipt",
     "selectPayment": "Select a payment method to continue ↓",
     "phone": "Phone",
-    "idCard": "ID",
     "bank": "Bank",
     "amountPay": "Amount to pay",
     "removeImage": "Remove image",
     "notOperational": "Not operational",
-    "eurNote": "Prices in euros (€). Pay by Bizum, bank transfer or PayPal."
+    "eurNote": "Prices in euros (€). Pay by Bizum, bank transfer or PayPal.",
+    "holder": "Account holder"
   },
   "publicar": {
     "title": "Post something",
@@ -715,7 +718,7 @@
     "loadingListings": "Loading listings...",
     "imageTooLarge": "Image must be less than 2MB",
     "photoError": "Error uploading photo: ",
-    "boostApplied": "⚡ Boost applied! Your listing is now #1",
+    "boostApplied": "⚡ Boost applied: your listing is first for 7 days",
     "featuredActivated": "⭐ Featured activated for {hours} hours!",
     "name": "Name",
     "phone": "Phone",
@@ -732,7 +735,7 @@
     "saveError": "Error saving: ",
     "namePlaceholder": "Your name",
     "save": "Save",
-    "boostError": "Could not apply boost",
+    "boostError": "The listing could not be boosted",
     "featuredError": "Could not feature",
     "selectType": "Select...",
     "edit": "Edit",

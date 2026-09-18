@@ -5,6 +5,7 @@ import { useState } from 'react'
 import LocalLink from '@/components/LocalLink'
 import { Package, X, Pause, Play, Edit, Zap, Star, CheckCircle2, ChevronDown, ArrowLeft, Send, RefreshCw } from 'lucide-react'
 import { productUrl } from '@/lib/product-url'
+import { boostVigente } from '@/lib/catalog-consulta'
 import Image from 'next/image'
 
 export default function TabProductos({
@@ -269,7 +270,7 @@ export default function TabProductos({
       </div>
       <div className="space-y-3">
         {productos.map((p) => {
-          const isBoosted = p.boosteado_en != null
+          const isBoosted = boostVigente(p.boosteado_en)
           const isFeatured = p.destacado && p.destacado_hasta && p.destacado_hasta > now
           const isVendido = p.vendido === true
           const gestionAbierto = menuGestion === p.id
@@ -389,7 +390,7 @@ export default function TabProductos({
                           }}
                           className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 w-full text-left"
                         >
-                          <Zap size={14} className="text-yellow-500" /> Boost (visibilidad extra)
+                          <Zap size={14} className="text-yellow-500" /> Subir al nº 1 (7 días)
                         </button>
                         <button
                           onClick={() => {

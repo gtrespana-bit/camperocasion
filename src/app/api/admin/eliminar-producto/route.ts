@@ -14,7 +14,11 @@ import { createClient } from '@supabase/supabase-js'
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { requireUUIDs } from '@/lib/validation'
 import { requireUser, getAdminEmails } from '@/lib/require-auth'
+import { revalidarListadosPublicos } from '@/lib/revalidar'
 
+// La portada y el catálogo listan anuncios desde caché (ISR): si no se
+// revalida aquí, aprobar/marcar vendido/eliminar no se ve hasta que otra
+// escritura cualquiera refresque la página.
 export async function POST(req: NextRequest) {
   try {
     // El propietario (o admin) debe ser la sesión real; antes era un userId opcional del body
@@ -99,6 +103,8 @@ export async function POST(req: NextRequest) {
       console.error('Database delete error:', error)
       return NextResponse.json({ error: 'Error al eliminar: ' + error.message }, { status: 500 })
     }
+
+    revalidarListadosPublicos()
 
     return NextResponse.json({ ok: true })
   } catch (error) {

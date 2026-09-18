@@ -102,15 +102,20 @@ async function asegurarVendedores(sb: any): Promise<{ ids: Record<string, string
       {
         id: usuario.id,
         nombre: v.nombre,
-        telefono: v.telefono,
+        // Sin teléfono: los números del guion de la semilla son inventados y
+        // en España pertenecen a personas reales. Un anuncio de ejemplo no
+        // debe poder generar llamadas.
+        telefono: null,
         estado: v.estado,
         ciudad: v.ciudad,
-        whatsapp_disponible: true,
-        telefono_visible: true,
+        whatsapp_disponible: false,
+        telefono_visible: false,
         email_visible: false,
-        verificado: v.verificado,
+        // Los perfiles de la semilla NUNCA son verificados: el sello
+        // "verificado" es una promesa de identidad comprobada.
+        verificado: false,
+        es_demo: true,
         tipo_vendedor: v.tipo || 'particular',
-        ...(v.verificado ? { verificado_desde: haceHoras(24 * 200) } : {}),
         actualizado_en: new Date().toISOString(),
       },
       { onConflict: 'id' },
@@ -222,18 +227,19 @@ async function ejecutarSemilla(sb: any, origen: string, reset: boolean, dry: boo
         imagen_url: urls[0],
         imagenes: urls,
         especificaciones: a.ficha,
-        metodos_contacto: {
-          email: emailVendedor(vendedor),
-          telefono: vendedor.telefono,
-          whatsapp: vendedor.telefono,
-        },
+        // Solo el email de la propia plataforma: sin teléfono ni WhatsApp,
+        // porque el anuncio es un ejemplo y no hay nadie al otro lado.
+        metodos_contacto: { email: emailVendedor(vendedor) },
+        es_demo: true,
         estado_moderacion: 'aprobado',
         motivo_moderacion: null,
         activo: true,
         destacado: !!a.destacado,
         destacado_hasta: a.destacado ? dentroDias(25) : null,
         boosteado_en: a.boosteado ? haceHoras(18) : null,
-        vendedor_verificado: vendedor.verificado,
+        // El sello de vendedor verificado no se hereda de un guion: los
+        // anuncios de demostración salen siempre sin verificar.
+        vendedor_verificado: false,
         verificacion_homologacion: a.verificacion || 'sin_verificar',
         ...(a.verificacion === 'verificada'
           ? { verificacion_homologacion_revisada_en: haceHoras(Math.max(a.creado - 30, 12)) }

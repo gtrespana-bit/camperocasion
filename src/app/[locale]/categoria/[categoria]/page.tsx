@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import LocalLink from '@/components/LocalLink'
 import { getSupabaseServerClient } from '@/lib/supabase-server-client'
+import { aplicarOrdenCatalogo } from '@/lib/catalog-consulta'
 import { CATEGORIAS_SEO_LIST, getCategoriaSEO } from '@/lib/categorias-seo'
 import { productUrl } from '@/lib/product-url'
 import { formatPrecio } from '@/lib/precio'
@@ -84,14 +85,15 @@ async function getProductos(categoriaSlug: string): Promise<{ productos: Product
 
     if (!categoria?.id) return { productos: [], total: 0 }
 
-    const { data, count, error } = await supabase
-      .from('productos')
-      .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, subcategoria, creado_en', { count: 'exact' })
-      .eq('activo', true)
-      .eq('categoria_id', categoria.id)
-      .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado')
-      .order('creado_en', { ascending: false })
-      .limit(PRODUCT_LIMIT)
+    // Mismo ORDER BY compartido que el catálogo: prioridad pagada primero.
+    const { data, count, error } = await aplicarOrdenCatalogo(
+      supabase
+        .from('productos')
+        .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, subcategoria, creado_en', { count: 'exact' })
+        .eq('activo', true)
+        .eq('categoria_id', categoria.id)
+        .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado'),
+    ).limit(PRODUCT_LIMIT)
 
     if (error) return { productos: [], total: 0 }
     return { productos: (data || []) as ProductoCategoria[], total: count || 0 }

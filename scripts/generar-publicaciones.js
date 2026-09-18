@@ -54,7 +54,7 @@ const FOTOS_CAMPER = [
   'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=600&fit=crop',
 ]
 
-// Anuncios camper de ejemplo — 100% vertical camper (sustituye al catálogo generalista venezolano)
+// Anuncios camper de ejemplo — 100% vertical camper
 const PRODUCTOS = [
   { sub: 'Gran Volumen', titulo: 'Fiat Ducato L3H2 camperizada 2019 — 140 CV', desc: 'Ducato 2.3 Multijet 140 CV, L3H2, 92.000 km. Homologada como vehículo vivienda (2448), distintivo C, 4 plazas para viajar y 3 para dormir. Calefacción diésel, placa 200 W, batería litio 100 Ah, inversor 2000 W, baño con ducha interior, ITV al día.', precio: 38900, estado: 'Bueno' },
   { sub: 'Gran Volumen', titulo: 'Peugeot Boxer L4H3 gran volumen 2020', desc: 'Boxer 2.2 BlueHDi 140 CV, L4H3, 78.000 km. Homologación 2448, MMA hasta 3.500 kg (carnet B), altura 2,75 m. Autonomía completa: calefacción, agua caliente, nevera compresor.', precio: 42500, estado: 'Bueno' },

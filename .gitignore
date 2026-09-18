@@ -46,6 +46,7 @@ camperocasion.online_*.report.html
 
 # Batch & URL generation scripts (dev utilities)
 batch_*.txt
+urls_*.txt
 generate-*.sh
 generate-*.py
 copy-urls-to-gsc.py

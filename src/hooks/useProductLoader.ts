@@ -9,6 +9,7 @@ import {
   CATALOG_PRODUCT_COLUMNS,
   CATALOG_FILTRO_MODERACION,
   aplicarFiltrosBase,
+  aplicarOrdenCatalogo,
   ordenarProductosCatalogo,
   ProductoCatalogo,
   tieneRangosNumericos,
@@ -81,9 +82,9 @@ export const useProductLoader = (): UseProductLoaderResult => {
       query = aplicarFiltrosBase(query, resto) as typeof query;
 
       const { from, to } = getCatalogPageRange(page, pageSize);
-      query = query
-        .order('creado_en', { ascending: false })
-        .range(from, to);
+      // Orden compartido con el SSR y el prefetch (boost > destacado > fecha):
+      // la ventana de la página tiene que salir del mismo ORDER BY.
+      query = aplicarOrdenCatalogo(query).range(from, to) as typeof query;
 
       return await query;
     };

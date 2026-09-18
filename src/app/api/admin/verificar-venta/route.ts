@@ -2,7 +2,11 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUUIDs } from '@/lib/validation'
 import { requireAdmin } from '@/lib/require-auth'
+import { revalidarListadosPublicos } from '@/lib/revalidar'
 
+// La portada y el catálogo listan anuncios desde caché (ISR): si no se
+// revalida aquí, aprobar/marcar vendido/eliminar no se ve hasta que otra
+// escritura cualquiera refresque la página.
 /**
  * Verifica un vendedor desde el admin.
  * Actualiza el perfil (bypass RLS via service key) y copia los datos de pago.
@@ -45,6 +49,8 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    revalidarListadosPublicos()
 
     return NextResponse.json({ ok: true })
   } catch (err: any) {

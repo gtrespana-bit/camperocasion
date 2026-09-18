@@ -40,10 +40,15 @@ function getBlogSlugs(): { slug: string; lastModified: Date }[] {
 // si la columna aún no existe, cae a id para no dejar el sitemap vacío.
 async function getProductos(supabase: any) {
   const moderacion = 'estado_moderacion.is.null,estado_moderacion.eq.aprobado'
+  // Los anuncios de demostración (`es_demo`) quedan FUERA del sitemap: no son
+  // inventario real, no deben competir en Google ni llenar el índice de
+  // páginas sin valor. Si la migración 202609180003 no está aplicada, la
+  // consulta falla y se reintenta sin el filtro para no dejar el sitemap vacío.
   const withSlug = await supabase
     .from('productos')
     .select('id, slug, user_id, actualizado_en')
     .eq('activo', true)
+    .eq('es_demo', false)
     .or(moderacion)
     .limit(4000) // Reducir ligeramente para evitar límites de tamaño de sitemap
 

@@ -2,6 +2,11 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
+import {
+  alCambiarConsentimiento,
+  leerConsentimiento,
+  type Consentimiento,
+} from '@/lib/cookie-consent'
 
 const Analytics = dynamic(
   () => import('@vercel/analytics/react').then((m) => m.Analytics),
@@ -51,9 +56,16 @@ function onIdleAfterLoad(callback: () => void) {
  * Efectos globales que no son necesarios para pintar ni hidratar la página.
  * Se activan después de load + idle para que analytics, Speed Insights y el
  * Service Worker no compitan con Lighthouse ni con el usuario en el arranque.
+ *
+ * La medición (Analytics y Speed Insights) solo se carga si el usuario ha
+ * aceptado en el banner de cookies: antes se cargaba siempre, así que quien
+ * pulsaba «Rechazar» seguía siendo medido. El Service Worker no depende del
+ * consentimiento —es lo que da el modo offline y las notificaciones push— así
+ * que se registra igual.
  */
 export default function RootClientEffects() {
   const [enabled, setEnabled] = useState(false)
+  const [consentimiento, setConsentimiento] = useState<Consentimiento | null>(null)
 
   useEffect(() => {
     // Keep the audit path free of non-critical effects during the initial
@@ -62,12 +74,22 @@ export default function RootClientEffects() {
     return onIdleAfterLoad(() => setEnabled(true))
   }, [])
 
+  useEffect(() => {
+    setConsentimiento(leerConsentimiento())
+    // Si el usuario acepta después (sin recargar), la medición se activa sola.
+    return alCambiarConsentimiento(setConsentimiento)
+  }, [])
+
   if (!enabled) return null
 
   return (
     <>
-      <Analytics />
-      <SpeedInsights />
+      {consentimiento === 'accepted' && (
+        <>
+          <Analytics />
+          <SpeedInsights />
+        </>
+      )}
       <ServiceWorkerRegistration />
     </>
   )

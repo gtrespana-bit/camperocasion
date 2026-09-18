@@ -202,7 +202,8 @@ function ModalPago({
                     telefono: t('phone'),
                     iban: 'IBAN',
                     banco: t('bank'),
-                    receptor: t('idCard'),
+                    receptor: t('holder'),
+                    titular: t('holder'),
                     email: 'PayPal (email)',
                   }
                   return (

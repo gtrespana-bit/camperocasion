@@ -1,6 +1,7 @@
 import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase-server-client'
+import { aplicarOrdenCatalogo } from '@/lib/catalog-consulta'
 import { ChevronRight } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import { productUrl } from '@/lib/product-url'
@@ -25,13 +26,14 @@ const CATEGORIA_MAP: Record<string, string> = Object.fromEntries(
 async function getProductos(ciudadNombre: string, ciudadMunicipio: string | undefined, categoriaSlug: string) {
   if (!supabase) return []
   try {
-    let query = supabase
-      .from('productos')
-      .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, subcategoria, destacado, destacado_hasta')
-      .eq('activo', true)
-      .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado')
-      .order('creado_en', { ascending: false })
-      .limit(24)
+    // Mismo ORDER BY compartido que el catálogo: prioridad pagada primero.
+    let query = aplicarOrdenCatalogo(
+      supabase
+        .from('productos')
+        .select('id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, subcategoria, destacado, destacado_hasta')
+        .eq('activo', true)
+        .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado'),
+    ).limit(24)
 
     // La landing filtra por la etiqueta real de subcategoría camper
     const subLabel = CATEGORIA_MAP[categoriaSlug]

@@ -81,6 +81,27 @@ function queryProducto(column: 'id' | 'slug', value: string, columns: string) {
 }
 
 /**
+ * ¿Es un anuncio de demostración? (migración 202609180003)
+ *
+ * Consulta aparte y tolerante a fallo, como la del expediente: si la columna
+ * todavía no existe, el anuncio es normal y la ficha no se cae por un sello.
+ */
+async function getEsDemo(productoId: string): Promise<boolean> {
+  if (!supabase || !productoId) return false
+  try {
+    const { data, error } = await supabase
+      .from('productos')
+      .select('es_demo')
+      .eq('id', productoId)
+      .maybeSingle()
+    if (error) return false
+    return data?.es_demo === true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Estado del expediente de homologación del anuncio (Fase 0.2).
  *
  * Va en consultas SEPARADAS y tolerantes a fallo a propósito: si la migración
@@ -482,6 +503,7 @@ export default async function ProductoPage({ params }: Props) {
           favoritosCount={favoritosCount}
           verificacion={verificacion}
           reserva={reserva}
+          esDemo={await getEsDemo(producto.id)}
         />
       </Suspense>
 

@@ -420,13 +420,14 @@
   },
   "productCard": {
     "featured": "Destacado",
-    "boost": "Boost",
+    "boost": "Subida al nº 1",
     "verified": "Verificado",
     "homologacionVerificada": "Homologación verificada",
     "homologacionPendiente": "Verificación en curso",
     "homologacionRechazada": "Documentación rechazada",
     "homologacionSinExpediente": "Sin expediente",
-    "reserved": "Reservado"
+    "reserved": "Reservado",
+    "demo": "Ejemplo"
   },
   "tiposVendedor": {
     "particular": "Particular",
@@ -558,15 +559,17 @@
     "reservarCta": "Reservar con señal",
     "reservadoBadge": "Reservado",
     "contratoCtaTitulo": "Contrato de compraventa",
-    "contratoCtaDesc": "Modelo listo para imprimir con los datos de esta camper"
+    "contratoCtaDesc": "Modelo listo para imprimir con los datos de esta camper",
+    "demoBannerTitle": "Anuncio de ejemplo",
+    "demoBannerDesc": "Este anuncio es una demostración para que veas cómo queda una ficha completa: no corresponde a un vehículo real en venta y no tiene datos de contacto. Publica el tuyo gratis en un par de minutos."
   },
   "creditos": {
     "title1": "Compra créditos y",
     "title2": "destaca",
     "subtitle": "Publicar siempre es <strong>gratis</strong>. Los créditos son opcionales para dar visibilidad.",
     "whatFor": "¿Para qué sirven los créditos?",
-    "boostTitle": "⚡ Boost — Subir al #1",
-    "boostDesc": "Tu publicación aparece <strong>primera</strong> en la lista.",
+    "boostTitle": "⚡ Subida al nº 1 — 7 días",
+    "boostDesc": "Tu publicación aparece <strong>primera</strong> en la lista durante 7 días. Puedes volver a subirla cuando caduque.",
     "boostPrice": "1 crédito",
     "featureTitle": "⭐ Destacar — 2 en 1",
     "featureDesc": "<strong>Página principal</strong> + prioridad en <strong>búsqueda</strong>.",
@@ -576,7 +579,7 @@
     "mostPopular": "⭐ MÁS POPULAR",
     "credits": "créditos",
     "perCredit": "por crédito",
-    "boosts": "boost(s) al #1",
+    "boosts": "subidas al nº 1 (7 días)",
     "orFeatured": "o {count}× destacado 12h",
     "noExpiration": "Sin expiración",
     "buy": "Comprar",
@@ -600,12 +603,12 @@
     "sendReceipt": "Enviar comprobante",
     "selectPayment": "Selecciona un método de pago para continuar ↓",
     "phone": "Teléfono",
-    "idCard": "Cédula",
     "bank": "Banco",
     "amountPay": "Monto a pagar",
     "removeImage": "Quitar imagen",
     "notOperational": "No operativo",
-    "eurNote": "Precios en euros (€). Pago por Bizum, transferencia bancaria o PayPal."
+    "eurNote": "Precios en euros (€). Pago por Bizum, transferencia bancaria o PayPal.",
+    "holder": "Titular"
   },
   "publicar": {
     "title": "Publicar algo",
@@ -715,7 +718,7 @@
     "loadingListings": "Cargando publicaciones...",
     "imageTooLarge": "La imagen debe ser menor a 2MB",
     "photoError": "Error subiendo foto: ",
-    "boostApplied": "⚡ Boost aplicado! Tu publicación ahora está #1",
+    "boostApplied": "⚡ Subida aplicada: tu publicación está la primera durante 7 días",
     "featuredActivated": "⭐ Destacado activado por {hours} horas!",
     "name": "Nombre",
     "phone": "Teléfono",
@@ -732,7 +735,7 @@
     "saveError": "Error al guardar: ",
     "namePlaceholder": "Tu nombre",
     "save": "Guardar",
-    "boostError": "No se pudo aplicar boost",
+    "boostError": "No se pudo subir la publicación",
     "featuredError": "No se pudo destacar",
     "selectType": "Selecciona...",
     "edit": "Editar",

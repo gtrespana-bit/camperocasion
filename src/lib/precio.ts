@@ -6,7 +6,7 @@
  * Canónico desde 2026-09-17: `productos.precio` (euros).
  * Aliases sincronizados por trigger `fn_sync_producto_precio`:
  *   - `precio_eur` (alias explícito, mismo valor que `precio`)
- *   - `precio_usd` (legado venezolano, deprecado — mantener por compatibilidad)
+ *   - `precio_usd` (nombre heredado del esquema original, deprecado — se mantiene por compatibilidad y el trigger lo sincroniza)
  * Todo el código nuevo debe usar `precio`; los aliases existen solo para
  * lecturas/escrituras antiguas y se mantienen idénticos por la BD.
  */

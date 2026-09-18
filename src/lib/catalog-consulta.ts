@@ -205,7 +205,7 @@ export function esErrorColumnasRango(err: unknown): boolean {
  * canónica del producto se construye con él (`productUrl`).
  */
 export const CATALOG_PRODUCT_COLUMNS =
-  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, vendedor_tipo, verificacion_homologacion, reservado'
+  'id, slug, titulo, precio_usd, estado, imagen_url, ubicacion_ciudad, ubicacion_estado, creado_en, subcategoria, boosteado_en, destacado, destacado_hasta, vendedor_verificado, vendedor_tipo, verificacion_homologacion, reservado, es_demo'
 
 /**
  * Visibilidad pública: aprobados, pendientes de moderación (aún no revisados)
@@ -235,33 +235,99 @@ export interface ProductoCatalogo {
   verificacion_homologacion?: string | null
   /** Reserva con señal vigente (Fase 1.2): el anuncio está comprometido. */
   reservado?: boolean | null
+  /** Anuncio de demostración: se etiqueta como ejemplo y no expone contacto. */
+  es_demo?: boolean | null
   /** Pre-computado para evitar hydration mismatch entre servidor y cliente. */
   _isFeatured?: boolean
 }
 
 /**
- * Orden de prioridad del catálogo: boost > destacado vigente > más reciente.
+ * Días que dura un boost (1 crédito).
  *
- * El servidor ordena por `creado_en` en SQL para paginar por rangos, pero la
- * prioridad real se resuelve aquí, en memoria, sobre las filas de la página.
+ * Antes `boosteado_en` no caducaba nunca: quien pagaba un crédito una vez se
+ * quedaba en cabeza para siempre y nadie más tenía motivo para comprar otro.
+ * El cron `/api/cron/expirar-prioridades` limpia los boost caducados en la
+ * base de datos y aquí se aplica la misma regla al ordenar, para que la web
+ * y la base de datos cuenten la misma historia.
+ */
+export const BOOST_DIAS = 7
+
+/** ¿Sigue vigente el boost? (misma regla que aplica el cron en SQL). */
+export function boostVigente(boosteadoEn: string | null | undefined, ahoraMs: number = Date.now()): boolean {
+  if (!boosteadoEn) return false
+  const t = new Date(boosteadoEn).getTime()
+  if (Number.isNaN(t)) return false
+  return ahoraMs - t < BOOST_DIAS * 864e5
+}
+
+/**
+ * Orden de prioridad del catálogo: boost vigente > destacado vigente >
+ * más reciente.
+ *
+ * ⚠️ Este orden tiene que ser EL MISMO que el que pide cada consulta a la base
+ * de datos (`aplicarOrdenCatalogo`). La consulta define la ventana de la
+ * página —con `.range()`, para no perder ni duplicar filas— y este comparador
+ * define el orden dentro de esa ventana. Si los dos se separan, un anuncio
+ * pagado puede quedar fuera de la primera página y el vendedor nota que pagó
+ * por nada.
  */
 export function ordenarProductosCatalogo<T extends ProductoCatalogo>(productos: T[]): T[] {
-  const ahora = new Date().toISOString()
+  const ahoraMs = Date.now()
+  const ahora = new Date(ahoraMs).toISOString()
   return [...productos].sort((a, b) => {
-    const aBoost = a.boosteado_en || null
-    const bBoost = b.boosteado_en || null
+    // 1. Boost vigente (los caducados dejan de adelantar: el vendedor puede
+    //    volver a comprar y su anuncio vuelve a subir de verdad).
+    const aBoost = boostVigente(a.boosteado_en, ahoraMs) ? a.boosteado_en! : null
+    const bBoost = boostVigente(b.boosteado_en, ahoraMs) ? b.boosteado_en! : null
     if (aBoost && !bBoost) return -1
     if (!aBoost && bBoost) return 1
     if (aBoost && bBoost) return bBoost.localeCompare(aBoost)
 
+    // 2. Destacado vigente (mismo criterio: `destacado_hasta` manda).
     const aDest = !!(a.destacado && a.destacado_hasta && a.destacado_hasta > ahora)
     const bDest = !!(b.destacado && b.destacado_hasta && b.destacado_hasta > ahora)
     if (aDest && !bDest) return -1
     if (!aDest && bDest) return 1
-    if (aDest && bDest) return b.destacado_hasta!.localeCompare(a.destacado_hasta!)
+    if (aDest && bDest && a.destacado_hasta && b.destacado_hasta) {
+      return b.destacado_hasta.localeCompare(a.destacado_hasta)
+    }
 
+    // 3. Más reciente.
     return b.creado_en.localeCompare(a.creado_en)
   })
+}
+
+/**
+ * Cláusulas de orden que acompaña a TODO listado de anuncios.
+ *
+ * Se pide en SQL —y no solo en memoria— para que la primera página traiga de
+ * verdad los anuncios con prioridad pagada aunque sean antiguos: antes la
+ * consulta pedía los N más recientes y el boost solo reordenaba dentro de esa
+ * ventana, así que un boost sobre un anuncio de hace un mes no subía a ningún
+ * sitio. El último criterio (`creado_en`) mantiene la paginación estable.
+ */
+export const ORDEN_CATALOGO: ReadonlyArray<{
+  column: string
+  ascending: boolean
+  nullsFirst: boolean
+}> = [
+  { column: 'boosteado_en', ascending: false, nullsFirst: false },
+  { column: 'destacado', ascending: false, nullsFirst: false },
+  { column: 'destacado_hasta', ascending: false, nullsFirst: false },
+  { column: 'creado_en', ascending: false, nullsFirst: false },
+]
+
+interface QueryOrdenable {
+  order: (column: string, opts?: { ascending?: boolean; nullsFirst?: boolean }) => unknown
+}
+
+/** Aplica `ORDEN_CATALOGO` a una consulta de Supabase. */
+export function aplicarOrdenCatalogo<T extends QueryOrdenable>(query: T): T {
+  let q: unknown = query
+  for (const o of ORDEN_CATALOGO) {
+    q = (q as QueryOrdenable).order(o.column, { ascending: o.ascending, nullsFirst: o.nullsFirst })
+  }
+  return q as T
 }
 
 /** Añade `_isFeatured` ya resuelto para que el cliente no recalcule el flag. */

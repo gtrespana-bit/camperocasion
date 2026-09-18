@@ -21,7 +21,9 @@ import {
 } from '@/lib/filtros-tecnicos'
 import {
   aplicarFiltrosBase,
+  aplicarOrdenCatalogo,
   esErrorColumnasRango,
+  ordenarProductosCatalogo,
   FILTRO_VENDEDOR_PARAM,
   tipoVendedorFiltro,
   type FiltrosCatalogo,
@@ -329,7 +331,9 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
 
         if (orden === 'precio_asc') sq = sq.order('precio_usd', { ascending: true })
         else if (orden === 'precio_desc') sq = sq.order('precio_usd', { ascending: false })
-        else sq = sq.order('creado_en', { ascending: false })
+        // Por defecto, el mismo ORDER BY que el catálogo (prioridad pagada +
+        // fecha): el buscador también promete esa prioridad.
+        else sq = aplicarOrdenCatalogo(sq) as typeof sq
 
         return await sq
       }
@@ -346,20 +350,9 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
         if (!error) {
           let sorted = data as Producto[]
           if (orden !== 'precio_asc' && orden !== 'precio_desc') {
-            const now = new Date().toISOString()
-            sorted = sorted.sort((a, b) => {
-              const aBoost = a.boosteado_en || null
-              const bBoost = b.boosteado_en || null
-              if (aBoost && !bBoost) return -1
-              if (!aBoost && bBoost) return 1
-              if (aBoost && bBoost) return bBoost.localeCompare(aBoost)
-              const aDest = a.destacado && a.destacado_hasta && a.destacado_hasta > now
-              const bDest = b.destacado && b.destacado_hasta && b.destacado_hasta > now
-              if (aDest && !bDest) return -1
-              if (!aDest && bDest) return 1
-              if (aDest && bDest) return b.destacado_hasta!.localeCompare(a.destacado_hasta!)
-              return new Date(b.creado_en).getTime() - new Date(a.creado_en).getTime()
-            })
+            // Mismo comparador que el catálogo: una sola definición del orden
+            // (boost vigente > destacado vigente > fecha) en todo el sitio.
+            sorted = ordenarProductosCatalogo(sorted as any) as Producto[]
           }
           setResultCount(count ?? 0)
           setProductos(sorted)

@@ -295,7 +295,7 @@ export const categoriasData: Record<string, CatConfig> = {
   },
 }
 
-// ── Helpers de consulta (mismo contrato que el mercado anterior) ──────────
+// ── Helpers de consulta (contrato estable para los componentes) ───────────
 
 /** Lista plana de subcategorías de una categoría para búsqueda rápida. */
 export function getSubByCategory(catKey: string): { label: string; icon: string; slug: string }[] {

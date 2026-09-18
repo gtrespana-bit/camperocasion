@@ -11,6 +11,7 @@ import { MapPin, Phone, Mail, MessageSquare, Star, ArrowLeft, ShoppingBag } from
 import SellerReputation from '@/components/SellerReputation'
 import { useTranslations } from 'next-intl'
 import { productUrl } from '@/lib/product-url'
+import { enlaceWhatsApp } from '@/lib/telefono'
 
 interface VendedorClientProps {
   vendedor: any
@@ -96,7 +97,7 @@ export default function VendedorClient({
             <div className="flex flex-wrap gap-2 mt-4">
               {tieneWhatsApp && (
                 <a
-                  href={`https://wa.me/${vendedor.telefono?.replace(/\s+/g, '')}`}
+                  href={enlaceWhatsApp(vendedor.telefono || '')}
                   target="_blank"
                   className="flex items-center gap-1.5 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700 transition"
                 >

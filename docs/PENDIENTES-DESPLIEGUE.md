@@ -5,6 +5,27 @@
 > reiniciarse el entorno, así que ahora está versionado aquí. El resumen corto
 > también está en la descripción del PR #3.
 
+## ⚠️ Antes de desplegar el código del 2026-09-18
+
+1. **Aplicar en Supabase** `supabase/migrations/202609180003_anuncios_demo.sql`
+   (idempotente). Marca los anuncios de demostración (`es_demo`), **vacía los
+   teléfonos inventados** de la semilla y retira los «verificado» falsos de esos
+   perfiles. El código tolera que no esté aplicada, pero sin ella los anuncios de
+   ejemplo siguen pareciendo reales.
+2. **Cron nuevo:** `vercel.json` añade `/api/cron/expirar-prioridades`
+   (diario 03:41 UTC). Vercel lo registra solo al desplegar; comprobar en
+   *Settings → Cron Jobs* que aparece y que devuelve 200 (necesita
+   `CRON_SECRET`, ya configurado para los otros cuatro).
+3. **Datos de pago (opcional, para vender créditos):** mientras
+   `PAGO_IBAN`, `PAGO_TITULAR`, `PAGO_BIZUM_TELEFONO` y `PAGO_PAYPAL_EMAIL` no
+   estén en Vercel, `/creditos` avisa de que los pagos aún no están abiertos en
+   lugar de mostrar un IBAN de relleno. Para recibir pagos hay que definirlas.
+4. **Teléfono de contacto (opcional):** `NEXT_PUBLIC_TELEFONO_CONTACTO`
+   (`+34 …`). Si no se define, `/contacto` muestra solo email y WhatsApp.
+5. **Verificación rápida después del despliegue:** abrir `/`, `/catalogo`,
+   `/contacto` (sin teléfono falso) y `/creditos` (sin IBAN falso), y comprobar
+   que el botón de WhatsApp de un anuncio abre un número **+34**.
+
 > **Estado a 2026-09-17:** todas las migraciones de CamperOcasión aplicadas
 > en producción y verificadas **32/32** con `scripts/verificar_despliegue.sql`
 > (SQL ejecutado con éxito en el editor de Supabase; verificado por el usuario).

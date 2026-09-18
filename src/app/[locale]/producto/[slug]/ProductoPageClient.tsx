@@ -18,6 +18,7 @@ import { esHomologacionVivienda, resumenExpediente } from '@/lib/verificacion-ho
 import ImageGallery from '@/components/ImageGallery'
 import SellerReputation from '@/components/SellerReputation'
 import { resolveContactMethods } from '@/lib/contact-methods'
+import { enlaceWhatsApp } from '@/lib/telefono'
 import { agruparFichaTecnica, camposFichaExtras } from '@/lib/categorias'
 import { formatPrecio } from '@/lib/precio'
 import { useTranslations } from 'next-intl'
@@ -58,6 +59,8 @@ interface ProductoPageClientProps {
   favoritosCount?: number
   verificacion?: VerificacionHomologacion | null
   reserva?: EstadoReserva | null
+  /** Anuncio de demostración: se avisa y no se ofrece contacto. */
+  esDemo?: boolean
 }
 
 function ProductoPageClientInner({
@@ -65,6 +68,7 @@ function ProductoPageClientInner({
   favoritosCount = 0,
   verificacion = null,
   reserva = null,
+  esDemo = false,
 }: ProductoPageClientProps) {
   const [reservaEstado, setReservaEstado] = useState<string | null>(reserva?.reserva_propia_estado || null)
   const t = useTranslations('productDetail')
@@ -208,7 +212,12 @@ function ProductoPageClientInner({
 
 
 
-  const contactos = resolveContactMethods(producto.metodos_contacto, vendedor?.telefono || '')
+  // En los anuncios de demostración no hay nadie al otro lado: ni teléfono,
+  // ni WhatsApp, ni email. Los números de la semilla eran inventados (y en
+  // España pertenecen a personas reales), así que no se muestran nunca.
+  const contactos = esDemo
+    ? { hasProductConfiguration: true, phone: '', whatsapp: '', email: '', messengerUrl: '' }
+    : resolveContactMethods(producto.metodos_contacto, vendedor?.telefono || '')
   const contactPhone = contactos.phone
   // WhatsApp y teléfono pueden ser números distintos. No usar el teléfono
   // como preferencia cuando el anunciante configuró expresamente WhatsApp.
@@ -223,13 +232,10 @@ function ProductoPageClientInner({
     messenger: Boolean(contactos.messengerUrl),
   }
   const imagenes = producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes : producto.imagen_url ? [producto.imagen_url] : []
-  let whatsappLink = ''
-  if (whatsappPhone.trim()) {
-    const phoneClean = whatsappPhone.replace(/[^0-9]/g, '')
-    const phoneNoZero = phoneClean.startsWith('0') ? phoneClean.slice(1) : phoneClean
-    const finalPhone = phoneNoZero.startsWith('58') ? phoneNoZero : '58' + phoneNoZero
-    whatsappLink = 'https://wa.me/' + finalPhone + '?text=' + encodeURIComponent(t('whatsappMsg', { title: producto.titulo }))
-  }
+  // Enlace construido con el helper compartido: antes anteponía el prefijo de
+  // Venezuela ('58') y todos los móviles españoles quedaban en un número
+  // inexistente, así que el botón de WhatsApp no funcionaba.
+  const whatsappLink = enlaceWhatsApp(whatsappPhone, t('whatsappMsg', { title: producto.titulo }))
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -242,6 +248,17 @@ function ProductoPageClientInner({
             <div>
               <h3 className="font-bold text-gray-800 text-lg">{t('soldBannerTitle')}</h3>
               <p className="text-gray-600 text-sm mt-1">{t('soldBannerDesc')}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {esDemo && (
+        <div className="mb-6 bg-amber-50 border-2 border-amber-300 rounded-2xl p-5">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl leading-none" aria-hidden="true">🧪</span>
+            <div>
+              <h2 className="font-bold text-amber-900 text-lg">{t('demoBannerTitle')}</h2>
+              <p className="text-amber-800 text-sm mt-1">{t('demoBannerDesc')}</p>
             </div>
           </div>
         </div>
@@ -451,13 +468,25 @@ function ProductoPageClientInner({
 
             {/* Reserva con señal: el comprador solicita, el vendedor confirma la
                 señal al recibirla y entonces el anuncio queda reservado. */}
-            {!producto.vendido && (
+            {!producto.vendido && !esDemo && (
               <BotonReservar
                 producto={producto}
                 userId={user?.id || null}
                 reservadoInicial={!!reserva?.reservado}
                 reservadoHastaInicial={reserva?.reservado_hasta || null}
                 onEstadoReserva={setReservaEstado}
+              />
+            )}
+
+            {/* Inspección precompra (§4.1): el CTA existía pero no se
+                renderizaba en ninguna parte, así que el comprador no podía
+                pedirla. Va justo debajo de la reserva (no son excluyentes) y
+                nunca en anuncios de demostración, donde no hay coche real. */}
+            {!producto.vendido && !esDemo && (
+              <BotonInspeccion
+                producto={producto}
+                userId={user?.id || null}
+                reservado={!!reserva?.reservado || reservaEstado === 'confirmada'}
               />
             )}
 

@@ -4,6 +4,7 @@ import { CATALOG_PAGE_SIZE } from '@/lib/catalog-pagination'
 import {
   CATALOG_PRODUCT_COLUMNS,
   CATALOG_FILTRO_MODERACION,
+  aplicarOrdenCatalogo,
   marcarDestacados,
   ordenarProductosCatalogo,
   type ProductoCatalogo,
@@ -54,12 +55,13 @@ async function getInitialProducts() {
   try {
     // Optimización: Seleccionar solo columnas necesarias para la vista de catálogo
     // (las mismas que usa el cliente: ver src/lib/catalog-consulta.ts)
-    const { data, count, error } = await supabase
-      .from('productos')
-      .select(CATALOG_PRODUCT_COLUMNS, { count: 'exact' })
-      .eq('activo', true)
-      .or(CATALOG_FILTRO_MODERACION)
-      .order('creado_en', { ascending: false })
+    const { data, count, error } = await aplicarOrdenCatalogo(
+      supabase
+        .from('productos')
+        .select(CATALOG_PRODUCT_COLUMNS, { count: 'exact' })
+        .eq('activo', true)
+        .or(CATALOG_FILTRO_MODERACION),
+    )
       .limit(CATALOG_PAGE_SIZE) // Debe coincidir con la página del cliente; de lo contrario se omiten filas.
 
     if (error || !data) return { products: [], count: 0 }

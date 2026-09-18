@@ -60,7 +60,7 @@ export default function TabCreditos({ creditos, refreshCreditos }: { creditos: n
         <h3 className="font-bold text-lg mb-3">¿Para qué sirven?</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-            <p className="font-bold text-brand-primary flex items-center gap-2"><Zap size={18} className="text-yellow-500" /> Boost — 1 crédito</p>
+            <p className="font-bold text-brand-primary flex items-center gap-2"><Zap size={18} className="text-yellow-500" /> Subida al nº 1 — 1 crédito</p>
             <p className="text-sm text-gray-600 mt-1">Sube tu publicación al #1 de la lista</p>
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -86,7 +86,7 @@ export default function TabCreditos({ creditos, refreshCreditos }: { creditos: n
                 <p className="text-3xl font-black text-gray-800 mb-1">{formatPrecio(pkg.precio)}</p>
                 <p className="text-xs text-gray-500 mb-5 bg-gray-50 rounded-lg py-1 px-2 inline-block">{formatPrecio(porCredito)} por crédito</p>
                 <ul className="text-sm text-gray-600 space-y-2 mb-6 text-left">
-                  <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500 flex-shrink-0" /><strong>{pkg.creditos}</strong> boost(s) al #1</li>
+                  <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500 flex-shrink-0" /><strong>{pkg.creditos}</strong> subidas al nº 1</li>
                   <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500 flex-shrink-0" />o {Math.floor(pkg.creditos / 4)}× destacado 12h</li>
                   <li className="flex items-center gap-2"><CheckCircle size={14} className="text-green-500 flex-shrink-0" />Sin expiración</li>
                 </ul>

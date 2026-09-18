@@ -61,6 +61,9 @@ const nextConfig = withNextIntl({
       },
     ],
     formats: ['image/avif', 'image/webp'],
+    // Next 16 solo admite las calidades declaradas aquí; el resto se ignora y
+    // avisa por consola (el hero pedía 80 y el OG 90 sin estar declaradas).
+    qualities: [75, 80, 90],
     deviceSizes: [320, 384, 440, 512, 640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 640, 750],
     minimumCacheTTL: 60 * 60 * 24 * 30,

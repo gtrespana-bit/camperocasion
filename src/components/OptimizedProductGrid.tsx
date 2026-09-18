@@ -15,6 +15,7 @@ interface Producto {
   creado_en: string;
   subcategoria: string | null;
   boosteado_en: string | null;
+  es_demo?: boolean | null;
   destacado: boolean;
   destacado_hasta: string | null;
   vendedor_verificado: boolean | null;
