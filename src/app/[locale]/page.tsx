@@ -463,9 +463,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { icon: '👤', key: 'private' },
-              { icon: '🔧', key: 'camperizer' },
-              { icon: '🏢', key: 'pro' },
+              { icon: '👤', key: 'private', vendedor: 'particular', plural: 'particulares' },
+              { icon: '🔧', key: 'camperizer', vendedor: 'camperizador', plural: 'camperizadores' },
+              { icon: '🏢', key: 'pro', vendedor: 'profesional', plural: 'profesionales' },
             ].map(a => (
               <div
                 key={a.key}
@@ -478,12 +478,22 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 <p className="text-sm text-gray-500 mt-2 leading-relaxed flex-1">
                   {t(`home.audiences.${a.key}.desc`)}
                 </p>
-                <LocalLink
-                  href="/publicar"
-                  className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-brand-accent hover:text-brand-dark transition"
-                >
-                  {t('home.audiences.cta')} <ArrowRight size={14} />
-                </LocalLink>
+                <div className="mt-4 flex flex-col gap-1.5">
+                  <LocalLink
+                    href="/publicar"
+                    className="inline-flex items-center gap-1 text-sm font-bold text-brand-accent hover:text-brand-dark transition"
+                  >
+                    {t('home.audiences.cta')} <ArrowRight size={14} />
+                  </LocalLink>
+                  {/* Enlace profundo al catálogo filtrado por tipo de vendedor
+                      (Fase 3): también hay camino para el comprador. */}
+                  <LocalLink
+                    href={`/catalogo?vendedor=${a.vendedor}`}
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-brand-primary transition"
+                  >
+                    {t('home.audiences.buyCta', { tipo: t(`tiposVendedor.${a.plural}`) })}
+                  </LocalLink>
+                </div>
               </div>
             ))}
           </div>

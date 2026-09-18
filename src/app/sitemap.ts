@@ -74,6 +74,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/contrato-compraventa', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/gestoria-cambio-nombre', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/marcas', changeFrequency: 'weekly', priority: 0.8 },
+    // Landings por tipo de vendedor (Fase 3): indexan "comprar camper a
+    // particulares / camperizadores / profesionales".
+    { path: '/comprar-a-particulares', changeFrequency: 'daily', priority: 0.8 },
+    { path: '/comprar-a-camperizadores', changeFrequency: 'daily', priority: 0.8 },
+    { path: '/comprar-a-profesionales', changeFrequency: 'daily', priority: 0.8 },
     { path: '/como-funciona', changeFrequency: 'monthly', priority: 0.6 },
     { path: '/como-instalar-app', changeFrequency: 'monthly', priority: 0.5 },
     { path: '/contacto', changeFrequency: 'monthly', priority: 0.5 },

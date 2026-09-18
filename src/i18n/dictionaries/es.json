@@ -162,7 +162,8 @@
         "title": "Profesionales y concesionarios",
         "desc": "Rota tu stock de campers y autocaravanas con perfil verificado y llega a compradores que buscan justo lo que vendes."
       },
-      "cta": "Vender gratis"
+      "cta": "Vender gratis",
+      "buyCta": "Comprar a {tipo}"
     }
   },
   "notFound": {
@@ -217,7 +218,8 @@
       "password_mismatch": "Las contraseñas no coinciden",
       "error": "Error al registrar",
       "subtitle": "Únete gratis. Empieza a vender hoy.",
-      "creating": "Creando cuenta..."
+      "creating": "Creando cuenta...",
+      "sellerTypeLabel": "¿Qué tipo de vendedor eres?"
     },
     "confirmacion": {
       "title": "¡Casi listo!",
@@ -432,7 +434,34 @@
     "profesional": "Pro",
     "particularDesc": "Vendo mi camper o equipamiento",
     "camperizadorDesc": "Camperizo y vendo mis proyectos",
-    "profesionalDesc": "Empresa, taller o concesionario"
+    "profesionalDesc": "Empresa, taller o concesionario",
+    "particulares": "Particulares",
+    "camperizadores": "Camperizadores",
+    "profesionales": "Profesionales"
+  },
+  "vendedorLanding": {
+    "particular": {
+      "title": "Furgonetas camper de particulares",
+      "metaTitle": "Comprar camper a particulares | CamperOcasión",
+      "metaDescription": "Compra furgonetas camper y autocaravanas directamente a sus dueños. Sin intermediarios: trato entre particulares en toda España.",
+      "intro": "Compra directamente a los dueños: sin intermediarios, historial real y trato de persona a persona. Cada anuncio lleva el sello \"Particular\" para que sepas siempre con quién hablas."
+    },
+    "camperizador": {
+      "title": "Campers de camperizadores",
+      "metaTitle": "Comprar camper a camperizadores | CamperOcasión",
+      "metaDescription": "Camperizaciones artesanales y proyectos a medida de quienes viven el mundo camper. Directamente del taller de su creador a ti.",
+      "intro": "Proyectos montados por gente que vive la furgoneta: camperizaciones artesanales, soluciones probadas en ruta y vendedores que conocen cada detalle de su montaje."
+    },
+    "profesional": {
+      "title": "Campers y autocaravanas de profesionales",
+      "metaTitle": "Comprar camper a profesionales y talleres | CamperOcasión",
+      "metaDescription": "Talleres, camperizadores profesionales y concesionarios especializados en camper. Vehículos revisados y garantía profesional en toda España.",
+      "intro": "Talleres y concesionarios especializados en camper: stock renovado, vehículos revisados antes de la venta y respaldo profesional."
+    },
+    "gridTitle": "Anuncios de {tipo} ahora mismo",
+    "empty": "Ahora mismo no hay anuncios de este tipo. Vuelve pronto… o sé el primero en publicar.",
+    "publishCta": "Publicar gratis",
+    "catalogCta": "Ver todo el catálogo"
   },
   "product": {
     "featured": "Destacado",

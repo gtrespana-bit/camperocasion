@@ -162,7 +162,8 @@
         "title": "Dealers & professionals",
         "desc": "Rotate your camper and motorhome stock with a verified profile and reach buyers looking for exactly what you sell."
       },
-      "cta": "Sell for free"
+      "cta": "Sell for free",
+      "buyCta": "Buy from {tipo}"
     }
   },
   "notFound": {
@@ -217,7 +218,8 @@
       "password_mismatch": "Passwords do not match",
       "error": "Registration error",
       "subtitle": "Join for free. Start selling today.",
-      "creating": "Creating account..."
+      "creating": "Creating account...",
+      "sellerTypeLabel": "What kind of seller are you?"
     },
     "confirmacion": {
       "title": "Almost there!",
@@ -432,7 +434,34 @@
     "profesional": "Pro",
     "particularDesc": "Selling my camper or gear",
     "camperizadorDesc": "I build and sell camper projects",
-    "profesionalDesc": "Company, workshop or dealership"
+    "profesionalDesc": "Company, workshop or dealership",
+    "particulares": "Private sellers",
+    "camperizadores": "Camper builders",
+    "profesionales": "Pros"
+  },
+  "vendedorLanding": {
+    "particular": {
+      "title": "Campervans from private sellers",
+      "metaTitle": "Buy a camper from private sellers | CamperOcasión",
+      "metaDescription": "Buy campervans and motorhomes directly from their owners. No middlemen: person-to-person deals across Spain.",
+      "intro": "Buy directly from the owners: no middlemen, real history and person-to-person deals. Every listing carries the \"Private seller\" badge so you always know who you are talking to."
+    },
+    "camperizador": {
+      "title": "Campers from builders",
+      "metaTitle": "Buy a camper from builders | CamperOcasión",
+      "metaDescription": "Hand-built conversions and custom projects from people who live the camper life. Straight from the builder's workshop to you.",
+      "intro": "Projects built by people who live on the road: hand-built conversions, solutions tested on real trips and sellers who know every detail of their build."
+    },
+    "profesional": {
+      "title": "Campers and motorhomes from pros",
+      "metaTitle": "Buy a camper from professionals | CamperOcasión",
+      "metaDescription": "Workshops, professional converters and dealers specialised in campers. Inspected vehicles and professional backing across Spain.",
+      "intro": "Workshops and dealers specialised in campers: fresh stock, vehicles inspected before sale and professional backing."
+    },
+    "gridTitle": "Listings from {tipo} right now",
+    "empty": "No listings of this type right now. Check back soon… or be the first to post.",
+    "publishCta": "Post for free",
+    "catalogCta": "Browse the full catalog"
   },
   "product": {
     "featured": "Featured",

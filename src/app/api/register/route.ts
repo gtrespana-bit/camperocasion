@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { enviarConfirmacion } from '@/lib/confirmacion-email'
+import { tipoVendedorFiltro } from '@/lib/catalog-consulta'
 
 /**
  * POST /api/register — Registro gestionado por la app.
@@ -25,7 +26,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req)
 
-  let body: { nombre?: string; email?: string; password?: string }
+  let body: { nombre?: string; email?: string; password?: string; tipo?: string }
   try {
     body = await req.json()
   } catch {
@@ -35,6 +36,12 @@ export async function POST(req: NextRequest) {
   const nombre = (body.nombre || '').trim()
   const email = (body.email || '').trim().toLowerCase()
   const password = body.password || ''
+  // Tipo de vendedor elegido en el registro (Fase 2). Ausente = 'particular'
+  // (lo aplica el trigger de la BD); un valor inventado se rechaza.
+  const tipoVendedor = body.tipo === undefined ? undefined : tipoVendedorFiltro(body.tipo) ?? undefined
+  if (body.tipo !== undefined && !tipoVendedor) {
+    return NextResponse.json({ error: 'Tipo de vendedor inválido' }, { status: 400 })
+  }
 
   // Mismas validaciones que el formulario (registro de 4 campos, NIST 800-63B).
   if (!EMAIL_REGEX.test(email)) {
@@ -52,7 +59,7 @@ export async function POST(req: NextRequest) {
   if (!limit.ok) return rateLimitResponse(limit.resetIn)
 
   try {
-    const resultado = await enviarConfirmacion(email, nombre, password)
+    const resultado = await enviarConfirmacion(email, nombre, password, tipoVendedor)
 
     if (!resultado.ok) {
       if (resultado.codigo === 'registrado') {
