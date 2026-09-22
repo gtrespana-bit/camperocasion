@@ -118,6 +118,14 @@ export default function DashboardNav({
               </button>
             )
           })}
+          <button
+            type="button"
+            onClick={onLogout}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap text-slate-600 border border-slate-200 hover:text-red-600 hover:bg-red-50"
+          >
+            <LogOut size={15} aria-hidden="true" />
+            Cerrar sesión
+          </button>
         </div>
       </nav>
 

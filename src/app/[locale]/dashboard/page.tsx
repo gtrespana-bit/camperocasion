@@ -275,8 +275,7 @@ export default function DashboardPage() {
         promedioResenas={data.promedioResenas}
         setToast={data.setToast}
         setGuardando={setGuardandoPerfil}
-        onPassword={() => setCambiarPw(true)}
-        onLogout={handleLogout}
+        abrirEdicion={abrirEdicion}
         onFotoChange={handleFoto}
       />
 
@@ -324,79 +323,58 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 overflow-x-auto hide-scrollbar mb-6 bg-gray-100 p-1 rounded-xl">
-        {[
-          { id: 'resumen', label: t('tabSummary'), icon: BarChart3 },
-          { id: 'productos', label: t('tabListings'), icon: Package },
-          { id: 'mensajes', label: t('tabMessages'), icon: MessageSquare },
-          { id: 'creditos', label: t('tabCredits'), icon: CreditCard },
-          { id: 'reservas', label: t('tabReservations'), icon: CalendarClock },
-          { id: 'inspecciones', label: t('tabInspecciones'), icon: ClipboardCheck },
-          { id: 'tienda', label: 'Mi tienda', icon: Store },
-          { id: 'favoritos', label: t('tabFavorites'), icon: Heart },
-          { id: 'verificacion', label: t('tabVerification'), icon: ShieldCheck },
-          { id: 'reputacion', label: t('tabReputation'), icon: Star },
-        ].map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition whitespace-nowrap ${
-              activeTab === item.id ? 'bg-brand-primary text-white shadow-sm' : 'text-gray-600 hover:bg-white/50'
-            }`}
-          >
-            <item.icon size={16} />
-            {item.label}
-          </button>
-        ))}
+      <div className="lg:flex lg:gap-8">
+        <DashboardNav active={activeTab} onChange={setActiveTab} onLogout={handleLogout} />
+        <div className="flex-1 min-w-0">
+          {/* Tab Content */}
+          {activeTab === 'resumen' && <TabResumen userId={user!.id} />}
+          {activeTab === 'productos' && (
+            <Suspense fallback={<div className="p-12 text-center text-gray-500">{t('loadingListings')}</div>}>
+              <TabProductos
+                productos={data.productos}
+                onBoost={setBoostTarget}
+                onDestacar={setDestacadoTarget}
+                userId={user?.id ?? ''}
+              />
+            </Suspense>
+          )}
+          {activeTab === 'mensajes' && <TabMensajes />}
+          {activeTab === 'creditos' && (
+            <TabCreditos creditos={data.creditos} refreshCreditos={data.refreshAll} />
+          )}
+          {activeTab === 'tratos' && (
+            <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando…</div>}>
+              <TabTratos userId={user!.id} inicial={tratoInicial} />
+            </Suspense>
+          )}
+          {activeTab === 'tienda' && (
+            <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando…</div>}>
+              <TabTienda />
+            </Suspense>
+          )}
+          {activeTab === 'favoritos' && <TabFavoritos favoritos={data.favoritos} />}
+          {activeTab === 'cuenta' && (
+            <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando…</div>}>
+              <TabCuenta
+                verificado={data.verificado}
+                nivelConfianza={data.nivelConfianza}
+                badgesAuto={data.badgesAuto}
+                resenas={data.resenas}
+                promedioResenas={data.promedioResenas}
+                numPubsActivas={data.pubCount}
+                numPubsVendidas={numPubsVendidas}
+                creadoEn={data.creadoEn}
+                ultimaActividad={data.ultimaActividad}
+                onEditarPerfil={() => {
+                  setAbrirEdicion(value => value + 1)
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
+                onPassword={() => setCambiarPw(true)}
+              />
+            </Suspense>
+          )}
+        </div>
       </div>
-
-      {/* Tab Content */}
-      {activeTab === 'resumen' && <TabResumen userId={user!.id} />}
-      {activeTab === 'productos' && (
-        <Suspense fallback={<div className="p-12 text-center text-gray-500">{t('loadingListings')}</div>}>
-          <TabProductos
-            productos={data.productos}
-            onBoost={setBoostTarget}
-            onDestacar={setDestacadoTarget}
-            userId={user?.id ?? ''}
-          />
-        </Suspense>
-      )}
-      {activeTab === 'mensajes' && <TabMensajes />}
-      {activeTab === 'creditos' && (
-        <TabCreditos creditos={data.creditos} refreshCreditos={data.refreshAll} />
-      )}
-      {activeTab === 'reservas' && (
-        <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando…</div>}>
-          <TabReservas userId={user!.id} />
-        </Suspense>
-      )}
-      {activeTab === 'inspecciones' && (
-        <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando…</div>}>
-          <TabInspecciones />
-        </Suspense>
-      )}
-      {activeTab === 'tienda' && (
-        <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando…</div>}>
-          <TabTienda />
-        </Suspense>
-      )}
-      {activeTab === 'favoritos' && <TabFavoritos favoritos={data.favoritos} />}
-      {activeTab === 'verificacion' && <SolicitarVerificacion />}
-      {activeTab === 'reputacion' && (
-        <TabReputacion
-          verificado={data.verificado}
-          nivelConfianza={data.nivelConfianza}
-          badgesAuto={data.badgesAuto}
-          resenas={data.resenas}
-          promedioResenas={data.promedioResenas}
-          numPubsActivas={data.pubCount}
-          numPubsVendidas={numPubsVendidas}
-          creadoEn={data.creadoEn}
-          ultimaActividad={data.ultimaActividad}
-        />
-      )}
     </div>
   )
 }
