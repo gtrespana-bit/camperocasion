@@ -74,10 +74,11 @@ function isAllowedImageUrl(value: string): boolean {
     const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
       ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
       : ''
-    if (
+    const esSupabase =
       parsed.hostname === supabaseHost
-      && parsed.pathname.startsWith('/storage/v1/object/public/')
-    ) {
+      || parsed.hostname.endsWith('.supabase.co')
+      || parsed.hostname.endsWith('.supabase.in')
+    if (esSupabase && parsed.pathname.includes('/storage/v1/object/public/')) {
       return true
     }
 

@@ -3,14 +3,13 @@
 import { useEffect, useState, lazy, Suspense } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
-import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
-import { Package, MessageSquare, CreditCard, Eye, Heart, LogOut, X, Zap, Star, ShieldCheck, BarChart3, Settings, CalendarClock, ClipboardCheck, Store } from 'lucide-react'
+import { X } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { routing } from '@/i18n/routing'
 
-// Components
 import DashboardHeader from './components/DashboardHeader'
+import DashboardNav, { normalizarTab, type DashboardTab } from './components/DashboardNav'
 import TabResumen from './components/TabResumen'
 import TabMensajes from './components/tabs/TabMensajes'
 import TabCreditos from './components/tabs/TabCreditos'
@@ -18,13 +17,10 @@ import TabFavoritos from './components/tabs/TabFavoritos'
 import BoostModal from './components/modals/BoostModal'
 import DestacadoModal from './components/modals/DestacadoModal'
 
-// Lazy-load heavy tabs
 const TabProductos = lazy(() => import('./components/tabs/TabProductos'))
-const TabReservas = lazy(() => import('./components/tabs/TabReservas'))
-const TabInspecciones = lazy(() => import('./components/tabs/TabInspecciones'))
 const TabTienda = lazy(() => import('./components/tabs/TabTienda'))
-const SolicitarVerificacion = dynamic(() => import('@/components/SolicitarVerificacion'), { ssr: false })
-const TabReputacion = dynamic(() => import('./components/tabs/TabReputacion'), { ssr: false })
+const TabTratos = lazy(() => import('./components/tabs/TabTratos'))
+const TabCuenta = lazy(() => import('./components/tabs/TabCuenta'))
 
 // Hooks
 import { useDashboard } from './hooks/useDashboard'
@@ -102,8 +98,10 @@ export default function DashboardPage() {
   const router = useRouter()
   const data = useDashboard()
   const pathname = usePathname()
-  const [activeTab, setActiveTab] = useState('resumen')
+  const [activeTab, setActiveTab] = useState<DashboardTab>('resumen')
   const [cambiarPw, setCambiarPw] = useState(false)
+  const [abrirEdicion, setAbrirEdicion] = useState(0)
+  const [tratoInicial, setTratoInicial] = useState<'reservas' | 'inspecciones'>('reservas')
   const [guardandoPerfil, setGuardandoPerfil] = useState(false)
   const [boostTarget, setBoostTarget] = useState<{ productId: string; titulo: string } | null>(null)
   const [destacadoTarget, setDestacadoTarget] = useState<{ productId: string; titulo: string } | null>(null)
@@ -112,7 +110,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const tab = params.get('tab')
-    if (tab) setActiveTab(tab)
+    if (tab === 'reservas' || tab === 'inspecciones') setTratoInicial(tab)
+    if (tab) setActiveTab(normalizarTab(tab))
   }, [])
 
   async function handleFoto(e: React.ChangeEvent<HTMLInputElement>) {

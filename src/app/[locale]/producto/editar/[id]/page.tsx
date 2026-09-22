@@ -137,8 +137,10 @@ export default function EditarPage() {
 
           const res = await fetch('/api/storage-upload', { method: 'POST', body: fd })
           if (!res.ok) {
-            console.error('Error subiendo foto')
-            continue
+            const data = await res.json().catch(() => ({}))
+            setError('Error al subir la foto: ' + (data.error || res.status))
+            setGuardando(false)
+            return
           }
           const { publicUrl } = await res.json()
           uploadedUrls.push(publicUrl)

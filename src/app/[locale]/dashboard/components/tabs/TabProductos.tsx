@@ -1,12 +1,24 @@
 "use client"
 import { formatPrecio } from '@/lib/precio'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import LocalLink from '@/components/LocalLink'
-import { Package, X, Pause, Play, Edit, Zap, Star, CheckCircle2, ChevronDown, ArrowLeft, Send, RefreshCw } from 'lucide-react'
+import { Package, X, Pause, Play, Edit, Zap, Star, CheckCircle2, ArrowLeft, Send, RefreshCw, Plus, MoreHorizontal, Eye } from 'lucide-react'
 import { productUrl } from '@/lib/product-url'
 import { boostVigente } from '@/lib/catalog-consulta'
 import Image from 'next/image'
+
+type Filtro = 'activos' | 'pausados' | 'vendidos' | 'todos'
+
+function BadgeEstado({ vendido, activo }: { vendido: boolean; activo: boolean }) {
+  if (vendido) {
+    return <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 text-[11px] font-semibold">Vendido</span>
+  }
+  if (activo) {
+    return <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 text-[11px] font-semibold">Activo</span>
+  }
+  return <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 text-[11px] font-semibold">Pausado</span>
+}
 
 export default function TabProductos({
   productos,
@@ -19,9 +31,6 @@ export default function TabProductos({
   onDestacar: (m: { productId: string; titulo: string }) => void
   userId: string
 }) {
-  // Media de visitas de los anuncios vivos del vendedor. Es la referencia que
-  // convierte «12 vistas» (un dato sin sentido) en «un 60 % menos que tus
-  // otros anuncios» (un motivo para actuar).
   const mediaVisitas = (() => {
     const vivos = (productos || []).filter((p: any) => p.activo && !p.vendido)
     if (vivos.length < 2) return null
@@ -29,6 +38,7 @@ export default function TabProductos({
     return total / vivos.length
   })()
 
+  const [filtro, setFiltro] = useState<Filtro>('activos')
   const [vendidoModal, setVendidoModal] = useState<string | null>(null)
   const [vendidoPaso, setVendidoPaso] = useState<'tipo' | 'comprador' | 'reseña' | 'confirmado'>('tipo')
   const [interesados, setInteresados] = useState<any[]>([])
@@ -37,14 +47,32 @@ export default function TabProductos({
   const [enviandoResena, setEnviandoResena] = useState(false)
   const [rating, setRating] = useState(5)
   const [comentarioResena, setComentarioResena] = useState('')
+  const [menuAbierto, setMenuAbierto] = useState<string | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
-  // Gestión de menús desplegables
-  const [menuGestion, setMenuGestion] = useState<string | null>(null)
-  const [menuPromocionar, setMenuPromocionar] = useState<string | null>(null)
+  useEffect(() => {
+    function fuera(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuAbierto(null)
+      }
+    }
+    document.addEventListener('mousedown', fuera)
+    return () => document.removeEventListener('mousedown', fuera)
+  }, [])
 
-  const cerrarMenus = () => { setMenuGestion(null); setMenuPromocionar(null) }
+  const nActivos = productos.filter((p: any) => p.activo && !p.vendido).length
+  const nPausados = productos.filter((p: any) => !p.activo && !p.vendido).length
+  const nVendidos = productos.filter((p: any) => p.vendido).length
 
-  // Abrir modal de vendido
+  const lista = productos.filter((p: any) => {
+    if (filtro === 'activos') return p.activo && !p.vendido
+    if (filtro === 'pausados') return !p.activo && !p.vendido
+    if (filtro === 'vendidos') return p.vendido
+    return true
+  })
+
+  const cerrarMenus = () => setMenuAbierto(null)
+
   const abrirVendido = async (productoId: string) => {
     cerrarMenus()
     setVendidoModal(productoId)
@@ -66,7 +94,6 @@ export default function TabProductos({
     setCargandoVendidos(false)
   }
 
-  // Reactivar vendido
   const reactivarVendido = async (productoId: string) => {
     cerrarMenus()
     if (!confirm('¿Reactivar esta publicacion como no vendida?')) return
@@ -83,7 +110,6 @@ export default function TabProductos({
     window.location.reload()
   }
 
-  // Marcar como vendido (simple — sin comprador, sin reseña)
   const marcarVendidoSimple = async (productoId: string, vendidoEn: string) => {
     const res = await fetch('/api/admin/marcar-vendido', {
       method: 'POST',
@@ -98,13 +124,11 @@ export default function TabProductos({
     setVendidoPaso('confirmado')
   }
 
-  // Seleccionar comprador → ir a "¿quieres dejar reseña?"
   const seleccionarComprador = (comprador: { userId: string; nombre: string }) => {
     setCompradorInfo({ id: comprador.userId, nombre: comprador.nombre })
     setVendidoPaso('reseña')
   }
 
-  // Marcar vendido con comprador pero SIN reseña
   const venderSinResena = async () => {
     if (!vendidoModal || !compradorInfo) return
     cerrarMenus()
@@ -126,19 +150,15 @@ export default function TabProductos({
       return
     }
 
-    // Enviar mensaje de chat al comprador notificando y invitando a reseñar
     await enviarMensajeComprador(compradorInfo.id)
-
     setVendidoPaso('confirmado')
   }
 
-  // Enviar reseña al comprador (primero marca vendido, luego notifica)
   const enviarResena = async () => {
     if (!vendidoModal || !compradorInfo) return
     setEnviandoResena(true)
     cerrarMenus()
 
-    // Primero marcar como vendido con comprador
     const res1 = await fetch('/api/admin/marcar-vendido', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -157,7 +177,6 @@ export default function TabProductos({
       return
     }
 
-    // Ahora enviar la reseña
     const res2 = await fetch('/api/admin/enviar-resena', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -171,19 +190,15 @@ export default function TabProductos({
     })
 
     setEnviandoResena(false)
-
     const data2 = await res2.json()
     if (!res2.ok) {
       console.warn('Reseña falló:', data2.error)
     }
 
-    // Enviar mensaje de chat al comprador
     await enviarMensajeComprador(compradorInfo.id)
-
     setVendidoPaso('confirmado')
   }
 
-  // Enviar mensaje directo al comprador del chat de este producto
   const enviarMensajeComprador = async (compradorId: string) => {
     if (!vendidoModal) return
     try {
@@ -226,7 +241,6 @@ export default function TabProductos({
     window.location.reload()
   }
 
-  // Renovar (gratis, cada 7 días): el anuncio reaparece como "recién publicado"
   const renovarProducto = async (id: string) => {
     cerrarMenus()
     const res = await fetch('/api/productos/renovar', {
@@ -255,184 +269,199 @@ export default function TabProductos({
       alert('Error: ' + (result.error || 'no se pudo eliminar'))
       return
     }
-    // Recargar la página
     window.location.reload()
   }
 
   if (productos.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-        <Package size={48} className="text-gray-500 mx-auto mb-4" />
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Aún no tienes publicaciones</h3>
-        <p className="text-gray-500 mb-6">Publica tu primer producto en segundos. ¡Es gratis!</p>
-        <LocalLink href="/publicar" className="inline-block bg-brand-accent text-white px-8 py-3 rounded-lg font-bold hover:bg-accent/90 transition">Publicar ahora</LocalLink>
+      <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+        <div className="w-12 h-12 rounded-xl bg-brand-accent/10 flex items-center justify-center mx-auto mb-4">
+          <Package size={22} className="text-brand-accent" aria-hidden="true" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900 mb-1">Aún no tienes anuncios</h3>
+        <p className="text-sm text-slate-500 mb-6">Publica el primero en un par de minutos. Es gratis.</p>
+        <LocalLink href="/publicar" className="inline-flex items-center gap-2 bg-brand-accent text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-brand-accent-dark">
+          <Plus size={16} aria-hidden="true" /> Publicar ahora
+        </LocalLink>
       </div>
     )
   }
 
   const now = new Date().toISOString()
   const nowTs = Date.now()
+  const chips: { id: Filtro; label: string; n: number }[] = [
+    { id: 'activos', label: 'Activos', n: nActivos },
+    { id: 'pausados', label: 'Pausados', n: nPausados },
+    { id: 'vendidos', label: 'Vendidos', n: nVendidos },
+    { id: 'todos', label: 'Todos', n: productos.length },
+  ]
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <h3 className="font-bold text-lg mb-4">Mis publicaciones</h3>
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900">Anuncios</h3>
+          <p className="text-sm text-slate-500">{nActivos} activos · {nVendidos} vendidos</p>
+        </div>
+        <LocalLink
+          href="/publicar"
+          className="inline-flex items-center justify-center gap-2 bg-brand-accent hover:bg-brand-accent-dark text-white text-sm font-semibold px-4 py-2.5 rounded-xl"
+        >
+          <Plus size={16} aria-hidden="true" /> Nuevo anuncio
+        </LocalLink>
       </div>
-      <div className="space-y-3">
-        {productos.map((p) => {
-          const isBoosted = boostVigente(p.boosteado_en)
-          const isFeatured = p.destacado && p.destacado_hasta && p.destacado_hasta > now
-          const isVendido = p.vendido === true
-          const gestionAbierto = menuGestion === p.id
-          const promoAbierto = menuPromocionar === p.id
-          return (
-            <div key={p.id} className={`group flex items-start gap-4 p-3 rounded-lg border border-gray-100 transition ${isVendido ? 'bg-green-50/50 border-green-200' : 'hover:bg-gray-50'}`}>
-              <LocalLink href={productUrl(p)} className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="w-16 h-16 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden relative">
-                  {p.imagen_url ? (
-                    <Image src={p.imagen_url} alt={p.titulo} className="w-full h-full object-cover" fill sizes="100px" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">Sin foto</div>
-                  )}
-                  {isVendido && (
-                    <div className="absolute inset-0 bg-green-600/70 flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">VENDIDO</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-gray-800 truncate group-hover:text-brand-primary transition">
-                    {isBoosted && '⚡ '}{isFeatured && !isBoosted && '⭐ '}{p.titulo}
-                  </h4>
-                  <p className="text-sm text-brand-primary font-bold">{formatPrecio(p.precio_usd || 0)}</p>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                    <span>👀 {p.visitas || 0} vistas</span>
-                    {mediaVisitas != null && mediaVisitas > 0 && !isVendido && p.activo && (() => {
-                      const dif = Math.round((((p.visitas || 0) - mediaVisitas) / mediaVisitas) * 100)
-                      // Solo se comenta cuando la diferencia es relevante: un
-                      // ±10 % es ruido y restaría credibilidad al aviso.
-                      if (Math.abs(dif) < 25) return null
-                      return (
-                        <span className={dif < 0 ? 'text-amber-700 font-semibold' : 'text-green-700 font-semibold'}>
-                          {dif < 0 ? `${Math.abs(dif)} % menos que tu media` : `${dif} % más que tu media`}
-                        </span>
-                      )
-                    })()}
-                    {isVendido
-                      ? <span className="text-green-700 font-semibold">✅ Vendido</span>
-                      : p.activo
-                        ? '✅ Activo'
-                        : '⏸️ Pausado'
-                    }
-                    {isFeatured && (
-                      <span className="text-brand-primary">⭐ Hasta {new Date(p.destacado_hasta).toLocaleDateString('es-ES')}</span>
+
+      <div className="flex gap-1.5 overflow-x-auto hide-scrollbar mb-4" role="tablist" aria-label="Filtrar anuncios">
+        {chips.map(c => (
+          <button
+            key={c.id}
+            type="button"
+            role="tab"
+            aria-selected={filtro === c.id}
+            onClick={() => setFiltro(c.id)}
+            className={`whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition ${
+              filtro === c.id
+                ? 'bg-brand-primary text-white'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            {c.label} <span className="opacity-70">{c.n}</span>
+          </button>
+        ))}
+      </div>
+
+      {lista.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">
+          No hay anuncios en este filtro.
+        </div>
+      ) : (
+        <ul className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+          {lista.map((p) => {
+            const isBoosted = boostVigente(p.boosteado_en)
+            const isFeatured = p.destacado && p.destacado_hasta && p.destacado_hasta > now
+            const isVendido = p.vendido === true
+            const abierto = menuAbierto === p.id
+            const puedeRenovar = !isVendido && p.activo && p.creado_en && (nowTs - new Date(p.creado_en).getTime()) >= 7 * 864e5
+            const difVisitas = (() => {
+              if (mediaVisitas == null || mediaVisitas <= 0 || isVendido || !p.activo) return null
+              const dif = Math.round((((p.visitas || 0) - mediaVisitas) / mediaVisitas) * 100)
+              if (Math.abs(dif) < 25) return null
+              return dif
+            })()
+
+            return (
+              <li key={p.id} className="p-3 sm:p-4 hover:bg-slate-50/80 transition">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <LocalLink href={productUrl(p)} className="relative w-16 h-16 sm:w-[4.5rem] sm:h-[4.5rem] rounded-xl bg-slate-100 overflow-hidden shrink-0">
+                    {p.imagen_url ? (
+                      <Image src={p.imagen_url} alt="" className="object-cover" fill sizes="72px" />
+                    ) : (
+                      <span className="flex h-full items-center justify-center text-[10px] text-slate-400">Sin foto</span>
                     )}
+                    {isVendido && (
+                      <span className="absolute inset-0 bg-emerald-800/70 flex items-center justify-center text-white text-[10px] font-bold tracking-wide">VENDIDO</span>
+                    )}
+                  </LocalLink>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <LocalLink href={productUrl(p)} className="block font-medium text-slate-900 truncate hover:text-brand-accent">
+                          {p.titulo}
+                        </LocalLink>
+                        <p className="text-sm font-semibold text-slate-800 mt-0.5">{formatPrecio(p.precio_usd || 0)}</p>
+                      </div>
+                      <BadgeEstado vendido={isVendido} activo={!!p.activo} />
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                      <span className="inline-flex items-center gap-1"><Eye size={12} aria-hidden="true" /> {p.visitas || 0}</span>
+                      {difVisitas != null && (
+                        <span className={difVisitas < 0 ? 'text-amber-700 font-medium' : 'text-emerald-700 font-medium'}>
+                          {difVisitas < 0 ? `${Math.abs(difVisitas)} % menos que tu media` : `${difVisitas} % más que tu media`}
+                        </span>
+                      )}
+                      {isBoosted && <span className="text-amber-700 font-medium">En el nº 1</span>}
+                      {isFeatured && (
+                        <span className="text-slate-600">Destacado hasta {new Date(p.destacado_hasta).toLocaleDateString('es-ES')}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </LocalLink>
 
-              {/* Menús desplegables */}
-              <div className="flex gap-2 flex-shrink-0 relative" onClick={e => e.stopPropagation()}>
-                {/* GESTIONAR */}
-                <div className="relative">
-                  <button
-                    onClick={() => { cerrarMenus(); setMenuGestion(gestionAbierto ? null : p.id) }}
-                    className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 flex items-center gap-1"
+                <div className="mt-3 flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
+                  <LocalLink
+                    href={`/producto/editar/${p.id}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 text-slate-700 hover:bg-white"
                   >
-                    Gestionar <ChevronDown size={12} />
-                  </button>
-                  {gestionAbierto && (
-                    <div className="absolute right-0 top-full mt-1 bg-white border rounded-lg shadow-lg py-1 w-48 z-20">
-                      <LocalLink
-                        href={`/producto/editar/${p.id}`}
-                        onClick={cerrarMenus}
-                        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
-                      >
-                        <Edit size={14} /> Editar
-                      </LocalLink>
-                      {!isVendido && p.activo && (
-                        <button
-                          onClick={() => abrirVendido(p.id)}
-                          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 w-full text-left"
-                        >
-                          <CheckCircle2 size={14} className="text-green-600" /> Marcar como vendido
-                        </button>
-                      )}
-                      {!isVendido && p.activo && p.creado_en && (nowTs - new Date(p.creado_en).getTime()) >= 7 * 864e5 && (
-                        <button
-                          onClick={() => renovarProducto(p.id)}
-                          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 w-full text-left"
-                        >
-                          <RefreshCw size={14} className="text-blue-600" /> Renovar (subir como nuevo)
-                        </button>
-                      )}
-                      {isVendido && (
-                        <button
-                          onClick={() => reactivarVendido(p.id)}
-                          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 w-full text-left"
-                        >
-                          <Play size={14} className="text-orange-500" /> Reactivar
-                        </button>
-                      )}
-                      <button
-                        onClick={() => pausarActivar(p.id, p.activo)}
-                        disabled={isVendido}
-                        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 w-full text-left disabled:opacity-40"
-                      >
-                        {p.activo ? <Pause size={14} /> : <Play size={14} />} {p.activo ? 'Pausar' : 'Activar'}
-                      </button>
-                      {!isVendido && (
-                        <button
-                          onClick={() => eliminarProducto(p.id)}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
-                        >
-                          <X size={14} className="text-red-500" /> Eliminar publicación
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* PROMOCIONAR */}
-                {!isVendido && p.activo && (
-                  <div className="relative">
+                    <Edit size={13} aria-hidden="true" /> Editar
+                  </LocalLink>
+                  {!isVendido && p.activo && (
                     <button
-                      onClick={() => { cerrarMenus(); setMenuPromocionar(promoAbierto ? null : p.id) }}
-                      className="px-3 py-1.5 bg-brand-accent/20 text-brand-primary rounded-lg text-xs font-bold hover:bg-brand-accent/30 flex items-center gap-1"
+                      type="button"
+                      onClick={() => onDestacar({ productId: p.id, titulo: p.titulo })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-primary text-white hover:bg-brand-dark"
                     >
-                      Promocionar <ChevronDown size={12} />
+                      <Star size={13} aria-hidden="true" /> Destacar
                     </button>
-                    {promoAbierto && (
-                      <div className="absolute right-0 top-full mt-1 bg-white border rounded-lg shadow-lg py-1 w-52 z-20">
-                        <button
-                          onClick={() => {
-                            onBoost({ productId: p.id, titulo: p.titulo })
-                            cerrarMenus()
-                          }}
-                          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 w-full text-left"
-                        >
-                          <Zap size={14} className="text-yellow-500" /> Subir al nº 1 (7 días)
-                        </button>
-                        <button
-                          onClick={() => {
-                            onDestacar({ productId: p.id, titulo: p.titulo })
-                            cerrarMenus()
-                          }}
-                          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 w-full text-left"
-                        >
-                          <Star size={14} className="text-brand-primary" /> Destacar (12h / 24h / 48h)
-                        </button>
+                  )}
+                  {isVendido && (
+                    <button
+                      type="button"
+                      onClick={() => reactivarVendido(p.id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 text-slate-700 hover:bg-white"
+                    >
+                      <Play size={13} aria-hidden="true" /> Reactivar
+                    </button>
+                  )}
+
+                  <div className="relative" ref={abierto ? menuRef : undefined}>
+                    <button
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={abierto}
+                      aria-label="Más acciones"
+                      onClick={() => setMenuAbierto(abierto ? null : p.id)}
+                      className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-white"
+                    >
+                      <MoreHorizontal size={16} />
+                    </button>
+                    {abierto && (
+                      <div role="menu" className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg py-1 w-52 z-20">
+                        {!isVendido && p.activo && (
+                          <>
+                            <button type="button" role="menuitem" onClick={() => { onBoost({ productId: p.id, titulo: p.titulo }); cerrarMenus() }} className="flex items-center gap-2 px-3 py-2 text-sm w-full text-left hover:bg-slate-50">
+                              <Zap size={14} className="text-amber-500" /> Subir al nº 1
+                            </button>
+                            <button type="button" role="menuitem" onClick={() => abrirVendido(p.id)} className="flex items-center gap-2 px-3 py-2 text-sm w-full text-left hover:bg-slate-50">
+                              <CheckCircle2 size={14} className="text-emerald-600" /> Marcar vendido
+                            </button>
+                            {puedeRenovar && (
+                              <button type="button" role="menuitem" onClick={() => renovarProducto(p.id)} className="flex items-center gap-2 px-3 py-2 text-sm w-full text-left hover:bg-slate-50">
+                                <RefreshCw size={14} /> Renovar
+                              </button>
+                            )}
+                          </>
+                        )}
+                        {!isVendido && (
+                          <button type="button" role="menuitem" onClick={() => pausarActivar(p.id, p.activo)} className="flex items-center gap-2 px-3 py-2 text-sm w-full text-left hover:bg-slate-50">
+                            {p.activo ? <Pause size={14} /> : <Play size={14} />} {p.activo ? 'Pausar' : 'Activar'}
+                          </button>
+                        )}
+                        {!isVendido && (
+                          <button type="button" role="menuitem" onClick={() => eliminarProducto(p.id)} className="flex items-center gap-2 px-3 py-2 text-sm w-full text-left text-red-600 hover:bg-red-50">
+                            <X size={14} /> Eliminar
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
 
-      {/* MODAL MARCAR COMO VENDIDO */}
       {vendidoModal && (
         <div
           className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
@@ -442,7 +471,7 @@ export default function TabProductos({
           tabIndex={-1}
           onKeyDown={(e) => { if (e.key === 'Escape') setVendidoModal(null) }}
         >
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
               {vendidoPaso !== 'tipo' ? (
                 <button onClick={() => setVendidoPaso('tipo')} className="flex items-center gap-1 text-sm text-brand-primary hover:underline">
@@ -454,7 +483,6 @@ export default function TabProductos({
               </button>
             </div>
 
-            {/* PASO 1: ¿Cómo se vendió? */}
             {vendidoPaso === 'tipo' && (
               <>
                 <h3 id="vendido-titulo" className="text-lg font-bold mb-2">¿Cómo se vendió?</h3>
@@ -470,7 +498,7 @@ export default function TabProductos({
                     }}
                     className="w-full text-left p-4 border-2 border-green-200 bg-green-50 rounded-xl hover:bg-green-100 transition"
                   >
-                    <p className="font-bold text-green-800">🤝 Vendido en esta plataforma</p>
+                    <p className="font-bold text-green-800">Vendido en esta plataforma</p>
                     <p className="text-xs text-green-600 mt-1">
                       {interesados.length > 0
                         ? `${interesados.length} persona(s) te contactaron por este producto`
@@ -482,21 +510,20 @@ export default function TabProductos({
                     onClick={() => marcarVendidoSimple(vendidoModal, 'otra_pagina')}
                     className="w-full text-left p-4 border-2 border-blue-200 bg-blue-50 rounded-xl hover:bg-blue-100 transition"
                   >
-                    <p className="font-bold text-blue-800">🌐 Vendido en otro lugar</p>
+                    <p className="font-bold text-blue-800">Vendido en otro lugar</p>
                     <p className="text-xs text-blue-600 mt-1">Facebook, WhatsApp, en persona, etc.</p>
                   </button>
                   <button
                     onClick={() => marcarVendidoSimple(vendidoModal, 'no_especificado')}
                     className="w-full text-left p-4 border-2 border-gray-200 bg-gray-50 rounded-xl hover:bg-gray-100 transition"
                   >
-                    <p className="font-bold text-gray-700">🤫 Prefiero no decir</p>
+                    <p className="font-bold text-gray-700">Prefiero no decir</p>
                     <p className="text-xs text-gray-500 mt-1">Solo marca el anuncio como vendido</p>
                   </button>
                 </div>
               </>
             )}
 
-            {/* PASO 2: ¿A quién le vendiste? */}
             {vendidoPaso === 'comprador' && (
               <>
                 <h3 className="text-lg font-bold mb-2">¿A quién le vendiste?</h3>
@@ -516,7 +543,7 @@ export default function TabProductos({
                         >
                           <p className="font-semibold text-gray-900">{inter.nombre}</p>
                           {inter.ultimoMensaje && (
-                            <p className="text-xs text-gray-500 mt-0.5 truncate">"{inter.ultimoMensaje}"</p>
+                            <p className="text-xs text-gray-500 mt-0.5 truncate">&ldquo;{inter.ultimoMensaje}&rdquo;</p>
                           )}
                         </button>
                       ))}
@@ -535,7 +562,6 @@ export default function TabProductos({
               </>
             )}
 
-            {/* PASO 3: ¿Quieres dejar reseña al comprador? */}
             {vendidoPaso === 'reseña' && (
               <>
                 <div className="text-center mb-4">
@@ -590,7 +616,6 @@ export default function TabProductos({
               </>
             )}
 
-            {/* PASO 4: Confirmación */}
             {vendidoPaso === 'confirmado' && (
               <div className="text-center py-6">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">

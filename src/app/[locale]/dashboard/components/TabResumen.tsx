@@ -2,10 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { TrendingUp, Eye, MessageCircle, BarChart3 } from 'lucide-react'
+import { TrendingUp, Eye, MessageCircle, BarChart3, Plus, Package, Calculator, Zap } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import LocalLink from '@/components/LocalLink'
+import type { DashboardTab } from './DashboardNav'
 
-export default function TabResumen({ userId }: { userId: string }) {
+export default function TabResumen({
+  userId,
+  onIr,
+}: {
+  userId: string
+  onIr?: (tab: DashboardTab) => void
+}) {
   const t = useTranslations('dashboard')
   const [stats, setStats] = useState<any>(null)
   // Preferencia de avisos por email. `null` mientras se carga, para no
@@ -120,7 +128,7 @@ export default function TabResumen({ userId }: { userId: string }) {
         {tarjetas.map((item) => {
           const Icon = item.icon
           return (
-            <div key={item.label} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+            <div key={item.label} className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm">
               <div className={`w-10 h-10 ${item.bg} rounded-lg flex items-center justify-center mb-2`}>
                 <Icon size={20} className={item.color} />
               </div>

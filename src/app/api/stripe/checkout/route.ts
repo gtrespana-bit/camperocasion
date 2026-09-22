@@ -68,6 +68,10 @@ export async function POST(req: NextRequest) {
       client_reference_id: user.id,
       customer_email: user.email || undefined,
       locale: 'es',
+      // Esta web cobra solo en euros. Adaptive Pricing de Stripe convierte a la
+      // divisa por defecto de la CUENTA (si las claves son de otro proyecto,
+      // p. ej. PAB) y enseña «Elige divisa» + comisión. Lo apagamos.
+      adaptive_pricing: { enabled: false },
       line_items: [
         {
           quantity: 1,
@@ -89,6 +93,8 @@ export async function POST(req: NextRequest) {
       },
       payment_intent_data: {
         metadata: { user_id: user.id, creditos: String(paquete.creditos) },
+        description: `CamperOcasión — ${paquete.creditos} créditos`,
+        statement_descriptor: 'CAMPEROCASION',
       },
       // Recibo/factura automática de Stripe: cumple con lo que hay que
       // entregar al comprador y evita emitirla a mano.

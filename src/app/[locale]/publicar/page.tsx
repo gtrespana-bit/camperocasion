@@ -197,7 +197,7 @@ export default function PublicarPage() {
           const data = await res.json().catch(() => ({}))
           console.error('Error subiendo foto:', data.error || res.status)
           setImagenes(prev => prev.map((p, idx) => idx === i ? { ...p, error: true, uploading: false } : p))
-          return null
+          throw new Error(data.error || 'No se pudo subir la foto')
         }
 
         const { publicUrl } = await res.json()
@@ -244,10 +244,19 @@ export default function PublicarPage() {
 
       if (imagenes.length > 0) {
         setUploadProgress(0)
-        imagenesArray = await uploadImages()
-        if (imagenesArray.length > 0) {
-          imagenUrl = imagenesArray[0] // Use first as cover
+        try {
+          imagenesArray = await uploadImages()
+        } catch (e: any) {
+          setError(e?.message || 'No se pudieron subir las fotos. Inténtalo de nuevo.')
+          setLoading(false)
+          return
         }
+        if (imagenesArray.length === 0) {
+          setError('No se pudieron subir las fotos. El anuncio no se ha publicado.')
+          setLoading(false)
+          return
+        }
+        imagenUrl = imagenesArray[0]
       }
 
       // NOTA: el categoria_id ya NO se resuelve aquí.
