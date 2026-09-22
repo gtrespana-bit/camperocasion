@@ -4,7 +4,7 @@ import Avatar from '@/components/Avatar'
 import BadgeVerificado from '@/components/BadgeVerificado'
 import BadgeTipoVendedor, { TIPOS_VENDEDOR } from '@/components/BadgeTipoVendedor'
 import { getMunicipiosNombres, ESTADOS } from '@/lib/ubicaciones'
-import { Camera, Edit, Key, LogOut, X, Save, Phone, MapPin, Mail } from 'lucide-react'
+import { Camera, Edit, X, Save, Phone, MapPin, Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
@@ -24,7 +24,8 @@ export default function DashboardHeader({
   tipoVendedor, setTipoVendedor,
   fotoUrl, setFotoUrl,
   verificado, nivelConfianza, resenasCount, promedioResenas,
-  setToast, setGuardando, onPassword, onLogout, onFotoChange,
+  setToast, setGuardando, onFotoChange,
+  abrirEdicion = 0,
 }: {
   user: any
   nombre: string; setNombre: (s: string) => void
@@ -39,14 +40,16 @@ export default function DashboardHeader({
   promedioResenas: number
   setToast: (msg: string | null) => void
   setGuardando: (b: boolean) => void
-  onPassword: () => void
-  onLogout: () => void
-
   onFotoChange: (e: any) => Promise<void>
+  abrirEdicion?: number
 }) {
   const t = useTranslations('dashboard')
   const tTipos = useTranslations('tiposVendedor')
   const [editando, setEditando] = useState(false)
+
+  useEffect(() => {
+    if (abrirEdicion) setEditando(true)
+  }, [abrirEdicion])
   const municipiosDisponibles = estado ? getMunicipiosNombres(estado) : []
 
   async function handleGuardar() {
@@ -77,7 +80,7 @@ export default function DashboardHeader({
   const cfg = NIVELES[n]
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border p-5 mb-6">
+    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:p-5 mb-6">
       <div className="flex flex-col sm:flex-row items-start gap-4">
         <label className="relative group cursor-pointer flex-shrink-0">
           <Avatar nombre={nombre} fotoUrl={fotoUrl} size="lg" />
@@ -172,17 +175,13 @@ export default function DashboardHeader({
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2 w-full sm:w-auto">
-                <button onClick={() => setEditando(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-1 border px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
-                  <Edit size={14} /> {t('editProfile')}
-                </button>
-                <button onClick={onPassword} className="flex items-center gap-1 text-brand-primary hover:bg-blue-50 px-3 py-1.5 rounded-lg text-sm font-medium transition">
-                  <Key size={14} /> {t('password')}
-                </button>
-                <button onClick={onLogout} className="flex items-center gap-1 text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg text-sm font-medium transition">
-                  <LogOut size={14} /> {t('logout')}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setEditando(true)}
+                className="flex items-center justify-center gap-1.5 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition w-full sm:w-auto"
+              >
+                <Edit size={14} aria-hidden="true" /> {t('editProfile')}
+              </button>
             </div>
           )}
         </div>

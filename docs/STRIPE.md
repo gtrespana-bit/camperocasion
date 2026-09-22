@@ -54,9 +54,23 @@ supabase/migrations/202609220001_stripe_pagos.sql
 Es idempotente. Sin ella el webhook devuelve error y Stripe reintenta, así que
 **hazlo antes de activar el webhook**.
 
-### 2. Claves en Vercel
+### 2. Cuenta de Stripe **propia** (no reutilizar CotizaT ni otro proyecto)
 
-Dashboard de Stripe → *Developers → API keys*:
+El Checkout **no** coge el nombre de esta web: enseña el de la cuenta de Stripe
+cuyas claves hayas pegado. Si ves «Pagar a CotizaT», PAB u otra divisa, las
+claves de Vercel son las de **otro** negocio. Crea (o usa) una cuenta Stripe
+de CamperOcasión, España, liquidación en **EUR**.
+
+Dashboard → *Settings → Public details*:
+
+- **Business name**: CamperOcasión (esto es el «Pagar a …» del checkout)
+- **Statement descriptor**: CAMPEROCASION
+- **Support**: soporte@camperocasion.online / camperocasion.online
+- **Brand**: logo y color de CamperOcasión
+
+Dashboard → *Settings → Account details*: país ES, moneda predeterminada EUR.
+
+Luego *Developers → API keys* **de esa cuenta**:
 
 ```
 STRIPE_SECRET_KEY = sk_live_…      (o sk_test_… para probar)
@@ -64,6 +78,10 @@ STRIPE_SECRET_KEY = sk_live_…      (o sk_test_… para probar)
 
 Marca los entornos Production y Preview. **No** hace falta ninguna variable
 pública: la clave publicable no se usa porque redirigimos a Checkout alojado.
+
+En el código el precio ya va en `eur` y Adaptive Pricing está desactivado
+para que no aparezca «Elige divisa». El nombre comercial **no** se puede
+cambiar por API: solo en el dashboard de la cuenta correcta.
 
 ### 3. Crear el webhook
 
