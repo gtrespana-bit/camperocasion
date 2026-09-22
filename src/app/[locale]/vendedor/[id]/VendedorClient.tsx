@@ -7,7 +7,7 @@ import Image from 'next/image'
 import BadgeVerificado from '@/components/BadgeVerificado'
 import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
 import Avatar from '@/components/Avatar'
-import { MapPin, Phone, Mail, MessageSquare, Star, ArrowLeft, ShoppingBag } from 'lucide-react'
+import { MapPin, Phone, Mail, MessageSquare, Star, ArrowLeft, ShoppingBag, Store } from 'lucide-react'
 import SellerReputation from '@/components/SellerReputation'
 import { useTranslations } from 'next-intl'
 import { productUrl } from '@/lib/product-url'
@@ -75,6 +75,17 @@ export default function VendedorClient({
               <p className="text-gray-500 text-sm flex items-center gap-1 mt-1">
                 <MapPin size={14} /> {[vendedor.ciudad, vendedor.estado].filter(Boolean).join(', ')}
               </p>
+            )}
+
+            {/* Si es un profesional con tienda abierta, su escaparate es la
+                página buena: stock completo, horario y web. */}
+            {vendedor.tienda_activa && vendedor.slug && (
+              <LocalLink
+                href={`/tienda/${vendedor.slug}`}
+                className="inline-flex items-center gap-1.5 mt-2 text-sm font-semibold text-brand-primary hover:underline"
+              >
+                <Store size={15} /> Ver la tienda completa
+              </LocalLink>
             )}
 
             {/* Reputación */}

@@ -5,7 +5,7 @@ import LocalLink from '@/components/LocalLink'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  CheckCircle, Zap, Star, X, Copy, Upload, Loader2, Banknote, Landmark, Wallet
+  CheckCircle, Zap, Star, X, Copy, Upload, Loader2, Banknote, Landmark, Wallet, CreditCard
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useTranslations } from 'next-intl'
@@ -52,16 +52,49 @@ function ModalPago({
   paquete,
   metodos,
   configurado,
+  stripeDisponible,
   onClose,
 }: {
   paquete: any
   metodos: MetodoPago[]
   configurado: Record<string, boolean> | null
+  stripeDisponible: boolean
   onClose: () => void
 }) {
   const t = useTranslations('creditos')
   const router = useRouter()
   const [metodo, setMetodo] = useState('')
+  const [yendoAStripe, setYendoAStripe] = useState(false)
+  const [errorStripe, setErrorStripe] = useState('')
+
+  /**
+   * Pago inmediato con Stripe (tarjeta o Bizum). No se sube comprobante ni hay
+   * espera: el webhook acredita los créditos en cuanto Stripe confirma el
+   * cobro, así que el usuario vuelve con el saldo ya sumado.
+   */
+  const pagarConStripe = async () => {
+    setErrorStripe('')
+    setYendoAStripe(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login?redirect=/creditos'); return }
+
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creditos: paquete.creditos }),
+      })
+      const data = await res.json()
+      if (data?.ok && data.url) {
+        window.location.href = data.url
+        return
+      }
+      setErrorStripe(data?.error || 'No se pudo iniciar el pago.')
+    } catch {
+      setErrorStripe('No se pudo conectar con la pasarela de pago.')
+    }
+    setYendoAStripe(false)
+  }
   const [copiado, setCopiado] = useState('')
   const [comprobanteFile, setComprobanteFile] = useState<File | null>(null)
   const [comprobantePreview, setComprobantePreview] = useState('')
@@ -157,6 +190,47 @@ function ModalPago({
         </div>
 
         <div className="p-6 space-y-6">
+          {/* Pago inmediato con Stripe (tarjeta o Bizum) */}
+          {stripeDisponible && (
+            <div className="rounded-xl border-2 border-brand-accent bg-green-50/60 p-5">
+              <div className="flex items-start gap-3 mb-3">
+                <CreditCard size={22} className="text-brand-accent flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-gray-900">Pagar ahora con tarjeta o Bizum</h4>
+                  <p className="text-sm text-gray-600">
+                    Los créditos se añaden <strong>al instante</strong>, sin subir comprobante
+                    ni esperar aprobación. Recibirás la factura por email.
+                  </p>
+                </div>
+              </div>
+              {errorStripe && (
+                <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-2 mb-3">
+                  {errorStripe}
+                </p>
+              )}
+              <button
+                onClick={pagarConStripe}
+                disabled={yendoAStripe}
+                className="w-full bg-brand-accent text-white py-3 rounded-xl font-bold hover:brightness-95 transition disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {yendoAStripe
+                  ? <><Loader2 size={18} className="animate-spin" /> Conectando con el pago seguro…</>
+                  : <>Pagar {formatPrecio(paquete.precio)} ahora</>}
+              </button>
+              <p className="text-[11px] text-gray-500 text-center mt-2">
+                Pago seguro procesado por Stripe. No guardamos los datos de tu tarjeta.
+              </p>
+            </div>
+          )}
+
+          {stripeDisponible && metodos.length > 0 && (
+            <div className="flex items-center gap-3">
+              <div className="h-px bg-gray-200 flex-1" />
+              <span className="text-xs text-gray-400 font-medium">o paga manualmente</span>
+              <div className="h-px bg-gray-200 flex-1" />
+            </div>
+          )}
+
           {/* Método de pago */}
           <div>
             <h4 className="font-bold text-gray-800 mb-3">{t('choosePayment')}</h4>
@@ -269,6 +343,20 @@ export default function CreditosPage() {
   // huecos con valores ficticios.
   const [metodos, setMetodos] = useState<MetodoPago[]>(metodosPago)
   const [configurado, setConfigurado] = useState<Record<string, boolean> | null>(null)
+  // ¿Está el cobro automático activo? Lo pregunta al servidor para no tener que
+  // exponer ninguna clave de Stripe en el bundle del navegador.
+  const [stripeDisponible, setStripeDisponible] = useState(false)
+  // Se lee de window y no con useSearchParams para no obligar a envolver toda
+  // la página en un <Suspense> durante el prerender.
+  const [resultadoPago, setResultadoPago] = useState<string | null>(null)
+
+  useEffect(() => {
+    setResultadoPago(new URLSearchParams(window.location.search).get('pago'))
+    fetch('/api/stripe/estado')
+      .then(r => r.json())
+      .then(d => setStripeDisponible(Boolean(d?.disponible)))
+      .catch(() => {})
+  }, [])
 
   // Cargar datos de pago reales del servidor (IBAN, teléfono Bizum, PayPal…)
   useEffect(() => {
@@ -292,6 +380,26 @@ export default function CreditosPage() {
           {t.rich('subtitle', { strong: (chunks) => <strong>{chunks}</strong> })}
         </p>
       </div>
+
+      {resultadoPago === 'ok' && (
+        <div className="mb-8 rounded-2xl border border-green-200 bg-green-50 p-5 flex items-start gap-3">
+          <CheckCircle size={22} className="text-brand-accent flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-gray-900">Pago recibido. ¡Gracias!</p>
+            <p className="text-sm text-gray-700">
+              Tus créditos se abonan en cuanto el banco confirma la operación (normalmente
+              es inmediato; con Bizum puede tardar unos segundos). Si no ves el saldo
+              actualizado, recarga tu <LocalLink href="/dashboard" className="font-semibold underline">panel</LocalLink> en un minuto.
+            </p>
+          </div>
+        </div>
+      )}
+      {resultadoPago === 'cancelado' && (
+        <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <p className="font-bold text-gray-900">Pago cancelado</p>
+          <p className="text-sm text-gray-700">No se ha cobrado nada. Puedes elegir otro paquete cuando quieras.</p>
+        </div>
+      )}
 
       {/* Info */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
@@ -391,6 +499,7 @@ export default function CreditosPage() {
           paquete={paqueteSeleccionado}
           metodos={metodos}
           configurado={configurado}
+          stripeDisponible={stripeDisponible}
           onClose={() => setPaqueteSeleccionado(null)}
         />
       )}

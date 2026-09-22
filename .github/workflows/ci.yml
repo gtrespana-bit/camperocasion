@@ -109,6 +109,9 @@ jobs:
         
       - name: Promoción sin doble cobro
         run: python3 scripts/verify_boost_sql.py
+        
+      - name: Cobro con Stripe (idempotencia e importes)
+        run: python3 scripts/verify_stripe_sql.py
 
       - name: Verificación de despliegue (fases 0.1, 0.2 y 1.2)
         run: python3 scripts/verificar_despliegue_sql.py

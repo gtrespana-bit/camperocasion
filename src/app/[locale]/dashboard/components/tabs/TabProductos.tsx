@@ -19,6 +19,16 @@ export default function TabProductos({
   onDestacar: (m: { productId: string; titulo: string }) => void
   userId: string
 }) {
+  // Media de visitas de los anuncios vivos del vendedor. Es la referencia que
+  // convierte «12 vistas» (un dato sin sentido) en «un 60 % menos que tus
+  // otros anuncios» (un motivo para actuar).
+  const mediaVisitas = (() => {
+    const vivos = (productos || []).filter((p: any) => p.activo && !p.vendido)
+    if (vivos.length < 2) return null
+    const total = vivos.reduce((s: number, p: any) => s + (p.visitas || 0), 0)
+    return total / vivos.length
+  })()
+
   const [vendidoModal, setVendidoModal] = useState<string | null>(null)
   const [vendidoPaso, setVendidoPaso] = useState<'tipo' | 'comprador' | 'reseña' | 'confirmado'>('tipo')
   const [interesados, setInteresados] = useState<any[]>([])
@@ -297,6 +307,17 @@ export default function TabProductos({
                   <p className="text-sm text-brand-primary font-bold">{formatPrecio(p.precio_usd || 0)}</p>
                   <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                     <span>👀 {p.visitas || 0} vistas</span>
+                    {mediaVisitas != null && mediaVisitas > 0 && !isVendido && p.activo && (() => {
+                      const dif = Math.round((((p.visitas || 0) - mediaVisitas) / mediaVisitas) * 100)
+                      // Solo se comenta cuando la diferencia es relevante: un
+                      // ±10 % es ruido y restaría credibilidad al aviso.
+                      if (Math.abs(dif) < 25) return null
+                      return (
+                        <span className={dif < 0 ? 'text-amber-700 font-semibold' : 'text-green-700 font-semibold'}>
+                          {dif < 0 ? `${Math.abs(dif)} % menos que tu media` : `${dif} % más que tu media`}
+                        </span>
+                      )
+                    })()}
                     {isVendido
                       ? <span className="text-green-700 font-semibold">✅ Vendido</span>
                       : p.activo

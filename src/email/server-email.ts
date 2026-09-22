@@ -36,23 +36,43 @@ export async function enviarEmailProducto(
 }
 
 /**
- * 2. MENSAJE RECIBIDO
+ * 2. MENSAJE RECIBIDO (aviso diferido de mensajes no leídos)
+ *
+ * Se envía desde el cron `avisos-mensajes`, no en el momento de recibir el
+ * mensaje: si el usuario estaba en la web y ya ha respondido, no recibe nada.
+ * Agrupa todos los mensajes no leídos de una misma conversación en un único
+ * email para no reventar la bandeja de entrada en una charla animada.
  */
 export async function enviarEmailMensaje(
   email: string,
-  nombreVendedor: string,
-  nombreComprador: string,
+  nombreDestinatario: string,
+  nombreRemitente: string,
   producto: string,
-  mensajePreview: string
+  mensajePreview: string,
+  opciones?: { total?: number; conversacionId?: string }
 ) {
-  return enviar('CamperOcasión', email, `💬 ${nombreComprador} te escribió sobre "${producto}"`, `
+  const base = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'
+  const url = opciones?.conversacionId
+    ? `${base}/chat?conversation=${opciones.conversacionId}`
+    : `${base}/chat`
+  const total = opciones?.total || 1
+  const asunto = total > 1
+    ? `💬 ${nombreRemitente} te ha enviado ${total} mensajes sobre "${producto}"`
+    : `💬 ${nombreRemitente} te ha escrito sobre "${producto}"`
+
+  return enviar('CamperOcasión', email, asunto, `
     <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
-      <h2 style="color:#1e3a8a">Hola ${nombreVendedor}!</h2>
-      <p><strong>${nombreComprador}</strong> te envió un mensaje sobre:</p>
+      <h2 style="color:#1e3a8a">¡Hola ${nombreDestinatario}!</h2>
+      <p><strong>${nombreRemitente}</strong> está interesado en:</p>
       <p style="font-weight:bold">${producto}</p>
-      <div style="background:#f3f4f6;padding:16px;border-radius:10px;margin:16px 0;font-style:italic">"${mensajePreview}"</div>
-      <a href="${process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'}/dashboard?tab=mensajes" style="display:inline-block;background:#1e3a8a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold">Responder →</a>
-      <p style="color:#6b7280;font-size:12px;margin-top:28px">CamperOcasión</p>
+      <div style="background:#f3f4f6;padding:16px;border-radius:10px;margin:16px 0;font-style:italic">&ldquo;${mensajePreview}&rdquo;</div>
+      ${total > 1 ? `<p style="color:#6b7280;font-size:14px">Y ${total - 1} mensaje${total - 1 === 1 ? '' : 's'} más sin leer.</p>` : ''}
+      <a href="${url}" style="display:inline-block;background:#1e3a8a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold">Responder &rarr;</a>
+      <p style="color:#6b7280;font-size:13px;margin-top:20px">Los compradores contactan con varios vendedores a la vez: quien responde antes, vende.</p>
+      <p style="color:#6b7280;font-size:12px;margin-top:24px">
+        CamperOcasión &middot;
+        <a href="${base}/dashboard?tab=perfil" style="color:#6b7280">Dejar de recibir estos avisos</a>
+      </p>
     </div>
   `)
 }

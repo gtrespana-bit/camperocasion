@@ -19,6 +19,14 @@
     {
       "path": "/api/cron/expirar-prioridades",
       "schedule": "41 3 * * *"
+    },
+    {
+      "path": "/api/cron/avisos-renovacion",
+      "schedule": "20 10 * * *"
+    },
+    {
+      "path": "/api/cron/avisos-mensajes",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

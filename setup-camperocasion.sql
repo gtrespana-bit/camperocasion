@@ -5793,3 +5793,429 @@ $$;
 
 grant execute on function public.usar_boost(uuid, uuid) to authenticated;
 revoke execute on function public.usar_boost(uuid, uuid) from anon;
+
+
+-- ══════════════════════════════════════════════════════════════════════════
+-- Anexo 2026-09-22: Stripe (migración 202609220001_stripe_pagos.sql)
+-- ══════════════════════════════════════════════════════════════════════════
+
+-- ────────────────────────────────────────────────────────────────────────────
+-- Stripe: cobro automático de paquetes de créditos (2026-09-22)
+--
+-- Hasta ahora la compra era manual: el usuario pagaba por Bizum/transferencia,
+-- subía una captura y un admin aprobaba a mano (`aprobar_transaccion`). Eso no
+-- escala, no emite factura y obliga a revisar comprobantes uno a uno.
+--
+-- Esta migración añade lo mínimo para que Stripe acredite solo:
+--   · columnas de trazabilidad en `transacciones_creditos`
+--   · unicidad por sesión de Stripe → el webhook es IDEMPOTENTE
+--   · RPC `acreditar_pago_stripe`, que crea la transacción y suma el saldo en
+--     una sola operación atómica, sin poder pagar dos veces lo mismo
+--
+-- Es idempotente: se puede ejecutar varias veces sin efectos secundarios.
+-- ────────────────────────────────────────────────────────────────────────────
+
+-- 1. Trazabilidad del pago ---------------------------------------------------
+
+alter table public.transacciones_creditos
+  add column if not exists stripe_session_id text,
+  add column if not exists stripe_payment_intent text,
+  add column if not exists importe_eur numeric(10,2),
+  add column if not exists factura_url text;
+
+comment on column public.transacciones_creditos.stripe_session_id is
+  'ID de la Checkout Session (cs_…). Único: garantiza que un pago se acredita una sola vez.';
+comment on column public.transacciones_creditos.stripe_payment_intent is
+  'ID del PaymentIntent (pi_…), para conciliar con el dashboard de Stripe.';
+comment on column public.transacciones_creditos.importe_eur is
+  'Importe realmente cobrado por Stripe, en euros.';
+comment on column public.transacciones_creditos.factura_url is
+  'Enlace al recibo/factura de Stripe que se enseña al usuario en su historial.';
+
+-- La unicidad es la defensa real contra el doble abono: Stripe reintenta los
+-- webhooks, y sin esto un reintento sumaría créditos dos veces.
+create unique index if not exists transacciones_creditos_stripe_session_key
+  on public.transacciones_creditos (stripe_session_id)
+  where stripe_session_id is not null;
+
+create index if not exists transacciones_creditos_user_creado_idx
+  on public.transacciones_creditos (user_id, creado_en desc);
+
+-- 2. Acreditación atómica e idempotente --------------------------------------
+
+create or replace function public.acreditar_pago_stripe(
+  p_user_id uuid,
+  p_creditos integer,
+  p_session_id text,
+  p_payment_intent text default null,
+  p_importe_eur numeric default null,
+  p_factura_url text default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_existente uuid;
+  v_tx_id uuid;
+  v_balance integer;
+begin
+  -- Solo el webhook (service_role) o un admin pueden acreditar. Nunca el
+  -- usuario: si pudiera llamarla, se regalaría créditos.
+  if auth.role() <> 'service_role' and not public.is_admin() then
+    return jsonb_build_object('ok', false, 'error', 'No autorizado');
+  end if;
+
+  if p_user_id is null then
+    return jsonb_build_object('ok', false, 'error', 'Falta el usuario');
+  end if;
+  if p_creditos is null or p_creditos <= 0 then
+    return jsonb_build_object('ok', false, 'error', 'Créditos no válidos');
+  end if;
+  if p_session_id is null or length(trim(p_session_id)) = 0 then
+    return jsonb_build_object('ok', false, 'error', 'Falta la sesión de Stripe');
+  end if;
+
+  -- ¿Ya acreditado? Stripe reintenta los webhooks: esto no es un error,
+  -- es el camino normal de un reintento. Devolvemos ok con `duplicado`.
+  select id into v_existente
+  from public.transacciones_creditos
+  where stripe_session_id = p_session_id;
+
+  if v_existente is not null then
+    select coalesce(credito_balance, 0) into v_balance
+    from public.perfiles where id = p_user_id;
+    return jsonb_build_object(
+      'ok', true, 'duplicado', true,
+      'transaccion_id', v_existente, 'balance', v_balance
+    );
+  end if;
+
+  insert into public.transacciones_creditos (
+    user_id, tipo, monto, metodo_pago, estado,
+    stripe_session_id, stripe_payment_intent, importe_eur, factura_url
+  ) values (
+    p_user_id, 'compra', p_creditos, 'stripe', 'aprobado',
+    p_session_id, p_payment_intent, p_importe_eur, p_factura_url
+  )
+  returning id into v_tx_id;
+
+  update public.perfiles
+  set credito_balance = coalesce(credito_balance, 0) + p_creditos
+  where id = p_user_id
+  returning credito_balance into v_balance;
+
+  if v_balance is null then
+    -- Perfil inexistente: deshacemos para no dejar una transacción huérfana
+    -- que cuadre en la contabilidad pero no haya dado créditos a nadie.
+    raise exception 'Perfil % no encontrado', p_user_id;
+  end if;
+
+  return jsonb_build_object(
+    'ok', true, 'duplicado', false,
+    'transaccion_id', v_tx_id, 'creditos_anadidos', p_creditos, 'balance', v_balance
+  );
+end;
+$$;
+
+-- OJO: en PostgreSQL toda funcion nueva nace con EXECUTE concedido a PUBLIC, y
+-- `revoke ... from anon, authenticated` NO quita ese permiso heredado. Hay que
+-- revocar de PUBLIC explicitamente. El cuerpo ya rechaza a quien no sea
+-- service_role/admin, pero dejar el grant abierto es una capa de menos: si
+-- manana alguien relaja esa comprobacion, cualquier usuario logueado podria
+-- regalarse creditos.
+revoke execute on function public.acreditar_pago_stripe(uuid, integer, text, text, numeric, text) from public;
+revoke execute on function public.acreditar_pago_stripe(uuid, integer, text, text, numeric, text) from anon, authenticated;
+grant execute on function public.acreditar_pago_stripe(uuid, integer, text, text, numeric, text) to service_role;
+
+-- 3. El usuario puede ver sus propias transacciones (historial/recibos) -------
+
+alter table public.transacciones_creditos enable row level security;
+
+drop policy if exists "Ver mis transacciones" on public.transacciones_creditos;
+create policy "Ver mis transacciones"
+  on public.transacciones_creditos for select
+  using (auth.uid() = user_id);
+
+
+-- ══════════════════════════════════════════════════════════════════════════
+-- Anexo 2026-09-22: Tiendas de profesionales (migración 202609220002)
+-- ══════════════════════════════════════════════════════════════════════════
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 202609220002 — Tienda para camperizadores y profesionales (2026-09-22)
+--
+-- Por qué: los vendedores profesionales son los únicos que repiten (5-15
+-- vehículos al año). Hoy su perfil es una página más, con una URL de UUID que
+-- nadie puede pegar en su web ni en Instagram. Darles un escaparate propio
+-- con dirección legible es lo que convierte a un camperizador en un proveedor
+-- recurrente de inventario.
+--
+-- Qué añade:
+--   · `perfiles.slug`         → /tienda/furgocamper-valencia (único, estable)
+--   · campos de escaparate    → descripción, web, portada, horario, dirección
+--   · `perfiles.tienda_activa`→ solo se publica cuando el vendedor lo decide
+--   · generación automática de slug a partir del nombre, sin colisiones
+--
+-- Idempotente: se puede ejecutar varias veces.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ── 1. Columnas del escaparate ─────────────────────────────────────────────
+
+alter table public.perfiles
+  add column if not exists slug text,
+  add column if not exists tienda_activa boolean not null default false,
+  add column if not exists descripcion text,
+  add column if not exists web text,
+  add column if not exists portada_url text,
+  add column if not exists horario text,
+  add column if not exists direccion text;
+
+comment on column public.perfiles.slug is
+  'Identificador legible para /tienda/[slug]. Único entre todos los perfiles.';
+comment on column public.perfiles.tienda_activa is
+  'El escaparate público solo existe si el vendedor lo activa. Por defecto, no.';
+comment on column public.perfiles.descripcion is
+  'Texto de presentación del taller o concesionario (máx. 1500 caracteres en la app).';
+
+-- El slug tiene que ser único: es la URL pública. Índice parcial porque la
+-- inmensa mayoría de perfiles (particulares) no tendrán slug.
+create unique index if not exists perfiles_slug_key
+  on public.perfiles (slug)
+  where slug is not null;
+
+-- Listado de tiendas: solo las activas, ordenadas por nombre.
+create index if not exists perfiles_tienda_activa_idx
+  on public.perfiles (tipo_vendedor, nombre)
+  where tienda_activa = true;
+
+-- ── 2. Generación de slug ──────────────────────────────────────────────────
+
+-- Normaliza un texto a slug: sin acentos, minúsculas, guiones.
+create or replace function public.fn_slugify(p_texto text)
+returns text
+language sql
+immutable
+as $$
+  select trim(both '-' from
+    regexp_replace(
+      regexp_replace(
+        lower(translate(
+          coalesce(p_texto, ''),
+          'áàäâãéèëêíìïîóòöôõúùüûñçÁÀÄÂÃÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÑÇ',
+          'aaaaaeeeeiiiiooooouuuuncAAAAAEEEEIIIIOOOOOUUUUNC'
+        )),
+        '[^a-z0-9]+', '-', 'g'
+      ),
+      '-{2,}', '-', 'g'
+    )
+  );
+$$;
+
+-- Devuelve un slug libre a partir de un texto, añadiendo sufijo si hace falta.
+-- Sin esto, dos "Camper Center" se pisarían y el segundo no podría abrir tienda.
+create or replace function public.fn_slug_disponible(p_texto text, p_perfil uuid)
+returns text
+language plpgsql
+stable
+set search_path = public
+as $$
+declare
+  v_base text;
+  v_slug text;
+  v_i integer := 1;
+begin
+  v_base := public.fn_slugify(p_texto);
+
+  -- Un slug vacío o numérico daría URLs absurdas o chocaría con rutas futuras.
+  if v_base is null or length(v_base) < 3 then
+    v_base := 'tienda';
+  end if;
+  v_base := left(v_base, 60);
+
+  v_slug := v_base;
+  while exists (
+    select 1 from public.perfiles
+    where slug = v_slug and (p_perfil is null or id <> p_perfil)
+  ) loop
+    v_i := v_i + 1;
+    v_slug := v_base || '-' || v_i;
+  end loop;
+
+  return v_slug;
+end;
+$$;
+
+grant execute on function public.fn_slugify(text) to anon, authenticated;
+grant execute on function public.fn_slug_disponible(text, uuid) to authenticated;
+
+-- ── 3. Asignar slug automáticamente al activar la tienda ───────────────────
+
+create or replace function public.fn_asignar_slug_tienda()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- Solo generamos slug cuando hace falta: al activar la tienda y no tenerlo.
+  -- No se regenera al cambiar el nombre, a propósito: una URL publicada que
+  -- cambia sola rompe los enlaces que el vendedor ya repartió.
+  if new.tienda_activa and (new.slug is null or length(trim(new.slug)) = 0) then
+    new.slug := public.fn_slug_disponible(coalesce(new.nombre, 'tienda'), new.id);
+  end if;
+
+  if new.slug is not null then
+    new.slug := public.fn_slugify(new.slug);
+    if length(new.slug) < 3 then
+      new.slug := public.fn_slug_disponible(coalesce(new.nombre, 'tienda'), new.id);
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_asignar_slug_tienda on public.perfiles;
+create trigger trg_asignar_slug_tienda
+  before insert or update of tienda_activa, slug, nombre on public.perfiles
+  for each row execute function public.fn_asignar_slug_tienda();
+
+-- ── 4. Solo profesionales y camperizadores pueden tener tienda ─────────────
+-- Un particular con escaparate confundiría al comprador sobre con quién trata
+-- (y es justo la distinción que vende este marketplace).
+
+create or replace function public.fn_validar_tienda()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.tienda_activa and coalesce(new.tipo_vendedor, 'particular') = 'particular' then
+    raise exception 'Solo los camperizadores y profesionales pueden abrir tienda';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_validar_tienda on public.perfiles;
+create trigger trg_validar_tienda
+  before insert or update of tienda_activa, tipo_vendedor on public.perfiles
+  for each row execute function public.fn_validar_tienda();
+
+-- Si un profesional se pasa a particular, su tienda se cierra sola en vez de
+-- dejar el trigger anterior bloqueando cualquier edición de su perfil.
+create or replace function public.fn_cerrar_tienda_si_particular()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if coalesce(new.tipo_vendedor, 'particular') = 'particular' then
+    new.tienda_activa := false;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_cerrar_tienda_si_particular on public.perfiles;
+create trigger trg_cerrar_tienda_si_particular
+  before update of tipo_vendedor on public.perfiles
+  for each row
+  when (coalesce(new.tipo_vendedor, 'particular') = 'particular'
+        and coalesce(old.tipo_vendedor, 'particular') <> 'particular')
+  execute function public.fn_cerrar_tienda_si_particular();
+
+-- ── 5. Backfill: slug para los profesionales que ya existen ────────────────
+-- No activa ninguna tienda; solo reserva la URL para que al activarla sea la
+-- esperada y no una con sufijo numérico por haber llegado tarde.
+
+do $$
+declare
+  r record;
+begin
+  for r in
+    select id, nombre from public.perfiles
+    where slug is null
+      and coalesce(tipo_vendedor, 'particular') in ('camperizador', 'profesional')
+    order by creado_en nulls last
+  loop
+    update public.perfiles
+    set slug = public.fn_slug_disponible(coalesce(r.nombre, 'tienda'), r.id)
+    where id = r.id;
+  end loop;
+end $$;
+
+
+-- ══════════════════════════════════════════════════════════════════════════
+-- Anexo 2026-09-22: Avisos de renovación (migración 202609220003)
+-- ══════════════════════════════════════════════════════════════════════════
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 202609220003 — Avisos de renovación al vendedor (2026-09-22)
+--
+-- Registra cuándo se avisó por última vez de cada anuncio, para no repetir el
+-- mismo mensaje. Sin esto, el cron mandaría el aviso todos los días al mismo
+-- vendedor: la forma más rápida de que silencie las notificaciones y se dé de
+-- baja de los correos.
+--
+-- Idempotente.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+alter table public.productos
+  add column if not exists ultimo_aviso_en timestamptz;
+
+comment on column public.productos.ultimo_aviso_en is
+  'Última vez que se avisó al vendedor de que este anuncio perdió visibilidad. '
+  'Lo usa /api/cron/avisos-renovacion para respetar DIAS_ENTRE_AVISOS.';
+
+-- Índice parcial: el cron busca candidatos entre los anuncios vivos, que son
+-- una fracción del total.
+create index if not exists productos_avisos_idx
+  on public.productos (ultimo_aviso_en)
+  where activo = true and vendido = false;
+
+
+-- ══════════════════════════════════════════════════════════════════════════
+-- Anexo 2026-09-22: Avisos por email de mensajes (migración 202609220004)
+-- ══════════════════════════════════════════════════════════════════════════
+
+-- ══════════════════════════════════════════════════════════════════════════
+-- Avisos por email de mensajes no leídos
+--
+-- Hasta ahora, recibir un mensaje solo generaba una notificación in-app y un
+-- push (que únicamente llega a quien aceptó notificaciones del navegador).
+-- Un vendedor que no vuelve a entrar en la web no se entera de que tiene un
+-- comprador esperando, y el comprador se va a otro portal.
+--
+-- Estrategia: aviso DIFERIDO. Un cron avisa solo de lo que sigue sin leer
+-- pasados unos minutos, así que quien estaba en la web y ya respondió no
+-- recibe nada.
+--
+-- Idempotente: se puede ejecutar varias veces sin efecto adicional.
+-- ══════════════════════════════════════════════════════════════════════════
+
+-- 1) Preferencia del usuario. Por defecto activada: es un aviso transaccional
+--    que el usuario espera recibir (alguien quiere comprarle algo), pero
+--    siempre debe poder apagarlo desde su perfil.
+alter table perfiles
+  add column if not exists email_avisos_mensajes boolean not null default true;
+
+comment on column perfiles.email_avisos_mensajes is
+  'Si false, el usuario no recibe emails de aviso por mensajes no leídos.';
+
+-- 2) Marca de aviso enviado en el propio mensaje. Evita avisar dos veces del
+--    mismo mensaje aunque el cron se solape o se reintente.
+alter table mensajes
+  add column if not exists aviso_email_en timestamp with time zone;
+
+comment on column mensajes.aviso_email_en is
+  'Momento en que se envió el email de aviso por este mensaje. Null = pendiente.';
+
+-- 3) Índice parcial: el cron solo busca mensajes sin leer y sin avisar.
+--    Al ser parcial se mantiene diminuto (los mensajes ya leídos o ya
+--    avisados, que son la inmensa mayoría, no ocupan sitio en el índice).
+create index if not exists mensajes_pendientes_aviso_idx
+  on mensajes (creado_en)
+  where leido = false and aviso_email_en is null;

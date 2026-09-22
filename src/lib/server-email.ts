@@ -208,7 +208,7 @@ export async function emailProductoPublicado(
      <p style="margin:0 0 20px">Tu anuncio ya está visible en CamperOcasión para que miles de compradores lo vean.</p>
      ${card(`
        <p style="margin:0 0 8px;font-weight:600;font-size:16px;color:${COLORS.dark}">${titulo}</p>
-       <p style="margin:0;font-size:22px;font-weight:700;color:${COLORS.primary}">$${precio} USD</p>
+       <p style="margin:0;font-size:22px;font-weight:700;color:${COLORS.primary}">${precio} &euro;</p>
      `)}
      <p style="margin:24px 0 0;color:${COLORS.gray};font-size:14px">Consejo: revisa tu anuncio desde tu perfil para asegurarte de que la foto principal sea la mejor.</p>`,
     'Ver mi anuncio',
