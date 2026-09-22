@@ -118,6 +118,13 @@ begin
 end;
 $$;
 
+-- OJO: en PostgreSQL toda funcion nueva nace con EXECUTE concedido a PUBLIC, y
+-- `revoke ... from anon, authenticated` NO quita ese permiso heredado. Hay que
+-- revocar de PUBLIC explicitamente. El cuerpo ya rechaza a quien no sea
+-- service_role/admin, pero dejar el grant abierto es una capa de menos: si
+-- manana alguien relaja esa comprobacion, cualquier usuario logueado podria
+-- regalarse creditos.
+revoke execute on function public.acreditar_pago_stripe(uuid, integer, text, text, numeric, text) from public;
 revoke execute on function public.acreditar_pago_stripe(uuid, integer, text, text, numeric, text) from anon, authenticated;
 grant execute on function public.acreditar_pago_stripe(uuid, integer, text, text, numeric, text) to service_role;
 

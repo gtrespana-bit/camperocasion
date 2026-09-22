@@ -20,6 +20,9 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   'conversacion:create': { max: 20, windowMs: 60 * 60 * 1000 },
   'favorito:toggle': { max: 100, windowMs: 60 * 60 * 1000 },
   'foto-perfil:update': { max: 10, windowMs: 60 * 60 * 1000 },
+  // Editar el escaparate de la tienda: generoso (el vendedor ajusta textos
+  // varias veces seguidas) pero acotado, porque cada cambio escribe en perfiles.
+  'perfil:actualizar': { max: 40, windowMs: 60 * 60 * 1000 },
   'storage-upload': { max: 50, windowMs: 60 * 60 * 1000 },
   'documento-vehiculo:upload': { max: 30, windowMs: 60 * 60 * 1000 },
   'reserva:create': { max: 10, windowMs: 24 * 60 * 60 * 1000 },

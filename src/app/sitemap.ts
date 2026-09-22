@@ -96,6 +96,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(hayDatosTitular() ? [{ path: '/aviso-legal', changeFrequency: 'yearly' as const, priority: 0.3 }] : []),
     { path: '/gestoria-cambio-nombre', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/marcas', changeFrequency: 'weekly', priority: 0.8 },
+    // Directorio de camperizadores y profesionales con tienda abierta.
+    { path: '/tiendas', changeFrequency: 'daily', priority: 0.8 },
     // Landings por tipo de vendedor (Fase 3): indexan "comprar camper a
     // particulares / camperizadores / profesionales".
     { path: '/comprar-a-particulares', changeFrequency: 'daily', priority: 0.8 },
@@ -204,7 +206,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })
     })
 
-    dynamicUrls = [...productUrls, ...vendorUrls]
+    // Tiendas de profesionales: son páginas de negocio con stock, así que
+    // pesan más que un perfil suelto de vendedor.
+    const tiendaUrls: MetadataRoute.Sitemap = []
+    try {
+      const { data: tiendas } = await supabase
+        .from('perfiles')
+        .select('slug')
+        .eq('tienda_activa', true)
+        .not('slug', 'is', null)
+        .limit(1000)
+
+      ;(tiendas || []).forEach((t: any) => {
+        if (!t.slug) return
+        tiendaUrls.push({
+          url: `${BASE_URL}/tienda/${t.slug}`,
+          lastModified: LAST_MODIFIED_DATE,
+          changeFrequency: 'daily' as const,
+          priority: 0.7,
+        })
+      })
+    } catch {
+      // La migración de tiendas puede no estar aplicada: el sitemap sigue.
+    }
+
+    dynamicUrls = [...productUrls, ...vendorUrls, ...tiendaUrls]
   } catch {
     // Si Supabase falla, servir al menos las URLs estáticas
   }

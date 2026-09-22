@@ -20,7 +20,7 @@ async function getVendedor(id: string) {
   const { data: perfil, error } = await supabase
     .from('perfiles')
     .select(
-      'id, nombre, estado, ciudad, verificado, nivel_confianza, creado_en, foto_perfil_url, badges_automaticos, tipo_vendedor'
+      'id, nombre, estado, ciudad, verificado, nivel_confianza, creado_en, foto_perfil_url, badges_automaticos, tipo_vendedor, slug, tienda_activa'
     )
     .eq('id', id)
     .maybeSingle()
