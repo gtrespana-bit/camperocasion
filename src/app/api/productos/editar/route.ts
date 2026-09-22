@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireUser } from '@/lib/require-auth'
-import { isValidUUID, isValidEmail, isValidLength, isValidPrice, isValidProductState, sanitizeObject, sanitizeString } from '@/lib/validation'
+import { isValidUUID, isValidLength, sanitizeString } from '@/lib/validation'
 import { verificarContenido } from '@/lib/moderacion'
-import { categoriasData, getSubConfig } from '@/lib/categorias'
-import { ESTADOS, getMunicipiosNombres } from '@/lib/ubicaciones'
-import { normalizeMessengerUrl } from '@/lib/contact-methods'
 import { revalidarListadosPublicos, revalidarFichaProducto } from '@/lib/revalidar'
+import {
+  isAllowedImageUrl,
+  normalizeContactMethods,
+  parsePrice,
+  resolveCategoryId,
+  resolveSubcategory,
+  validateImages,
+  validateSpecifications,
+  validLocation,
+} from '@/lib/productos-editar'
 
 const PRODUCT_COLUMNS = [
   'id',
@@ -62,110 +69,6 @@ function getAdminClient(): any {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false, autoRefreshToken: false } },
   )
-}
-
-function isAllowedImageUrl(value: string): boolean {
-  if (value === '/placeholder-product.webp') return true
-
-  try {
-    const parsed = new URL(value)
-    if (parsed.protocol !== 'https:') return false
-
-    const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
-      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
-      : ''
-    const esSupabase =
-      parsed.hostname === supabaseHost
-      || parsed.hostname.endsWith('.supabase.co')
-      || parsed.hostname.endsWith('.supabase.in')
-    if (esSupabase && parsed.pathname.includes('/storage/v1/object/public/')) {
-      return true
-    }
-
-    const r2PublicUrl = process.env.R2_PUBLIC_URL
-    if (r2PublicUrl) {
-      const r2 = new URL(r2PublicUrl)
-      if (parsed.origin === r2.origin && parsed.pathname.startsWith(`${r2.pathname.replace(/\/$/, '')}/`)) {
-        return true
-      }
-    }
-
-    // Existing seed content uses Unsplash. It is an explicit trusted host,
-    // never an arbitrary URL supplied by a user.
-    return parsed.hostname === 'images.unsplash.com'
-  } catch {
-    return false
-  }
-}
-
-function validateImages(value: unknown): string[] | null {
-  if (!Array.isArray(value) || value.length > 10) return null
-  const urls = value.filter((item): item is string => typeof item === 'string')
-  if (urls.length !== value.length) return null
-  if (urls.some((url) => url.length > 2000 || !isAllowedImageUrl(url))) return null
-  return urls
-}
-
-function normalizeContactMethods(value: unknown): Record<string, string> | null {
-  if (value === null || value === undefined) return {}
-  if (typeof value !== 'object' || Array.isArray(value)) return null
-
-  const input = value as Record<string, unknown>
-  const output: Record<string, string> = {}
-  const allowed = ['email', 'telefono', 'whatsapp', 'messenger']
-
-  for (const key of Object.keys(input)) {
-    if (!allowed.includes(key)) return null
-    if (typeof input[key] !== 'string') return null
-
-    const clean = sanitizeString(input[key] as string, key === 'email' ? 254 : 2000)
-    if (!clean) continue
-
-    if (key === 'email' && !isValidEmail(clean)) return null
-    if (key === 'messenger' && !normalizeMessengerUrl(clean)) return null
-    if ((key === 'telefono' || key === 'whatsapp') && !isValidLength(clean, 3, 40)) return null
-
-    output[key] = key === 'messenger' ? normalizeMessengerUrl(clean) : clean
-  }
-
-  return output
-}
-
-function validateSpecifications(value: unknown): Record<string, unknown> | null {
-  if (value === null || value === undefined) return {}
-  if (typeof value !== 'object' || Array.isArray(value)) return null
-
-  const entries = Object.entries(value as Record<string, unknown>)
-  if (entries.length > 30) return null
-
-  const clean = sanitizeObject(value as Record<string, unknown>, 4) as Record<string, unknown>
-  for (const [key, item] of Object.entries(clean)) {
-    if (key.length > 100) return null
-    if (typeof item === 'string' && item.length > 300) return null
-    if (typeof item !== 'string' && typeof item !== 'number' && typeof item !== 'boolean') return null
-  }
-  return clean
-}
-
-async function resolveCategoryId(sb: any, categoria: unknown): Promise<number | null> {
-  if (typeof categoria !== 'string' || !Object.prototype.hasOwnProperty.call(categoriasData, categoria)) {
-    return null
-  }
-
-  const { data, error } = await sb
-    .from('categorias')
-    .select('id')
-    .eq('nombre', categoria)
-    .maybeSingle()
-
-  if (error || data?.id == null) return null
-  return Number(data.id)
-}
-
-function validLocation(state: string, city: string, previousCity: string): boolean {
-  if (!(ESTADOS as readonly string[]).includes(state)) return false
-  if (city === previousCity) return true
-  return getMunicipiosNombres(state).includes(city)
 }
 
 export async function PATCH(request: NextRequest) {
@@ -238,26 +141,18 @@ export async function PATCH(request: NextRequest) {
     ...body,
   }
 
-  // `categoria` es una clave interna del catálogo, nunca una columna que el
-  // cliente pueda inventar. Si no viene, se conserva la categoría existente.
+  // En CamperOcasión todas las publicaciones pertenecen a la categoría 'camper'.
+  // Si la categoría viene vacía o con un valor heredado, se normaliza y se
+  // resuelve/asegura su ID en la base de datos sin fallar.
   let categoriaId = current.categoria_id
-  if (Object.prototype.hasOwnProperty.call(body, 'categoria')) {
-    const resolved = await resolveCategoryId(sb, body.categoria)
-    if (resolved === null) {
-      return NextResponse.json({ error: 'Categoría inválida o no configurada' }, { status: 400 })
-    }
+  const resolved = await resolveCategoryId(sb, body.categoria || 'camper')
+  if (resolved !== null) {
     categoriaId = resolved
   }
 
-  const categoriaKey = typeof body.categoria === 'string'
-    ? body.categoria
-    : await (async () => {
-        if (current.categoria_id == null) return null
-        const { data } = await sb.from('categorias').select('nombre').eq('id', current.categoria_id).maybeSingle()
-        return data?.nombre || null
-      })()
-  const subConfig = categoriaKey ? getSubConfig(categoriaKey, String(candidate.subcategoria || '')) : undefined
-  if (!subConfig) {
+  // Subcategoría: admite label canónico o slug y normaliza al label oficial de categoriasData.camper
+  const subcategoriaNormalizada = resolveSubcategory(candidate.subcategoria)
+  if (!subcategoriaNormalizada) {
     return NextResponse.json({ error: 'Subcategoría inválida para la categoría seleccionada' }, { status: 400 })
   }
 
@@ -269,18 +164,32 @@ export async function PATCH(request: NextRequest) {
   if (!isValidLength(descripcion, 1, 5000)) {
     return NextResponse.json({ error: 'Descripción requerida' }, { status: 400 })
   }
-  // Precio canónico: aceptar precio / precio_eur / precio_usd (legado) y sincronizar
-  const precioInput = candidate.precio ?? candidate.precio_eur ?? candidate.precio_usd
-  if (precioInput !== null && precioInput !== undefined && !isValidPrice(precioInput)) {
+
+  // Canónico ES: precio / precio_eur / precio_usd.
+  // Si el body envía precio, precio_eur o precio_usd, se respeta la entrada del usuario.
+  const precioRaw = Object.prototype.hasOwnProperty.call(body, 'precio')
+    ? body.precio
+    : Object.prototype.hasOwnProperty.call(body, 'precio_eur')
+      ? body.precio_eur
+      : Object.prototype.hasOwnProperty.call(body, 'precio_usd')
+        ? body.precio_usd
+        : (current.precio ?? current.precio_eur ?? current.precio_usd)
+
+  const parsedPrice = parsePrice(precioRaw)
+  if (!parsedPrice.valid) {
     return NextResponse.json({ error: 'Precio inválido' }, { status: 400 })
   }
-  if (!isValidProductState(String(candidate.estado || ''))) {
+  const precioEur = parsedPrice.value
+
+  const validStates = ['Nuevo', 'Como nuevo', 'Bueno', 'Usado', 'Para repuestos']
+  const estadoStr = String(candidate.estado || '')
+  if (!validStates.includes(estadoStr)) {
     return NextResponse.json({ error: 'Estado de producto inválido' }, { status: 400 })
   }
 
   const ubicacionEstado = sanitizeString(String(candidate.ubicacion_estado ?? ''), 50)
   const ubicacionCiudad = sanitizeString(String(candidate.ubicacion_ciudad ?? ''), 80)
-  if (!validLocation(ubicacionEstado, ubicacionCiudad, String(current.ubicacion_ciudad || ''))) {
+  if (!validLocation(ubicacionEstado, ubicacionCiudad, String(current.ubicacion_estado || ''), String(current.ubicacion_ciudad || ''))) {
     return NextResponse.json({ error: 'Ubicación inválida' }, { status: 400 })
   }
 
@@ -290,14 +199,17 @@ export async function PATCH(request: NextRequest) {
   const contactMethods = normalizeContactMethods(candidate.metodos_contacto)
   if (contactMethods === null) return NextResponse.json({ error: 'Métodos de contacto inválidos' }, { status: 400 })
 
-  const imageFieldsProvided = Object.prototype.hasOwnProperty.call(body, 'imagenes')
-    || Object.prototype.hasOwnProperty.call(body, 'imagen_url')
-  const currentImages = Array.isArray(current.imagenes) && current.imagenes.length > 0
+  const currentImagesList: string[] = Array.isArray(current.imagenes) && current.imagenes.length > 0
     ? current.imagenes
     : current.imagen_url
       ? [current.imagen_url]
       : []
-  const images = validateImages(imageFieldsProvided ? (candidate.imagenes || []) : currentImages)
+  const currentImagesSet = new Set(currentImagesList)
+
+  const imageFieldsProvided = Object.prototype.hasOwnProperty.call(body, 'imagenes')
+    || Object.prototype.hasOwnProperty.call(body, 'imagen_url')
+  const candidateImages = imageFieldsProvided ? (candidate.imagenes || []) : currentImagesList
+  const images = validateImages(candidateImages, currentImagesSet)
   if (images === null) return NextResponse.json({ error: 'Imágenes inválidas' }, { status: 400 })
   if (imageFieldsProvided && candidate.imagen_url && images.length > 0 && candidate.imagen_url !== images[0]) {
     return NextResponse.json({ error: 'La imagen principal no coincide con la galería' }, { status: 400 })
@@ -332,22 +244,21 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Un producto rechazado requiere revisión administrativa' }, { status: 409 })
   }
 
-  const precioEur = precioInput == null ? null : Number(precioInput)
   const updateData: Record<string, unknown> = {
     titulo,
     descripcion,
     categoria_id: categoriaId,
-    subcategoria: String(candidate.subcategoria),
+    subcategoria: subcategoriaNormalizada,
     marca: candidate.marca == null ? null : sanitizeString(String(candidate.marca), 100),
     modelo: candidate.modelo == null ? null : sanitizeString(String(candidate.modelo), 150),
     especificaciones: specs,
-    estado: String(candidate.estado),
-    // Escribir en canónico y en aliases para compatibilidad (trigger los mantiene sincronizados, pero escribir explícito es más claro)
+    estado: estadoStr,
+    // Escribir en canónico y en aliases para compatibilidad (trigger los mantiene sincronizados)
     precio: precioEur,
     precio_eur: precioEur,
     precio_usd: precioEur,
-    ubicacion_estado: ubicacionEstado,
-    ubicacion_ciudad: ubicacionCiudad,
+    ubicacion_estado: ubicacionEstado || null,
+    ubicacion_ciudad: ubicacionCiudad || null,
     imagen_url: nextImageUrl,
     imagenes: images,
     metodos_contacto: contactMethods,
@@ -365,7 +276,7 @@ export async function PATCH(request: NextRequest) {
     .maybeSingle()
 
   if (error) {
-    return NextResponse.json({ error: 'No se pudo guardar el producto' }, { status: 500 })
+    return NextResponse.json({ error: 'No se pudo guardar el producto: ' + (error.message || '') }, { status: 500 })
   }
   if (!data) {
     return NextResponse.json({ error: 'No se pudo guardar el producto' }, { status: 409 })

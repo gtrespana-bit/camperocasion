@@ -1,24 +1,20 @@
 'use client'
 
 /**
- * Expediente del vehículo — cara del vendedor.
+ * Expediente del vehículo — cara del vendedor (100% opcional).
  *
  * Permite subir (y reemplazar) los documentos que acreditan lo que declara el
  * anuncio: ficha técnica, proyecto de homologación, ITV… El equipo de
  * CamperOcasión lo revisa y entonces el anuncio muestra el sello de
  * "Homologación verificada".
  *
- * Reglas que respeta la UI:
- *  - Subir de nuevo un documento invalida la verificación anterior (el sello
- *    acredita unos documentos concretos). Lo decide el servidor, no el cliente.
- *  - Los documentos viven en un bucket privado: se abren con URL firmada de 5
- *    minutos que devuelve la API, nunca con una URL pública.
- *  - El vendedor no puede marcarse nada como verificado.
+ * Es una funcionalidad completamente opcional: el anuncio se publica y edita
+ * sin necesidad de subir ningún documento.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { AlertTriangle, CheckCircle2, FileText, Loader2, Trash2, Upload } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, FileText, Loader2, ShieldCheck, Trash2, Upload } from 'lucide-react'
 import {
   TAMANO_MAXIMO_DOCUMENTO,
   TIPOS_ARCHIVO_DOCUMENTO,
@@ -42,10 +38,10 @@ interface ExpedienteVehiculoProps {
 }
 
 const TONOS_ESTADO: Record<string, string> = {
-  verificada: 'bg-brand-accent/10 border-brand-accent/40 text-brand-accent-dark',
+  verificada: 'bg-emerald-50 border-emerald-300 text-emerald-800',
   pendiente: 'bg-amber-50 border-amber-200 text-amber-800',
   rechazada: 'bg-red-50 border-red-200 text-red-700',
-  sin_verificar: 'bg-gray-50 border-gray-200 text-gray-700',
+  sin_verificar: 'bg-slate-50 border-slate-200 text-slate-700',
 }
 
 export default function ExpedienteVehiculo({
@@ -62,6 +58,7 @@ export default function ExpedienteVehiculo({
   const [subiendo, setSubiendo] = useState<string | null>(null)
   const [eliminando, setEliminando] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [desplegado, setDesplegado] = useState(false)
   const inputs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const resumen = resumenExpediente(especificaciones, documentos, estado)
@@ -74,8 +71,15 @@ export default function ExpedienteVehiculo({
         setError(json.error || t('expedienteErrorCarga'))
         return
       }
-      setDocumentos(json.documentos || [])
-      if (json.estadoVerificacion) setEstado(normalizarEstadoVerificacion(json.estadoVerificacion))
+      const docs = json.documentos || []
+      setDocumentos(docs)
+      if (json.estadoVerificacion) {
+        const est = normalizarEstadoVerificacion(json.estadoVerificacion)
+        setEstado(est)
+        if (est !== 'sin_verificar' || docs.length > 0) {
+          setDesplegado(true)
+        }
+      }
       if (typeof json.motivo === 'string') setMotivo(json.motivo || '')
     } catch {
       setError(t('expedienteErrorCarga'))
@@ -87,6 +91,12 @@ export default function ExpedienteVehiculo({
   useEffect(() => {
     cargar()
   }, [cargar])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#expediente') {
+      setDesplegado(true)
+    }
+  }, [])
 
   async function subir(tipo: TipoDocumentoVehiculo, file: File) {
     setError('')
@@ -115,6 +125,7 @@ export default function ExpedienteVehiculo({
       setEstado(normalizarEstadoVerificacion(json.estadoVerificacion))
       setMotivo('')
       await cargar()
+      setDesplegado(true)
     } catch {
       setError(t('expedienteErrorSubida'))
     } finally {
@@ -143,131 +154,178 @@ export default function ExpedienteVehiculo({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4" id="expediente">
-      <div>
-        <h3 className="font-bold text-gray-900 flex items-center gap-2">
-          <FileText size={18} className="text-brand-accent" aria-hidden="true" />
-          {t('expedienteTitle')}
-        </h3>
-        <p className="text-sm text-gray-600 mt-1">{t('expedienteIntro')}</p>
+    <div className="bg-slate-50/70 rounded-2xl border border-slate-200 p-5 space-y-4 transition" id="expediente">
+      {/* Cabecera explicativa con indicador claro de Opcional */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <ShieldCheck size={20} className="text-brand-primary shrink-0" aria-hidden="true" />
+            <h3 className="font-bold text-gray-900 text-base">
+              {t('expedienteTitle')}
+            </h3>
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+              100% Opcional
+            </span>
+            {documentos.length > 0 && (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                {documentos.length} {documentos.length === 1 ? 'doc subido' : 'docs subidos'}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">
+            Subir la documentación es <strong>totalmente voluntario</strong>: tu anuncio se guarda y publica normalmente sin ningún documento.
+            Súbelos únicamente si deseas obtener el sello oficial de <strong>«Homologación verificada»</strong> para certificar la ficha técnica y transmitir mayor confianza a los compradores.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setDesplegado(prev => !prev)}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition shrink-0 self-start sm:self-auto shadow-sm"
+        >
+          {desplegado ? (
+            <>Ocultar <ChevronUp size={14} /></>
+          ) : (
+            <>{documentos.length > 0 ? 'Gestionar documentos' : 'Añadir documentos para verificar'} <ChevronDown size={14} /></>
+          )}
+        </button>
       </div>
 
-      <div className={`rounded-lg border px-4 py-3 text-sm ${TONOS_ESTADO[estado] || TONOS_ESTADO.sin_verificar}`}>
-        <p className="font-semibold">{t(`expedienteEstado.${estado}`)}</p>
-        {estado === 'rechazada' && motivo && (
-          <p className="mt-1 text-xs">{t('expedienteMotivo')}: {motivo}</p>
-        )}
-        {estado === 'verificada' && <p className="mt-1 text-xs">{t('expedienteEstadoVerificadaNota')}</p>}
-      </div>
+      {desplegado && (
+        <div className="space-y-4 pt-3 border-t border-slate-200 animate-fadeIn">
+          {/* Estado del expediente */}
+          <div className={`rounded-lg border px-4 py-3 text-xs sm:text-sm ${TONOS_ESTADO[estado] || TONOS_ESTADO.sin_verificar}`}>
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">
+                Estado de verificación: {t(`expedienteEstado.${estado}`)}
+              </span>
+              {estado === 'sin_verificar' && (
+                <span className="text-[11px] text-gray-500 font-normal">
+                  (Anuncio estándar sin certificar)
+                </span>
+              )}
+            </div>
+            {estado === 'rechazada' && motivo && (
+              <p className="mt-1 text-xs">{t('expedienteMotivo')}: {motivo}</p>
+            )}
+            {estado === 'verificada' && (
+              <p className="mt-1 text-xs text-emerald-700">
+                ✅ Sello concedido. {t('expedienteEstadoVerificadaNota')}
+              </p>
+            )}
+          </div>
 
-      {resumen.avisos.length > 0 && (
-        <ul className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
-          {resumen.avisos.map(aviso => (
-            <li key={aviso} className="flex items-start gap-2">
-              <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" aria-hidden="true" />
-              <span>{aviso}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+          {/* Avisos solo si el usuario YA ha empezado a subir documentos para solicitar el sello */}
+          {documentos.length > 0 && resumen.avisos.length > 0 && (
+            <ul className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
+              {resumen.avisos.map(aviso => (
+                <li key={aviso} className="flex items-start gap-2">
+                  <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <span>Para completar la verificación del sello: {aviso}</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
-      {error && (
-        <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
-      )}
+          {error && (
+            <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
+          )}
 
-      {cargando ? (
-        <p className="text-sm text-gray-500 flex items-center gap-2">
-          <Loader2 size={16} className="animate-spin" aria-hidden="true" /> {t('expedienteCargando')}
-        </p>
-      ) : (
-        <ul className="divide-y divide-gray-100">
-          {resumen.items.map(item => {
-            const doc = documentos.find(d => d.tipo === item.tipo)
-            const ocupado = subiendo === item.tipo
-            return (
-              <li key={item.tipo} className="py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-sm text-gray-900">{item.label}</span>
-                    {item.exigido ? (
-                      <span className="text-[10px] font-bold uppercase tracking-wide text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
-                        {t('expedienteRequerido')}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold uppercase tracking-wide text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded-full">
-                        {t('expedienteOpcional')}
-                      </span>
-                    )}
-                    {doc && (
-                      <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border ${
-                        doc.estado === 'verificado'
-                          ? 'text-brand-accent-dark bg-brand-accent/10 border-brand-accent/40'
-                          : doc.estado === 'rechazado'
-                            ? 'text-red-700 bg-red-50 border-red-200'
-                            : 'text-amber-700 bg-amber-50 border-amber-200'
-                      }`}>
-                        {t(`expedienteDocumentoEstado.${doc.estado || 'pendiente'}`)}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-0.5">{item.ayuda}</p>
-                  {doc && (
-                    <p className="text-xs text-gray-600 mt-1 truncate">
-                      {doc.signedUrl ? (
-                        <a href={doc.signedUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-primary">
-                          {doc.nombre_archivo || t('expedienteVerDocumento')}
-                        </a>
-                      ) : (
-                        doc.nombre_archivo || ''
+          {cargando ? (
+            <p className="text-sm text-gray-500 flex items-center gap-2">
+              <Loader2 size={16} className="animate-spin" aria-hidden="true" /> {t('expedienteCargando')}
+            </p>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden divide-y divide-gray-100">
+              {resumen.items.map(item => {
+                const doc = documentos.find(d => d.tipo === item.tipo)
+                const ocupado = subiendo === item.tipo
+                return (
+                  <div key={item.tipo} className="p-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm text-gray-900">{item.label}</span>
+                        {item.exigido ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full">
+                            Necesario para el sello
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
+                            Opcional
+                          </span>
+                        )}
+                        {doc && (
+                          <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${
+                            doc.estado === 'verificado'
+                              ? 'text-emerald-700 bg-emerald-50 border-emerald-300'
+                              : doc.estado === 'rechazado'
+                                ? 'text-red-700 bg-red-50 border-red-200'
+                                : 'text-amber-700 bg-amber-50 border-amber-200'
+                          }`}>
+                            {t(`expedienteDocumentoEstado.${doc.estado || 'pendiente'}`)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">{item.ayuda}</p>
+                      {doc && (
+                        <p className="text-xs text-gray-600 mt-1 truncate">
+                          {doc.signedUrl ? (
+                            <a href={doc.signedUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-primary">
+                              {doc.nombre_archivo || t('expedienteVerDocumento')}
+                            </a>
+                          ) : (
+                            doc.nombre_archivo || ''
+                          )}
+                        </p>
                       )}
-                    </p>
-                  )}
-                </div>
+                    </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <input
-                    ref={el => { inputs.current[item.tipo] = el }}
-                    type="file"
-                    accept={TIPOS_ARCHIVO_DOCUMENTO.join(',')}
-                    className="hidden"
-                    onChange={e => {
-                      const file = e.target.files?.[0]
-                      if (file) subir(item.tipo, file)
-                      e.target.value = ''
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => inputs.current[item.tipo]?.click()}
-                    disabled={ocupado}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold border border-gray-300 rounded-lg px-3 py-2 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    {ocupado ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Upload size={14} aria-hidden="true" />}
-                    {ocupado ? t('expedienteSubiendo') : doc ? t('expedienteReemplazar') : t('expedienteSubir')}
-                  </button>
-                  {doc && (
-                    <button
-                      type="button"
-                      onClick={() => eliminar(doc.id)}
-                      disabled={eliminando === doc.id}
-                      title={t('expedienteEliminar')}
-                      aria-label={t('expedienteEliminar')}
-                      className="inline-flex items-center justify-center text-red-600 border border-red-200 rounded-lg p-2 hover:bg-red-50 disabled:opacity-50"
-                    >
-                      {eliminando === doc.id ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />}
-                    </button>
-                  )}
-                </div>
-              </li>
-            )
-          })}
-        </ul>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <input
+                        ref={el => { inputs.current[item.tipo] = el }}
+                        type="file"
+                        accept={TIPOS_ARCHIVO_DOCUMENTO.join(',')}
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0]
+                          if (file) subir(item.tipo, file)
+                          e.target.value = ''
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => inputs.current[item.tipo]?.click()}
+                        disabled={ocupado}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold border border-gray-300 rounded-lg px-3 py-2 hover:bg-gray-50 disabled:opacity-50 transition bg-white shadow-sm"
+                      >
+                        {ocupado ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Upload size={14} aria-hidden="true" />}
+                        {ocupado ? t('expedienteSubiendo') : doc ? t('expedienteReemplazar') : t('expedienteSubir')}
+                      </button>
+                      {doc && (
+                        <button
+                          type="button"
+                          onClick={() => eliminar(doc.id)}
+                          disabled={eliminando === doc.id}
+                          title={t('expedienteEliminar')}
+                          aria-label={t('expedienteEliminar')}
+                          className="inline-flex items-center justify-center text-red-600 border border-red-200 rounded-lg p-2 hover:bg-red-50 disabled:opacity-50 transition"
+                        >
+                          {eliminando === doc.id ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <p className="text-xs text-gray-500 flex items-start gap-2 pt-1">
+            <CheckCircle2 size={14} className="mt-0.5 flex-shrink-0 text-emerald-600" aria-hidden="true" />
+            {t('expedientePrivacidad')}
+          </p>
+        </div>
       )}
-
-      <p className="text-xs text-gray-500 flex items-start gap-2">
-        <CheckCircle2 size={14} className="mt-0.5 flex-shrink-0 text-brand-accent" aria-hidden="true" />
-        {t('expedientePrivacidad')}
-      </p>
     </div>
   )
 }
