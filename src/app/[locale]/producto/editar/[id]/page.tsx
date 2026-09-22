@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import { categoriasData, resolverCampos, FAMILIAS } from '@/lib/categorias'
+import { agruparPorFabricante, etiquetaModelo } from '@/lib/marcas'
 import { ESTADOS, getMunicipiosNombres } from '@/lib/ubicaciones'
 import { Camera, X, ArrowLeft, Save, AlertCircle, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -30,7 +31,6 @@ export default function EditarPage() {
   // Form
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
-  const [categoria, setCategoria] = useState('')
   const [subcategoria, setSubcategoria] = useState('')
   const [marca, setMarca] = useState('')
   const [estadoProd, setEstadoProd] = useState('')
@@ -63,28 +63,34 @@ export default function EditarPage() {
     async function load() {
       const { data: prod } = await supabase
         .from('productos')
-        .select('id, titulo, descripcion, precio_usd, estado, categoria_id, subcategoria, marca, modelo, ubicacion_estado, ubicacion_ciudad, activo, visitas, creado_en, user_id, imagen_url, imagenes, metodos_contacto, especificaciones, destacado, destacado_hasta, boosteado_en')
+        .select('id, titulo, descripcion, precio, precio_eur, precio_usd, estado, categoria_id, subcategoria, marca, modelo, ubicacion_estado, ubicacion_ciudad, activo, visitas, creado_en, user_id, imagen_url, imagenes, metodos_contacto, especificaciones, destacado, destacado_hasta, boosteado_en')
         .eq('id', productoId)
         .maybeSingle()
 
       if (!prod) { setError('No encontrado'); setLoading(false); return }
       if (user && prod.user_id !== user.id) { setError('No tienes permiso'); setLoading(false); return }
 
-      // Find category name
-      // maybeSingle(): los productos con categoria_id NULL (publicados con el
-      // bug de la categoría inexistente) devolvían 406 al abrir el editor.
-      const { data: cat } = await supabase.from('categorias').select('nombre').eq('id', prod.categoria_id).maybeSingle()
-
-      setTitulo(prod.titulo)
+      // En CamperOcasión, la categoría canónica única es 'camper'.
+      setTitulo(prod.titulo || '')
       setDescripcion(prod.descripcion || '')
-      setCategoria(cat?.nombre || '')
-      setSubcategoria(prod.subcategoria || '')
+
+      // Normalizar subcategoría si venía como slug o con formato diferente
+      const subEncontrada = categoriasData.camper.subs.find(
+        s => s.label === prod.subcategoria || s.slug === prod.subcategoria || s.label.toLowerCase() === (prod.subcategoria || '').toLowerCase()
+      )
+      const subcategoriaActual = subEncontrada?.label || prod.subcategoria || ''
+      setSubcategoria(subcategoriaActual)
+
       setMarca(prod.marca || '')
       setEstadoProd(prod.estado || '')
-      setPrecioUsd(prod.precio_usd?.toString() || '')
+
+      // Precio: leer de precio (canónico), precio_eur o precio_usd
+      const precioValor = prod.precio ?? prod.precio_eur ?? prod.precio_usd
+      setPrecioUsd(precioValor != null ? String(precioValor) : '')
+
       setUbicacionEstado(prod.ubicacion_estado || '')
       setUbicacionCiudad(prod.ubicacion_ciudad || '')
-      setActivo(prod.activo)
+      setActivo(prod.activo ?? true)
       setCurrentImages(prod.imagenes?.length ? prod.imagenes : (prod.imagen_url ? [prod.imagen_url] : []))
 
       // Load contact methods
@@ -98,14 +104,18 @@ export default function EditarPage() {
       setShowWhatsApp(!!mc.whatsapp)
       setShowMessenger(!!mc.messenger)
 
-      // Load specs from categoria
-      const catData = categoriasData[cat?.nombre]
-      const sub = catData?.subs.find(s => s.label === prod.subcategoria)
-      const campos = resolverCampos(sub)
-
+      // Cargar especificaciones técnicas de la subcategoría
+      const campos = resolverCampos(subEncontrada)
       const existingSpecs: Record<string, string> = {}
+      if (prod.especificaciones && typeof prod.especificaciones === 'object') {
+        Object.entries(prod.especificaciones).forEach(([k, v]) => {
+          if (v != null) existingSpecs[k] = String(v)
+        })
+      }
       campos.forEach((campo: any) => {
-        existingSpecs[campo.label] = (prod.especificaciones && typeof prod.especificaciones === 'object' ? (prod.especificaciones as any)[campo.label] : null) || ''
+        if (!(campo.label in existingSpecs)) {
+          existingSpecs[campo.label] = ''
+        }
       })
       setSpecs(existingSpecs)
 
@@ -116,12 +126,61 @@ export default function EditarPage() {
 
   if (!session) return null
 
+  const cat = categoriasData.camper
+  const sub = cat.subs.find(s => s.label === subcategoria || s.slug === subcategoria)
+  // resolverCampos: Marca hereda las marcas de la subcategoría y Año se genera dinámicamente.
+  const camposEspeciales = resolverCampos(sub)
+
+  const handleSubcategoriaChange = (val: string) => {
+    setSubcategoria(val)
+    const newSub = categoriasData.camper.subs.find(s => s.label === val || s.slug === val)
+    const newCampos = resolverCampos(newSub)
+    setSpecs(prev => {
+      const updated = { ...prev }
+      newCampos.forEach(c => {
+        if (!(c.label in updated)) updated[c.label] = ''
+      })
+      return updated
+    })
+  }
+
   const handleSubmit = async () => {
     setGuardando(true)
     setError('')
     setSuccess('')
 
     if (!isSupabaseConfigured()) { setError('Supabase no configurado'); setGuardando(false); return }
+
+    if (!titulo.trim()) {
+      setError('El título es obligatorio')
+      setGuardando(false)
+      return
+    }
+    if (titulo.trim().length < 3) {
+      setError('El título debe tener al menos 3 caracteres')
+      setGuardando(false)
+      return
+    }
+    if (!descripcion.trim()) {
+      setError('La descripción es obligatoria')
+      setGuardando(false)
+      return
+    }
+    if (!subcategoria) {
+      setError('Selecciona el tipo de vehículo')
+      setGuardando(false)
+      return
+    }
+    if (!estadoProd) {
+      setError('Selecciona la condición del vehículo')
+      setGuardando(false)
+      return
+    }
+    if (precioUsd !== '' && (isNaN(Number(precioUsd)) || Number(precioUsd) < 0)) {
+      setError('El precio debe ser un número positivo')
+      setGuardando(false)
+      return
+    }
 
     try {
       // Subir nuevas fotos a Supabase Storage
@@ -147,26 +206,34 @@ export default function EditarPage() {
         }
       }
 
-      // Build contact methods
-      const metodosContacto: Record<string, any> = {}
-      if (showEmail && contactEmail) metodosContacto.email = contactEmail
-      if (showPhone && contactPhone) metodosContacto.telefono = contactPhone
-      if (showWhatsApp && contactWhatsApp) metodosContacto.whatsapp = contactWhatsApp
-      if (showMessenger && contactMessenger) metodosContacto.messenger = contactMessenger
+      // Construir métodos de contacto limpios
+      const metodosContacto: Record<string, string> = {}
+      if (showEmail && contactEmail.trim()) metodosContacto.email = contactEmail.trim()
+      const cleanPhone = contactPhone.trim()
+      if (showPhone && cleanPhone && cleanPhone !== '+34' && cleanPhone !== '+') {
+        metodosContacto.telefono = cleanPhone
+      }
+      const cleanWA = contactWhatsApp.trim()
+      if (showWhatsApp && cleanWA && cleanWA !== '+34' && cleanWA !== '+') {
+        metodosContacto.whatsapp = cleanWA
+      }
+      const cleanMessenger = contactMessenger.trim()
+      if (showMessenger && cleanMessenger && cleanMessenger !== 'https://m.me/' && cleanMessenger !== 'https://m.me') {
+        metodosContacto.messenger = cleanMessenger
+      }
 
-      // La edición pasa por una API server-side. Allí se comprueban el
-      // propietario, la categoría, la ubicación, las imágenes y la moderación;
-      // el cliente nunca escribe directamente las columnas de productos.
+      // La edición pasa por la API server-side
+      const precioNum = precioUsd === '' ? null : Number(precioUsd)
       const res = await fetch('/api/productos/editar', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: productoId,
-          titulo,
-          descripcion,
-          categoria,
+          titulo: titulo.trim(),
+          descripcion: descripcion.trim(),
+          categoria: 'camper',
           subcategoria,
-          marca: marca || null,
+          marca: marca.replace(/^otra:/, '').trim() || null,
           modelo: (() => {
             const campoModelo = camposEspeciales.find(c => c.label.toLowerCase() === 'modelo')
             return campoModelo ? (specs[campoModelo.label] || '').trim() || null : null
@@ -177,9 +244,11 @@ export default function EditarPage() {
               .filter(([, v]) => v)
           ),
           estado: estadoProd,
-          precio_usd: precioUsd === '' ? null : Number(precioUsd),
-          ubicacion_estado: ubicacionEstado,
-          ubicacion_ciudad: ubicacionCiudad,
+          precio: precioNum,
+          precio_eur: precioNum,
+          precio_usd: precioNum,
+          ubicacion_estado: ubicacionEstado || null,
+          ubicacion_ciudad: ubicacionCiudad || null,
           activo,
           imagen_url: uploadedUrls[0] || null,
           imagenes: uploadedUrls,
@@ -189,13 +258,13 @@ export default function EditarPage() {
 
       const result = await res.json().catch(() => ({}))
       if (!res.ok || !result.ok) {
-        setError('Error al guardar: ' + (result.error || 'No se pudo guardar el producto'))
+        setError(result.error || 'No se pudo guardar el producto (error ' + res.status + ')')
       } else {
         setSuccess('Guardado correctamente')
         setTimeout(() => router.push(`/producto/${result.product?.slug || productoId}`), 1500)
       }
     } catch (err) {
-      setError('Error inesperado')
+      setError('Error inesperado al guardar')
     }
     setGuardando(false)
   }
@@ -222,12 +291,6 @@ export default function EditarPage() {
     }
   }
 
-  const cat = categoriasData[categoria]
-  const sub = cat?.subs.find(s => s.label === subcategoria)
-  // resolverCampos: Marca hereda las marcas de la subcategoría y Año se genera
-  // solo. (Antes se comparaba con 'Ano', que nunca casa con el label real 'Año'.)
-  const camposEspeciales = resolverCampos(sub)
-
   const handleNewImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
@@ -242,7 +305,7 @@ export default function EditarPage() {
     if (selected.length === 0) return
     e.target.value = ''
 
-    // Optimizar en el navegador (canvas → WebP) antes de subir a R2
+    // Optimizar en el navegador (canvas → WebP) antes de subir a Storage
     setProcesando(true)
     let processed = selected
     try {
@@ -292,10 +355,10 @@ export default function EditarPage() {
           <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} rows={4} className="w-full border rounded-lg px-4 py-3 resize-none" />
         </div>
 
-        {/* Precio + Estado + Categoria/Sub */}
+        {/* Precio + Estado */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1.5">{t('priceUsd')}</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">{t('priceEur') || 'Precio (€)'}</label>
             <input type="number" value={precioUsd} onChange={e => setPrecioUsd(e.target.value)} className="w-full border rounded-lg px-4 py-3" />
           </div>
           <div>
@@ -307,12 +370,11 @@ export default function EditarPage() {
           </div>
         </div>
 
+        {/* Tipo de vehículo */}
         <div>
-          {/* Tipo de vehículo agrupado por familia (Campers / Autocaravanas /
-              Overland). La categoría única `camper` ya no se expone. */}
           <label className="block text-sm font-semibold text-gray-900 mb-1.5">Tipo de vehículo</label>
-          <select value={subcategoria} onChange={e => setSubcategoria(e.target.value)} className="w-full border rounded-lg px-4 py-3 bg-white">
-            <option value="">...</option>
+          <select value={subcategoria} onChange={e => handleSubcategoriaChange(e.target.value)} className="w-full border rounded-lg px-4 py-3 bg-white">
+            <option value="">Seleccionar tipo...</option>
             {FAMILIAS.map((f: any) => (
               <optgroup key={f.key} label={`${f.icon} ${f.label}`}>
                 {f.subs.map((slug: string) => {
@@ -325,7 +387,48 @@ export default function EditarPage() {
           </select>
         </div>
 
-        {marca && <div><label className="block text-sm font-semibold text-gray-900 mb-1.5">Marca</label><input type="text" value={marca} onChange={e => setMarca(e.target.value)} className="w-full border rounded-lg px-4 py-3" /></div>}
+        {/* Marca */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-1.5">Marca</label>
+          {sub && sub.marcas.length > 0 ? (
+            <>
+              <select
+                value={marca.startsWith('otra:') ? 'otra:' : marca}
+                onChange={e => setMarca(e.target.value === 'otra:' ? 'otra:' : e.target.value)}
+                className="w-full border rounded-lg px-4 py-3 text-gray-800 bg-white"
+              >
+                <option value="">Selecciona marca...</option>
+                {agruparPorFabricante(sub.marcas).map(g =>
+                  g.modelos.length === 1 && !g.modelos[0].modelo ? (
+                    <option key={g.modelos[0].valor} value={g.modelos[0].valor}>{g.modelos[0].valor}</option>
+                  ) : (
+                    <optgroup key={g.fabricante} label={g.fabricante}>
+                      {g.modelos.map(m => <option key={m.valor} value={m.valor}>{etiquetaModelo(m)}</option>)}
+                    </optgroup>
+                  )
+                )}
+                <option value="otra:">Otra marca...</option>
+              </select>
+              {marca.startsWith('otra:') && (
+                <input
+                  type="text"
+                  value={marca.replace('otra:', '')}
+                  onChange={e => setMarca('otra:' + e.target.value)}
+                  placeholder="Escribe la marca..."
+                  className="mt-2 w-full border rounded-lg px-4 py-3 text-gray-800 bg-white"
+                />
+              )}
+            </>
+          ) : (
+            <input
+              type="text"
+              value={marca}
+              onChange={e => setMarca(e.target.value)}
+              placeholder="Ej: Fiat, Volkswagen, Mercedes..."
+              className="w-full border rounded-lg px-4 py-3"
+            />
+          )}
+        </div>
 
         {/* Expediente del vehículo: sube la documentación y consigue el sello
             de "Homologación verificada" en el anuncio (Fase 0.2). */}
@@ -355,16 +458,16 @@ export default function EditarPage() {
         {/* Ubicación */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1.5">{t('condition')}</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Comunidad Autónoma</label>
             <select value={ubicacionEstado} onChange={e => setUbicacionEstado(e.target.value)} className="w-full border rounded-lg px-4 py-3 bg-white">
-              <option value="">Estado...</option>
+              <option value="">Comunidad Autónoma...</option>
               {ESTADOS.map(e => <option key={e} value={e}>{e}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Municipio</label>
-            <select value={ubicacionCiudad} onChange={e => setUbicacionCiudad(e.target.value)} required disabled={!ubicacionEstado} className="w-full border rounded-lg px-4 py-3 bg-white text-gray-800">
-              <option value="">Municipio...</option>
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Provincia</label>
+            <select value={ubicacionCiudad} onChange={e => setUbicacionCiudad(e.target.value)} disabled={!ubicacionEstado} className="w-full border rounded-lg px-4 py-3 bg-white text-gray-800">
+              <option value="">Provincia...</option>
               {(ubicacionEstado ? getMunicipiosNombres(ubicacionEstado) : []).map(m => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
@@ -414,7 +517,7 @@ export default function EditarPage() {
             </div>
           ) : (
             <label className="flex items-center gap-3 bg-white border rounded-lg p-3 cursor-pointer hover:bg-gray-50">
-              <input type="checkbox" onChange={() => setShowEmail(true)} className="rounded" />
+              <input type="checkbox" onChange={() => { setShowEmail(true) }} className="rounded" />
               <span className="text-sm">📧 Email</span>
             </label>
           )}
