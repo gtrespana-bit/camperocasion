@@ -221,6 +221,25 @@ export function agruparPorFabricante(modelos: MarcaModelo[]): GrupoFabricante[] 
     }))
 }
 
+/**
+ * Slug de URL de un modelo, para /modelo/[slug]. Se deriva del valor canónico
+ * (que es lo que está guardado en `productos.marca`), así que la URL y el
+ * filtro del catálogo no pueden divergir.
+ */
+export function slugModelo(m: MarcaModelo): string {
+  return m.valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+/** Busca un modelo por su slug de URL. */
+export function modeloPorSlug(slug: string): MarcaModelo | undefined {
+  return MARCAS_MODELOS.find(m => slugModelo(m) === slug)
+}
+
 /** Etiqueta visible de un modelo dentro de su fabricante: 'Ducato', 'Benimar'… */
 export function etiquetaModelo(m: MarcaModelo): string {
   return m.modelo || m.valor

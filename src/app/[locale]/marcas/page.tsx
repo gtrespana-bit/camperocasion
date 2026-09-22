@@ -7,6 +7,7 @@ import {
   MARCAS_MODELOS,
   agruparPorFabricante,
   etiquetaModelo,
+  slugModelo,
   type MarcaModelo,
   type SubSlug,
 } from '@/lib/marcas'
@@ -206,6 +207,12 @@ export default async function MarcasPage({ params }: { params: Promise<{ locale:
                             <div className="mt-2">
                               <AptasBadges m={entrada} subActual={sub.slug} />
                             </div>
+                            <LocalLink
+                              href={`/modelo/${slugModelo(entrada)}`}
+                              className="text-xs font-semibold text-brand-primary hover:underline inline-flex items-center gap-0.5 mt-2"
+                            >
+                              Ver precios de mercado <ArrowRight size={11} />
+                            </LocalLink>
                           </div>
                         ) : (
                           <ul className="space-y-2">
@@ -222,6 +229,12 @@ export default async function MarcasPage({ params }: { params: Promise<{ locale:
                                     <span className="block text-xs text-gray-500 mt-0.5">{m.nota}</span>
                                   )}
                                   <AptasBadges m={m} subActual={sub.slug} />
+                                </LocalLink>
+                                <LocalLink
+                                  href={`/modelo/${slugModelo(m)}`}
+                                  className="text-xs font-semibold text-brand-primary hover:underline inline-flex items-center gap-0.5 mt-0.5"
+                                >
+                                  Ver precios de mercado <ArrowRight size={11} />
                                 </LocalLink>
                               </li>
                             ))}

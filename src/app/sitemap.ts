@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { hayDatosTitular } from '@/lib/datos-legales'
+import { MARCAS_MODELOS, slugModelo } from '@/lib/marcas'
 import { getSupabaseServerClient } from '@/lib/supabase-server-client'
 import fs from 'fs'
 import path from 'path'
@@ -235,8 +236,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Si Supabase falla, servir al menos las URLs estáticas
   }
 
+  // ── Páginas de modelo con precios de mercado ─────────────────────────
+  // Contenido único (mediana y rango P25-P75 calculados con anuncios reales),
+  // así que merecen prioridad alta y refresco diario.
+  const modeloUrls: MetadataRoute.Sitemap = MARCAS_MODELOS.map((m) => ({
+    url: `${BASE_URL}/modelo/${slugModelo(m)}`,
+    lastModified: LAST_MODIFIED_DATE,
+    changeFrequency: 'daily' as const,
+    priority: 0.8,
+  }))
+
   return [
     ...staticUrls,
+    ...modeloUrls,
     ...categoryUrls,
     ...cityUrls,
     ...cityCategoryUrls,

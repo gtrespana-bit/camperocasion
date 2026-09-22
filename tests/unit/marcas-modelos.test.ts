@@ -148,3 +148,49 @@ describe('catálogo maestro de marcas y modelos', () => {
     }
   })
 })
+
+/**
+ * Slugs de las páginas de modelo (/modelo/[slug]).
+ *
+ * Cada una de estas URLs se va a indexar y a enlazar desde /marcas y desde el
+ * sitemap, así que un slug duplicado significaría dos modelos peleando por la
+ * misma página, y un slug que cambie rompería enlaces ya indexados.
+ */
+describe('slugs de las páginas de modelo', () => {
+  const { slugModelo, modeloPorSlug } = require('@/lib/marcas')
+
+  it('todos los modelos generan un slug no vacío', () => {
+    for (const m of MARCAS_MODELOS) {
+      expect(slugModelo(m).length).toBeGreaterThan(2)
+    }
+  })
+
+  it('los slugs son únicos (no hay dos modelos en la misma URL)', () => {
+    const slugs = MARCAS_MODELOS.map(slugModelo)
+    expect(new Set(slugs).size).toBe(slugs.length)
+  })
+
+  it('son URLs limpias: minúsculas, sin acentos ni símbolos', () => {
+    for (const m of MARCAS_MODELOS) {
+      expect(slugModelo(m)).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    }
+  })
+
+  it('cada slug resuelve a su modelo (ida y vuelta)', () => {
+    for (const m of MARCAS_MODELOS) {
+      expect(modeloPorSlug(slugModelo(m))?.valor).toBe(m.valor)
+    }
+  })
+
+  it('un slug inventado no resuelve a nada', () => {
+    expect(modeloPorSlug('no-existe-este-modelo')).toBeUndefined()
+    expect(modeloPorSlug('')).toBeUndefined()
+  })
+
+  it('los acentos y símbolos de los valores canónicos se normalizan', () => {
+    const jumper = MARCAS_MODELOS.find(m => m.valor === 'Citroën Jumper')
+    expect(jumper && slugModelo(jumper)).toBe('citroen-jumper')
+    const doblo = MARCAS_MODELOS.find(m => m.valor === 'Fiat Doblò')
+    expect(doblo && slugModelo(doblo)).toBe('fiat-doblo')
+  })
+})
