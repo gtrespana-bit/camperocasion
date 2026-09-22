@@ -101,6 +101,30 @@ Para reintentar el webhook y verificar la idempotencia: en el dashboard del
 webhook, botón *Resend*. El saldo **no** debe cambiar y la respuesta debe traer
 `"duplicado": true`.
 
+## Verificación hecha el 22/09/2026 (local, con la app compilada)
+
+| Prueba | Resultado |
+|---|---|
+| `/api/stripe/estado` con claves | `{"disponible":true}` |
+| Webhook **sin** cabecera de firma | 400 «Falta la firma» |
+| Webhook con firma **falsa** | 400 «Firma inválida» |
+| Webhook con payload **manipulado** y firma del original | rechazado por la librería de Stripe |
+| Checkout **sin sesión** | 401 |
+| Pago **no confirmado** (Bizum pendiente) | 200, no acredita |
+| Evento irrelevante (`payment_intent.created`) | 200, ignorado |
+| **100 créditos pagando 1 €** | descartado: «Importe cobrado (1 €) no coincide con el paquete (20 €)» |
+| Paquete inventado (999) | descartado |
+| Sesión sin usuario | descartado |
+| Sin claves configuradas | 503 y `/creditos` sigue cargando (no rompe) |
+
+Contra Postgres real (`scripts/verify_stripe_sql.py`, 18/18): un reintento del
+webhook **no** duplica créditos, y ni `anon` ni `authenticated` pueden ejecutar
+la RPC de acreditación.
+
+Lo único que **no** se puede verificar desde aquí es el cobro real de extremo a
+extremo, porque requiere tus claves y el dominio en producción. Esa prueba está
+descrita en el paso 5 de arriba y son dos minutos.
+
 ## Qué pasa con el pago manual
 
 Se queda. Es la red de seguridad mientras Stripe esté en pruebas y la vía para
