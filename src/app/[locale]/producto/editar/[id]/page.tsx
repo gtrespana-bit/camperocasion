@@ -430,10 +430,6 @@ export default function EditarPage() {
           )}
         </div>
 
-        {/* Expediente del vehículo: sube la documentación y consigue el sello
-            de "Homologación verificada" en el anuncio (Fase 0.2). */}
-        <ExpedienteVehiculo productoId={productoId} especificaciones={specs} />
-
         {/* Campos especiales */}
         {camposEspeciales.length > 0 && (
           <div className="bg-gray-50 rounded-xl p-5 space-y-4">
@@ -589,6 +585,10 @@ export default function EditarPage() {
             <span className="text-sm font-medium">Publicación {activo ? 'activa' : 'pausada'}</span>
           </label>
         </div>
+
+        {/* Verificación de homologación (100% opcional): permite subir la
+            documentación del vehículo para conseguir el sello de confianza. */}
+        <ExpedienteVehiculo productoId={productoId} especificaciones={specs} />
 
         {/* Actions */}
         <div className="flex items-center gap-3 pt-4 border-t">
