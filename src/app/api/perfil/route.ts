@@ -18,6 +18,7 @@ const PROFILE_COLUMNS = [
   'credito_balance',
   'emprendedor_dado',
   'tipo_vendedor',
+  'email_avisos_mensajes',
 ].join(', ')
 
 const TIPOS_VENDEDOR = ['particular', 'camperizador', 'profesional'] as const
@@ -108,6 +109,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'tipo_vendedor inválido' }, { status: 400 })
     }
     updates.tipo_vendedor = body.tipo_vendedor
+  }
+
+  // Preferencia de avisos por email. Es un booleano, no pasa por sanitizeString.
+  if (body.email_avisos_mensajes !== undefined) {
+    if (typeof body.email_avisos_mensajes !== 'boolean') {
+      return NextResponse.json({ error: 'email_avisos_mensajes inválido' }, { status: 400 })
+    }
+    ;(updates as Record<string, unknown>).email_avisos_mensajes = body.email_avisos_mensajes
   }
 
   if (updates.nombre !== undefined && updates.nombre.length < 2) {

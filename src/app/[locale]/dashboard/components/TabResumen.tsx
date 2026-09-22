@@ -8,6 +8,10 @@ import { useTranslations } from 'next-intl'
 export default function TabResumen({ userId }: { userId: string }) {
   const t = useTranslations('dashboard')
   const [stats, setStats] = useState<any>(null)
+  // Preferencia de avisos por email. `null` mientras se carga, para no
+  // enseñar el interruptor en la posición equivocada durante un instante.
+  const [avisosEmail, setAvisosEmail] = useState<boolean | null>(null)
+  const [guardandoAvisos, setGuardandoAvisos] = useState(false)
 
   useEffect(() => {
     async function loadStats() {
@@ -58,6 +62,39 @@ export default function TabResumen({ userId }: { userId: string }) {
     loadStats()
   }, [userId])
 
+  // Se lee y escribe por /api/perfil: la tabla `perfiles` tiene permisos por
+  // columna y esta preferencia no está expuesta al navegador a propósito.
+  useEffect(() => {
+    let vivo = true
+    fetch('/api/perfil')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!vivo) return
+        // Sin dato todavía: el valor por defecto es avisar.
+        setAvisosEmail(d?.profile?.email_avisos_mensajes !== false)
+      })
+      .catch(() => { if (vivo) setAvisosEmail(null) })
+    return () => { vivo = false }
+  }, [userId])
+
+  async function cambiarAvisos(valor: boolean) {
+    const previo = avisosEmail
+    setAvisosEmail(valor)       // respuesta inmediata
+    setGuardandoAvisos(true)
+    try {
+      const r = await fetch('/api/perfil', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email_avisos_mensajes: valor }),
+      })
+      if (!r.ok) setAvisosEmail(previo)   // revertir si el servidor lo rechaza
+    } catch {
+      setAvisosEmail(previo)
+    } finally {
+      setGuardandoAvisos(false)
+    }
+  }
+
   if (!stats) {
     return (
       <div className="animate-pulse space-y-4">
@@ -93,6 +130,28 @@ export default function TabResumen({ userId }: { userId: string }) {
           )
         })}
       </div>
+
+      {avisosEmail !== null && (
+        <div className="mt-3 bg-white border border-gray-100 rounded-xl px-4 py-3 shadow-sm flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-900">Avisarme por email de mensajes nuevos</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Solo si no los has leído en unos minutos. Quien responde antes, vende.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={avisosEmail}
+            aria-label="Avisarme por email de mensajes nuevos"
+            disabled={guardandoAvisos}
+            onClick={() => cambiarAvisos(!avisosEmail)}
+            className={`relative w-12 h-7 rounded-full transition flex-shrink-0 disabled:opacity-50 ${avisosEmail ? 'bg-brand-primary' : 'bg-gray-300'}`}
+          >
+            <span className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all ${avisosEmail ? 'left-6' : 'left-1'}`} />
+          </button>
+        </div>
+      )}
 
       {stats.vendidos > 0 && (
         <div className="mt-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center gap-2">

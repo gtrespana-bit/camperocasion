@@ -658,3 +658,37 @@ export const ENLACES_LEGALES = {
   es: { avisoLegal: 'Aviso legal', cookies: 'Cookies', privacidad: 'Privacidad', terminos: 'Términos' },
   en: { avisoLegal: 'Legal notice', cookies: 'Cookies', privacidad: 'Privacy', terminos: 'Terms' },
 } as const
+
+/**
+ * Inserta la identidad real del responsable en la sección 1 de la política de
+ * privacidad.
+ *
+ * El RGPD (art. 13.1.a) exige la identidad del responsable en la propia
+ * información que se da al interesado. Remitir al aviso legal es habitual,
+ * pero la AEPD espera encontrarla aquí, y el coste de ponerla es nulo cuando
+ * ya tenemos los datos configurados.
+ *
+ * Si el titular no está configurado se devuelve el texto original, que sigue
+ * remitiendo al aviso legal: nunca se inventan datos identificativos.
+ */
+export function politicaPrivacidadCon(
+  idioma: IdiomaLegal,
+  titular: { nombre: string; nif: string; domicilio: string },
+): DocumentoLegal {
+  const base = POLITICA_PRIVACIDAD[idioma]
+  if (!titular.nombre || !titular.nif || !titular.domicilio) return base
+
+  const identidad =
+    idioma === 'en'
+      ? `The data controller is ${titular.nombre}, tax ID ${titular.nif}, with registered address at ${titular.domicilio}.`
+      : `El responsable del tratamiento es ${titular.nombre}, con NIF ${titular.nif} y domicilio en ${titular.domicilio}.`
+
+  return {
+    ...base,
+    secciones: base.secciones.map((seccion, indice) =>
+      indice === 0
+        ? { ...seccion, parrafos: [identidad, ...(seccion.parrafos || [])] }
+        : seccion,
+    ),
+  }
+}
