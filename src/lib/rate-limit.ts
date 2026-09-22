@@ -23,6 +23,9 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   // Editar el escaparate de la tienda: generoso (el vendedor ajusta textos
   // varias veces seguidas) pero acotado, porque cada cambio escribe en perfiles.
   'perfil:actualizar': { max: 40, windowMs: 60 * 60 * 1000 },
+  // Valorador público (sin sesión): generoso para que nadie con dudas se
+  // quede fuera, pero acotado para que no se use como API de scraping.
+  'valorar': { max: 30, windowMs: 60 * 60 * 1000 },
   'storage-upload': { max: 50, windowMs: 60 * 60 * 1000 },
   'documento-vehiculo:upload': { max: 30, windowMs: 60 * 60 * 1000 },
   'reserva:create': { max: 10, windowMs: 24 * 60 * 60 * 1000 },

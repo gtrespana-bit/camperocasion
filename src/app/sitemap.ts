@@ -99,6 +99,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/marcas', changeFrequency: 'weekly', priority: 0.8 },
     // Directorio de camperizadores y profesionales con tienda abierta.
     { path: '/tiendas', changeFrequency: 'daily', priority: 0.8 },
+    // Valorador: lead-magnet del vendedor, capta antes de publicar.
+    { path: '/cuanto-vale-mi-camper', changeFrequency: 'monthly', priority: 0.9 },
     // Landings por tipo de vendedor (Fase 3): indexan "comprar camper a
     // particulares / camperizadores / profesionales".
     { path: '/comprar-a-particulares', changeFrequency: 'daily', priority: 0.8 },

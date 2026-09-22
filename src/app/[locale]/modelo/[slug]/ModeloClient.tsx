@@ -276,12 +276,20 @@ export default function ModeloClient({
             ? `Ahora ya sabes lo que vale: la mediana está en ${fmt(est.mediana)}. Publica gratis y llega a compradores que buscan justo este modelo.`
             : 'Publica gratis y llega a compradores que buscan justo este modelo.'}
         </p>
-        <LocalLink
-          href="/publicar"
-          className="inline-block bg-brand-accent text-white px-6 py-3 rounded-xl font-bold hover:brightness-95 transition"
-        >
-          Publicar mi anuncio gratis
-        </LocalLink>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <LocalLink
+            href="/cuanto-vale-mi-camper"
+            className="inline-block bg-brand-accent text-white px-6 py-3 rounded-xl font-bold hover:brightness-95 transition"
+          >
+            Calcular cuánto vale la mía
+          </LocalLink>
+          <LocalLink
+            href="/publicar"
+            className="inline-block border border-gray-200 bg-white text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition"
+          >
+            Publicar mi anuncio gratis
+          </LocalLink>
+        </div>
       </div>
     </div>
   )
