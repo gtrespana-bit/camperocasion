@@ -562,8 +562,10 @@
     "reservadoBadge": "Reserved",
     "contratoCtaTitulo": "Sale contract",
     "contratoCtaDesc": "Print-ready template prefilled with this van’s details",
+    "demoChat": "Enquire",
+    "demoContactNote": "Tell the CamperOcasión team what you are looking for.",
     "demoBannerTitle": "Sample listing",
-    "demoBannerDesc": "This listing is a demo so you can see what a complete listing looks like: it is not a real vehicle for sale and has no contact details. Post yours for free in a couple of minutes."
+    "demoBannerDesc": "Fictional vehicle, not available to buy. Enquiries handled by CamperOcasión."
   },
   "creditos": {
     "title1": "Buy credits and",

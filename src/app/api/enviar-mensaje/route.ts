@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     const { data: conv, error: convError } = await sb
       .from('conversaciones')
-      .select('user1_id, user2_id')
+      .select('user1_id, user2_id, producto_id, productos(user_id, es_demo)')
       .eq('id', conversacion_id)
       .maybeSingle()
 
@@ -61,8 +61,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'El destinatario no pertenece a la conversación' }, { status: 400 })
     }
 
+    // No reescribir conversaciones privadas antiguas ni reenviar su historial.
+    // Si aún apuntan a un vendedor ficticio, ofrecer una nueva consulta al equipo.
+    const producto = conv.productos as unknown as { user_id: string; es_demo: boolean } | null
+    if (producto?.es_demo && destinatarioEsperado === producto.user_id) {
+      return NextResponse.json({
+        code: 'CONVERSACION_SEMILLA_CERRADA',
+        error: 'Este chat antiguo no recibe mensajes. Abre una consulta con CamperOcasión.',
+        reabrir: `/chat?producto_id=${conv.producto_id}&vendedor_id=${producto.user_id}`,
+      }, { status: 409 })
+    }
+
     const { data, error } = await sb.from('mensajes').insert({
       conversacion_id,
+      // El trigger legado busca por pareja + producto y reescribe conversacion_id.
+      // Derivar SIEMPRE el producto del chat validado, nunca del body.
+      producto_id: conv.producto_id,
       remitente_id,
       destinatario_id,
       contenido: contenidoSanitizado,
@@ -83,7 +97,7 @@ export async function POST(req: NextRequest) {
         tipo: 'mensaje',
         titulo: title,
         cuerpo: preview || 'Nuevo mensaje',
-        click_url: '/chat',
+        click_url: `/chat?conversation=${conversacion_id}`,
       })
       await notifyUser(sb, destinatario_id, {
         title,

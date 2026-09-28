@@ -65,16 +65,10 @@ export default function ChatPageClient() {
   const productoId = searchParams?.get('producto_id')
   const vendedorId = searchParams?.get('vendedor_id')
 
-  const [conversaciones, setConversaciones] = useState<Conversacion[]>(() => {
-    // Restore cached conversations for instant render
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = sessionStorage.getItem('camperocasion_chat_convs')
-        if (cached) return JSON.parse(cached)
-      } catch {}
-    }
-    return []
-  })
+  const conversationParam = searchParams?.get('conversation')
+  const openedLinkRef = useRef('')
+  // No cachear conversaciones sin aislarlas por usuario: filtra datos al cambiar de cuenta.
+  const [conversaciones, setConversaciones] = useState<Conversacion[]>([])
   const [convId, setConvId] = useState<string | null>(null)
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
   const [texto, setTexto] = useState('')
@@ -83,14 +77,20 @@ export default function ChatPageClient() {
   const [showMobileChat, setShowMobileChat] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [loadingConvs, setLoadingConvs] = useState(true)
+  const [reabrirChat, setReabrirChat] = useState<string | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const bcRef = useRef<BroadcastChannel | null>(null)
 
   const mensajesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const userRef = useRef(user)
+  const authIdRef = useRef(user?.id)
   const convIdRef = useRef(convId)
   userRef.current = user
+  if (authIdRef.current !== user?.id) {
+    authIdRef.current = user?.id
+    openedLinkRef.current = ''
+  }
   convIdRef.current = convId
 
   // ─── Estados reseña comprador ───
@@ -209,57 +209,77 @@ export default function ChatPageClient() {
       }
     })
 
+    if (userRef.current?.id !== uid) return
     setConversaciones(enriched)
-
-    // Cache en sessionStorage para carga instantánea la próxima vez
-    try {
-      sessionStorage.setItem('camperocasion_chat_convs', JSON.stringify(enriched))
-    } catch {}
+    const linkKey = `${uid}:${conversationParam || ''}:${productoId || ''}:${vendedorId || ''}`
+    if (openedLinkRef.current === linkKey) return
+    openedLinkRef.current = linkKey
+    if (conversationParam) {
+      const requested = enriched.find(c => c.id === conversationParam)
+      if (requested) {
+        setMensajes([])
+        setConvId(requested.id)
+        setShowMobileChat(true)
+      }
+      return
+    }
 
     // If URL has producto_id + vendedor_id, try to find or create conv
     if (productoId && vendedorId && vendedorId !== uid) {
-      const match = enriched.find(c =>
-        c.producto_id === productoId &&
-        ((c.user1_id === uid && c.user2_id === vendedorId) ||
-         (c.user1_id === vendedorId && c.user2_id === uid))
-      )
-      if (match) {
-        setConvId(match.id)
-        setShowMobileChat(true)
-      } else {
+      // La API decide el destinatario actual, también si existía un chat ficticio.
+      try {
         const response = await fetch('/api/crear-conversacion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ vendedorId, productoId }),
         })
         const result = await response.json().catch(() => ({}))
-        const newConv = result?.id ? result : null
-
-        if (!response.ok || !newConv) {
-          console.error('Error creating conversation:', result.error || response.status)
-        } else {
-          const perfil = perfilMap.get(vendedorId)
-          setConversaciones(prev => [{
-            ...newConv,
-            otro_nombre: perfil?.nombre || 'Usuario',
-            otro_foto: perfil?.foto || null,
-            otro_email: null,
-            producto_titulo: prodMap.get(productoId) || null,
-            no_leidos: 0,
-          }, ...prev])
-          setConvId(newConv.id)
-          setShowMobileChat(true)
+        if (!response.ok || !result?.id) {
+          setToastMsg(result.error || 'No se pudo abrir la conversación')
+          openedLinkRef.current = ''
+          return
         }
+        const recipientId = result.user1_id === uid ? result.user2_id : result.user1_id
+        if (!perfilMap.has(recipientId)) {
+          const resp = await fetch(`/api/user-bulk?ids=${encodeURIComponent(recipientId)}`)
+          const data = await resp.json()
+          for (const p of data.profiles || []) {
+            perfilMap.set(p.id, { nombre: p.nombre || 'Usuario', foto: p.foto_perfil_url || null, email: null })
+          }
+        }
+        if (userRef.current?.id !== uid) return
+        const perfil = perfilMap.get(recipientId)
+        setConversaciones(prev => [{
+          ...result,
+          otro_nombre: perfil?.nombre || 'Usuario',
+          otro_foto: perfil?.foto || null,
+          otro_email: null,
+          producto_titulo: prodMap.get(productoId) || null,
+          no_leidos: 0,
+        }, ...prev.filter(c => c.id !== result.id)])
+        setConvId(result.id)
+        setShowMobileChat(true)
+      } catch {
+        openedLinkRef.current = ''
+        setToastMsg('No hay conexión. Vuelve a intentarlo.')
       }
     }
-  }, [productoId, vendedorId])
+  }, [productoId, vendedorId, conversationParam])
+
+  useEffect(() => {
+    setConversaciones([])
+    setMensajes([])
+    setConvId(null)
+    setReabrirChat(null)
+    setToastMsg(null)
+    setTexto('')
+  }, [user?.id])
 
   // Load once
   useEffect(() => {
     if (authLoading || !user) return
     loadingRef.current = true
     setLoadingConvs(true)
-    loadConversaciones().then(() => { loadingRef.current = false; setLoadingConvs(false) })
+    loadConversaciones().catch(() => { openedLinkRef.current = ''; setToastMsg('No se pudieron cargar las conversaciones') }).finally(() => { loadingRef.current = false; setLoadingConvs(false) })
   }, [user, authLoading, loadConversaciones])
 
   // ─── Cargar mensajes ───
@@ -271,6 +291,7 @@ export default function ChatPageClient() {
       .order('creado_en', { ascending: true })
 
     if (error) { console.error('Error loading msgs:', error); return }
+    if (convIdRef.current !== id) return
     setMensajes(data || [])
   }, [])
 
@@ -298,29 +319,35 @@ export default function ChatPageClient() {
     return () => { supabase.removeChannel(sub) }
   }, [user])
 
-  // ─── Realtime: actualizar sidebar ───
+  // También INSERT: una conversación nueva debe aparecer sin recargar la página.
   useEffect(() => {
     if (!user) return
-    const sub = supabase
-      .channel('chat-convs')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversaciones' }, (payload: any) => {
-        const updated = payload.new as any
-        if (updated.user1_id !== user.id && updated.user2_id !== user.id) return
-        setConversaciones(prev => {
-          const idx = prev.findIndex(c => c.id === updated.id)
-          if (idx < 0) return prev
-          const arr = [...prev]
-          arr[idx] = { ...arr[idx], ultimo_mensaje: updated.ultimo_mensaje, ultimo_mensaje_en: updated.ultimo_mensaje_en }
-          return arr.sort((a, b) => (b.ultimo_mensaje_en || '').localeCompare(a.ultimo_mensaje_en || ''))
-        })
+    const sub = supabase.channel('chat-convs')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversaciones' }, () => {
+        loadConversaciones().catch(() => {})
       })
       .subscribe()
     return () => { supabase.removeChannel(sub) }
-  }, [user])
+  }, [user, loadConversaciones])
+
+  // Deep links y mensajes recibidos con el chat abierto también cuentan como leídos.
+  useEffect(() => {
+    if (!convId || !user) return
+    fetch('/api/mensajes-leidos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversacion_id: convId }),
+    }).then(r => {
+      if (!r.ok) return
+      setConversaciones(prev => prev.map(c => c.id === convId ? { ...c, no_leidos: 0 } : c))
+      bcRef.current?.postMessage({ action: 'refresh-unread' })
+    }).catch(() => {})
+  }, [convId, user, mensajes.length])
 
   // ─── Seleccionar conversacion ───
   const seleccionarConv = async (id: string) => {
     setConvId(id)
+    setMensajes([])
+    setReabrirChat(null)
     setShowMobileChat(true)
     // Marcar como leido via API server-side (evita RLS bloqueante)
     try {
@@ -412,28 +439,24 @@ export default function ChatPageClient() {
     if (!conv) { console.error('ChatPage: conversacion no encontrada', convId); setEnviando(false); return }
     const destinatarioId = conv.user1_id === user.id ? conv.user2_id : conv.user1_id
 
-    const response = await fetch('/api/enviar-mensaje', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        conversacion_id: convId,
-        destinatario_id: destinatarioId,
-        contenido: msg,
-      }),
-    })
-    const result = await response.json().catch(() => ({}))
-
-    if (!response.ok) {
-      console.error('Error enviando mensaje:', result.error)
-      setToastMsg('Error al enviar: ' + (result.error || 'inténtalo de nuevo'))
-      setTimeout(() => setToastMsg(null), 4000)
+    try {
+      const response = await fetch('/api/enviar-mensaje', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversacion_id: convId, destinatario_id: destinatarioId, contenido: msg }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        if (result.code === 'CONVERSACION_SEMILLA_CERRADA') setReabrirChat(result.reabrir)
+        setToastMsg(result.error || 'No se pudo enviar. Inténtalo de nuevo.')
+        return
+      }
+      setTexto('')
+      await loadMensajes(convId)
+    } catch {
+      setToastMsg('No hay conexión. Tu mensaje no se ha borrado; puedes reintentarlo.')
+    } finally {
       setEnviando(false)
-      return
     }
-
-    setTexto('')
-    await loadMensajes(convId)
-    setEnviando(false)
   }
 
   // ─── Loading ───
@@ -459,6 +482,18 @@ export default function ChatPageClient() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      {toastMsg && (
+        <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          {toastMsg}
+          <button type="button" onClick={() => setToastMsg(null)} className="ml-3 underline">Cerrar</button>
+        </div>
+      )}
+      {reabrirChat && (
+        <div className="mb-4 rounded-xl border bg-gray-50 p-4 text-sm">
+          El historial se conserva aquí. Las nuevas consultas las atiende CamperOcasión.
+          <LocalLink href={reabrirChat} className="ml-2 font-semibold underline">Abrir chat con el equipo</LocalLink>
+        </div>
+      )}
       <h1 className="text-3xl font-bold text-gray-800 mb-6">💬 Mensajes</h1>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

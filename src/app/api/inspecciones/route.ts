@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     const { data: producto, error: productoError } = await sb
       .from('productos')
-      .select('id, titulo, user_id, activo, vendido, estado_moderacion')
+      .select('id, titulo, user_id, activo, vendido, estado_moderacion, es_demo')
       .eq('id', productoId)
       .maybeSingle()
 

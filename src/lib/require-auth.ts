@@ -35,7 +35,8 @@ export function getAdminEmails(): string[] {
  * El navegador es el único que refresca; el servidor solo valida.
  */
 export async function getSessionUser(request: NextRequest): Promise<any | null> {
-  return getUserFromRequestCookies(request.cookies.getAll())
+  const user = await getUserFromRequestCookies(request.cookies.getAll())
+  return user?.app_metadata?.semilla === true ? null : user
 }
 
 /** Exige sesión activa. Devuelve { user } o una respuesta 401 lista para retornar. */

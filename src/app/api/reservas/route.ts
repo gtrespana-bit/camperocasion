@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
         .from('reservas')
         .select(COLUMNAS)
         .eq('producto_id', productoId)
+        .or(`comprador_id.eq.${auth.user.id},vendedor_id.eq.${auth.user.id}`)
         .order('creado_en', { ascending: false })
         .limit(5)
       if (error) {
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
         }
         return NextResponse.json({ error: error.message }, { status: 500 })
       }
-      // Sin comprobantes: cualquier parte puede ver la reserva de su anuncio.
+      // Solo las partes ven los datos privados; el estado público vive en productos.reservado.
       return NextResponse.json(
         { ok: true, reservas: data || [] },
         { headers: { 'Cache-Control': 'no-store, private' } },
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
 
     const { data: producto, error: productoError } = await sb
       .from('productos')
-      .select('id, titulo, user_id, activo, vendido, reservado, estado_moderacion')
+      .select('id, titulo, user_id, activo, vendido, reservado, estado_moderacion, es_demo')
       .eq('id', productoId)
       .maybeSingle()
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { destinatarioSemilla } from '@/lib/semilla-chat'
 import { requireUser } from '@/lib/require-auth'
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 import { isValidUUID, validateConversationData } from '@/lib/validation'
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     if (otroUsuarioId !== undefined && !isValidUUID(otroUsuarioId)) {
       return NextResponse.json({ error: 'Usuario de conversación inválido' }, { status: 400 })
     }
-    const otroId = otroUsuarioId || vendedorId
+    let otroId = otroUsuarioId || vendedorId
     if (otroId === uid) {
       return NextResponse.json({ error: 'No puedes iniciar conversación contigo mismo' }, { status: 400 })
     }
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     const { data: product, error: productError } = await supabaseAdmin
       .from('productos')
-      .select('user_id, activo, estado_moderacion')
+      .select('user_id, activo, estado_moderacion, es_demo')
       .eq('id', productoId)
       .maybeSingle()
 
@@ -61,6 +62,21 @@ export async function POST(req: NextRequest) {
     // pero un comprador no puede abrir conversaciones sobre productos ocultos.
     if (!product.activo && uid !== product.user_id) {
       return NextResponse.json({ error: 'Este producto ya no está disponible' }, { status: 410 })
+    }
+
+    if (product.es_demo) {
+      // Nunca aceptar un destinatario de demo enviado por el navegador.
+      if (otroUsuarioId) {
+        return NextResponse.json({ error: 'No puedes elegir el destinatario de esta consulta' }, { status: 403 })
+      }
+      try {
+        otroId = await destinatarioSemilla(supabaseAdmin, product.user_id)
+      } catch {
+        return NextResponse.json({ error: 'El chat de atención no está disponible. Inténtalo más tarde.' }, { status: 503 })
+      }
+      if (otroId === uid) {
+        return NextResponse.json({ error: 'Estas consultas ya llegan a tu cuenta. Abre una conversación recibida para responder.' }, { status: 400 })
+      }
     }
 
     const u1 = uid < otroId ? uid : otroId

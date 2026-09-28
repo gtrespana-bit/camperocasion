@@ -107,15 +107,15 @@ export default function BotonReservar({
         && (r.estado === 'solicitada' || (r.estado === 'activa' && reservaVigente(r.estado, r.expira_en))))
       const otra = todas.find(r => r.comprador_id !== userId && reservaVigente(r.estado, r.expira_en))
       setMiReserva(mia || null)
-      setAjenaVigente(!!otra)
-      setHastaAjeno(otra?.expira_en || null)
+      setAjenaVigente(!!otra || (!mia && reservadoInicial))
+      setHastaAjeno(otra?.expira_en || (!mia ? reservadoHastaInicial : null))
       onEstadoReserva?.(otra?.estado || mia?.estado || null)
     } catch {
       // Sin red: el CTA se queda como está; la API volverá a decidir al pulsar.
     } finally {
       setCargando(false)
     }
-  }, [producto.id, userId, onEstadoReserva])
+  }, [producto.id, userId, onEstadoReserva, reservadoInicial, reservadoHastaInicial])
 
   useEffect(() => { cargar() }, [cargar])
 
