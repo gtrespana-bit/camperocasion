@@ -42,7 +42,9 @@ function cargarEnv() {
 }
 cargarEnv()
 
-const { VENDEDORES, ANUNCIOS, emailVendedor, haceHoras, dentroDias } = require('../src/lib/semilla-datos.js')
+const { VENDEDORES, ANUNCIOS, haceHoras, dentroDias } = require('../src/lib/semilla-datos.js')
+
+const { asegurarVendedores, CAMPOS_ANUNCIO_SEMILLA } = require('../src/lib/semilla-admin.js')
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_KEY =
@@ -96,68 +98,6 @@ async function resolverCategoriaCamper() {
     .maybeSingle()
   if (error) throw new Error(`No se pudo crear la categoría "${CATEGORIA}": ${error.message}`)
   return creada.id
-}
-
-/** Busca un usuario por email (admin API, paginando). Null si no existe. */
-async function buscarUsuarioPorEmail(email) {
-  let page = 1
-  for (;;) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 200 })
-    if (error) throw new Error(`listUsers p.${page}: ${error.message}`)
-    const hit = data?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
-    if (hit) return hit
-    if (!data?.users?.length || data.users.length < 200) return null
-    page++
-  }
-}
-
-/** Crea (o reutiliza) los vendedores y deja sus perfiles completos. */
-async function asegurarVendedores() {
-  const ids = {}
-  let creados = 0, reutilizados = 0
-
-  for (const v of VENDEDORES) {
-    const email = emailVendedor(v)
-    let usuario = await buscarUsuarioPorEmail(email)
-
-    if (!usuario) {
-      const { data, error } = await supabase.auth.admin.createUser({
-        email,
-        password: `Semilla#${v.slug}#camper2026`,
-        email_confirm: true,
-        user_metadata: { nombre: v.nombre, semilla: true },
-      })
-      if (error) throw new Error(`createUser ${email}: ${error.message}`)
-      usuario = data.user
-      creados++
-    } else {
-      reutilizados++
-    }
-
-    ids[v.slug] = usuario.id
-
-    const { error: pErr } = await supabase.from('perfiles').upsert(
-      {
-        id: usuario.id,
-        nombre: v.nombre,
-        telefono: v.telefono,
-        estado: v.estado,
-        ciudad: v.ciudad,
-        whatsapp_disponible: true,
-        telefono_visible: true,
-        email_visible: false,
-        verificado: v.verificado,
-        tipo_vendedor: v.tipo || 'particular',
-        ...(v.verificado ? { verificado_desde: haceHoras(24 * 200) } : {}),
-        actualizado_en: new Date().toISOString(),
-      },
-      { onConflict: 'id' }
-    )
-    if (pErr) throw new Error(`perfil ${v.nombre}: ${pErr.message}`)
-  }
-
-  console.log(`👥 Vendedores: ${creados} creados, ${reutilizados} reutilizados (${VENDEDORES.length} en total)`)
-  return ids
 }
 
 /** Sube una foto al bucket y devuelve su URL pública (upsert → idempotente). */
@@ -233,7 +173,10 @@ async function main() {
   const categoriaId = await resolverCategoriaCamper()
   console.log(`✅ Categoría "camper": id ${categoriaId}`)
 
-  const ids = await asegurarVendedores()
+  const { ids } = await asegurarVendedores(supabase)
+  const { error: repairError } = await supabase.from('productos')
+    .update(CAMPOS_ANUNCIO_SEMILLA).in('user_id', Object.values(ids))
+  if (repairError) throw new Error(`Actualizar semilla existente: ${repairError.message}`)
   console.log()
 
   if (RESET) await resetear(ids)
@@ -283,27 +226,16 @@ async function main() {
         imagen_url: urls[0],
         imagenes: urls,
         especificaciones: a.ficha,
-        metodos_contacto: {
-          email: emailVendedor(vendedor),
-          telefono: vendedor.telefono,
-          whatsapp: vendedor.telefono,
-        },
+        ...CAMPOS_ANUNCIO_SEMILLA,
         estado_moderacion: 'aprobado',
         motivo_moderacion: null,
         activo: true,
         destacado: !!a.destacado,
         destacado_hasta: a.destacado ? dentroDias(25) : null,
         boosteado_en: a.boosteado ? haceHoras(18) : null,
-        vendedor_verificado: vendedor.verificado,
-        verificacion_homologacion: a.verificacion || 'sin_verificar',
-        ...(a.verificacion === 'verificada'
-          ? { verificacion_homologacion_revisada_en: haceHoras(Math.max(a.creado - 30, 12)) }
-          : {}),
         vendido: false,
         vendido_en: null,
         comprador_id: null,
-        reservado: !!a.reservado,
-        ...(a.reservado ? { reservado_hasta: dentroDias(4) } : {}),
         visitas: a.visitas,
         creado_en: creado,
         actualizado_en: creado,

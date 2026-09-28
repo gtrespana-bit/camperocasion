@@ -59,7 +59,7 @@ interface ProductoPageClientProps {
   favoritosCount?: number
   verificacion?: VerificacionHomologacion | null
   reserva?: EstadoReserva | null
-  /** Anuncio de demostración: se avisa y no se ofrece contacto. */
+  /** Anuncio de muestra: consultas al equipo; sin teléfonos ni reservas. */
   esDemo?: boolean
 }
 
@@ -212,8 +212,8 @@ function ProductoPageClientInner({
 
 
 
-  // En los anuncios de demostración no hay nadie al otro lado: ni teléfono,
-  // ni WhatsApp, ni email. Los números de la semilla eran inventados (y en
+  // En la semilla solo se ofrece chat con la plataforma, no teléfono,
+  // WhatsApp ni email ficticios. Los números de la semilla eran inventados (y en
   // España pertenecen a personas reales), así que no se muestran nunca.
   const contactos = esDemo
     ? { hasProductConfiguration: true, phone: '', whatsapp: '', email: '', messengerUrl: '' }
@@ -253,14 +253,9 @@ function ProductoPageClientInner({
         </div>
       )}
       {esDemo && (
-        <div className="mb-6 bg-amber-50 border-2 border-amber-300 rounded-2xl p-5">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl leading-none" aria-hidden="true">🧪</span>
-            <div>
-              <h2 className="font-bold text-amber-900 text-lg">{t('demoBannerTitle')}</h2>
-              <p className="text-amber-800 text-sm mt-1">{t('demoBannerDesc')}</p>
-            </div>
-          </div>
+        <div className="mb-6 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+          <span className="font-semibold text-gray-800">{t('demoBannerTitle')}.</span>{' '}
+          {t('demoBannerDesc')}
         </div>
       )}
       {esNuevaPublicacion && (
@@ -332,7 +327,7 @@ function ProductoPageClientInner({
               <span className="badge-trust">{producto.estado}</span>
               {producto.marca && <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">{producto.marca}</span>}
               {producto.subcategoria && <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm capitalize">{producto.subcategoria}</span>}
-              {verificacion && verificacion.estado === 'verificada' && (
+              {!esDemo && verificacion && verificacion.estado === 'verificada' && (
                 <BadgeHomologacion estado={verificacion.estado} size="md" />
               )}
               {(reserva?.reservado || reservaEstado === 'activa') && (
@@ -435,7 +430,7 @@ function ProductoPageClientInner({
             {/* Expediente del vehículo: qué documentación ha revisado el
                 equipo. Solo se muestra cuando hay algo que contar (verificada
                 o en revisión); un anuncio sin expediente no se castiga. */}
-            {verificacion && verificacion.estado !== 'sin_verificar' && verificacion.estado !== 'rechazada' && (
+            {!esDemo && verificacion && verificacion.estado !== 'sin_verificar' && verificacion.estado !== 'rechazada' && (
               <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5">
                 <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
                   <FileCheck2 size={18} className="text-brand-accent" aria-hidden="true" />
@@ -529,7 +524,7 @@ function ProductoPageClientInner({
               <ChevronRight size={16} className="ml-auto text-gray-400 flex-shrink-0" aria-hidden="true" />
             </LocalLink>
 
-            {vendedor && (
+            {vendedor && !esDemo && (
               <div className="bg-gray-50 rounded-xl p-4 mb-5">
                 <LocalLink href={`/vendedor/${vendedor.id}`} className="flex items-center gap-3 hover:bg-gray-100 rounded-xl p-1 -m-1 transition">
                   <Avatar nombre={vendedor.nombre || 'Vendedor'} fotoUrl={vendedor.foto_perfil_url} />
@@ -555,10 +550,11 @@ function ProductoPageClientInner({
             <div className="space-y-3">
               {!producto.vendido && (
               <>
+              {esDemo && <p className="text-sm text-gray-600">{t('demoContactNote')}</p>}
               <div className="grid grid-cols-2 gap-2">
                 {metodos.chat && (
                   <button onClick={handleContacto} className="bg-brand-primary text-white py-3 rounded-xl font-bold hover:bg-brand-dark transition flex items-center justify-center gap-2 text-sm">
-                    <MessageCircle size={18} /> {t('chat')}
+                    <MessageCircle size={18} /> {esDemo ? t('demoChat') : t('chat')}
                   </button>
                 )}
                 {metodos.whatsapp && whatsappLink && (

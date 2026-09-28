@@ -143,6 +143,7 @@ export interface ProductoInspeccionable {
   user_id?: string | null
   activo?: boolean | null
   vendido?: boolean | null
+  es_demo?: boolean | null
   estado_moderacion?: string | null
 }
 
@@ -167,6 +168,7 @@ export function puedeSolicitarInspeccion(
   userId: string | null | undefined
 ): VeredictoInspeccion {
   if (!producto) return { ok: false, motivo: 'El anuncio no existe' }
+  if (producto.es_demo) return { ok: false, motivo: 'Este vehículo es ficticio y no está disponible para compra' }
   if (!userId) return { ok: false, motivo: 'Inicia sesión para solicitar inspección' }
   if (producto.user_id && producto.user_id === userId) {
     return { ok: false, motivo: 'No puedes solicitar inspección de tu propio anuncio' }

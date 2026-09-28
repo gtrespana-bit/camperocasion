@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/require-auth'
+import { asegurarVendedores, CAMPOS_ANUNCIO_SEMILLA } from '@/lib/semilla-admin.js'
 import {
   VENDEDORES,
   ANUNCIOS,
-  emailVendedor,
   haceHoras,
   dentroDias,
 } from '@/lib/semilla-datos.js'
@@ -58,74 +58,6 @@ async function resolverCategoriaCamper(sb: any): Promise<number> {
   return creada.id as number
 }
 
-/** Busca un usuario por email con la admin API (paginando). */
-async function buscarUsuarioPorEmail(sb: any, email: string): Promise<any | null> {
-  let page = 1
-  for (;;) {
-    const { data, error } = await sb.auth.admin.listUsers({ page, perPage: 200 })
-    if (error) throw new Error(`listUsers p.${page}: ${error.message}`)
-    const users = data?.users || []
-    const hit = users.find((u: any) => (u.email || '').toLowerCase() === email.toLowerCase())
-    if (hit) return hit
-    if (users.length < 200) return null
-    page++
-  }
-}
-
-/** Crea (o reutiliza) los 14 vendedores demo y completa sus perfiles. */
-async function asegurarVendedores(sb: any): Promise<{ ids: Record<string, string>; creados: number; reutilizados: number }> {
-  const ids: Record<string, string> = {}
-  let creados = 0
-  let reutilizados = 0
-
-  for (const v of VENDEDORES as any[]) {
-    const email = emailVendedor(v)
-    let usuario = await buscarUsuarioPorEmail(sb, email)
-
-    if (!usuario) {
-      const { data, error } = await sb.auth.admin.createUser({
-        email,
-        password: `Semilla#${v.slug}#camper2026`,
-        email_confirm: true,
-        user_metadata: { nombre: v.nombre, semilla: true },
-      })
-      if (error) throw new Error(`createUser ${email}: ${error.message}`)
-      usuario = data.user
-      creados++
-    } else {
-      reutilizados++
-    }
-
-    ids[v.slug] = usuario.id
-
-    const { error: pErr } = await sb.from('perfiles').upsert(
-      {
-        id: usuario.id,
-        nombre: v.nombre,
-        // Sin teléfono: los números del guion de la semilla son inventados y
-        // en España pertenecen a personas reales. Un anuncio de ejemplo no
-        // debe poder generar llamadas.
-        telefono: null,
-        estado: v.estado,
-        ciudad: v.ciudad,
-        whatsapp_disponible: false,
-        telefono_visible: false,
-        email_visible: false,
-        // Los perfiles de la semilla NUNCA son verificados: el sello
-        // "verificado" es una promesa de identidad comprobada.
-        verificado: false,
-        es_demo: true,
-        tipo_vendedor: v.tipo || 'particular',
-        actualizado_en: new Date().toISOString(),
-      },
-      { onConflict: 'id' },
-    )
-    if (pErr) throw new Error(`perfil ${v.nombre}: ${pErr.message}`)
-  }
-
-  return { ids, creados, reutilizados }
-}
-
 /**
  * Sube una foto al bucket y devuelve su URL pública (upsert → idempotente).
  * La descarga del propio despliegue (public/semilla-fotos/...).
@@ -158,15 +90,14 @@ async function subirFoto(
 }
 
 async function ejecutarSemilla(sb: any, origen: string, reset: boolean, dry: boolean) {
-  const categoriaId = await resolverCategoriaCamper(sb)
-  const { ids, creados, reutilizados } = await asegurarVendedores(sb)
+  const { ids, creados, reutilizados } = await asegurarVendedores(sb, dry)
   const sellerIds = Object.values(ids)
 
   // ¿Cuánto hay ya sembrado?
-  const { data: previos, error: ePrev } = await sb
+  const { data: previos, error: ePrev } = sellerIds.length ? await sb
     .from('productos')
     .select('titulo, user_id')
-    .in('user_id', sellerIds)
+    .in('user_id', sellerIds) : { data: [], error: null }
   if (ePrev) throw new Error(`consulta previos: ${ePrev.message}`)
   const yaExiste = new Set((previos || []).map((p: any) => `${p.user_id}::${p.titulo}`))
 
@@ -180,6 +111,11 @@ async function ejecutarSemilla(sb: any, origen: string, reset: boolean, dry: boo
       mensaje: 'No se ha modificado nada. Pulsa "Generar anuncios" para sembrar.',
     }
   }
+
+  const categoriaId = await resolverCategoriaCamper(sb)
+  const { error: repairError } = await sb.from('productos')
+    .update(CAMPOS_ANUNCIO_SEMILLA).in('user_id', sellerIds)
+  if (repairError) throw new Error(`Actualizar semilla existente: ${repairError.message}`)
 
   let borrados = 0
   if (reset && (previos?.length || 0) > 0) {
@@ -227,28 +163,16 @@ async function ejecutarSemilla(sb: any, origen: string, reset: boolean, dry: boo
         imagen_url: urls[0],
         imagenes: urls,
         especificaciones: a.ficha,
-        // Solo el email de la propia plataforma: sin teléfono ni WhatsApp,
-        // porque el anuncio es un ejemplo y no hay nadie al otro lado.
-        metodos_contacto: { email: emailVendedor(vendedor) },
-        es_demo: true,
+        ...CAMPOS_ANUNCIO_SEMILLA,
         estado_moderacion: 'aprobado',
         motivo_moderacion: null,
         activo: true,
         destacado: !!a.destacado,
         destacado_hasta: a.destacado ? dentroDias(25) : null,
         boosteado_en: a.boosteado ? haceHoras(18) : null,
-        // El sello de vendedor verificado no se hereda de un guion: los
-        // anuncios de demostración salen siempre sin verificar.
-        vendedor_verificado: false,
-        verificacion_homologacion: a.verificacion || 'sin_verificar',
-        ...(a.verificacion === 'verificada'
-          ? { verificacion_homologacion_revisada_en: haceHoras(Math.max(a.creado - 30, 12)) }
-          : {}),
         vendido: false,
         vendido_en: null,
         comprador_id: null,
-        reservado: !!a.reservado,
-        ...(a.reservado ? { reservado_hasta: dentroDias(4) } : {}),
         visitas: a.visitas,
         creado_en: creado,
         actualizado_en: creado,
@@ -295,6 +219,8 @@ export async function POST(request: NextRequest) {
 
 /** Mini-panel HTML: sin framework, habla con POST usando las cookies de sesión. */
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request)
+  if ('response' in auth) return auth.response
   const html = `<!doctype html>
 <html lang="es">
 <head>
@@ -315,7 +241,8 @@ export async function GET(request: NextRequest) {
 </head>
 <body>
 <h1>🚐 Semilla de anuncios</h1>
-<p>Genera <strong>20 anuncios completos</strong> (gran volumen, mediana, mini, perfilada, capuchina, integral y overland) con ficha técnica, descripciones reales y 68 fotos, repartidos entre 14 vendedores de demostración por toda España. Es idempotente: no duplica lo que ya exista.</p>
+<p>Genera <strong>20 anuncios completos</strong> (gran volumen, mediana, mini, perfilada, capuchina, integral y overland) con ficha técnica, descripciones detalladas y 68 fotos, repartidos entre 14 vendedores de demostración por toda España. Es idempotente: no duplica lo que ya exista.</p>
+<p>El chat de los anuncios de muestra lo atiende CamperOcasión. Generar también protege las cuentas antiguas y actualiza sus anuncios sin borrar conversaciones. Reset sí elimina el historial asociado: úsalo solo para empezar de cero.</p>
 <p>
   <button class="estado" onclick="ejecutar('dry=1')">👀 Ver estado (sin tocar nada)</button>
   <button class="generar" id="btn-gen" onclick="ejecutar('')">🌱 Generar 20 anuncios</button>

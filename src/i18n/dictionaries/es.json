@@ -562,8 +562,10 @@
     "reservadoBadge": "Reservado",
     "contratoCtaTitulo": "Contrato de compraventa",
     "contratoCtaDesc": "Modelo listo para imprimir con los datos de esta camper",
-    "demoBannerTitle": "Anuncio de ejemplo",
-    "demoBannerDesc": "Este anuncio es una demostración para que veas cómo queda una ficha completa: no corresponde a un vehículo real en venta y no tiene datos de contacto. Publica el tuyo gratis en un par de minutos."
+    "demoChat": "Consultar",
+    "demoContactNote": "Escribe al equipo de CamperOcasión sobre lo que estás buscando.",
+    "demoBannerTitle": "Anuncio de muestra",
+    "demoBannerDesc": "Vehículo ficticio, no disponible para compra. Consultas atendidas por CamperOcasión."
   },
   "creditos": {
     "title1": "Compra créditos y",

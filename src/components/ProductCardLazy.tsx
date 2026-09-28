@@ -75,7 +75,7 @@ export const ProductCardLazy = ({ p, t, priority = false }: ProductCardLazyProps
         )}
         {p.es_demo && (
           <div className="absolute bottom-2 left-2 z-10 bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-            🧪 {t('productCard.demo')}
+            {t('productCard.demo')}
           </div>
         )}
         <Image

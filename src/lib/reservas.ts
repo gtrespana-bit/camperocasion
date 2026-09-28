@@ -183,6 +183,7 @@ export interface ProductoReservable {
   activo?: boolean | null
   vendido?: boolean | null
   reservado?: boolean | null
+  es_demo?: boolean | null
   estado_moderacion?: string | null
 }
 
@@ -210,6 +211,7 @@ export function puedeReservar(
   ahora: Date = new Date()
 ): VeredictoReserva {
   if (!producto) return { ok: false, motivo: 'El anuncio no existe' }
+  if (producto.es_demo) return { ok: false, motivo: 'Este vehículo es ficticio y no está disponible para compra' }
   if (!userId) return { ok: false, motivo: 'Inicia sesión para reservar' }
   if (producto.user_id && producto.user_id === userId) {
     return { ok: false, motivo: 'No puedes reservar tu propio anuncio' }
