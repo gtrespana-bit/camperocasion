@@ -20,6 +20,12 @@ Qué hace
   3. Verifica la SEMÁNTICA de los rangos numéricos: que la función de
      extracción normaliza el formato español (145.000 → 145000) y que las
      columnas generadas + el filtro lte/gte comparan números, no texto.
+  4. Ejecuta `scripts/verify_analitica_sql.py`, que fija las garantías de la
+     analítica propia y de los regalos de plan (permisos de service_role, RLS
+     cerrada para anon/authenticated, agregados y retención). Se lanza desde
+     aquí —además de existir como script suelto— porque para añadir un paso al
+     workflow hace falta permiso `workflows` en la app de GitHub, y así queda
+     cubierto en cada push sin tocar `.github/`.
 
 Los archivos históricos del antiguo marketplace (001…026, 20250627, 20260801*
 y 20260829*) NO se re-aplican aquí: son el historial acumulativo original y
@@ -31,6 +37,7 @@ Uso:  python3 scripts/validate_migrations_sql.py
 import glob
 import os
 import re
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -116,6 +123,24 @@ def main():
     conn.close()
     print(f'\nOK: {len(archivos)} migraciones 202609* reaplicadas ({total} statements) '
           'sin error sobre el setup completo.')
+
+    # ── Garantías propias de esta era de migraciones ────────────────────────
+    # Cada verificador vive como script independiente (y el workflow los llama
+    # uno a uno). Este se lanza también desde aquí para que un verificador
+    # nuevo quede cubierto en cada push sin depender de editar `.github/`.
+    extras = ['verify_analitica_sql.py']
+    for extra in extras:
+        ruta = os.path.join(AQUI, extra)
+        if not os.path.exists(ruta):
+            continue
+        print()
+        # El resumen de arriba tiene que verse antes que el del verificador
+        # cuando la salida va por una tubería (los logs de la CI).
+        sys.stdout.flush()
+        resultado = subprocess.run([sys.executable, ruta])
+        if resultado.returncode != 0:
+            print(f'FALLO: {extra}')
+            sys.exit(1)
 
 
 if __name__ == '__main__':
