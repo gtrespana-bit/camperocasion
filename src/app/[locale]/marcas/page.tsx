@@ -79,18 +79,42 @@ export default async function MarcasPage({ params }: { params: Promise<{ locale:
   const fabricantes = agruparPorFabricante(MARCAS_MODELOS)
   const subs = categoriasData.camper.subs
 
-  const jsonLd = {
+  const SITIO = 'https://camperocasion.online'
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Marcas', item: SITIO + '/marcas' },
+    ],
+  }
+  const collectionJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': SITIO + '/marcas#collection',
+    name: 'Marcas y modelos de campers y autocaravanas',
+    description: 'Catálogo de fabricantes y modelos aptos para camperizar, autocaravanas y 4x4 overland.',
+    url: SITIO + '/marcas',
+    isPartOf: { '@id': SITIO + '/#website' },
+    breadcrumb: { '@id': SITIO + '/marcas#breadcrumb' },
+  }
+  const itemListJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
+    '@id': SITIO + '/marcas#itemlist',
     name: 'Marcas y modelos de campers y autocaravanas',
     description: 'Catálogo de fabricantes y modelos aptos para camperizar, autocaravanas y 4x4 overland.',
     numberOfItems: MARCAS_MODELOS.length,
-    itemListElement: subs.map((sub, i) => ({
+    itemListElement: MARCAS_MODELOS.slice(0, 30).map((m, i) => ({
       '@type': 'ListItem',
       position: i + 1,
-      name: sub.label,
-      url: `https://camperocasion.online/catalogo?subcategoria=${encodeURIComponent(sub.label)}`,
+      name: etiquetaModelo(m),
+      url: SITIO + '/modelo/' + slugModelo(m),
     })),
+  }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, collectionJsonLd, itemListJsonLd],
   }
 
   return (

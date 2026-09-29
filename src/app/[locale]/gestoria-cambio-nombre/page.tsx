@@ -60,13 +60,63 @@ const FAQ = [
 ]
 
 export default function GestoriaCambioNombrePage() {
-  const jsonLd = {
+  const SITIO = 'https://camperocasion.online'
+  const serviceJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
+    '@id': SITIO + '/gestoria-cambio-nombre#service',
     name: 'Gestoría del cambio de nombre DGT para campers',
-    areaServed: 'ES',
-    provider: { '@type': 'Organization', name: 'CamperOcasión' },
+    serviceType: 'Gestoría de cambio de titularidad DGT',
+    areaServed: { '@type': 'Country', name: 'España' },
+    provider: { '@type': 'Organization', '@id': SITIO + '/#organization', name: 'CamperOcasión', url: SITIO },
     description: metadata.description as string,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'EUR',
+      lowPrice: String(GESTORIA_PRECIO_MIN),
+      highPrice: String(GESTORIA_PRECIO_MAX),
+      priceSpecification: { '@type': 'PriceSpecification', priceCurrency: 'EUR', minPrice: GESTORIA_PRECIO_MIN, maxPrice: GESTORIA_PRECIO_MAX },
+      availability: 'https://schema.org/InStock',
+      url: CANONICAL,
+    },
+  }
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Gestoría del cambio de nombre', item: CANONICAL },
+    ],
+  }
+  const howToJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    '@id': CANONICAL + '#howto',
+    name: 'Cómo hacer el cambio de nombre de una camper con gestoría',
+    description: 'Pasos para tramitar el cambio de titularidad DGT de una furgoneta camper o autocaravana con gestoría.',
+    totalTime: 'P14D',
+    estimatedCost: { '@type': 'MonetaryAmount', currency: 'EUR', value: GESTORIA_PRECIO_MIN + '-' + GESTORIA_PRECIO_MAX },
+    step: INCLUYE.map((texto, i) => ({
+      '@type': 'HowToStep',
+      position: i + 1,
+      name: 'Paso ' + (i+1),
+      text: texto,
+      url: CANONICAL + '#paso-' + (i+1),
+    })),
+  }
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': CANONICAL + '#faq',
+    mainEntity: FAQ.map(f => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, serviceJsonLd, howToJsonLd, faqJsonLd],
   }
 
   return (

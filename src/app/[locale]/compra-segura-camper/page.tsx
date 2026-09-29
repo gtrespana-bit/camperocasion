@@ -32,10 +32,21 @@ const PASOS_MODELO_620 = [
 ]
 
 export default function CompraSeguraCamperPage() {
-  const jsonLd = {
+  const SITIO = 'https://camperocasion.online'
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Compra segura', item: CANONICAL },
+    ],
+  }
+  const howToJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
+    '@id': CANONICAL + '#howto',
     name: 'Cómo comprar una camper de segunda mano entre particulares de forma segura',
+    description: 'Checklist completo para comprar una furgoneta camper o autocaravana de ocasión sin sustos: documentos, ITV, reformas legalizadas y trámites DGT.',
     totalTime: 'P1D',
     estimatedCost: { '@type': 'MonetaryAmount', currency: 'EUR', value: TASA_DGT },
     step: PASOS_MODELO_620.map((paso, i) => ({
@@ -43,7 +54,30 @@ export default function CompraSeguraCamperPage() {
       position: i + 1,
       name: `Paso ${i + 1}`,
       text: paso,
+      url: CANONICAL + '#paso-' + (i+1),
     })),
+  }
+  const checklistFaq = [
+    ...CHECKLIST_COMPRA_SEGURA.map(item => ({
+      '@type': 'Question',
+      name: item.titulo,
+      acceptedAnswer: { '@type': 'Answer', text: item.detalle + ' — Dónde verificar: ' + item.donde },
+    })),
+    ...CHECKLIST_CAMPER.map(item => ({
+      '@type': 'Question',
+      name: item.titulo,
+      acceptedAnswer: { '@type': 'Answer', text: item.detalle + ' — Dónde verificar: ' + item.donde },
+    })),
+  ]
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': CANONICAL + '#faq',
+    mainEntity: checklistFaq.slice(0, 12),
+  }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, howToJsonLd, faqJsonLd],
   }
 
   return (

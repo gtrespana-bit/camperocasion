@@ -13,18 +13,48 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
   setRequestLocale(locale)
   const t = await getTranslations({ locale, namespace: 'howItWorks' })
 
-  const jsonLd = {
+  const SITIO = 'https://camperocasion.online'
+  const CANONICAL = SITIO + '/como-funciona'
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: t('heroTitle') || 'Cómo funciona', item: CANONICAL },
+    ],
+  }
+  const howToJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
+    '@id': CANONICAL + '#howto',
     name: t('heroTitle'),
     description: t('heroSubtitle'),
-    url: 'https://camperocasion.online/como-funciona',
+    url: CANONICAL,
+    totalTime: 'PT30M',
+    estimatedCost: { '@type': 'MonetaryAmount', currency: 'EUR', value: '0' },
     step: [
-      { '@type': 'HowToStep', name: t('step1Title'), text: t('step1Desc') },
-      { '@type': 'HowToStep', name: t('step2Title'), text: t('step2Desc') },
-      { '@type': 'HowToStep', name: t('step3Title'), text: t('step3Desc') },
-      { '@type': 'HowToStep', name: t('step4Title'), text: t('step4Desc') },
+      { '@type': 'HowToStep', position: 1, name: t('step1Title'), text: t('step1Desc'), url: CANONICAL + '#paso-1' },
+      { '@type': 'HowToStep', position: 2, name: t('step2Title'), text: t('step2Desc'), url: CANONICAL + '#paso-2' },
+      { '@type': 'HowToStep', position: 3, name: t('step3Title'), text: t('step3Desc'), url: CANONICAL + '#paso-3' },
+      { '@type': 'HowToStep', position: 4, name: t('step4Title'), text: t('step4Desc'), url: CANONICAL + '#paso-4' },
     ],
+  }
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': CANONICAL + '#faq',
+    mainEntity: [
+      { '@type': 'Question', name: t('faq1q'), acceptedAnswer: { '@type': 'Answer', text: t('faq1a') } },
+      { '@type': 'Question', name: t('faq2q'), acceptedAnswer: { '@type': 'Answer', text: t('faq2a') } },
+      { '@type': 'Question', name: t('faq3q'), acceptedAnswer: { '@type': 'Answer', text: t('faq3a') } },
+      { '@type': 'Question', name: t('faq4q'), acceptedAnswer: { '@type': 'Answer', text: t('faq4a') } },
+      { '@type': 'Question', name: t('faq5q'), acceptedAnswer: { '@type': 'Answer', text: t('faq5a') } },
+      { '@type': 'Question', name: t('faq6q'), acceptedAnswer: { '@type': 'Answer', text: t('faq6a') } },
+    ],
+  }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, howToJsonLd, faqJsonLd],
   }
 
   const pasos = [

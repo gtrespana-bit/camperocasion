@@ -4,6 +4,7 @@ import { setRequestLocale } from 'next-intl/server'
 import { supabase } from '@/lib/supabase-server-client'
 import { COLUMNAS_PRECIO } from '@/lib/precio'
 import { slugValido } from '@/lib/tiendas'
+import { productAbsoluteUrl } from '@/lib/product-url'
 import TiendaClient from './TiendaClient'
 
 /**
@@ -102,7 +103,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? [{ url: perfil.portada_url }]
     : perfil.foto_perfil_url
       ? [{ url: perfil.foto_perfil_url }]
-      : undefined
+      : [{ url: `https://camperocasion.online/api/og/catalog?categoria=camper`, width: 1200, height: 630, alt: title }]
 
   return {
     title,
@@ -112,7 +113,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       languages: { 'es-ES': url, 'x-default': url },
     },
     openGraph: { title, description, url, siteName: 'CamperOcasión', type: 'profile', locale: 'es_ES', images },
-    twitter: { card: 'summary_large_image', title, description, images },
+    twitter: { card: 'summary_large_image', title, description, images: images.map(i => (i as any).url || i) as any },
   }
 }
 
@@ -125,15 +126,27 @@ export default async function TiendaPage({ params }: Props) {
 
   const { perfil, productos, totalResenas, promedio } = data
 
-  // JSON-LD: un profesional con stock es un AutoDealer a ojos de Google, y eso
-  // le da ficha de negocio local en vez de una página suelta.
-  const jsonLd = {
+  const pageUrl = SITIO + '/tienda/' + perfil.slug
+
+  // JSON-LD: AutoDealer mejorado + BreadcrumbList + ItemList
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Tiendas', item: SITIO + '/tiendas' },
+      { '@type': 'ListItem', position: 3, name: perfil.nombre || 'Tienda', item: pageUrl },
+    ],
+  }
+
+  const localBusinessJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'AutoDealer',
+    '@id': pageUrl + '#dealer',
     name: perfil.nombre,
-    url: `${SITIO}/tienda/${perfil.slug}`,
+    url: pageUrl,
     ...(perfil.descripcion ? { description: perfil.descripcion } : {}),
-    ...(perfil.foto_perfil_url ? { image: perfil.foto_perfil_url } : {}),
+    ...(perfil.foto_perfil_url ? { image: perfil.foto_perfil_url } : perfil.portada_url ? { image: perfil.portada_url } : {}),
     ...(perfil.web ? { sameAs: [perfil.web] } : {}),
     ...(perfil.ciudad || perfil.estado
       ? {
@@ -146,23 +159,81 @@ export default async function TiendaPage({ params }: Props) {
           },
         }
       : {}),
+    // areaServed para Local Pack
+    ...(perfil.estado || perfil.ciudad ? {
+      areaServed: {
+        '@type': 'AdministrativeArea',
+        name: perfil.estado || perfil.ciudad,
+        containedInPlace: { '@type': 'Country', name: 'España' }
+      }
+    } : {}),
     ...(perfil.horario ? { openingHours: perfil.horario } : {}),
+    priceRange: '€€',
     ...(totalResenas > 0
       ? {
           aggregateRating: {
             '@type': 'AggregateRating',
             ratingValue: promedio,
             reviewCount: totalResenas,
+            bestRating: 5,
+            worstRating: 1,
           },
         }
       : {}),
+    // Indica que es parte del sitio
+    isPartOf: { '@id': SITIO + '/#website' },
+  }
+
+  const itemListJsonLd = productos.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': pageUrl + '#itemlist',
+    name: 'Stock de ' + (perfil.nombre || 'la tienda'),
+    numberOfItems: productos.length,
+    itemListElement: productos.slice(0, 20).map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: productAbsoluteUrl(p, SITIO),
+      name: p.titulo,
+      ...(p.imagen_url ? { image: p.imagen_url } : {}),
+      offers: {
+        '@type': 'Offer',
+        price: (p as any).precio_usd || 0,
+        priceCurrency: 'EUR',
+        availability: 'https://schema.org/InStock',
+        url: productAbsoluteUrl(p, SITIO),
+      },
+    })),
+  } : null
+
+  const collectionPageJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': pageUrl + '#collection',
+    name: (perfil.nombre || 'Tienda') + ' — stock',
+    description: perfil.descripcion || 'Stock de furgonetas camper y autocaravanas',
+    url: pageUrl,
+    isPartOf: { '@id': SITIO + '/#website' },
+    breadcrumb: { '@id': pageUrl + '#breadcrumb' },
+    mainEntity: itemListJsonLd ? { '@id': pageUrl + '#itemlist' } : undefined,
+    about: { '@id': pageUrl + '#dealer' },
+  }
+
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      breadcrumbJsonLd,
+      localBusinessJsonLd,
+      collectionPageJsonLd,
+      ...(itemListJsonLd ? [itemListJsonLd] : []),
+    ],
   }
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
       />
       <TiendaClient
         perfil={perfil}

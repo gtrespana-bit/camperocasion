@@ -11,21 +11,38 @@ export default async function SobreNosotrosPage({ params }: { params: Promise<{ 
   const { locale } = await params
   setRequestLocale(locale)
   const t = await getTranslations({ locale, namespace: 'about' })
-  const jsonLd = {
+  const SITIO = 'https://camperocasion.online'
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: t('title'), item: SITIO + '/sobre-nosotros' },
+    ],
+  }
+  const aboutJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'AboutPage',
+    '@id': SITIO + '/sobre-nosotros#about',
     name: t('title'),
     description: t('subtitle'),
-    url: 'https://camperocasion.online/sobre-nosotros',
+    url: SITIO + '/sobre-nosotros',
+    isPartOf: { '@id': SITIO + '/#website' },
+    breadcrumb: { '@id': SITIO + '/sobre-nosotros#breadcrumb' },
     mainEntity: {
       '@type': 'Organization',
+      '@id': SITIO + '/#organization',
       name: 'CamperOcasión',
-      url: 'https://camperocasion.online',
+      url: SITIO,
       description: t('subtitle'),
       foundingDate: '2024',
       areaServed: { '@type': 'Country', name: 'España' },
       serviceType: 'Marketplace',
     },
+  }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, aboutJsonLd],
   }
 
   return (

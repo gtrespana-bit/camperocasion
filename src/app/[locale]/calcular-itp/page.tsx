@@ -31,6 +31,13 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'es_ES',
     url: CANONICAL,
+    images: [{ url: 'https://camperocasion.online/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: 'Calculadora de ITP — CamperOcasión' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Calculadora de ITP para comprar una camper de segunda mano',
+    description: 'Calcula el ITP de tu camper o autocaravana de ocasión: tipo por comunidad autónoma, cuota fija para vehículos antiguos, depreciación por antigüedad y coste total del cambio de nombre.',
+    images: ['https://camperocasion.online/api/og/catalog?categoria=camper'],
   },
 }
 
@@ -45,14 +52,29 @@ export default async function CalcularITPPage({ searchParams }: PageProps) {
   const precioInicial = Number(String(precio || '').replace(/[^\d.]/g, '')) || undefined
   const ccaaInicial = ccaa && TIPOS_ITP.some(c => c.slug === ccaa) ? ccaa : undefined
 
+  const SITIO = 'https://camperocasion.online'
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Calculadora de ITP', item: SITIO + '/calcular-itp' },
+    ],
+  }
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: CALCULADORA_FAQ.map(f => ({
-      '@type': 'Question',
-      name: f.pregunta,
-      acceptedAnswer: { '@type': 'Answer', text: f.respuesta },
-    })),
+    '@graph': [
+      breadcrumbJsonLd,
+      {
+        '@type': 'FAQPage',
+        '@id': SITIO + '/calcular-itp#faq',
+        mainEntity: CALCULADORA_FAQ.map(f => ({
+          '@type': 'Question',
+          name: f.pregunta,
+          acceptedAnswer: { '@type': 'Answer', text: f.respuesta },
+        })),
+      },
+    ],
   }
 
   return (
