@@ -309,3 +309,31 @@ export async function emailSubidaNivel(
     `${URL}/dashboard?tab=perfil`,
   ))
 }
+
+// ─── 6. Pack regalado por el equipo ────────────────────────
+// El admin puede regalar días de pack desde /admin → Planes y cupones o desde
+// la ficha de un usuario. Avisar por email evita el «¿por qué tengo 15
+// anuncios si yo no he pagado nada?».
+export async function emailPlanRegalado(
+  email: string,
+  nombre: string,
+  planNombre: string,
+  hasta: string,
+  dias: number,
+): Promise<boolean> {
+  return enviar(email, `🎁 Te hemos activado el pack ${planNombre}`, emailLayout(
+    `Pack ${planNombre} de regalo`,
+    `<p style="margin:0 0 16px">Hola <strong>${nombre}</strong>,</p>
+     <p style="margin:0 0 20px">El equipo de CamperOcasión te ha activado el pack <strong>${planNombre}</strong> sin coste, para que puedas publicar y vender con más margen.</p>
+     ${card(`
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+         ${priceLine('Pack', planNombre)}
+         ${priceLine('Días regalados', `${dias}`)}
+         <tr style="border-top:1px solid ${COLORS.lightGray}"><td style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.gray}">Activo hasta</td><td align="right" style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:18px;font-weight:700;color:${COLORS.success}">${hasta}</td></tr>
+       </table>
+     `)}
+     <p style="margin:24px 0 0;color:${COLORS.gray};font-size:14px">Cuando termine el periodo volverás al plan gratuito; no se hace ningún cargo ni hace falta tarjeta.</p>`,
+    'Ir a mis anuncios',
+    `${URL}/dashboard`,
+  ))
+}

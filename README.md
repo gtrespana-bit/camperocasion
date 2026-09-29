@@ -163,6 +163,30 @@ Publicar es gratis. Opcionalmente, los vendedores compran **créditos**
 (boost al #1 y destacados) por **Bizum, transferencia o PayPal**, con
 comprobante y aprobación. Paquetes: 2 / 15 / 40 / 100 créditos.
 
+## Panel admin
+
+`/admin` (solo `ADMIN_EMAILS`) es el centro de operaciones: publicaciones,
+moderación, usuarios, homologación, reservas, transacciones, auditoría,
+categorías, comunicación, planes y cupones, exportación y ajustes.
+
+- **Audiencia** (`/admin?tab=audiencia`): visitantes únicos, páginas vistas,
+  sesiones, tiempo por página, registros, anuncios publicados, mensajes,
+  favoritos y canjes, todo clasificable por **día, semana o mes** y por rango
+  (hoy, 7 días, 30 días, mes, mes pasado, 90 días, 12 meses, todo o fechas a
+  mano), con comparativa contra el periodo anterior, top de páginas y anuncios,
+  dispositivos, idioma, fuentes de tráfico, horas y días de la semana, y la
+  lista de anuncios activos sin ninguna visita. Se exporta a CSV.
+- **Regalar pack** (`/admin` → *Planes y cupones* o desde la ficha de un
+  usuario): días de Starter, Plus o Unlimited gratis para una cuenta concreta,
+  sin cupón y sin Stripe, sumando al final del periodo vigente o empezando
+  ahora. Queda en la bitácora `planes_regalos` y al usuario se le avisa por
+  email.
+
+La medición de audiencia es **propia y anónima**: un id aleatorio del navegador,
+sin IP ni user-agent, y solo se activa si el usuario pulsa «Aceptar» en el aviso
+de cookies (igual que Vercel Analytics). Migración:
+`supabase/migrations/202609290001_analitica_visitas.sql`.
+
 ## Despliegue en Vercel
 
 La build es *zero-config*: Vercel detecta Next.js por `package.json` y usa

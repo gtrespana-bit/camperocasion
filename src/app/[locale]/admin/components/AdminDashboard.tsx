@@ -149,7 +149,7 @@ export default function AdminDashboard({
     { label: 'Publicaciones', value: formatNumber(data.products), icon: ShoppingBag, accent: 'bg-purple-50 text-purple-600', onClick: () => jump('publicaciones'), helper: `${formatNumber(data.active)} activas · ${formatNumber(data.sold)} vendidas` },
     { label: 'Ingresos (créditos)', value: formatMoney(data.revenueUsd), icon: DollarSign, accent: 'bg-emerald-50 text-emerald-600', onClick: () => jump('transacciones'), helper: `+${formatMoney(data.revenueToday)} hoy` },
     { label: 'Ventas hoy', value: formatNumber(data.transactionsToday), icon: Wallet, accent: 'bg-yellow-50 text-yellow-700', onClick: () => jump('transacciones'), helper: 'compras aprobadas' },
-    { label: 'Visitas', value: formatNumber(data.totalVisits), icon: Eye, accent: 'bg-orange-50 text-orange-600', onClick: () => jump('publicaciones'), helper: 'top publicaciones' },
+    { label: 'Visitas', value: formatNumber(data.totalVisits), icon: Eye, accent: 'bg-orange-50 text-orange-600', onClick: () => jump('audiencia'), helper: 'ver audiencia y actividad' },
     { label: 'Reseñas', value: formatNumber(data.reviews), icon: Star, accent: 'bg-amber-50 text-amber-600', onClick: () => jump('publicaciones'), helper: 'confianza en la plataforma' },
     { label: 'Pendientes', value: formatNumber(data.pendingTransactions), icon: Clock, accent: 'bg-red-50 text-red-600', onClick: () => jump('transacciones'), helper: data.pendingTransactions ? 'requieren tu acción' : 'todo al día' },
     { label: 'Moderación', value: formatNumber(data.pendingModeration + data.activeReports), icon: ShieldCheck, accent: 'bg-gray-100 text-gray-700', onClick: () => jump('moderacion'), helper: `${data.pendingModeration} pubs · ${data.activeReports} denuncias` },

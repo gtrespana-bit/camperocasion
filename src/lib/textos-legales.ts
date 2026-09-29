@@ -401,7 +401,7 @@ export const POLITICA_COOKIES: Record<IdiomaLegal, DocumentoLegal> = {
           'Sesión (necesaria): cookies de Supabase (prefijo `sb-`) que mantienen tu sesión iniciada. Sin ellas no se puede iniciar sesión ni publicar. Se guardan hasta que cierras sesión o caduca el token.',
           'Preferencias (necesaria): la clave `cookie-consent` en el almacenamiento local recuerda si aceptaste o rechazaste la medición, para no volver a preguntarte en cada visita.',
           'Aviso de instalación de la app (necesaria): recuerda si ya cerraste el aviso para no repetirlo.',
-          'Medición de tráfico y rendimiento (opcional): Vercel Analytics y Speed Insights, que miden visitas y tiempos de carga de forma agregada. Se cargan **solo si pulsas «Aceptar»**; si rechazas o no decides, no se descarga su código.',
+          'Medición de tráfico y rendimiento (opcional): Vercel Analytics y Speed Insights miden visitas y tiempos de carga de forma agregada, y la medición propia de audiencia anota qué páginas se ven, cuánto tiempo y desde qué web se llega. La medición propia usa un identificador aleatorio guardado en el navegador y **no** guarda tu IP ni tu user-agent. Se carga **solo si pulsas «Aceptar»**; si rechazas o no decides, no se descarga su código.',
         ],
       },
       {
@@ -441,7 +441,7 @@ export const POLITICA_COOKIES: Record<IdiomaLegal, DocumentoLegal> = {
           'Session (essential): Supabase cookies (prefix `sb-`) that keep you signed in. Without them you cannot sign in or publish. They are kept until you sign out or the token expires.',
           'Preferences (essential): the `cookie-consent` key in local storage remembers whether you accepted or rejected measurement, so we do not ask you on every visit.',
           'App install notice (essential): remembers that you already dismissed the notice so it is not shown again.',
-          'Traffic and performance measurement (optional): Vercel Analytics and Speed Insights, which measure visits and load times in aggregate. They are loaded **only if you press “Accept”**; if you reject or do not decide, their code is not downloaded.',
+          'Traffic and performance measurement (optional): Vercel Analytics and Speed Insights measure visits and load times in aggregate, and our own audience measurement records which pages are viewed, for how long and which website referred you. Our own measurement uses a random identifier stored in your browser and does **not** store your IP or user-agent. It is loaded **only if you press “Accept”**; if you reject or do not decide, its code is not downloaded.',
         ],
       },
       {
