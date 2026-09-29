@@ -65,6 +65,15 @@ export default function PublicarPage() {
   const [showEmprendedor, setShowEmprendedor] = useState(false)
   const [pubCount, setPubCount] = useState(0)
   const [tipoVendedor, setTipoVendedor] = useState<string | null>(null)
+  const [cupo, setCupo] = useState<{
+    max: number | null
+    usados: number
+    restantes: number | null
+    puedePublicar: boolean
+    trial: boolean
+    profesional: boolean
+    fotosMax: number
+  } | null>(null)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -85,6 +94,13 @@ export default function PublicarPage() {
         .then(r => (r.ok ? r.json() : null))
         .then(result => {
           if (result?.profile?.tipo_vendedor) setTipoVendedor(result.profile.tipo_vendedor)
+        })
+        .catch(() => {})
+
+      fetch('/api/cupo-anuncios')
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => {
+          if (data?.ok) setCupo(data)
         })
         .catch(() => {})
     }
@@ -133,7 +149,8 @@ export default function PublicarPage() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
-    const maxFiles = 10 - imagenes.length
+    const topeFotos = cupo?.fotosMax ?? 10
+    const maxFiles = topeFotos - imagenes.length
     if (maxFiles <= 0) return
 
     const selected: File[] = []
@@ -215,6 +232,11 @@ export default function PublicarPage() {
   }
 
   const handleSubmit = async () => {
+    if (cupo && !cupo.puedePublicar) {
+      setError(t('cupoLleno'))
+      return
+    }
+
     setLoading(true)
     setError('')
     setModeracionResultado(null)
@@ -341,6 +363,17 @@ export default function PublicarPage() {
         setLoading(false)
         return
       }
+
+      if (res.status === 403 && apiResult.codigo === 'CUPO') {
+        setError(apiResult.error || t('cupoLleno'))
+        setCupo(prev =>
+          prev
+            ? { ...prev, puedePublicar: false, restantes: 0, usados: apiResult.usados ?? prev.usados }
+            : prev,
+        )
+        setLoading(false)
+        return
+      }
       
       if (!res.ok || !apiResult.ok) {
         console.error('API error:', apiResult)
@@ -403,16 +436,50 @@ export default function PublicarPage() {
         </p>
       )}
 
-      {/* Banner: siempre gratis */}
-      <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
-        <span className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shrink-0">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </span>
-        <div>
+      {cupo && (
+        <div
+          className={`mb-6 rounded-xl p-4 border ${
+            cupo.puedePublicar
+              ? 'bg-green-50 border-green-200'
+              : 'bg-amber-50 border-amber-200'
+          }`}
+        >
+          <p className={`text-sm font-bold ${cupo.puedePublicar ? 'text-green-800' : 'text-amber-900'}`}>
+            {cupo.trial && cupo.profesional
+              ? t('lanzamientoBanner')
+              : cupo.puedePublicar
+                ? t('freeBanner')
+                : t('cupoLlenoTitulo')}
+          </p>
+          <p className={`text-xs mt-1 ${cupo.puedePublicar ? 'text-green-700' : 'text-amber-800'}`}>
+            {t('cupoResumen', {
+              usados: cupo.usados,
+              max: cupo.max == null ? '∞' : cupo.max,
+              restantes: cupo.restantes == null ? '∞' : cupo.restantes,
+            })}
+            {cupo.trial && cupo.profesional ? ` ${t('lanzamientoBannerDesc')}` : ''}
+          </p>
+          {!cupo.puedePublicar && (
+            <p className="text-xs mt-2">
+              {cupo.profesional ? (
+                <LocalLink href="/para-profesionales" className="underline font-semibold">
+                  {t('verPlanes')}
+                </LocalLink>
+              ) : (
+                <LocalLink href="/dashboard" className="underline font-semibold">
+                  {t('cambiarAPro')}
+                </LocalLink>
+              )}
+            </p>
+          )}
+        </div>
+      )}
+      {!cupo && (
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4">
           <p className="text-sm font-bold text-green-800">{t('freeBanner')}</p>
           <p className="text-xs text-green-600">{t('freeBannerDesc')}</p>
         </div>
-      </div>
+      )}
 
       <p className="text-gray-500 text-sm mb-8">{t('stepsDesc')}</p>
 

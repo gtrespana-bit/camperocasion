@@ -107,6 +107,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/comprar-a-camperizadores', changeFrequency: 'daily', priority: 0.8 },
     { path: '/comprar-a-profesionales', changeFrequency: 'daily', priority: 0.8 },
     { path: '/como-funciona', changeFrequency: 'monthly', priority: 0.6 },
+    { path: '/para-profesionales', changeFrequency: 'weekly', priority: 0.8 },
     { path: '/como-instalar-app', changeFrequency: 'monthly', priority: 0.5 },
     { path: '/contacto', changeFrequency: 'monthly', priority: 0.5 },
     { path: '/faq', changeFrequency: 'monthly', priority: 0.5 },

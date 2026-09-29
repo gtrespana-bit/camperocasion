@@ -13,6 +13,7 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   'denuncia:create': { max: 10, windowMs: 60 * 60 * 1000 },
   'auth:login': { max: 5, windowMs: 15 * 60 * 1000 },
   'creditos:comprar': { max: 12, windowMs: 60 * 60 * 1000 },
+  'planes:checkout': { max: 12, windowMs: 60 * 60 * 1000 },
   'auth:register': { max: 3, windowMs: 60 * 60 * 1000 },
   'auth:reconfirmar': { max: 3, windowMs: 60 * 60 * 1000 },
   'auth:reset': { max: 5, windowMs: 60 * 60 * 1000 },

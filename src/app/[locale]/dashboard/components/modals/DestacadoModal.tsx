@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X, Star } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 
@@ -8,14 +8,24 @@ export default function DestacadoModal({
   titulo,
   creditos,
   onDestacar,
+  onIncluido,
   onClose,
 }: {
   titulo: string
   creditos: number
+  destacadosRestantes?: number
   onDestacar: (horas: number) => void
+  onIncluido?: () => void
   onClose: () => void
 }) {
   const dialogRef = useRef<HTMLDivElement>(null)
+  const [restantes, setRestantes] = useState(0)
+  useEffect(() => {
+    fetch('/api/cupo-anuncios')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d?.ok) setRestantes(d.destacadosRestantes || 0) })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -69,6 +79,16 @@ export default function DestacadoModal({
             <Star size={14} className="text-brand-accent" aria-hidden="true" /> Con <strong>prioridad</strong> en resultados de búsqueda
           </li>
         </ul>
+        {restantes > 0 && onIncluido && (
+          <button
+            type="button"
+            onClick={onIncluido}
+            className="w-full mb-4 p-3 rounded-xl border-2 border-emerald-300 bg-emerald-50 text-left"
+          >
+            <span className="block font-bold text-emerald-900">Usar destacado del pack (7 días)</span>
+            <span className="text-xs text-emerald-800">Te quedan {restantes} este mes. No gasta créditos.</span>
+          </button>
+        )}
         <div className="space-y-2 mb-6">
           {[
             { horas: 12, creditos: 4 },

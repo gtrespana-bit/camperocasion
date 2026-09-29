@@ -16,6 +16,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireUser } from '@/lib/require-auth'
 import { revalidarListadosPublicos, revalidarFichaProducto } from '@/lib/revalidar'
+import { cupoDeUsuario, sbAdmin } from '@/lib/planes-servidor'
+import { mesClave } from '@/lib/planes-anuncios'
 
 const HORAS_DESTACADO = [12, 24, 48] as const
 
@@ -36,6 +38,7 @@ export async function POST(req: NextRequest) {
   const productId = body?.productId
   const tipo = body?.tipo // 'destacado' | 'boost'
   const horas = Number(body?.horas)
+  const usarIncluido = Boolean(body?.incluidoPlan)
 
   if (!productId || typeof productId !== 'string') {
     return NextResponse.json({ error: 'productId requerido' }, { status: 400 })
@@ -43,7 +46,7 @@ export async function POST(req: NextRequest) {
   if (tipo !== 'destacado' && tipo !== 'boost') {
     return NextResponse.json({ error: 'Tipo de promoción no válido' }, { status: 400 })
   }
-  if (tipo === 'destacado' && !HORAS_DESTACADO.includes(horas as any)) {
+  if (tipo === 'destacado' && !usarIncluido && !HORAS_DESTACADO.includes(horas as any)) {
     return NextResponse.json({ error: 'Duración no válida' }, { status: 400 })
   }
 
@@ -60,6 +63,29 @@ export async function POST(req: NextRequest) {
   if (producto.user_id !== user.id) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
   if (!producto.activo || producto.vendido) {
     return NextResponse.json({ error: 'Solo se pueden promocionar publicaciones activas' }, { status: 400 })
+  }
+
+  if (tipo === 'destacado' && usarIncluido) {
+    const { resumen } = await cupoDeUsuario(user.id)
+    if (resumen.destacadosRestantes <= 0) {
+      return NextResponse.json({ error: 'No te quedan destacados incluidos este mes.' }, { status: 400 })
+    }
+    const hasta = new Date(Date.now() + 7 * 86400000).toISOString()
+    const { error: upErr } = await admin
+      .from('productos')
+      .update({ destacado: true, destacado_hasta: hasta })
+      .eq('id', productId)
+      .eq('user_id', user.id)
+    if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 })
+    const periodo = mesClave()
+    const usados = resumen.destacadosUsados + 1
+    await sbAdmin()
+      .from('perfiles')
+      .update({ destacados_mes_usados: usados, destacados_mes_periodo: periodo })
+      .eq('id', user.id)
+    revalidarListadosPublicos()
+    revalidarFichaProducto(producto.slug)
+    return NextResponse.json({ ok: true, hasta, incluido: true, destacadosRestantes: resumen.destacadosMes - usados })
   }
 
   const { data: result, error } = tipo === 'destacado'

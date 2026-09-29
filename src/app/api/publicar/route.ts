@@ -5,6 +5,8 @@ import { validateProductData, sanitizeObject } from '@/lib/validation'
 import { verificarContenido } from '@/lib/moderacion'
 import { requireUser } from '@/lib/require-auth'
 import { revalidarListadosPublicos } from '@/lib/revalidar'
+import { mensajeCupoLleno } from '@/lib/planes-anuncios'
+import { cupoDeUsuario } from '@/lib/planes-servidor'
 
 /**
  * Devuelve el id de una categoría por nombre, creándola si no existe.
@@ -143,6 +145,23 @@ export async function POST(req: NextRequest) {
     }
 
     const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
+    {
+      const { resumen: cupo } = await cupoDeUsuario(userId)
+      if (!cupo.puedePublicar) {
+        return NextResponse.json(
+          { error: mensajeCupoLleno(cupo), codigo: 'CUPO', ...cupo },
+          { status: 403 },
+        )
+      }
+      const fotos = Array.isArray(sanitizedData.imagenes) ? sanitizedData.imagenes.length : 0
+      if (fotos > cupo.fotosMax) {
+        return NextResponse.json(
+          { error: `Tu pack permite ${cupo.fotosMax} fotos por anuncio.`, codigo: 'FOTOS' },
+          { status: 403 },
+        )
+      }
+    }
 
     // Resolver categoria_id en el servidor (ver nota en publicar/page.tsx).
     // Se usa maybeSingle() en vez de single(): 0 filas es un caso esperado y

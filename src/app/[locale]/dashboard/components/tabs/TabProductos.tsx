@@ -48,6 +48,14 @@ export default function TabProductos({
   const [rating, setRating] = useState(5)
   const [comentarioResena, setComentarioResena] = useState('')
   const [menuAbierto, setMenuAbierto] = useState<string | null>(null)
+  const [cupo, setCupo] = useState<{ usados: number; max: number | null; puedePublicar: boolean; profesional: boolean; trial: boolean } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/cupo-anuncios')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d?.ok) setCupo(d) })
+      .catch(() => {})
+  }, [])
   const menuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -301,7 +309,19 @@ export default function TabProductos({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">Anuncios</h3>
-          <p className="text-sm text-slate-500">{nActivos} activos · {nVendidos} vendidos</p>
+          <p className="text-sm text-slate-500">
+            {nActivos} activos · {nVendidos} vendidos
+            {cupo ? ` · cupo ${cupo.usados}/${cupo.max == null ? '∞' : cupo.max}` : ''}
+            {cupo?.trial && cupo.profesional ? ' · mes de prueba' : ''}
+          </p>
+          {cupo && !cupo.puedePublicar && (
+            <p className="text-xs text-amber-800 mt-1">
+              Cupo lleno.{' '}
+              <LocalLink href="/para-profesionales" className="underline font-semibold">
+                Ver planes
+              </LocalLink>
+            </p>
+          )}
         </div>
         <LocalLink
           href="/publicar"
