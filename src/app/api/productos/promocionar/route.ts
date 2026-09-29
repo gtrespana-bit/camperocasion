@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
   const productId = body?.productId
   const tipo = body?.tipo // 'destacado' | 'boost'
   const horas = Number(body?.horas)
+  const usarIncluido = Boolean(body?.incluidoPlan)
 
   if (!productId || typeof productId !== 'string') {
     return NextResponse.json({ error: 'productId requerido' }, { status: 400 })
