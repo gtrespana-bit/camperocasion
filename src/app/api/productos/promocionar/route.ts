@@ -50,7 +50,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Duración no válida' }, { status: 400 })
   }
 
-  const usarIncluido = Boolean(body?.incluidoPlan)
   const admin = getAdminClient()
 
   const { data: producto, error: fetchError } = await admin
