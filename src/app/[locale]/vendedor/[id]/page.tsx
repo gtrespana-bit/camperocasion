@@ -148,11 +148,13 @@ export default async function VendedorPage({ params }: Props) {
   // JSON-LD: Person/Organization con AggregateRating SOLO si hay reseñas
   // reales — ratingValue sin reviewCount real es spam según las políticas
   // de Google para datos estructurados.
-  const jsonLd: any = {
+  const SITIO = 'https://camperocasion.online'
+  const perfilJsonLd: any = {
     '@context': 'https://schema.org',
     '@type': perfil.verificado ? 'Organization' : 'Person',
+    '@id': SITIO + '/vendedor/' + id + '#seller',
     name: perfil.nombre || 'Vendedor CamperOcasión',
-    url: `https://camperocasion.online/vendedor/${id}`,
+    url: SITIO + '/vendedor/' + id,
     ...(perfil.foto_perfil_url && { image: perfil.foto_perfil_url }),
     address: {
       '@type': 'PostalAddress',
@@ -171,11 +173,48 @@ export default async function VendedorPage({ params }: Props) {
     }),
   }
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Vendedores', item: SITIO + '/tiendas' },
+      { '@type': 'ListItem', position: 3, name: perfil.nombre || 'Vendedor', item: SITIO + '/vendedor/' + id },
+    ],
+  }
+
+  const itemListJsonLd = productos.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': SITIO + '/vendedor/' + id + '#itemlist',
+    name: 'Anuncios de ' + (perfil.nombre || 'vendedor'),
+    numberOfItems: productos.length,
+    itemListElement: productos.map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: SITIO + '/producto/' + (p.slug || p.id),
+      name: p.titulo,
+      ...(p.imagen_url ? { image: p.imagen_url } : {}),
+      offers: {
+        '@type': 'Offer',
+        price: (p as any).precio_usd || 0,
+        priceCurrency: 'EUR',
+        availability: 'https://schema.org/InStock',
+        url: SITIO + '/producto/' + (p.slug || p.id),
+      },
+    })),
+  } : null
+
+  const graphJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, perfilJsonLd, ...(itemListJsonLd ? [itemListJsonLd] : [])],
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(graphJsonLd) }}
       />
       <VendedorClient
         vendedor={perfil}

@@ -41,17 +41,29 @@ export async function metadataParaTipo(locale: string, slug: SlugTipo): Promise<
   const t = await getTranslations({ locale, namespace: 'vendedorLanding' })
   const tipoKey = SLUG_A_TIPO[slug]
 
+  const canonical = `${BASE_URL}/comprar-a-${slug}`
   return {
     title: t(`${tipoKey}.metaTitle`),
     description: t(`${tipoKey}.metaDescription`),
     alternates: {
       // Solo la versión ES se indexa (la /en lleva X-Robots-Tag: noindex).
-      canonical: `${BASE_URL}/comprar-a-${slug}`,
+      canonical,
+      languages: { 'es-ES': canonical, 'x-default': canonical },
     },
     openGraph: {
       title: t(`${tipoKey}.metaTitle`),
       description: t(`${tipoKey}.metaDescription`),
       locale: 'es_ES',
+      url: canonical,
+      type: 'website',
+      siteName: 'CamperOcasión',
+      images: [{ url: BASE_URL + '/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: t(`${tipoKey}.metaTitle`) }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t(`${tipoKey}.metaTitle`),
+      description: t(`${tipoKey}.metaDescription`),
+      images: [BASE_URL + '/api/og/catalog?categoria=camper'],
     },
   }
 }
@@ -99,8 +111,51 @@ export default async function ComprarATipoPage({
   const tnav = await getTranslations({ locale, namespace: 'nav' })
   const productos = await getProductosDeTipo(tipoKey)
 
+  const pageUrl = BASE_URL + '/comprar-a-' + slug
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: BASE_URL + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Catálogo', item: BASE_URL + '/catalogo' },
+      { '@type': 'ListItem', position: 3, name: t(`${tipoKey}.title`), item: pageUrl },
+    ],
+  }
+  const collectionJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': pageUrl + '#collection',
+    name: t(`${tipoKey}.title`),
+    description: t(`${tipoKey}.intro`),
+    url: pageUrl,
+    isPartOf: { '@id': BASE_URL + '/#website' },
+    breadcrumb: { '@id': pageUrl + '#breadcrumb' },
+    ...(productos.length > 0 ? { mainEntity: { '@id': pageUrl + '#itemlist' } } : {}),
+  }
+  const itemListJsonLd = productos.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': pageUrl + '#itemlist',
+    name: t(`${tipoKey}.title`),
+    numberOfItems: productos.length,
+    itemListElement: productos.map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: BASE_URL + '/producto/' + (p.slug || p.id),
+      name: p.titulo,
+      ...(p.imagen_url ? { image: p.imagen_url } : {}),
+      offers: { '@type': 'Offer', price: p.precio_usd || 0, priceCurrency: 'EUR', availability: 'https://schema.org/InStock', url: BASE_URL + '/producto/' + (p.slug || p.id) },
+    })),
+  } : null
+  const graphJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, collectionJsonLd, ...(itemListJsonLd ? [itemListJsonLd] : [])],
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graphJsonLd) }} />
+      <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Breadcrumb ligero: contexto para el visitante y para el crawler. */}
       <nav aria-label="breadcrumb" className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
         <LocalLink href="/" className="hover:text-brand-primary">{tnav('home')}</LocalLink>
@@ -183,5 +238,6 @@ export default async function ComprarATipoPage({
           ))}
       </div>
     </div>
+    </>
   )
 }

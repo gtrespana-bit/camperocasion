@@ -25,14 +25,28 @@ export default async function FAQPage({ params }: { params: Promise<{ locale: st
     { question: t('q11'), answer: t('a11') },
   ]
 
-  const jsonLd = {
+  const SITIO = 'https://camperocasion.online'
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Preguntas Frecuentes', item: SITIO + '/faq' },
+    ],
+  }
+  const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
+    '@id': SITIO + '/faq#faq',
     mainEntity: faqData.map(faq => ({
       '@type': 'Question',
       name: faq.question,
       acceptedAnswer: { '@type': 'Answer', text: faq.answer },
     })),
+  }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, faqJsonLd],
   }
 
   return (

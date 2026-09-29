@@ -55,8 +55,47 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
 
   const tiendas = await getTiendas()
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Tiendas', item: SITIO + '/tiendas' },
+    ],
+  }
+  const collectionJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': SITIO + '/tiendas#collection',
+    name: 'Camperizadores y concesionarios de camper en España',
+    description: 'Directorio de talleres de camperización y vendedores profesionales de furgonetas camper y autocaravanas en España.',
+    url: SITIO + '/tiendas',
+    isPartOf: { '@id': SITIO + '/#website' },
+    breadcrumb: { '@id': SITIO + '/tiendas#breadcrumb' },
+    ...(tiendas.length > 0 ? { mainEntity: { '@id': SITIO + '/tiendas#itemlist' } } : {}),
+  }
+  const itemListJsonLd = tiendas.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': SITIO + '/tiendas#itemlist',
+    name: 'Camperizadores y profesionales',
+    numberOfItems: tiendas.length,
+    itemListElement: tiendas.slice(0, 30).map((t: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: SITIO + '/tienda/' + t.slug,
+      name: t.nombre || 'Tienda',
+    })),
+  } : null
+  const graphJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, collectionJsonLd, ...(itemListJsonLd ? [itemListJsonLd] : [])],
+  }
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graphJsonLd) }} />
+      <div className="max-w-6xl mx-auto px-4 py-12">
       <div className="text-center mb-10">
         <h1 className="text-3xl md:text-4xl font-black text-gray-800 mb-3">
           Camperizadores y <span className="text-brand-accent">profesionales</span>
@@ -145,5 +184,6 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
         </>
       )}
     </div>
+    </>
   )
 }

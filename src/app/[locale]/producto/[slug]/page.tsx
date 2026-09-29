@@ -494,11 +494,41 @@ export default async function ProductoPage({ params }: Props) {
     { label: producto.titulo, href: undefined }
   ]
 
+  const SITIO = 'https://camperocasion.online'
+  const productUrlCanonical = SITIO + '/producto/' + (producto.slug || slug)
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Catálogo', item: SITIO + '/catalogo' },
+      ...(producto.subcategoria ? [{ '@type': 'ListItem', position: 3, name: producto.subcategoria, item: SITIO + '/catalogo?subcategoria=' + encodeURIComponent(producto.subcategoria) }] : []),
+      ...(ciudadSEO ? [{ '@type': 'ListItem', position: producto.subcategoria ? 4 : 3, name: ciudadSEO.nombre, item: SITIO + '/' + ciudadSEO.slug }] : producto.ubicacion_ciudad ? [{ '@type': 'ListItem', position: producto.subcategoria ? 4 : 3, name: producto.ubicacion_ciudad, item: SITIO + '/catalogo?ciudad=' + encodeURIComponent(producto.ubicacion_ciudad) }] : []),
+      { '@type': 'ListItem', position: producto.subcategoria ? (ciudadSEO || producto.ubicacion_ciudad ? 5 : 4) : (ciudadSEO || producto.ubicacion_ciudad ? 4 : 3), name: producto.titulo, item: productUrlCanonical },
+    ],
+  }
+  // Enriquecer Product con brand/model si disponibles
+  if (producto.marca) jsonLd.brand = { '@type': 'Brand', name: producto.marca }
+  if (producto.modelo) jsonLd.model = producto.modelo
+  // Añadir imagen secundaria si hay galería
+  if (Array.isArray(producto.imagenes) && producto.imagenes.length > 1) {
+    const extra = producto.imagenes.filter(Boolean).slice(0, 5)
+    jsonLd.image = [...(jsonLd.image || []), ...extra]
+  }
+  // Mantener agregado de reseñas ya existente, añadir url canónica
+  jsonLd.url = productUrlCanonical
+  jsonLd.isPartOf = { '@id': SITIO + '/#website' }
+
+  const graphJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, jsonLd],
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(graphJsonLd) }}
       />
       <Breadcrumbs items={breadcrumbItems} />
       <Suspense fallback={<div className="max-w-7xl mx-auto px-4 py-20 text-center">{t('loading')}</div>}>

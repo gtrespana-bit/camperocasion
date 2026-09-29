@@ -49,7 +49,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical,
       languages: { 'es-ES': canonical, 'x-default': canonical },
     },
-    openGraph: { title: titulo, description, type: 'website', locale: 'es_ES', url: canonical },
+    openGraph: { title: titulo, description, type: 'website', locale: 'es_ES', url: canonical, images: [{ url: 'https://camperocasion.online/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: titulo }] },
+    twitter: { card: 'summary_large_image', title: titulo, description, images: ['https://camperocasion.online/api/og/catalog?categoria=camper'] },
   }
 }
 
@@ -61,14 +62,30 @@ export default async function ITPComunidadPage({ params }: Props) {
   const faq = faqComunidad(comunidad.slug)
   const otras = TIPOS_ITP.filter(c => c.slug !== comunidad.slug)
 
+  const SITIO = 'https://camperocasion.online'
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Calculadora de ITP', item: SITIO + '/calcular-itp' },
+      { '@type': 'ListItem', position: 3, name: comunidad.nombre, item: SITIO + '/calcular-itp/' + comunidad.slug },
+    ],
+  }
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faq.map(f => ({
-      '@type': 'Question',
-      name: f.pregunta,
-      acceptedAnswer: { '@type': 'Answer', text: f.respuesta },
-    })),
+    '@graph': [
+      breadcrumbJsonLd,
+      {
+        '@type': 'FAQPage',
+        '@id': SITIO + '/calcular-itp/' + comunidad.slug + '#faq',
+        mainEntity: faq.map(f => ({
+          '@type': 'Question',
+          name: f.pregunta,
+          acceptedAnswer: { '@type': 'Answer', text: f.respuesta },
+        })),
+      },
+    ],
   }
 
   return (

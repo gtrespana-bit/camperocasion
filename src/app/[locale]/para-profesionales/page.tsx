@@ -7,6 +7,19 @@ export const metadata: Metadata = {
   title: 'Planes para profesionales y camperizadores',
   description:
     'Starter 9 €, Plus 19 € o Unlimited 39 €. Escaparate, sello profesional, destacados incluidos y mes de prueba al registrarte.',
+  alternates: {
+    canonical: 'https://camperocasion.online/para-profesionales',
+    languages: { 'es-ES': 'https://camperocasion.online/para-profesionales', 'x-default': 'https://camperocasion.online/para-profesionales' },
+  },
+  openGraph: {
+    title: 'Planes para profesionales y camperizadores',
+    description: 'Starter 9 €, Plus 19 € o Unlimited 39 €. Escaparate, sello profesional, destacados incluidos y mes de prueba al registrarte.',
+    url: 'https://camperocasion.online/para-profesionales',
+    siteName: 'CamperOcasión',
+    type: 'website',
+    locale: 'es_ES',
+    images: [{ url: 'https://camperocasion.online/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: 'Planes para profesionales' }],
+  },
 }
 
 const extras = [
@@ -22,8 +35,36 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
   const { locale } = await params
   setRequestLocale(locale)
 
+  const SITIO = 'https://camperocasion.online'
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+          { '@type': 'ListItem', position: 2, name: 'Para profesionales', item: SITIO + '/para-profesionales' },
+        ],
+      },
+      {
+        '@type': 'Product',
+        '@id': SITIO + '/para-profesionales#plans',
+        name: 'Planes para profesionales y camperizadores',
+        description: 'Starter 9 €, Plus 19 € o Unlimited 39 €. Escaparate, sello profesional, destacados incluidos y mes de prueba al registrarte.',
+        brand: { '@type': 'Brand', name: 'CamperOcasión' },
+        offers: [
+          { '@type': 'Offer', name: 'Starter', price: '9', priceCurrency: 'EUR', availability: 'https://schema.org/InStock', url: SITIO + '/para-profesionales' },
+          { '@type': 'Offer', name: 'Plus', price: '19', priceCurrency: 'EUR', availability: 'https://schema.org/InStock', url: SITIO + '/para-profesionales' },
+          { '@type': 'Offer', name: 'Unlimited', price: '39', priceCurrency: 'EUR', availability: 'https://schema.org/InStock', url: SITIO + '/para-profesionales' },
+        ],
+      },
+    ],
+  }
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-12">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <div className="max-w-5xl mx-auto px-4 py-12">
       <p className="text-sm font-semibold text-brand-accent uppercase tracking-wide mb-2">
         Talleres, camperizadores y compraventas
       </p>
@@ -49,5 +90,6 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
         ))}
       </div>
     </div>
+    </>
   )
 }

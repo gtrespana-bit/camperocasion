@@ -89,8 +89,48 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
   const featured = posts.filter(p => p.featured)
   const regular = posts.filter(p => !p.featured)
 
+  const SITIO = 'https://camperocasion.online'
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: SITIO + '/blog' },
+    ],
+  }
+  const collectionJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': SITIO + '/blog#collection',
+    name: 'Blog de Compra y Venta en España',
+    description: 'Guías, precios del mercado español y consejos para comprar y vender sin estafas.',
+    url: SITIO + '/blog',
+    isPartOf: { '@id': SITIO + '/#website' },
+    breadcrumb: { '@id': SITIO + '/blog#breadcrumb' },
+    mainEntity: posts.length > 0 ? { '@id': SITIO + '/blog#itemlist' } : undefined,
+  }
+  const itemListJsonLd = posts.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': SITIO + '/blog#itemlist',
+    name: 'Artículos del blog',
+    numberOfItems: posts.length,
+    itemListElement: posts.map((post, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: SITIO + '/blog/' + post.slug,
+      name: post.title,
+    })),
+  } : null
+  const graphJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, collectionJsonLd, ...(itemListJsonLd ? [itemListJsonLd] : [])],
+  }
+
   return (
-    <div className="min-h-screen bg-white">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graphJsonLd) }} />
+      <div className="min-h-screen bg-white">
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand-primary to-brand-dark py-12 md:py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
@@ -171,5 +211,6 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
     </div>
+    </>
   )
 }

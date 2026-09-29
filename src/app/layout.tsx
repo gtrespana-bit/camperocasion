@@ -154,17 +154,19 @@ export default async function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'WebSite',
+              '@id': 'https://camperocasion.online/#website',
               name: 'CamperOcasión',
               url: 'https://camperocasion.online',
               description:
                 'El marketplace especializado en furgonetas camper y autocaravanas de ocasión en España.',
               potentialAction: {
                 '@type': 'SearchAction',
-                target: 'https://camperocasion.online/buscar?q={search_term_string}',
+                target: 'https://camperocasion.online/catalogo?q={search_term_string}',
                 'query-input': 'required name=search_term_string'
               },
               publisher: {
                 '@type': 'Organization',
+                '@id': 'https://camperocasion.online/#organization',
                 name: 'CamperOcasión',
                 url: 'https://camperocasion.online',
                 logo: 'https://camperocasion.online/icon-192.png',

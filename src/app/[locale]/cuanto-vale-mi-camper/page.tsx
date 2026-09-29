@@ -24,8 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: url, languages: { 'es-ES': url, 'x-default': url } },
-    openGraph: { title, description, url, siteName: 'CamperOcasión', locale: 'es_ES' },
-    twitter: { card: 'summary_large_image', title, description },
+    openGraph: { title, description, url, siteName: 'CamperOcasión', locale: 'es_ES', type: 'website', images: [{ url: SITIO + '/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: title }] },
+    twitter: { card: 'summary_large_image', title, description, images: [SITIO + '/api/og/catalog?categoria=camper'] },
   }
 }
 
@@ -59,14 +59,27 @@ export default async function ValorarPage({ params }: { params: Promise<{ locale
     },
   ]
 
-  const jsonLd = {
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: '¿Cuánto vale mi camper?', item: SITIO + '/cuanto-vale-mi-camper' },
+    ],
+  }
+  const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
+    '@id': SITIO + '/cuanto-vale-mi-camper#faq',
     mainEntity: faq.map(f => ({
       '@type': 'Question',
       name: f.q,
       acceptedAnswer: { '@type': 'Answer', text: f.a },
     })),
+  }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, faqJsonLd],
   }
 
   return (

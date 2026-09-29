@@ -66,6 +66,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   const post = getPostBySlug(slug)
   if (!post) return { title: 'Post no encontrado' }
 
+  const ogImg = post.ogImage || 'https://camperocasion.online/api/og/catalog?categoria=camper'
   return {
     title: post.title,
     description: post.excerpt,
@@ -83,39 +84,72 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
       siteName: 'CamperOcasión',
       type: 'article',
       locale: 'es_ES',
+      images: [{ url: ogImg, width: 1200, height: 630, alt: post.title }],
+      publishedTime: post.date,
+      authors: ['CamperOcasión'],
+      tags: post.tags,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt,
+      images: [ogImg],
     },
   }
 }
 
 function generateArticleSchema(post: Post) {
-  return {
+  const SITIO = 'https://camperocasion.online'
+  const articleUrl = SITIO + '/blog/' + post.slug
+  const breadcrumb = {
+    "@type": "BreadcrumbList",
+    "@id": articleUrl + "#breadcrumb",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Inicio", "item": SITIO + "/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": SITIO + "/blog" },
+      { "@type": "ListItem", "position": 3, "name": post.title, "item": articleUrl }
+    ]
+  }
+  const article = {
     "@context": "https://schema.org",
     "@type": "Article",
+    "@id": articleUrl + "#article",
     "headline": post.title,
     "description": post.excerpt,
     "datePublished": post.date,
     "dateModified": post.date,
     "author": {
       "@type": "Organization",
-      "name": "camperocasion.online",
-      "url": "https://camperocasion.online"
+      "name": "CamperOcasión",
+      "url": SITIO
     },
     "publisher": {
       "@type": "Organization",
-      "name": "camperocasion.online",
-      "url": "https://camperocasion.online",
+      "name": "CamperOcasión",
+      "url": SITIO,
       "logo": {
         "@type": "ImageObject",
-        "url": "https://camperocasion.online/logo.png"
+        "url": SITIO + "/logo.png"
       }
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://camperocasion.online/blog/${post.slug}`
+      "@id": articleUrl
     },
+    "image": post.ogImage ? [post.ogImage] : [SITIO + "/og-image.webp"],
     "articleSection": post.category,
     "keywords": post.tags.join(', '),
-    "inLanguage": "es-ES"
+    "inLanguage": "es-ES",
+    "isPartOf": { "@id": SITIO + "/#website" },
+    // Speakable: titulares y entradilla para Assistant / voz
+    "speakable": {
+      "@type": "SpeakableSpecification",
+      "cssSelector": ["h1", ".blog-excerpt", "h2"]
+    }
+  }
+  return {
+    "@context": "https://schema.org",
+    "@graph": [breadcrumb, article]
   }
 }
 
@@ -283,7 +317,7 @@ export default async function BlogPost(props: { params: Promise<{ locale: string
             <span className="text-sm font-semibold text-brand-accent bg-brand-accent/20 px-3 py-1 rounded-full">{post.category}</span>
           </div>
           <h1 className="text-2xl md:text-4xl font-black text-white mb-4 leading-tight">{post.title}</h1>
-          <p className="text-lg text-blue-200 mb-6">{post.excerpt}</p>
+          <p className="blog-excerpt text-lg text-blue-200 mb-6">{post.excerpt}</p>
           <div className="flex items-center gap-6 text-sm text-white/60">
             <span className="flex items-center gap-2"><Calendar size={14} /> {post.date}</span>
             <span className="flex items-center gap-2"><Clock size={14} /> {post.readTime}</span>

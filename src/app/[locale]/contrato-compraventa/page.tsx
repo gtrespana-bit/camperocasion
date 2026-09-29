@@ -35,14 +35,56 @@ export const metadata: Metadata = {
 }
 
 export default function ContratoCompraventaPage() {
-  const jsonLd = {
+  const SITIO = 'https://camperocasion.online'
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Contrato de compraventa', item: CANONICAL },
+    ],
+  }
+  const webAppJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
+    '@id': CANONICAL + '#app',
     name: 'Generador de contrato de compraventa de camper',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
     description: metadata.description as string,
+    url: CANONICAL,
+    isAccessibleForFree: true,
+    provider: { '@type': 'Organization', '@id': SITIO + '/#organization', name: 'CamperOcasión' },
+  }
+  const howToJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    '@id': CANONICAL + '#howto',
+    name: 'Cómo generar el contrato de compraventa de una camper',
+    description: 'Genera el contrato de compraventa de tu furgoneta camper o autocaravana en PDF, listo para firmar.',
+    totalTime: 'PT10M',
+    step: [
+      { '@type': 'HowToStep', position: 1, name: 'Rellena los datos de las partes', text: 'Introduce datos de comprador y vendedor: nombre, DNI/NIE, domicilio y teléfono.' },
+      { '@type': 'HowToStep', position: 2, name: 'Datos del vehículo', text: 'Matrícula, marca, modelo, bastidor, kilómetros y equipamiento. Si vienes desde un anuncio, se precargan.' },
+      { '@type': 'HowToStep', position: 3, name: 'Precio y condiciones', text: 'Precio pactado, forma de pago, fecha de entrega y estado del vehículo.' },
+      { '@type': 'HowToStep', position: 4, name: 'Imprime y firma', text: 'Imprime dos ejemplares, firmad ambos y conservad uno cada parte. Adjunta fotocopias de DNI.' },
+      { '@type': 'HowToStep', position: 5, name: 'Tramita ITP y cambio de titularidad', text: 'Presenta el modelo 620 del ITP y solicita el cambio de titularidad en la DGT.' },
+    ],
+  }
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': CANONICAL + '#faq',
+    mainEntity: [
+      { '@type': 'Question', name: '¿Este contrato sirve para el cambio de nombre en la DGT?', acceptedAnswer: { '@type': 'Answer', text: 'Sí como justificante de la compraventa entre particulares: es el documento que acompaña a la notificación de venta y al modelo 620 del ITP. La Jefatura de Tráfico no registra el contrato, pero te protege frente a multas y tasas anteriores a la entrega.' } },
+      { '@type': 'Question', name: '¿Y si la camper tiene reformas homologadas?', acceptedAnswer: { '@type': 'Answer', text: 'Antes de firmar, comprueba que la ficha técnica recoge la configuración de habitáculo (2448/3148 si es vivienda) y pide los certificados de las reformas. En CamperOcasión puedes filtrar por homologación verificada.' } },
+      { '@type': 'Question', name: '¿Quién paga el ITP y el cambio de nombre?', acceptedAnswer: { '@type': 'Answer', text: 'El comprador: el ITP (modelo 620, varía por comunidad) y las tasas de la DGT. El vendedor debe presentar la notificación de venta para no responder de multas posteriores.' } },
+    ],
+  }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [breadcrumbJsonLd, webAppJsonLd, howToJsonLd, faqJsonLd],
   }
 
   return (

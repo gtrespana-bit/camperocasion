@@ -44,6 +44,48 @@ function generateItemListSchema(products: any[], baseUrl: string) {
   }
 }
 
+/** Organization + WebSite + SearchAction schema for homepage rich results */
+function generateOrganizationSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://camperocasion.online/#organization',
+        name: 'CamperOcasión',
+        url: 'https://camperocasion.online/',
+        logo: 'https://camperocasion.online/logo.png',
+        sameAs: [
+          'https://twitter.com/camperocasion',
+          'https://facebook.com/camperocasion',
+          'https://instagram.com/camperocasion'
+        ],
+        contactPoint: {
+          '@type': 'ContactPoint',
+          telephone: '+34-900-000-000',
+          contactType: 'customer service',
+          availableLanguage: ['Spanish', 'English']
+        }
+      },
+      {
+        '@type': 'WebSite',
+        '@id': 'https://camperocasion.online/#website',
+        url: 'https://camperocasion.online/',
+        name: 'CamperOcasión',
+        publisher: { '@id': 'https://camperocasion.online/#organization' },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: 'https://camperocasion.online/catalogo?q={search_term_string}'
+          },
+          'query-input': 'required name=search_term_string'
+        }
+      }
+    ]
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params
 
@@ -250,6 +292,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const provincias = getProvinciasPopulares()
   const subs = categoriasData.camper.subs
   const jsonLd = generateItemListSchema(recientes, 'https://camperocasion.online')
+  const orgSchema = generateOrganizationSchema()
 
   return (
     <>
@@ -259,6 +302,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+      />
 
       {/* ═══════════ HERO ═══════════ */}
       <section className="relative bg-brand-primary text-white overflow-hidden">

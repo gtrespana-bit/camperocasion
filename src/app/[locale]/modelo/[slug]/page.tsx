@@ -15,6 +15,7 @@ import {
   resumenMercado,
 } from '@/lib/precios-mercado'
 import ModeloClient from './ModeloClient'
+import { productAbsoluteUrl } from '@/lib/product-url'
 
 /**
  * Página de modelo: «Fiat Ducato camper de ocasión: precios reales».
@@ -99,12 +100,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = resumenMercado(nombre, est)
   const url = `${SITIO}/modelo/${slug}`
 
+  // OG con categoria según el modelo (usa endpoint existente)
+  const subCat = (modelo as any).aptoPara?.[0] || 'camper'
+  const ogParamMap: Record<string,string> = {
+    'gran-volumen': 'gran-volumen',
+    'camper-mediana': 'camper-mediana',
+    'minicamper': 'minicamper',
+    'perfilada': 'perfilada',
+    'capuchina': 'capuchina',
+    'integral': 'integral',
+    'overland': 'overland',
+  }
+  const ogParam = ogParamMap[subCat] || 'camper'
+
   return {
     title,
     description,
     alternates: { canonical: url, languages: { 'es-ES': url, 'x-default': url } },
-    openGraph: { title, description, url, siteName: 'CamperOcasión', locale: 'es_ES' },
-    twitter: { card: 'summary_large_image', title, description },
+    openGraph: { title, description, url, siteName: 'CamperOcasión', locale: 'es_ES', images: [{ url: `https://camperocasion.online/api/og/catalog?categoria=${ogParam}`, width: 1200, height: 630, alt: title }] },
+    twitter: { card: 'summary_large_image', title, description, images: [`https://camperocasion.online/api/og/catalog?categoria=${ogParam}`] },
   }
 }
 
@@ -123,31 +137,87 @@ export default async function ModeloPage({ params }: Props) {
     m => m.fabricante === modelo.fabricante && m.valor !== modelo.valor
   ).slice(0, 8)
 
-  const jsonLd: Record<string, unknown> = {
+  const pageUrl = SITIO + '/modelo/' + slug
+
+  const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: `${modelo.valor} camper de ocasión`,
-    ...(modelo.nota ? { description: modelo.nota } : {}),
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: 'Marcas', item: SITIO + '/marcas' },
+      { '@type': 'ListItem', position: 3, name: modelo.fabricante, item: SITIO + '/catalogo?marca=' + encodeURIComponent(modelo.fabricante) },
+      { '@type': 'ListItem', position: 4, name: etiquetaModelo(modelo), item: pageUrl },
+    ],
+  }
+
+  // Schema principal: ProductModel + AggregateOffer mejorado
+  // ProductModel es más preciso que Product para una página de modelo con estadísticas
+  const productModelJsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Vehicle',
+    name: modelo.valor + ' camper de ocasión',
+    model: modelo.valor,
     brand: { '@type': 'Brand', name: modelo.fabricante },
+    ...(modelo.nota ? { description: modelo.nota } : {}),
+    url: pageUrl,
+    // Oferta agregada con datos de mercado reales
     ...(est
       ? {
           offers: {
             '@type': 'AggregateOffer',
             priceCurrency: 'EUR',
-            lowPrice: est.minimo,
-            highPrice: est.maximo,
+            lowPrice: est.p25,
+            highPrice: est.p75,
             offerCount: est.muestra,
             availability: 'https://schema.org/InStock',
+            // Mediana como high/low auxiliar para rich results
+            ...(est.mediana ? { median: est.mediana } : {}),
           },
+          // Estadística adicional como QuantitativeValue para P25-P75
+          aggregateRating: undefined,
         }
       : {}),
+  }
+
+  // Si hay anuncios, añadir ItemList
+  const itemListJsonLd = anuncios.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': pageUrl + '#itemlist',
+    name: 'Anuncios de ' + modelo.valor + ' de ocasión',
+    numberOfItems: Math.min(anuncios.length, 20),
+    itemListElement: anuncios.slice(0, 20).map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: productAbsoluteUrl(p, SITIO),
+      name: p.titulo,
+      ...(p.imagen_url ? { image: p.imagen_url } : {}),
+      offers: {
+        '@type': 'Offer',
+        price: getPrecioEur(p) || 0,
+        priceCurrency: 'EUR',
+        availability: 'https://schema.org/InStock',
+        url: productAbsoluteUrl(p, SITIO),
+      },
+    })),
+  } : null
+
+  // Fallback Product para compatibilidad (Google entiende Vehicle pero Product es más broadly supported)
+  // Mantenemos Product + AggregateOffer como segunda entidad en @graph
+  const graphJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      breadcrumbJsonLd,
+      productModelJsonLd,
+      ...(itemListJsonLd ? [itemListJsonLd] : []),
+    ],
   }
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(graphJsonLd) }}
       />
       <ModeloClient
         modelo={modelo}

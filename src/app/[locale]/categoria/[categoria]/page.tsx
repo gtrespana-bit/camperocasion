@@ -144,6 +144,14 @@ export default async function CategoriaPage({ params }: Props) {
           position: index + 1,
           url: `${BASE_URL}${productUrl(producto)}`,
           name: producto.titulo,
+          ...(producto.imagen_url ? { image: producto.imagen_url } : {}),
+          offers: {
+            '@type': 'Offer',
+            price: producto.precio_usd || 0,
+            priceCurrency: 'EUR',
+            availability: 'https://schema.org/InStock',
+            url: `${BASE_URL}${productUrl(producto)}`,
+          },
         })),
       },
       {
