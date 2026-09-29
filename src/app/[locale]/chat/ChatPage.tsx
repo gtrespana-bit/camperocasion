@@ -659,8 +659,8 @@ export default function ChatPageClient() {
                   <div ref={mensajesEndRef} />
                 </div>
 
-                {/* Input */}
-                <div className="flex items-center gap-2 p-3 border-t bg-white">
+                {/* Input - STICKY at bottom, always visible */}
+                <div className="flex items-center gap-2 p-3 border-t bg-white sticky bottom-0 z-10 shadow-[0_-4px_6px_-4px_rgba(0,0,0,0.05)]">
                   <input
                     type="text"
                     value={texto}
@@ -669,11 +669,13 @@ export default function ChatPageClient() {
                     placeholder={t('typeMessage')}
                     className="flex-1 border rounded-full px-4 py-2.5 text-sm outline-none focus:border-brand-accent transition disabled:opacity-50"
                     disabled={enviando}
+                    autoComplete="off"
                   />
                   <button
                     onClick={enviarMensaje}
                     disabled={!texto.trim() || enviando}
-                    className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    aria-label="Enviar mensaje"
                   >
                     {enviando ? (
                       <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
