@@ -14,7 +14,7 @@ export default function PlanesClient() {
   async function contratar(plan: string) {
     setMsg('')
     if (!session) {
-      window.location.href = '/login?next=/para-profesionales'
+      window.location.assign('/login?next=/para-profesionales')
       return
     }
     setLoading(plan)
@@ -29,13 +29,13 @@ export default function PlanesClient() {
       setMsg(data.error || 'No se pudo abrir Stripe')
       return
     }
-    window.location.href = data.url
+    window.location.assign(data.url)
   }
 
   async function canjear() {
     setMsg('')
     if (!session) {
-      window.location.href = '/login?next=/para-profesionales'
+      window.location.assign('/login?next=/para-profesionales')
       return
     }
     setLoading('cupon')
