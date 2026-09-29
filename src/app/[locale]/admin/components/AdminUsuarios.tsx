@@ -3,21 +3,43 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Users, ShieldCheck, ShieldOff, CreditCard, ExternalLink, CheckSquare, Square,
-  RefreshCw, ChevronLeft, ChevronRight, Wallet, UserCheck,
+  RefreshCw, ChevronLeft, ChevronRight, Wallet, UserCheck, Gift,
 } from 'lucide-react'
 import { Badge, Button, Card, Confirm, Empty, Loading, Modal, RefreshButton, SearchInput, Segmented, formatDate, formatDateTime, formatNumber, timeAgo } from './AdminUi'
 import { apiJson, type Perfil } from './admin-utils'
+import RegalarPlanModal from './RegalarPlanModal'
+import { diasRestantesDePlan, etiquetaPlan, planVigente } from '@/lib/planes-regalo'
 
 const PAGE_SIZE = 25
 
 const NIVELES = ['🥉', '🥈', '🥇', '💎', '💠', '👑']
+
+const TONO_PACK: Record<string, 'blue' | 'brand' | 'purple'> = {
+  starter: 'blue',
+  plus: 'brand',
+  unlimited: 'purple',
+}
+
+/** Pack vigente del usuario, con los días que le quedan. */
+function PackBadge({ perfil }: { perfil: Perfil }) {
+  if (!planVigente(perfil.plan_anuncios, perfil.plan_hasta)) {
+    return <span className="text-xs text-gray-400">—</span>
+  }
+  const dias = diasRestantesDePlan(perfil.plan_hasta)
+  return (
+    <span className="inline-flex flex-col items-start gap-0.5">
+      <Badge tone={TONO_PACK[perfil.plan_anuncios || ''] || 'gray'}>{etiquetaPlan(perfil.plan_anuncios)}</Badge>
+      <span className="text-[10px] text-gray-400">{dias != null ? `${dias} días` : 'sin caducidad'}</span>
+    </span>
+  )
+}
 
 export default function AdminUsuarios({ notify }: { notify: (msg: string) => void }) {
   const [users, setUsers] = useState<Perfil[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [query, setQuery] = useState('')
-  const [filtro, setFiltro] = useState<'todos' | 'verificados' | 'no_verificados' | 'con_creditos' | 'sin_creditos'>('todos')
+  const [filtro, setFiltro] = useState<'todos' | 'verificados' | 'no_verificados' | 'con_creditos' | 'sin_creditos' | 'con_pack' | 'sin_pack'>('todos')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [page, setPage] = useState(1)
   const [creditModal, setCreditModal] = useState<Perfil | null>(null)
@@ -25,6 +47,7 @@ export default function AdminUsuarios({ notify }: { notify: (msg: string) => voi
   const [creditCantidad, setCreditCantidad] = useState('')
   const [creditMotivo, setCreditMotivo] = useState('')
   const [creditBusy, setCreditBusy] = useState(false)
+  const [regaloModal, setRegaloModal] = useState<Perfil | null>(null)
   const [detail, setDetail] = useState<Perfil | null>(null)
   const [bulkVerify, setBulkVerify] = useState(false)
   const [busyBulk, setBusyBulk] = useState(false)
@@ -55,6 +78,8 @@ export default function AdminUsuarios({ notify }: { notify: (msg: string) => voi
     if (filtro === 'no_verificados') list = list.filter((u) => !u.verificado)
     if (filtro === 'con_creditos') list = list.filter((u) => (u.credito_balance || 0) > 0)
     if (filtro === 'sin_creditos') list = list.filter((u) => !(u.credito_balance || 0))
+    if (filtro === 'con_pack') list = list.filter((u) => planVigente(u.plan_anuncios, u.plan_hasta))
+    if (filtro === 'sin_pack') list = list.filter((u) => !planVigente(u.plan_anuncios, u.plan_hasta))
     if (query) {
       const q = query.toLowerCase()
       list = list.filter((u) =>
@@ -130,8 +155,11 @@ export default function AdminUsuarios({ notify }: { notify: (msg: string) => voi
     await load(true)
   }
 
+  const conPack = users.filter((u) => planVigente(u.plan_anuncios, u.plan_hasta)).length
   const filtros = [
     { id: 'todos' as const, label: `Todos (${users.length})` },
+    { id: 'con_pack' as const, label: `Con pack (${conPack})` },
+    { id: 'sin_pack' as const, label: `Sin pack (${users.length - conPack})` },
     { id: 'verificados' as const, label: `Verificados (${users.filter((u) => u.verificado).length})` },
     { id: 'no_verificados' as const, label: `Sin verificar (${users.filter((u) => !u.verificado).length})` },
     { id: 'con_creditos' as const, label: `Con créditos (${users.filter((u) => (u.credito_balance || 0) > 0).length})` },
@@ -175,6 +203,7 @@ export default function AdminUsuarios({ notify }: { notify: (msg: string) => voi
                 <th className="px-3 py-3 font-semibold">Ubicación</th>
                 <th className="px-3 py-3 text-right font-semibold">Créditos</th>
                 <th className="px-3 py-3 text-center font-semibold">Verificado</th>
+                <th className="px-3 py-3 font-semibold">Pack</th>
                 <th className="px-3 py-3 font-semibold">Nivel</th>
                 <th className="px-3 py-3 font-semibold">Registro</th>
                 <th className="px-3 py-3 text-right font-semibold">Acciones</th>
@@ -208,10 +237,14 @@ export default function AdminUsuarios({ notify }: { notify: (msg: string) => voi
                       {u.verificado ? 'Sí' : 'No'}
                     </button>
                   </td>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    <PackBadge perfil={u} />
+                  </td>
                   <td className="px-3 py-3 text-center text-lg">{NIVELES[u.nivel_confianza ?? 0] || '—'}</td>
                   <td className="whitespace-nowrap px-3 py-3 text-xs text-gray-500">{formatDate(u.creado_en)}</td>
                   <td className="whitespace-nowrap px-3 py-3 text-right">
                     <div className="flex justify-end gap-1">
+                      <button onClick={() => setRegaloModal(u)} title="Regalar pack" className="rounded-lg p-1.5 text-gray-400 transition hover:bg-brand-primary/10 hover:text-brand-primary"><Gift size={15} /></button>
                       <button onClick={() => { setCreditModal(u); setCreditTipo('sumar'); setCreditCantidad(''); setCreditMotivo('') }} title="Ajustar créditos" className="rounded-lg p-1.5 text-gray-400 transition hover:bg-emerald-50 hover:text-emerald-600"><CreditCard size={15} /></button>
                       <button onClick={() => toggleVerificado(u, !u.verificado)} disabled={busyId === u.id} title={u.verificado ? 'Quitar verificación' : 'Verificar'} className="rounded-lg p-1.5 text-gray-400 transition hover:bg-blue-50 hover:text-blue-600">{u.verificado ? <ShieldOff size={15} /> : <ShieldCheck size={15} />}</button>
                       <a href={`/vendedor/${u.id}`} target="_blank" rel="noopener noreferrer" title="Ver perfil público" className="rounded-lg p-1.5 text-gray-400 transition hover:bg-blue-50 hover:text-blue-600"><ExternalLink size={15} /></a>
@@ -239,6 +272,7 @@ export default function AdminUsuarios({ notify }: { notify: (msg: string) => voi
               <div className="flex items-center justify-between">
                 <div className="text-xs text-gray-500">{formatDate(u.creado_en)} · {NIVELES[u.nivel_confianza ?? 0]}</div>
                 <div className="flex gap-1">
+                  <button onClick={() => setRegaloModal(u)} title="Regalar pack" className="rounded-lg p-2 text-gray-400 hover:bg-brand-primary/10 hover:text-brand-primary"><Gift size={16} /></button>
                   <button onClick={() => toggleVerificado(u, !u.verificado)} disabled={busyId === u.id} className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600">{u.verificado ? <ShieldOff size={16} /> : <ShieldCheck size={16} />}</button>
                   <button onClick={() => { setCreditModal(u); setCreditTipo('sumar'); setCreditCantidad(''); setCreditMotivo('') }} className="rounded-lg p-2 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"><CreditCard size={16} /></button>
                 </div>
@@ -271,9 +305,12 @@ export default function AdminUsuarios({ notify }: { notify: (msg: string) => voi
               <div><span className="text-gray-400">Nivel</span><p className="font-semibold">{NIVELES[detail.nivel_confianza ?? 0] || '—'}</p></div>
               <div><span className="text-gray-400">Registro</span><p className="font-semibold">{formatDateTime(detail.creado_en)}</p></div>
               <div><span className="text-gray-400">Verificado</span><p className="font-semibold">{detail.verificado ? 'Sí' : 'No'}</p></div>
+              <div><span className="text-gray-400">Pack</span><p className="font-semibold"><PackBadge perfil={detail} /></p></div>
+              <div><span className="text-gray-400">Tipo de cuenta</span><p className="font-semibold">{detail.tipo_vendedor === 'camperizador' ? 'Camperizador' : detail.tipo_vendedor === 'profesional' ? 'Profesional' : 'Particular'}</p></div>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant={detail.verificado ? 'outline' : 'success'} disabled={busyId === detail.id} onClick={() => { toggleVerificado(detail, !detail.verificado); setDetail(null) }}>{detail.verificado ? <><ShieldOff size={14} /> Quitar verificación</> : <><ShieldCheck size={14} /> Verificar</>}</Button>
+              <Button size="sm" variant="secondary" onClick={() => { setRegaloModal(detail); setDetail(null) }}><Gift size={14} /> Regalar pack</Button>
               <Button size="sm" variant="secondary" onClick={() => { setCreditModal(detail); setCreditTipo('sumar'); setCreditCantidad(''); setCreditMotivo(''); setDetail(null) }}><CreditCard size={14} /> Ajustar créditos</Button>
               <a href={`/vendedor/${detail.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-gray-300 px-3 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"><ExternalLink size={14} /> Ver perfil público</a>
             </div>
@@ -309,6 +346,13 @@ export default function AdminUsuarios({ notify }: { notify: (msg: string) => voi
           </div>
         </div>
       </Modal>
+
+      <RegalarPlanModal
+        usuario={regaloModal}
+        onClose={() => setRegaloModal(null)}
+        onDone={() => load(true)}
+        notify={notify}
+      />
 
       <Confirm
         open={bulkVerify}

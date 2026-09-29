@@ -20,6 +20,9 @@ const ServiceWorkerRegistration = dynamic(
   () => import('@/components/ServiceWorkerRegistration').then((m) => m.ServiceWorkerRegistration),
   { ssr: false }
 )
+// Medición propia de audiencia: es la que alimenta la pestaña «Audiencia» del
+// panel. Solo se monta con consentimiento, igual que Vercel Analytics.
+const AnaliticaVisitas = dynamic(() => import('@/components/AnaliticaVisitas'), { ssr: false })
 
 function onIdleAfterLoad(callback: () => void) {
   let cancelled = false
@@ -88,6 +91,7 @@ export default function RootClientEffects() {
         <>
           <Analytics />
           <SpeedInsights />
+          <AnaliticaVisitas />
         </>
       )}
       <ServiceWorkerRegistration />

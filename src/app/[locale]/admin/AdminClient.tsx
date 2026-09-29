@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import {
   LayoutDashboard, Package, ShieldAlert, Users, ShieldCheck, CreditCard, History,
   Tag, Megaphone, Download, Settings2, LogIn, LogOut, ArrowLeft, Menu, X, Sparkles, FileCheck2, Handshake,
-  ClipboardCheck, FileSignature, Ticket,
+  ClipboardCheck, FileSignature, Ticket, BarChart3,
 } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { useAuth } from '@/components/AuthProvider'
@@ -21,6 +21,7 @@ import AdminComunicacion from './components/AdminComunicacion'
 import AdminExportar from './components/AdminExportar'
 import AdminAjustes from './components/AdminAjustes'
 import AdminCupones from './components/AdminCupones'
+import AdminAudiencia from './components/AdminAudiencia'
 import VerificacionTab from './VerificacionTab'
 import AdminHomologacion from './AdminHomologacion'
 import AdminReservas from './AdminReservas'
@@ -31,6 +32,7 @@ import { apiJson, type Perfil } from './components/admin-utils'
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, description: 'Vista general' },
+  { id: 'audiencia', label: 'Audiencia', icon: BarChart3, description: 'Visitantes y actividad' },
   { id: 'publicaciones', label: 'Publicaciones', icon: Package, description: 'Gestión de productos' },
   { id: 'moderacion', label: 'Moderación', icon: ShieldAlert, description: 'Reportes y pendientes' },
   { id: 'usuarios', label: 'Usuarios', icon: Users, description: 'Perfiles y créditos' },
@@ -285,6 +287,7 @@ export default function AdminPage() {
 
           <div className="space-y-5">
             {tab === 'dashboard' && <AdminDashboard notify={notify} jump={navigate} />}
+            {tab === 'audiencia' && <AdminAudiencia notify={notify} />}
             {tab === 'publicaciones' && <AdminPublicaciones notify={notify} />}
             {tab === 'moderacion' && <AdminModeracion notify={notify} adminEmail={user.email || ''} />}
             {tab === 'usuarios' && <AdminUsuarios notify={notify} />}

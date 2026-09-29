@@ -50,3 +50,18 @@ relanzado como vertical camper español:
    segura de camper (`/compra-segura-camper`) y enlace desde cada anuncio con el
    precio precargado.
 9. **Canonización del esquema ES sin downtime (2026-09-17):** migración `supabase/migrations/202609170001_rename_legado_camperocasion.sql` (y mismo bloque anexado a `setup-camperocasion.sql` para fresh installs) introduce columnas canónicas españolas (`productos.precio` / `precio_eur`, `perfiles.dni` / `telefono_verificacion` / `banco_verificacion` / `dni_foto_url`, `solicitudes_verificacion.telefono` / `dni` / `banco` / `dni_foto_*`, bucket `documentos-identidad`, `transacciones.precio_eur`) con triggers `fn_sync_*` que mantienen los aliases legados `precio_usd` / `pago_movil_*` / `cedula_*` / bucket `cedulas` sincronizados. Código nuevo usa el canónico (src/lib/precio.ts: getPrecioEur/COLUMNAS_PRECIO, src/app/api/publicar + src/app/api/productos/editar + src/components/SolicitarVerificacion con fallback al bucket legado, src/app/api/admin/cedula intenta documentos-identidad antes que cedulas). Sin borrado: ambos nombres funcionan.
+
+10. **Audiencia y regalos de plan en el panel admin (2026-09-29):** pestaña
+    *Audiencia* (`/admin?tab=audiencia`) con visitantes únicos, páginas vistas,
+    sesiones, tiempo por página, registros, publicaciones, mensajes, favoritos y
+    canjes, clasificados por día/semana/mes y con comparativa contra el periodo
+    anterior (`src/lib/analitica.ts`, `GET /api/admin/estadisticas`, RPC
+    `analitica_visitas`). La medición es propia y anónima: `visitas_pagina`
+    guarda una fila por página vista con un id aleatorio del navegador, sin IP
+    ni user-agent, y solo se escribe si el usuario aceptó la medición en el aviso
+    de cookies (`src/components/AnaliticaVisitas.tsx`). Además, el admin puede
+    **regalar días de pack** a un usuario concreto desde *Planes y cupones* o
+    desde la ficha del usuario (`POST /api/admin/regalar-plan`, bitácora
+    `planes_regalos`, aviso por email), sin pasar por cupones ni por Stripe.
+    Migración: `supabase/migrations/202609290001_analitica_visitas.sql`.
+
