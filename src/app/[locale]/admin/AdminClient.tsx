@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import {
   LayoutDashboard, Package, ShieldAlert, Users, ShieldCheck, CreditCard, History,
   Tag, Megaphone, Download, Settings2, LogIn, LogOut, ArrowLeft, Menu, X, Sparkles, FileCheck2, Handshake,
-  ClipboardCheck, FileSignature,
+  ClipboardCheck, FileSignature, Ticket,
 } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { useAuth } from '@/components/AuthProvider'
@@ -20,6 +20,7 @@ import AdminCategorias from './components/AdminCategorias'
 import AdminComunicacion from './components/AdminComunicacion'
 import AdminExportar from './components/AdminExportar'
 import AdminAjustes from './components/AdminAjustes'
+import AdminCupones from './components/AdminCupones'
 import VerificacionTab from './VerificacionTab'
 import AdminHomologacion from './AdminHomologacion'
 import AdminReservas from './AdminReservas'
@@ -42,6 +43,7 @@ const NAV = [
   { id: 'auditoria', label: 'Auditoría', icon: History, description: 'Historial de cambios' },
   { id: 'categorias', label: 'Categorías', icon: Tag, description: 'Organización' },
   { id: 'comunicacion', label: 'Comunicación', icon: Megaphone, description: 'Banners del sitio' },
+  { id: 'cupones', label: 'Planes y cupones', icon: Ticket, description: 'Packs, mes gratis, cupones' },
   { id: 'exportar', label: 'Exportar', icon: Download, description: 'CSV y JSON' },
   { id: 'ajustes', label: 'Ajustes', icon: Settings2, description: 'Salud del sistema' },
 ]
@@ -293,6 +295,7 @@ export default function AdminPage() {
             {tab === 'auditoria' && <AdminAuditoria notify={notify} />}
             {tab === 'categorias' && <AdminCategorias notify={notify} />}
             {tab === 'comunicacion' && <AdminComunicacion notify={notify} />}
+            {tab === 'cupones' && <AdminCupones notify={notify} />}
             {tab === 'exportar' && <AdminExportar notify={notify} />}
             {tab === 'ajustes' && <AdminAjustes notify={notify} />}
           </div>

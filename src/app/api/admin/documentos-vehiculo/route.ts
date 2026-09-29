@@ -21,6 +21,7 @@ import {
   ESTADOS_VERIFICACION_HOMOLOGACION,
   normalizarEstadoVerificacion,
 } from '@/lib/verificacion-homologacion'
+import { planEfectivo, prioridadHomologacion } from '@/lib/planes-anuncios'
 
 const PRODUCTO_COLUMNS = `
   id,
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest) {
         ? sb.from('documentos_vehiculo').select(DOCUMENTO_COLUMNS).in('producto_id', productoIds)
         : Promise.resolve({ data: [], error: null } as any),
       userIds.length
-        ? sb.from('perfiles').select('id, nombre, verificado').in('id', userIds)
+        ? sb.from('perfiles').select('id, nombre, verificado, tipo_vendedor, plan_anuncios').in('id', userIds)
         : Promise.resolve({ data: [], error: null } as any),
     ])
 
@@ -114,8 +115,26 @@ export async function GET(request: NextRequest) {
     })
 
     if (estado === 'pendiente') {
-      revisiones.sort((a: any, b: any) =>
-        String(a.primer_documento || a.creado_en).localeCompare(String(b.primer_documento || b.creado_en)))
+      revisiones.sort((a: any, b: any) => {
+        const pa = prioridadHomologacion(
+          planEfectivo({
+            tipo: a.vendedor?.tipo_vendedor,
+            plan: a.vendedor?.plan_anuncios,
+            mesGratisActivo: false,
+          }),
+          a.vendedor?.tipo_vendedor,
+        )
+        const pb = prioridadHomologacion(
+          planEfectivo({
+            tipo: b.vendedor?.tipo_vendedor,
+            plan: b.vendedor?.plan_anuncios,
+            mesGratisActivo: false,
+          }),
+          b.vendedor?.tipo_vendedor,
+        )
+        if (pa !== pb) return pa - pb
+        return String(a.primer_documento || a.creado_en).localeCompare(String(b.primer_documento || b.creado_en))
+      })
     }
 
     const estados: string[] = [...ESTADOS_VERIFICACION_HOMOLOGACION].filter(e => e !== 'sin_verificar')

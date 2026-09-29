@@ -24,6 +24,8 @@ import { createClient } from '@supabase/supabase-js'
 import type Stripe from 'stripe'
 import { getStripe, getWebhookSecret } from '@/lib/stripe'
 import { decidirAccionPago, esEventoAcreditable } from '@/lib/stripe-pagos'
+import { aplicarPlanPerfil, sbAdmin } from '@/lib/planes-servidor'
+import { esCheckoutDePlan, planDesdeMetadata, periodoHastaUnix, userIdDesdeStripe } from '@/lib/stripe-planes'
 
 export const dynamic = 'force-dynamic'
 // El cuerpo debe llegar tal cual para poder verificar la firma.
@@ -53,6 +55,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Firma inválida' }, { status: 400 })
   }
 
+  if (
+    evento.type === 'customer.subscription.deleted' ||
+    evento.type === 'customer.subscription.updated'
+  ) {
+    const sub = evento.data.object as Stripe.Subscription
+    const userId = userIdDesdeStripe(sub)
+    if (!userId) return NextResponse.json({ recibido: true, ignorado: 'sub sin user' })
+    if (evento.type === 'customer.subscription.deleted' || sub.status === 'canceled' || sub.status === 'unpaid') {
+      await aplicarPlanPerfil(userId, { plan: 'gratis', hasta: null, stripeSubscriptionId: sub.id })
+      return NextResponse.json({ recibido: true, plan: 'gratis' })
+    }
+    const plan = planDesdeMetadata(sub.metadata as Record<string, string>)
+    if (plan && (sub.status === 'active' || sub.status === 'trialing')) {
+      await aplicarPlanPerfil(userId, {
+        plan,
+        hasta: periodoHastaUnix((sub as any).current_period_end),
+        stripeCustomerId: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
+        stripeSubscriptionId: sub.id,
+      })
+      return NextResponse.json({ recibido: true, plan })
+    }
+    return NextResponse.json({ recibido: true, status: sub.status })
+  }
+
   // Solo nos interesan los pagos completados. El resto se confirma con 200
   // para que Stripe no los reintente eternamente.
   if (!esEventoAcreditable(evento.type)) {
@@ -60,6 +86,41 @@ export async function POST(req: NextRequest) {
   }
 
   const session = evento.data.object as Stripe.Checkout.Session
+
+  if (esCheckoutDePlan(session)) {
+    const userId = userIdDesdeStripe(session)
+    const plan = planDesdeMetadata(session.metadata as Record<string, string>)
+    if (!userId || !plan) {
+      return NextResponse.json({ recibido: true, error: 'plan sin usuario' })
+    }
+    if (session.payment_status && session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') {
+      return NextResponse.json({ recibido: true, pendiente: session.payment_status })
+    }
+    const subId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id
+    let hasta: string | null = null
+    if (subId && stripe) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(subId)
+        hasta = periodoHastaUnix((sub as any).current_period_end)
+      } catch { /* period end is extra */ }
+    }
+    await aplicarPlanPerfil(userId, {
+      plan,
+      hasta,
+      stripeCustomerId: typeof session.customer === 'string' ? session.customer : session.customer?.id,
+      stripeSubscriptionId: subId || null,
+    })
+    const codigo = session.metadata?.cupon
+    if (codigo) {
+      const sbC = sbAdmin()
+      const { data: cupon } = await sbC.from('cupones').select('id, usos').eq('codigo', codigo).maybeSingle()
+      if (cupon) {
+        await sbC.from('cupones_usos').insert({ cupon_id: cupon.id, user_id: userId })
+        await sbC.from('cupones').update({ usos: (cupon.usos || 0) + 1 }).eq('id', cupon.id)
+      }
+    }
+    return NextResponse.json({ recibido: true, plan })
+  }
 
   // Toda la decisión (pagado, usuario, paquete e importe) vive en una función
   // pura y testeada: aquí solo se ejecuta.

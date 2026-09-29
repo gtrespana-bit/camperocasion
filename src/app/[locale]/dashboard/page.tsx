@@ -183,14 +183,14 @@ export default function DashboardPage() {
     setTimeout(() => data.setToast(null), 4000)
   }
 
-  async function handleDestacar(productId: string, horas: number) {
+  async function handleDestacar(productId: string, horas: number, incluidoPlan = false) {
     // El cobro va por el servidor: además de descontar los créditos invalida
     // la portada y el catálogo, así que el anuncio aparece destacado al
     // instante (antes el usuario pagaba y seguía viéndolo sin destacar).
     const res = await fetch('/api/productos/promocionar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId, tipo: 'destacado', horas }),
+      body: JSON.stringify({ productId, tipo: 'destacado', horas, incluidoPlan }),
     })
     const result = await res.json().catch(() => ({}))
     if (!res.ok || !result?.ok) {
@@ -254,6 +254,7 @@ export default function DashboardPage() {
           creditos={data.creditos}
           onClose={() => setDestacadoTarget(null)}
           onDestacar={(h) => handleDestacar(destacadoTarget.productId, h)}
+          onIncluido={() => handleDestacar(destacadoTarget.productId, 168, true)}
         />
       )}
       {cambiarPw && (

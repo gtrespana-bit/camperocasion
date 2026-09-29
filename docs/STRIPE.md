@@ -1,3 +1,9 @@
+# Stripe — créditos y suscripciones de packs
+
+Los packs profesionales (Starter/Plus/Unlimited) se cobran como **suscripción**
+(`POST /api/planes/checkout`). En el webhook de Stripe hay que escuchar también
+`customer.subscription.updated` y `customer.subscription.deleted`.
+
 # Stripe — cobro automático de créditos
 
 Implementado el 2026-09-22. Convive con el pago manual: si Stripe no está
