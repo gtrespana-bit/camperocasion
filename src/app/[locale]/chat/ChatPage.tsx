@@ -83,6 +83,7 @@ export default function ChatPageClient() {
 
   const mensajesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const userRef = useRef(user)
   const authIdRef = useRef(user?.id)
   const convIdRef = useRef(convId)
@@ -116,10 +117,26 @@ export default function ChatPageClient() {
     if (!user) router.push('/login')
   }, [user, authLoading, router])
 
-  // ─── Auto-scroll ───
+  // ─── Auto-scroll + focus input when conversation opens ───
   useEffect(() => {
     chatContainerRef.current?.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' })
   }, [mensajes])
+
+  // Focus input automatically when a conversation is selected / opened
+  useEffect(() => {
+    if (convId) {
+      const tm = setTimeout(() => inputRef.current?.focus(), 120)
+      return () => clearTimeout(tm)
+    }
+  }, [convId])
+
+  // Scroll instantly when conversation changes so input is visible immediately
+  useEffect(() => {
+    if (convId && chatContainerRef.current) {
+      // instant scroll, then smooth will take over for new messages
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    }
+  }, [convId])
 
   // ─── Cargar owner del producto y verificar reseña comprador ───
   useEffect(() => {
@@ -452,6 +469,8 @@ export default function ChatPageClient() {
       }
       setTexto('')
       await loadMensajes(convId)
+      // keep focus on input after sending
+      setTimeout(() => inputRef.current?.focus(), 0)
     } catch {
       setToastMsg('No hay conexión. Tu mensaje no se ha borrado; puedes reintentarlo.')
     } finally {
@@ -462,9 +481,9 @@ export default function ChatPageClient() {
   // ─── Loading ───
   if (authLoading || !user) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">💬 Mensajes</h1>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 h-[600px] md:h-auto flex items-center justify-center">
+      <div className="max-w-6xl mx-auto px-4 py-3 md:py-4 flex flex-col gap-3 md:gap-4 h-[calc(100dvh-56px-4rem)] md:h-[calc(100dvh-100px)] md:max-h-[820px]">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800 shrink-0 tracking-tight">💬 Mensajes</h1>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex-1 min-h-0 flex items-center justify-center">
           <div className="text-center text-gray-500">
             <div className="w-12 h-12 border-4 border-brand-accent border-t-brand-primary rounded-full animate-spin mx-auto mb-3" />
             <p>Cargando mensajes...</p>
@@ -481,26 +500,26 @@ export default function ChatPageClient() {
   const convActual = conversaciones.find(c => c.id === convId)
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-3 md:py-4 flex flex-col gap-3 h-[calc(100dvh-56px-4rem)] md:h-[calc(100dvh-100px)] md:max-h-[820px]">
       {toastMsg && (
-        <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-          {toastMsg}
-          <button type="button" onClick={() => setToastMsg(null)} className="ml-3 underline">Cerrar</button>
+        <div role="alert" className="shrink-0 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between">
+          <span>{toastMsg}</span>
+          <button type="button" onClick={() => setToastMsg(null)} className="ml-3 underline font-medium shrink-0">Cerrar</button>
         </div>
       )}
       {reabrirChat && (
-        <div className="mb-4 rounded-xl border bg-gray-50 p-4 text-sm">
+        <div className="shrink-0 rounded-xl border bg-gray-50 p-3 text-sm">
           El historial se conserva aquí. Las nuevas consultas las atiende CamperOcasión.
           <LocalLink href={reabrirChat} className="ml-2 font-semibold underline">Abrir chat con el equipo</LocalLink>
         </div>
       )}
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">💬 Mensajes</h1>
+      <h1 className="text-xl md:text-2xl font-bold text-gray-800 shrink-0 tracking-tight">💬 Mensajes</h1>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex flex-col md:flex-row md:h-[600px] max-h-[calc(100dvh-140px)]">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-1 min-h-0 flex flex-col">
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
           {/* ─── Sidebar ─── */}
-          <div className={`${showMobileChat ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-80 border-r border-gray-100`}>
-            <div className="p-3 border-b">
+          <div className={`${showMobileChat ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-80 border-r border-gray-100 min-h-0 bg-white`}>
+            <div className="p-3 border-b shrink-0 bg-white">
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
@@ -508,12 +527,12 @@ export default function ChatPageClient() {
                   value={busqueda}
                   onChange={e => setBusqueda(e.target.value)}
                   placeholder="Buscar conversacion..."
-                  className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-gray-50 focus:bg-white focus:border-brand-accent outline-none transition"
+                  className="w-full pl-9 pr-3 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 outline-none transition"
                 />
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto min-h-0">
               {loadingConvs && conversaciones.length === 0 ? (
                 <div className="p-4 space-y-4 animate-pulse">
                   {[1, 2, 3, 4, 5].map(i => (
@@ -527,10 +546,10 @@ export default function ChatPageClient() {
                   ))}
                 </div>
               ) : filtradas.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full px-6 text-center">
-                  <User size={48} className="text-gray-500 mb-3" />
-                  <p className="text-gray-500 font-medium">{conversaciones.length === 0 ? 'No hay conversaciones' : 'Sin resultados'}</p>
-                  <p className="text-sm text-gray-500 mt-1">Envia un mensaje a un vendedor desde cualquier producto</p>
+                <div className="flex flex-col items-center justify-center h-full px-6 text-center py-12">
+                  <User size={48} className="text-gray-300 mb-3" />
+                  <p className="text-gray-600 font-medium">{conversaciones.length === 0 ? 'No hay conversaciones' : 'Sin resultados'}</p>
+                  <p className="text-sm text-gray-400 mt-1">Envia un mensaje a un vendedor desde cualquier producto</p>
                 </div>
               ) : (
                 filtradas.map(c => (
@@ -538,15 +557,13 @@ export default function ChatPageClient() {
                     key={c.id}
                     className={`group w-full flex items-start gap-3 p-3 border-b border-gray-50 transition text-left relative ${convId === c.id ? 'bg-blue-50 border-l-2 border-l-brand-primary' : 'bg-white hover:bg-gray-50'}`}
                   >
-                    {/* Eliminar */}
                     <button
                       onClick={(e) => eliminarConv(c.id, e)}
-                      className="absolute top-1 right-1 p-1 rounded text-gray-500 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 transition"
+                      className="absolute top-1 right-1 p-1 rounded text-gray-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 transition"
                       title="Eliminar"
                     >
                       <Trash2 size={14} />
                     </button>
-                    {/* Contenido: zona clickeable solo nombre+avatar */}
                     <button
                       onClick={() => seleccionarConv(c.id)}
                       className="flex items-start gap-3 w-full cursor-pointer text-left"
@@ -556,7 +573,7 @@ export default function ChatPageClient() {
                         <div className="flex justify-between items-center">
                           <p className="font-semibold text-gray-800 text-sm truncate">{c.otro_nombre}</p>
                           {c.ultimo_mensaje_en && (
-                            <span className="text-xs text-gray-500 ml-2 flex-shrink-0">{formatTime(c.ultimo_mensaje_en)}</span>
+                            <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{formatTime(c.ultimo_mensaje_en)}</span>
                           )}
                         </div>
                         <p className="text-sm text-gray-500 truncate mt-0.5">{c.ultimo_mensaje || 'Sin mensajes'}</p>
@@ -584,36 +601,36 @@ export default function ChatPageClient() {
           </div>
 
           {/* ─── Chat ─── */}
-          <div className={`${showMobileChat ? 'flex' : 'hidden md:flex'} flex-col flex-1`}>
+          <div className={`${showMobileChat ? 'flex' : 'hidden md:flex'} flex-col flex-1 min-h-0 bg-[#f8fafc]`}>
             {!convId ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-8">
+                <div className="w-20 h-20 bg-white border border-gray-100 shadow-sm rounded-full flex items-center justify-center mb-4">
                   <svg width={40} height={40} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                     <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <p className="font-medium">Selecciona una conversacion</p>
-                <p className="text-sm mt-1">O escribe a un vendedor desde un producto</p>
+                <p className="font-semibold text-gray-700">Selecciona una conversacion</p>
+                <p className="text-sm mt-1 text-gray-400 text-center">O escribe a un vendedor desde un producto</p>
               </div>
             ) : (
               <>
                 {/* Header */}
-                <div className="flex items-center gap-3 p-4 border-b bg-white">
-                  <button onClick={() => setShowMobileChat(false)} className="md:hidden p-1">
+                <div className="flex items-center gap-3 p-3 md:p-4 border-b bg-white shrink-0">
+                  <button onClick={() => setShowMobileChat(false)} className="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100">
                     <ArrowLeft size={20} className="text-gray-600" />
                   </button>
                   {convActual && (
                     <>
                       <Avatar nombre={convActual.otro_nombre} fotoUrl={convActual.otro_foto} size="sm" />
-                      <div>
-                        <p className="font-semibold text-gray-800 text-sm">{convActual.otro_nombre}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-800 text-sm truncate">{convActual.otro_nombre}</p>
                         {convActual.producto_titulo && convActual.producto_id && (
                           <LocalLink
                             href={`/producto/${convActual.producto_id}`}
                             className="text-xs text-blue-600 truncate hover:underline flex items-center gap-0.5"
                           >
-                            {convActual.producto_titulo}
-                            <ExternalLink size={9} />
+                            <span className="truncate">{convActual.producto_titulo}</span>
+                            <ExternalLink size={10} className="shrink-0" />
                           </LocalLink>
                         )}
                       </div>
@@ -621,18 +638,17 @@ export default function ChatPageClient() {
                   )}
                 </div>
 
-                {/* Mensajes */}
-                <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 min-h-0">
+                {/* Mensajes - flex-1 scrollable */}
+                <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 bg-[#f8fafc] min-h-0">
                   {mensajes.map(m => {
                     const esMio = m.remitente_id === user?.id
-                    const isCompraExitosa = m.contenido?.includes('compra exitosa') || m.contenido?.includes('fue exitosa')
                     return (
                       <div key={m.id} className={`flex ${esMio ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl ${
-                          esMio ? 'bg-brand-primary text-white rounded-br-sm' : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'
+                        <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl shadow-sm ${
+                          esMio ? 'bg-brand-primary text-white rounded-br-md' : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md'
                         }`}>
-                          <p className="text-sm break-words">{m.contenido}</p>
-                          <p className={`text-[10px] mt-1 ${esMio ? 'text-blue-200' : 'text-gray-500'}`}>
+                          <p className="text-[14px] leading-[1.4] break-words whitespace-pre-wrap">{m.contenido}</p>
+                          <p className={`text-[10px] mt-1 ${esMio ? 'text-blue-100' : 'text-gray-400'}`}>
                             {formatHora(m.creado_en)}
                           </p>
                         </div>
@@ -640,7 +656,7 @@ export default function ChatPageClient() {
                     )
                   })}
                   {puedeResenar && (
-                    <div className="flex justify-center">
+                    <div className="flex justify-center pt-2">
                       <button
                         onClick={() => setMostrarResena(true)}
                         className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-sm font-semibold px-6 py-3 rounded-xl hover:brightness-105 transition shadow-lg flex items-center gap-2"
@@ -651,7 +667,7 @@ export default function ChatPageClient() {
                   )}
                   {enviando && (
                     <div className="flex justify-end">
-                      <div className="bg-blue-200 text-blue-800 px-4 py-2.5 rounded-2xl rounded-br-sm text-sm">
+                      <div className="bg-blue-100 text-blue-800 px-4 py-2.5 rounded-2xl rounded-br-md text-sm">
                         Enviando...
                       </div>
                     </div>
@@ -659,28 +675,32 @@ export default function ChatPageClient() {
                   <div ref={mensajesEndRef} />
                 </div>
 
-                {/* Input - STICKY at bottom, always visible */}
-                <div className="flex items-center gap-2 p-3 border-t bg-white sticky bottom-0 z-10 shadow-[0_-4px_6px_-4px_rgba(0,0,0,0.05)]">
-                  <input
-                    type="text"
-                    value={texto}
-                    onChange={e => setTexto(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensaje() } }}
-                    placeholder={t('typeMessage')}
-                    className="flex-1 border rounded-full px-4 py-2.5 text-sm outline-none focus:border-brand-accent transition disabled:opacity-50"
-                    disabled={enviando}
-                    autoComplete="off"
-                  />
+                {/* Input - ALWAYS VISIBLE, shrink-0, prominent */}
+                <div className="shrink-0 border-t bg-white p-3 md:p-3.5 flex items-end gap-2 md:gap-3 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.12)] z-10">
+                  <div className="flex-1 relative">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={texto}
+                      onChange={e => setTexto(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensaje() } }}
+                      placeholder={t('typeMessage')}
+                      className="w-full border border-gray-200 rounded-2xl md:rounded-full px-4 py-3 pr-4 text-[15px] outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10 transition bg-gray-50 focus:bg-white disabled:opacity-50 placeholder:text-gray-400"
+                      disabled={enviando}
+                      autoComplete="off"
+                      autoFocus
+                    />
+                  </div>
                   <button
                     onClick={enviarMensaje}
                     disabled={!texto.trim() || enviando}
-                    className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center hover:bg-brand-dark transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    className="w-12 h-12 md:w-11 md:h-11 bg-brand-primary text-white rounded-full flex items-center justify-center hover:bg-brand-dark active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-md"
                     aria-label="Enviar mensaje"
                   >
                     {enviando ? (
-                      <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                     ) : (
-                      <Send size={18} />
+                      <Send size={20} className="ml-[1px]" />
                     )}
                   </button>
                 </div>
@@ -700,24 +720,22 @@ export default function ChatPageClient() {
                       <h3 id="resena-titulo" className="text-lg font-bold text-gray-800 mb-1">⭐ Deja tu reseña</h3>
                       <p className="text-sm text-gray-500 mb-4">¿Cómo fue tu experiencia con {convActual?.otro_nombre}?</p>
 
-                      {/* Estrellas */}
                       <div className="flex justify-center gap-1 mb-4">
                         {[1,2,3,4,5].map(i => (
                           <button key={i} type="button" onClick={() => setRatingResena(i)} className="transition hover:scale-110">
-                            <Star size={32} className={i <= ratingResena ? 'fill-yellow-400 text-yellow-400' : 'text-gray-500'} />
+                            <Star size={32} className={i <= ratingResena ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'} />
                           </button>
                         ))}
                       </div>
 
-                      {/* Comentario */}
                       <textarea
                         value={comentarioResena}
                         onChange={e => setComentarioResena(e.target.value)}
                         maxLength={500}
                         placeholder={t('reviewPlaceholder')}
-                        className="w-full border rounded-xl p-3 text-sm resize-none h-24 outline-none focus:border-brand-accent mb-4"
+                        className="w-full border rounded-xl p-3 text-sm resize-none h-24 outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 mb-4"
                       />
-                      <p className="text-xs text-gray-500 text-right -mt-3 mb-4">{comentarioResena.length}/500</p>
+                      <p className="text-xs text-gray-400 text-right -mt-3 mb-4">{comentarioResena.length}/500</p>
 
                       <div className="flex gap-2">
                         <button
