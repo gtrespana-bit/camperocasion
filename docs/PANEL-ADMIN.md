@@ -54,6 +54,14 @@ día/semana/mes) y `limpiar_visitas_antiguas` (retención de 400 días, que llam
 el cron diario `clean-rate-limits`). Si falta, el panel **no se rompe**: la
 pestaña Audiencia avisa de que está pendiente y agrupa las visitas al vuelo.
 
+> **Permisos.** El fichero es **idempotente**: si ya lo ejecutaste antes de que
+> incluyera la sección 5 (permisos), **vuelve a ejecutarlo entero** y quedará
+> arreglado. Concede `all` sobre las dos tablas y `execute` sobre las dos
+> funciones a `service_role` (el rol de las API), deja fuera a `anon` y
+> `authenticated`, y añade una política `to service_role` para no depender de
+> `BYPASSRLS`. Sin esos permisos, las visitas no se guardan, la RPC falla (el
+> panel avisa en amarillo) y la bitácora de regalos no se escribe.
+
 Todas están incluidas en `setup-camperocasion.sql` (la de audiencia, como anexo
 2026-09-29). Ejecútalas en el SQL Editor de Supabase (producción) antes o junto
 al despliegue. Si faltan, el sitio sigue funcionando: el banner simplemente no

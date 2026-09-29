@@ -295,9 +295,42 @@ end $$;
 comment on function public.limpiar_visitas_antiguas(integer) is
   'Borra las visitas más antiguas que N días (por defecto 400). La llama el cron diario.';
 
--- Solo el service_role (las API) puede llamar a estas funciones: ni anon ni
--- authenticated deben poder leer la audiencia del sitio desde el navegador.
+-- ── 5. Permisos: nadie salvo el servidor ──────────────────────────────────
+--
+-- Quién puede tocar esto es tan importante como el esquema. Dos reglas:
+--
+--  1. `anon` y `authenticated` (el navegador) NO pueden ni leer ni ejecutar
+--     nada: la audiencia del sitio y la bitácora de regalos son del admin.
+--     Además de los revokes, RLS se queda activada sin políticas para ellos.
+--  2. `service_role` (las API con service key) SÍ puede, y se le concede
+--     **explícitamente**: no damos por hecho ni los privilegios por defecto del
+--     proyecto ni que el rol tenga BYPASSRLS. Es la misma convención que usan
+--     `anuncios_globales` o `documentos_vehiculo` en `setup-camperocasion.sql`.
+revoke all on public.visitas_pagina from anon, authenticated;
+revoke all on public.planes_regalos from anon, authenticated;
+grant all on public.visitas_pagina to service_role;
+grant all on public.planes_regalos to service_role;
+
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    execute 'grant execute on function public.analitica_visitas(timestamptz, timestamptz, text) to service_role';
+    execute 'grant execute on function public.limpiar_visitas_antiguas(integer) to service_role';
+  end if;
+end $$;
+
 revoke all on function public.analitica_visitas(timestamptz, timestamptz, text)
   from public, anon, authenticated;
 revoke all on function public.limpiar_visitas_antiguas(integer)
   from public, anon, authenticated;
+
+-- Política para el rol de servidor: con RLS activada, un rol sin BYPASSRLS
+-- quedaría bloqueado en las tablas nuevas. Esta política no abre nada al
+-- navegador (no menciona anon ni authenticated).
+drop policy if exists "service_role: visitas_pagina" on public.visitas_pagina;
+create policy "service_role: visitas_pagina" on public.visitas_pagina
+  for all to service_role using (true) with check (true);
+
+drop policy if exists "service_role: planes_regalos" on public.planes_regalos;
+create policy "service_role: planes_regalos" on public.planes_regalos
+  for all to service_role using (true) with check (true);
