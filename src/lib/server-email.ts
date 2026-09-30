@@ -3,6 +3,7 @@
 import nodemailer from 'nodemailer'
 import { Resend } from 'resend'
 import { emailLayout, card, priceLine, COLORS } from '@/lib/email-layout'
+import { escapeHtml } from '@/lib/html-escape'
 
 // ─── Remitente ─────────────────────────────────────────────
 // Configurable con EMAIL_FROM. Por defecto noreply@camperocasion.online.
@@ -15,6 +16,7 @@ import { emailLayout, card, priceLine, COLORS } from '@/lib/email-layout'
 const FROM =
   process.env.EMAIL_FROM || '"CamperOcasión" <noreply@camperocasion.online>'
 const URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'
+const htmlText = (value: unknown) => escapeHtml(String(value ?? ''))
 
 // ─── Canal 1: Resend API (preferido) ───────────────────────
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
@@ -97,6 +99,13 @@ export async function enviarEmailDetallado(
   html: string,
   opts?: { replyTo?: string; text?: string },
 ): Promise<ResultadoEnvio> {
+  // Defensas para encabezados de correo, independientemente del llamador.
+  const subjectSafe = subject.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, 255)
+  const replyToSafe = opts?.replyTo
+    ? opts.replyTo.replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 254)
+    : undefined
+  const optsSafe = { ...opts, ...(replyToSafe ? { replyTo: replyToSafe } : {}) }
+
   // 1) Resend API
   if (RESEND_API_KEY) {
     try {
@@ -105,10 +114,10 @@ export async function enviarEmailDetallado(
         const { data, error } = await resend.emails.send({
           from: FROM,
           to,
-          subject,
+          subject: subjectSafe,
           html,
-          ...(opts?.replyTo ? { replyTo: opts.replyTo } : {}),
-          ...(opts?.text ? { text: opts.text } : {}),
+          ...(optsSafe.replyTo ? { replyTo: optsSafe.replyTo } : {}),
+          ...(optsSafe.text ? { text: optsSafe.text } : {}),
         })
         if (error) {
           const msg =
@@ -149,10 +158,10 @@ export async function enviarEmailDetallado(
     const info = await getTransporter().sendMail({
       from: FROM,
       to,
-      subject,
+      subject: subjectSafe,
       html,
-      ...(opts?.replyTo ? { replyTo: opts.replyTo } : {}),
-      ...(opts?.text ? { text: opts.text } : {}),
+      ...(optsSafe.replyTo ? { replyTo: optsSafe.replyTo } : {}),
+      ...(optsSafe.text ? { text: optsSafe.text } : {}),
     })
     return { ok: true, canal: 'smtp', id: (info as any)?.messageId }
   } catch (e: any) {
@@ -202,17 +211,18 @@ export async function emailProductoPublicado(
   precio: string,
   slug: string,
 ): Promise<boolean> {
+  const productUrl = `${URL}/producto/${encodeURIComponent(slug)}`
   return enviar(email, '✅ Tu anuncio fue publicado', emailLayout(
     'Anuncio publicado',
-    `<p style="margin:0 0 16px">Hola <strong>${nombre}</strong>,</p>
+    `<p style="margin:0 0 16px">Hola <strong>${htmlText(nombre)}</strong>,</p>
      <p style="margin:0 0 20px">Tu anuncio ya está visible en CamperOcasión para que miles de compradores lo vean.</p>
      ${card(`
-       <p style="margin:0 0 8px;font-weight:600;font-size:16px;color:${COLORS.dark}">${titulo}</p>
-       <p style="margin:0;font-size:22px;font-weight:700;color:${COLORS.primary}">${precio} &euro;</p>
+       <p style="margin:0 0 8px;font-weight:600;font-size:16px;color:${COLORS.dark}">${htmlText(titulo)}</p>
+       <p style="margin:0;font-size:22px;font-weight:700;color:${COLORS.primary}">${htmlText(precio)} &euro;</p>
      `)}
      <p style="margin:24px 0 0;color:${COLORS.gray};font-size:14px">Consejo: revisa tu anuncio desde tu perfil para asegurarte de que la foto principal sea la mejor.</p>`,
     'Ver mi anuncio',
-    `${URL}/producto/${slug}`,
+    productUrl,
   ))
 }
 
@@ -227,13 +237,13 @@ export async function emailMensajeRecibido(
 ): Promise<boolean> {
   return enviar(emailVendedor, `💬 Nuevo mensaje sobre "${producto}"`, emailLayout(
     'Nuevo mensaje',
-    `<p style="margin:0 0 16px">Hola <strong>${nombreVendedor}</strong>,</p>
+    `<p style="margin:0 0 16px">Hola <strong>${htmlText(nombreVendedor)}</strong>,</p>
      <p style="margin:0 0 20px">Un comprador te escribió sobre tu anuncio:</p>
      ${card(`
-       <p style="margin:0 0 12px;font-weight:600;color:${COLORS.dark}">${producto}</p>
-       <p style="margin:0 0 8px"><strong>De:</strong> ${nombreComprador}</p>
+       <p style="margin:0 0 12px;font-weight:600;color:${COLORS.dark}">${htmlText(producto)}</p>
+       <p style="margin:0 0 8px"><strong>De:</strong> ${htmlText(nombreComprador)}</p>
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.white};border-radius:8px;padding:16px;margin-top:8px;border-left:3px solid ${COLORS.primary}">
-         <tr><td style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.dark};font-style:italic;line-height:1.6">"${mensajePreview}"</td></tr>
+         <tr><td style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.dark};font-style:italic;line-height:1.6">"${htmlText(mensajePreview)}"</td></tr>
        </table>
      `)}
      <p style="margin:24px 0 0;color:${COLORS.gray};font-size:14px">Responder pronto aumenta tus posibilidades de venta.</p>`,
@@ -252,12 +262,12 @@ export async function emailCreditosAgregados(
 ): Promise<boolean> {
   return enviar(email, `✅ +${cantidad} créditos en tu cuenta`, emailLayout(
     'Créditos añadidos',
-    `<p style="margin:0 0 16px">Hola <strong>${nombre}</strong>,</p>
+    `<p style="margin:0 0 16px">Hola <strong>${htmlText(nombre)}</strong>,</p>
      <p style="margin:0 0 20px">Se acreditaron créditos a tu cuenta:</p>
      ${card(`
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
          <tr>${priceLine('Créditos añadidos', `+${cantidad}`)}</tr>
-         <tr style="border-top:1px solid ${COLORS.lightGray}"><td style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.gray}">Balance total</td><td align="right" style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:20px;font-weight:700;color:${COLORS.success}">${balanceTotal}</td></tr>
+         <tr style="border-top:1px solid ${COLORS.lightGray}"><td style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.gray}">Balance total</td><td align="right" style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:20px;font-weight:700;color:${COLORS.success}">${htmlText(balanceTotal)}</td></tr>
        </table>
      `)}`,
     'Ir a mi perfil',
@@ -270,7 +280,7 @@ export async function emailCreditosAgregados(
 export async function emailVerificacionAprobada(email: string, nombre: string): Promise<boolean> {
   return enviar(email, '🎉 Tu cuenta fue verificada', emailLayout(
     'Cuenta verificada',
-    `<p style="margin:0 0 16px">Hola <strong>${nombre}</strong>,</p>
+    `<p style="margin:0 0 16px">Hola <strong>${htmlText(nombre)}</strong>,</p>
      <div style="text-align:center;padding:24px 0">
        <p style="font-size:52px;margin:0">✅</p>
        <p style="font-size:18px;font-weight:700;color:${COLORS.primary};margin:12px 0">Verificación completada</p>
@@ -294,7 +304,7 @@ export async function emailSubidaNivel(
   const emoji = emojis[nivelNuevo] || '⭐'
   return enviar(email, `${emoji} Subiste de nivel: ${nivelNuevo}`, emailLayout(
     `¡Ahora eres ${nivelNuevo}!`,
-    `<p style="margin:0 0 16px">Hola <strong>${nombre}</strong>,</p>
+    `<p style="margin:0 0 16px">Hola <strong>${htmlText(nombre)}</strong>,</p>
      <div style="text-align:center;padding:24px 0">
        <p style="font-size:52px;margin:0">${emoji}</p>
        <p style="font-size:18px;font-weight:700;color:${COLORS.primary};margin:12px 0">Subiste de nivel</p>
@@ -302,7 +312,7 @@ export async function emailSubidaNivel(
      ${card(`
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
          ${priceLine('Nivel anterior', nivelAnterior)}
-         <tr style="border-top:1px solid ${COLORS.lightGray}"><td style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.gray}">Nuevo nivel</td><td align="right" style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:18px;font-weight:700;color:${COLORS.accent}">${nivelNuevo}</td></tr>
+         <tr style="border-top:1px solid ${COLORS.lightGray}"><td style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.gray}">Nuevo nivel</td><td align="right" style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:18px;font-weight:700;color:${COLORS.accent}">${htmlText(nivelNuevo)}</td></tr>
        </table>
      `)}`,
     'Ver mi perfil',
@@ -323,13 +333,13 @@ export async function emailPlanRegalado(
 ): Promise<boolean> {
   return enviar(email, `🎁 Te hemos activado el pack ${planNombre}`, emailLayout(
     `Pack ${planNombre} de regalo`,
-    `<p style="margin:0 0 16px">Hola <strong>${nombre}</strong>,</p>
-     <p style="margin:0 0 20px">El equipo de CamperOcasión te ha activado el pack <strong>${planNombre}</strong> sin coste, para que puedas publicar y vender con más margen.</p>
+    `<p style="margin:0 0 16px">Hola <strong>${htmlText(nombre)}</strong>,</p>
+     <p style="margin:0 0 20px">El equipo de CamperOcasión te ha activado el pack <strong>${htmlText(planNombre)}</strong> sin coste, para que puedas publicar y vender con más margen.</p>
      ${card(`
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
          ${priceLine('Pack', planNombre)}
          ${priceLine('Días regalados', `${dias}`)}
-         <tr style="border-top:1px solid ${COLORS.lightGray}"><td style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.gray}">Activo hasta</td><td align="right" style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:18px;font-weight:700;color:${COLORS.success}">${hasta}</td></tr>
+         <tr style="border-top:1px solid ${COLORS.lightGray}"><td style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.gray}">Activo hasta</td><td align="right" style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:18px;font-weight:700;color:${COLORS.success}">${htmlText(hasta)}</td></tr>
        </table>
      `)}
      <p style="margin:24px 0 0;color:${COLORS.gray};font-size:14px">Cuando termine el periodo volverás al plan gratuito; no se hace ningún cargo ni hace falta tarjeta.</p>`,

@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import LocalLink from '@/components/LocalLink'
@@ -129,7 +130,7 @@ function generateArticleSchema(post: Post) {
       "url": SITIO,
       "logo": {
         "@type": "ImageObject",
-        "url": SITIO + "/logo.png"
+        "url": SITIO + "/logo-camperocasion.png"
       }
     },
     "mainEntityOfPage": {
@@ -290,7 +291,7 @@ export default async function BlogPost(props: { params: Promise<{ locale: string
       {/* Article Schema.org JSON-LD */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleSchema) }}
       />
       
       {/* Breadcrumb */}

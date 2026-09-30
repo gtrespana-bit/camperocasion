@@ -4,6 +4,7 @@
  * Módulo puro (sin 'use server' ni IO) para poder importarlo tanto desde
  * módulos de servidor normales como desde módulos de server actions.
  */
+import { escapeHtml } from '@/lib/html-escape'
 
 export const COLORS = {
   primary: '#0F172A',
@@ -22,13 +23,19 @@ const CONTACT = 'contacto@camperocasion.online'
 const LOGO = `${URL_BASE}/logo-camperocasion.png`
 
 export function emailLayout(title: string, body: string, ctaText?: string, ctaUrl?: string): string {
+  const titleHtml = escapeHtml(title)
+  const ctaTextHtml = ctaText ? escapeHtml(ctaText) : ''
+  const ctaUrlHtml = ctaUrl ? escapeHtml(ctaUrl) : ''
+  const siteUrlHtml = escapeHtml(URL_BASE)
+  const logoUrlHtml = escapeHtml(LOGO)
+
   return `<!DOCTYPE html>
 <html lang="es" style="margin:0;padding:0">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>${title}</title>
+  <title>${titleHtml}</title>
   <!--[if mso]>
   <noscript>
     <xml>
@@ -53,14 +60,14 @@ export function emailLayout(title: string, body: string, ctaText?: string, ctaUr
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding-bottom:8px">
-                    <a href="${URL_BASE}" style="text-decoration:none">
-                      <img src="${LOGO}" alt="CamperOcasión" width="160" style="display:block;max-width:160px;height:auto;border:0">
+                    <a href="${siteUrlHtml}" style="text-decoration:none">
+                      <img src="${logoUrlHtml}" alt="CamperOcasión" width="160" style="display:block;max-width:160px;height:auto;border:0">
                     </a>
                   </td>
                 </tr>
                 <tr>
                   <td align="center">
-                    <h1 style="margin:0;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:20px;font-weight:700;color:${COLORS.white};letter-spacing:-0.3px">${title}</h1>
+                    <h1 style="margin:0;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:20px;font-weight:700;color:${COLORS.white};letter-spacing:-0.3px">${titleHtml}</h1>
                   </td>
                 </tr>
               </table>
@@ -89,9 +96,9 @@ export function emailLayout(title: string, body: string, ctaText?: string, ctaUr
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
                   <th align="center" style="background:${COLORS.primary};border-radius:8px">
-                    <a href="${ctaUrl}" target="_blank" rel="noopener noreferrer"
+                    <a href="${ctaUrlHtml}" target="_blank" rel="noopener noreferrer"
                        style="display:inline-block;padding:14px 36px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:15px;font-weight:600;color:${COLORS.white};text-decoration:none;letter-spacing:0.3px">
-                      ${ctaText}
+                      ${ctaTextHtml}
                     </a>
                   </th>
                 </tr>
@@ -107,7 +114,7 @@ export function emailLayout(title: string, body: string, ctaText?: string, ctaUr
                     <p style="margin:0 0 6px;font-weight:600;color:${COLORS.dark}">CamperOcasión</p>
                     <p style="margin:0 0 6px">El marketplace español</p>
                     <p style="margin:0"><a href="mailto:${CONTACT}" style="color:${COLORS.primary};text-decoration:none">${CONTACT}</a></p>
-                    <p style="margin:6px 0 0"><a href="${URL_BASE}" style="color:${COLORS.primary};text-decoration:none">${URL_BASE}</a></p>
+                    <p style="margin:6px 0 0"><a href="${siteUrlHtml}" style="color:${COLORS.primary};text-decoration:none">${siteUrlHtml}</a></p>
                   </td>
                 </tr>
               </table>
@@ -128,5 +135,5 @@ export function card(body: string): string {
 }
 
 export function priceLine(label: string, value: string): string {
-  return `<tr><td style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.gray};padding:4px 0">${label}</td><td align="right" style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:16px;font-weight:700;color:${COLORS.primary};padding:4px 0">${value}</td></tr>`
+  return `<tr><td style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.gray};padding:4px 0">${escapeHtml(label)}</td><td align="right" style="font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:16px;font-weight:700;color:${COLORS.primary};padding:4px 0">${escapeHtml(value)}</td></tr>`
 }

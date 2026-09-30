@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { FileCheck2, ShieldAlert, ShieldCheck } from 'lucide-react'
 import Breadcrumbs from '@/components/Breadcrumbs'
@@ -82,7 +83,7 @@ export default function CompraSeguraCamperPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <Breadcrumbs items={[{ label: 'Compra segura', href: '/compra-segura-camper' }]} />
 
       <div className="max-w-4xl mx-auto px-4 py-8">

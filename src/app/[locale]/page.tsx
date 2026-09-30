@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { ArrowRight, Search, Star, FileCheck, ShieldCheck, MapPin, ChevronRight } from 'lucide-react'
@@ -14,9 +15,13 @@ import { aplicarOrdenCatalogo, ordenarProductosCatalogo } from '@/lib/catalog-co
 // ── Metadata ──────────────────────────────────────────────────────────────
 
 function generateItemListSchema(products: any[], baseUrl: string) {
-  if (!products || products.length === 0) return null
+  // Los anuncios de muestra siguen visibles en las tarjetas para dar contexto
+  // al marketplace, pero sus fichas llevan noindex y no deben declararse como
+  // ofertas reales en datos estructurados.
+  const indexableProducts = (products || []).filter((product) => product.es_demo !== true)
+  if (indexableProducts.length === 0) return null
 
-  const itemListElements = products.map((product, index) => ({
+  const itemListElements = indexableProducts.map((product, index) => ({
     '@type': 'ListItem',
     position: index + 1,
     url: `${baseUrl}/producto/${product.slug || product.id}`,
@@ -39,7 +44,7 @@ function generateItemListSchema(products: any[], baseUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     itemListElement: itemListElements,
-    numberOfItems: products.length,
+    numberOfItems: indexableProducts.length,
     description: 'Furgonetas camper y autocaravanas de ocasión en España — CamperOcasión',
   }
 }
@@ -54,7 +59,7 @@ function generateOrganizationSchema() {
         '@id': 'https://camperocasion.online/#organization',
         name: 'CamperOcasión',
         url: 'https://camperocasion.online/',
-        logo: 'https://camperocasion.online/logo.png',
+        logo: 'https://camperocasion.online/logo-camperocasion.png',
         sameAs: [
           'https://twitter.com/camperocasion',
           'https://facebook.com/camperocasion',
@@ -62,7 +67,7 @@ function generateOrganizationSchema() {
         ],
         contactPoint: {
           '@type': 'ContactPoint',
-          telephone: '+34-900-000-000',
+          email: process.env.CONTACTO_EMAIL?.trim() || 'soporte@camperocasion.online',
           contactType: 'customer service',
           availableLanguage: ['Spanish', 'English']
         }
@@ -299,12 +304,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {jsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
       )}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(orgSchema) }}
       />
 
       {/* ═══════════ HERO ═══════════ */}

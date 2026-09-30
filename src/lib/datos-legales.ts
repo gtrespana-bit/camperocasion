@@ -21,8 +21,6 @@ export interface DatosTitular {
   domicilio: string
   /** Email de contacto legal. Obligatorio en la LSSI. */
   email: string
-  /** Teléfono de atención (opcional, recomendable). */
-  telefono: string
   /** Datos registrales, solo para sociedades («Inscrita en el Registro…»). */
   registro: string
 }
@@ -37,7 +35,6 @@ export function datosTitular(): DatosTitular {
     // El email es obligatorio en la LSSI; si no hay uno específico se usa el
     // buzón de privacidad, que ya existe y se anuncia en la web.
     email: env(process.env.NEXT_PUBLIC_TITULAR_EMAIL) || env(process.env.NEXT_PUBLIC_EMAIL_CONTACTO) || 'privacidad@camperocasion.online',
-    telefono: env(process.env.NEXT_PUBLIC_TITULAR_TELEFONO) || env(process.env.NEXT_PUBLIC_TELEFONO_CONTACTO),
     registro: env(process.env.NEXT_PUBLIC_TITULAR_REGISTRO),
   }
 }

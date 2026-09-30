@@ -1,20 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAdmin } from '@/lib/require-auth'
 import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import {
+  isTelegramAdminCallbackAuthorized,
+  isTelegramWebhookAuthorized,
+} from '@/lib/telegram-webhook-auth'
 
-// Webhook: recibe clicks de botones inline en Telegram (APROBAR/RECHAZAR)
+export const runtime = 'nodejs'
+
+// Webhook: recibe clicks de botones inline en Telegram (APROBAR/RECHAZAR).
+// El chat_id del JSON no autentica al emisor: cualquiera puede falsificarlo.
+// Telegram debe enviar el secret_token configurado en setWebhook.
 export async function POST(req: NextRequest) {
-  const ip = getClientIp(req)
-  const limit = await checkRateLimit('telegram:webhook', ip, { ip })
-  if (!limit.ok) return rateLimitResponse(limit.resetIn)
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
+  if (!webhookSecret || !/^[A-Za-z0-9_-]{32,256}$/.test(webhookSecret)) {
+    return NextResponse.json({ ok: false, error: 'Webhook not configured' }, { status: 503 })
+  }
+  if (!isTelegramWebhookAuthorized(
+    req.headers.get('x-telegram-bot-api-secret-token'),
+    webhookSecret,
+  )) {
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  }
 
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!BOT_TOKEN || !supabaseUrl || !supabaseKey) {
-    return NextResponse.json({ ok: false, error: 'Config missing' }, { status: 500 })
+  if (!BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID || !supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ ok: false, error: 'Config missing' }, { status: 503 })
   }
+
+  const ip = getClientIp(req)
+  const limit = await checkRateLimit('telegram:webhook', ip, { ip })
+  if (!limit.ok) return rateLimitResponse(limit.resetIn)
 
   try {
     const body = await req.json()
@@ -23,14 +43,21 @@ export async function POST(req: NextRequest) {
 
     const data = callback.data as string
     const chatId = callback.message.chat.id as number
+    const senderId = callback.from?.id as number | undefined
     const messageId = callback.message.message_id as number
     const callbackQueryId = callback.id as string
 
     // Formato: aprobar:<tx_id> o rechazar:<tx_id>
     const [accion, txId] = data.split(':')
 
-    // Verificar que viene del chat correcto
-    if (chatId.toString() !== process.env.TELEGRAM_CHAT_ID) {
+    // Verificar chat y persona autorizada. En un chat privado ambos IDs
+    // coinciden por defecto; para un grupo hay que definir TELEGRAM_ADMIN_USER_ID.
+    if (!isTelegramAdminCallbackAuthorized(
+      chatId,
+      senderId,
+      process.env.TELEGRAM_CHAT_ID,
+      process.env.TELEGRAM_ADMIN_USER_ID,
+    )) {
       await tgFetch(BOT_TOKEN, '/answerCallbackQuery', { callback_query_id: callbackQueryId, text: 'No autorizado', show_alert: true })
       return NextResponse.json({ ok: false })
     }
@@ -55,12 +82,20 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET: info del webhook
-export async function GET() {
+// GET: info del webhook (solo administradores; no publicar estado operativo).
+export async function GET(req: NextRequest) {
+  const auth = await requireAdmin(req)
+  if ('response' in auth) return auth.response
+
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
-  if (!BOT_TOKEN) return NextResponse.json({ ok: false, error: 'No token' }, { status: 500 })
-  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo`)
-  return NextResponse.json(await res.json())
+  if (!BOT_TOKEN) return NextResponse.json({ ok: false, error: 'Config missing' }, { status: 503 })
+
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo`)
+    return NextResponse.json(await res.json(), { status: res.ok ? 200 : 502 })
+  } catch {
+    return NextResponse.json({ ok: false, error: 'Telegram unavailable' }, { status: 502 })
+  }
 }
 
 // ---- Helpers ----

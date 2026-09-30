@@ -16,6 +16,7 @@ import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit
 import { isValidUUID } from '@/lib/validation'
 import { validarLeadGestoria } from '@/lib/gestoria'
 import { enviarEmailDetallado } from '@/lib/server-email'
+import { escapeHtml } from '@/lib/html-escape'
 import { notificarAdminTelegram } from '@/lib/telegram-admin'
 import { requireUser } from '@/lib/require-auth'
 
@@ -88,9 +89,9 @@ export async function POST(request: NextRequest) {
     enviarEmailDetallado(
       process.env.CONTACTO_EMAIL || 'soporte@camperocasion.online',
       '📄 Nuevo lead de gestoría (cambio de nombre)',
-      `<p><b>${validacion.datos.nombre}</b> · ${validacion.datos.telefono} · ${validacion.datos.email}</p>` +
-        `<p>Provincia: ${validacion.datos.provincia || '—'} · Matrícula: ${validacion.datos.matricula || '—'}</p>` +
-        (validacion.datos.mensaje ? `<p>${validacion.datos.mensaje}</p>` : ''),
+      `<p><b>${escapeHtml(validacion.datos.nombre)}</b> · ${escapeHtml(validacion.datos.telefono)} · ${escapeHtml(validacion.datos.email)}</p>` +
+        `<p>Provincia: ${escapeHtml(validacion.datos.provincia || '—')} · Matrícula: ${escapeHtml(validacion.datos.matricula || '—')}</p>` +
+        (validacion.datos.mensaje ? `<p>${escapeHtml(validacion.datos.mensaje)}</p>` : ''),
     ).catch(() => {})
 
     return NextResponse.json({ ok: true, id: lead.id })

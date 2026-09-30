@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { setRequestLocale } from 'next-intl/server'
@@ -94,7 +95,7 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graphJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(graphJsonLd) }} />
       <div className="max-w-6xl mx-auto px-4 py-12">
       <div className="text-center mb-10">
         <h1 className="text-3xl md:text-4xl font-black text-gray-800 mb-3">

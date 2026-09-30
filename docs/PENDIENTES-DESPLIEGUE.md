@@ -5,6 +5,73 @@
 > reiniciarse el entorno, así que ahora está versionado aquí. El resumen corto
 > también está en la descripción del PR #3.
 
+## Pendientes exactos tras la auditoría de seguridad (2026-09-30)
+
+**El código ya está corregido en la rama de trabajo, pero no está desplegado ni
+se ha validado con los servicios de producción.** Para cerrar esta auditoría,
+haz estos pasos en orden:
+
+1. [ ] **Publicar el cambio en producción.** El push de esta rama no equivale a un
+   despliegue de producción. Revisa el preview de Vercel; cuando esté aprobado,
+   integra la rama en `main` por el proceso habitual y espera a que Vercel
+   termine el deployment de Production.
+2. [ ] **Configurar el secreto del webhook en Vercel.** Genera un valor nuevo en
+   una terminal segura con `openssl rand -hex 32` (64 caracteres hexadecimales).
+   Guárdalo como `TELEGRAM_WEBHOOK_SECRET` en el proyecto Vercel, al menos en
+   **Production** (y también en Preview si vas a probar allí). Comprueba además
+   que `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` están definidos en ese entorno.
+   No guardes el secreto en Git, no lo envíes por chat y no lo pongas en una URL.
+   Después de guardarlo, lanza un deployment nuevo para que el runtime lo reciba.
+3. [ ] **Alinear Telegram con ese secreto.** Desde un entorno seguro que tenga
+   `TELEGRAM_BOT_TOKEN` y el mismo `TELEGRAM_WEBHOOK_SECRET`, registra de nuevo
+   el webhook:
+
+   ```bash
+   curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+     --data-urlencode "url=https://camperocasion.online/api/telegram/webhook" \
+     --data-urlencode "secret_token=${TELEGRAM_WEBHOOK_SECRET}"
+   ```
+
+   Comprueba que Telegram responde `"ok": true` y revisa `getWebhookInfo`:
+   la URL debe ser la de producción y no debe haber un error de entrega reciente.
+4. [ ] **Si las notificaciones van a un grupo**, define `TELEGRAM_ADMIN_USER_ID`
+   en Vercel con el ID numérico de la persona autorizada a aprobar/rechazar;
+   `TELEGRAM_CHAT_ID` debe ser el ID del grupo destino. Sin esta variable, los
+   botones de un grupo no quedan habilitados para un administrador individual.
+   En chat privado se puede omitir: se usa el ID de
+   `TELEGRAM_CHAT_ID`.
+5. [ ] **Verificar la protección de diagnóstico.** Confirma que `CRON_SECRET` tiene
+   valor en el entorno Production de Vercel. Si falta, `/api/diagnostico/supabase`
+   queda abierto intencionalmente para diagnosticar el despliegue incompleto.
+   Después del deploy, comprueba desde un cliente seguro que sin sesión/token
+   responde **401** y que con `Authorization: Bearer $CRON_SECRET` responde
+   correctamente. Nunca lo pruebes añadiéndolo a la URL.
+6. [ ] **Hacer una prueba funcional controlada en producción.** Comprueba que un
+   POST al webhook sin secreto devuelve **401**; que una petición de Telegram
+   llega con el secreto correcto; y que un usuario no autorizado no puede
+   aprobar/rechazar. Por último, crea una transacción de prueba y valida el
+   flujo de aprobación/rechazo solo con el administrador autorizado, verificando
+   el resultado en el panel/ledger de créditos. No marques como pagado dinero
+   que no se haya recibido.
+7. [ ] **Comprobación visual y de soporte.** Tras publicar, abre `/es`,
+   `/es/catalogo` y `/es/contacto`: deben cargar, el soporte debe mostrarse solo
+   por email y los anuncios demo/inventario deben seguir visibles sin cambios de
+   apariencia. Esta auditoría no ha cambiado la presentación visual de los
+   anuncios.
+
+**Condicional, solo si el aviso legal aún no está completo en producción:**
+rellena `NEXT_PUBLIC_TITULAR_NOMBRE`, `NEXT_PUBLIC_TITULAR_NIF` y
+`NEXT_PUBLIC_TITULAR_DOMICILIO` en Vercel y redeploya. Los buzones
+`privacidad@camperocasion.online` y `legal@camperocasion.online` también deben
+existir y ser atendidos. La lista detallada está en «Cumplimiento legal» más
+abajo.
+
+**No realizado por el agente:** no se han modificado variables de Vercel, no se
+ha llamado a `setWebhook`, no se ha desplegado producción ni se ha ejecutado una
+transacción real. Las validaciones locales no sustituyen esos pasos.
+
+---
+
 ## ⚠️ Antes de desplegar el código del 2026-09-18
 
 1. ~~**Aplicar en Supabase** `202609180003_anuncios_demo.sql` y
@@ -20,8 +87,8 @@
    `PAGO_IBAN`, `PAGO_TITULAR`, `PAGO_BIZUM_TELEFONO` y `PAGO_PAYPAL_EMAIL` no
    estén en Vercel, `/creditos` avisa de que los pagos aún no están abiertos en
    lugar de mostrar un IBAN de relleno. Para recibir pagos hay que definirlas.
-4. **Teléfono de contacto (opcional):** `NEXT_PUBLIC_TELEFONO_CONTACTO`
-   (`+34 …`). Si no se define, `/contacto` muestra solo email y WhatsApp.
+4. **Contacto de soporte:** `/contacto` atiende exclusivamente por correo
+   electrónico; no se publica teléfono ni WhatsApp de soporte.
 5. **Verificación rápida después del despliegue:** abrir `/`, `/catalogo`,
    `/contacto` (sin teléfono falso) y `/creditos` (sin IBAN falso), y comprobar
    que el botón de WhatsApp de un anuncio abre un número **+34**.
@@ -62,9 +129,11 @@ NEXT_PUBLIC_TITULAR_NOMBRE     = nombre y apellidos (autónomo) o razón social
 NEXT_PUBLIC_TITULAR_NIF        = NIF/DNI o CIF
 NEXT_PUBLIC_TITULAR_DOMICILIO  = calle, número, CP y provincia
 NEXT_PUBLIC_TITULAR_EMAIL      = (opcional; si falta, privacidad@camperocasion.online)
-NEXT_PUBLIC_TITULAR_TELEFONO   = (opcional; recomendable para atención al cliente)
 NEXT_PUBLIC_TITULAR_REGISTRO   = (solo sociedades: datos del Registro Mercantil)
 ```
+
+La atención de CamperOcasión se ofrece exclusivamente por correo electrónico;
+no se publica un teléfono de soporte/contacto.
 
 Verifica además que los buzones que anuncian las páginas existen y se leen:
 **privacidad@** y **legal@camperocasion.online**. Una obligación de información
@@ -266,10 +335,15 @@ hasta que se aplique.
 
 ### 1.3 Variables de entorno en Vercel — ✅ APLICADAS el 2026-09-16
 
-Única comprobación que queda (10 s): `/admin` → *Estado*, o abrir
-`/api/diagnostico/supabase?token=<CRON_SECRET>`, y confirmar que `supabase` y
-el canal de correo (`emailResend`/`emailSmtp`) salen activos — sin canal de
-email el registro no envía el correo de verificación.
+Única comprobación que queda (10 s): `/admin` → *Estado* y confirmar que
+`supabase` y el canal de correo (`emailResend`/`emailSmtp`) salen activos — sin
+canal de email el registro no envía el correo de verificación. Si necesitas
+consultar el diagnóstico por terminal y `CRON_SECRET` está definido, usa el
+header Authorization (nunca pongas el secreto en la URL):
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" "https://camperocasion.online/api/diagnostico/supabase"
+```
 
 Reglas del dashboard: nombre **exacto** (mayúsculas, sin espacios ni comillas),
 marcar **Production + Preview**, y tras cambiar cualquier `NEXT_PUBLIC_*` hay
@@ -318,14 +392,15 @@ datos (que puede estar vacía), es que las claves de Vercel no son las del
 proyecto. Diagnóstico y arreglo paso a paso en
 [`docs/diagnostico-supabase-401.md`](./diagnostico-supabase-401.md). Resumen:
 
-```
-https://<dominio>/api/diagnostico/supabase?token=<CRON_SECRET>
-```
+Con sesión de administrador puedes abrir `/api/diagnostico/supabase` en el
+navegador. Si no tienes sesión pero existe `CRON_SECRET`, consulta desde una
+terminal con `curl -H "Authorization: Bearer $CRON_SECRET" "https://<dominio>/api/diagnostico/supabase"`.
+El endpoint solo queda abierto cuando `CRON_SECRET` no está configurado.
 
 Dice si cada clave está definida, de qué proyecto es, si está caducada y si
 Supabase la acepta (prueba real) — sin revelar ninguna clave. Tras corregir las
 variables hay que **redeployar**: las `NEXT_PUBLIC_*` se incrustan en el bundle
-en build time.
+en build time. No envíes el secreto como parámetro de URL.
 
 ## 2. Al aplicar el SQL, comprobar en producción
 
@@ -487,7 +562,8 @@ emails, `NEXT_PUBLIC_URL` default, plantillas Supabase) y `next.config.js`
    `/catalogo` renderizan (estados vacíos, **sin** el error 401 «Invalid API
    key»), `robots.txt` y `sitemap.xml` con el dominio nuevo, y el guard de
    `/api/diagnostico/supabase` responde correctamente. **Queda:** abrir
-   `/api/diagnostico/supabase?token=<CRON_SECRET>` (o `/admin` → *Estado*)
+   `/admin` → *Estado* (o consulta `/api/diagnostico/supabase` con header
+   `Authorization: Bearer $CRON_SECRET`, sin poner el secreto en URL)
    para confirmar claves y canal de email, revisar *Settings → Cron Jobs*
    (los 4 activos) y la prueba funcional de registro/reserva (§2).
 
@@ -548,7 +624,31 @@ parece que funciona:
 | `CRON_SECRET` | ✅ para los 4 crons | sin ella `/api/cron/*` responde 401 |
 | `NEXT_PUBLIC_URL` | ✅ | `https://camperocasion.online` (emails, OG, sitemap) |
 | `ADMIN_EMAILS`, `RESEND_API_KEY`, `EMAIL_FROM` | opcional | panel y emails |
-| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | opcional | avisos de reservas |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | opcional | avisos y revisión de pagos manuales |
+| `TELEGRAM_WEBHOOK_SECRET` | obligatorio si se usan botones de aprobación en Telegram | autentica las llamadas entrantes de Telegram |
+
+Para habilitar los botones de aprobar/rechazar créditos, genera un secreto
+(compatible con Telegram) y guárdalo como `TELEGRAM_WEBHOOK_SECRET` en Vercel:
+
+```bash
+openssl rand -hex 32
+```
+
+Configura **el mismo valor** en Telegram al registrar el webhook (desde un
+entorno seguro donde estén definidas ambas variables):
+
+```bash
+curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+  --data-urlencode "url=https://camperocasion.online/api/telegram/webhook" \
+  --data-urlencode "secret_token=${TELEGRAM_WEBHOOK_SECRET}"
+```
+
+Sin ese secreto la ruta rechaza las llamadas y no se pueden aprobar pagos
+(esto es deliberado: el `chat_id` del JSON no autentica quién envió la petición).
+En un chat privado se autoriza por defecto al usuario cuyo ID coincide con
+`TELEGRAM_CHAT_ID`; si las notificaciones van a un grupo, define también
+`TELEGRAM_ADMIN_USER_ID` con el ID numérico del administrador autorizado. El GET
+de diagnóstico del webhook requiere una sesión de administrador.
 
 Lista completa y comentada en **`.env.example`** (ahora sí está versionado;
 `.gitignore` lo excluye con `.env*`, se añadió la excepción `!.env.example`).

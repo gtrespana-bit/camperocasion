@@ -26,14 +26,26 @@ export async function GET() {
 
   let entries: string[] = []
   try {
-    const { data: productos } = await supabase!
-      .from('productos')
-      .select('id, slug, titulo, imagen_url, imagenes')
-      .eq('activo', true)
-      .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado')
-      .limit(MAX_PRODUCTOS)
+    const productos: any[] = []
+    for (let offset = 0; offset < MAX_PRODUCTOS; offset += 1000) {
+      const pageSize = Math.min(1000, MAX_PRODUCTOS - offset)
+      const { data, error } = await supabase!
+        .from('productos')
+        .select('id, slug, titulo, imagen_url, imagenes, es_demo')
+        .eq('activo', true)
+        // Las muestras se conservan en el catálogo visual, pero las fichas llevan
+        // noindex: no deben alimentar el índice de imágenes de Google.
+        .eq('es_demo', false)
+        .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado')
+        .order('id', { ascending: true })
+        .range(offset, offset + pageSize - 1)
 
-    for (const p of productos || []) {
+      if (error) throw error
+      productos.push(...(data || []))
+      if (!data || data.length < pageSize) break
+    }
+
+    for (const p of productos) {
       // Portada + galería (sin duplicados), máx. 3
       const imgs: string[] = []
       if (p.imagen_url) imgs.push(p.imagen_url)

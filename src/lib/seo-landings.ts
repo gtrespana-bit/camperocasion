@@ -11,6 +11,7 @@
  * una página vacía de más que desindexar el sitio entero por un timeout).
  */
 import { cache } from 'react'
+import { getSubcategoriaSEO } from './categorias-seo'
 
 const MODERACION = 'estado_moderacion.is.null,estado_moderacion.eq.aprobado'
 
@@ -24,6 +25,7 @@ export const hayAnunciosEnCiudad = cache(
         .from('productos')
         .select('id', { count: 'exact', head: true })
         .eq('activo', true)
+        .or(MODERACION)
       q = municipio
         ? q.or(`ubicacion_ciudad.eq."${nombre}",ubicacion_ciudad.eq."${municipio}"`)
         : q.eq('ubicacion_ciudad', nombre)
@@ -46,12 +48,10 @@ export const hayAnunciosEnCiudadCategoria = cache(
   ): Promise<boolean> => {
     if (!supabase || !nombre) return true
     try {
-      // Misma resolución de categoría que LandingCategoria
-      const { data: catRow } = await supabase
-        .from('categorias')
-        .select('id')
-        .eq('nombre', categoriaSlug)
-        .maybeSingle()
+      // Misma resolución de subcategoría que LandingCategoria: la URL usa
+      // slugs, mientras productos.subcategoria guarda la etiqueta visible.
+      const subcategoria = getSubcategoriaSEO(categoriaSlug)?.categoria
+      if (!subcategoria) return false
 
       let q = supabase
         .from('productos')
@@ -61,7 +61,7 @@ export const hayAnunciosEnCiudadCategoria = cache(
       q = municipio
         ? q.or(`ubicacion_ciudad.eq."${nombre}",ubicacion_ciudad.eq."${municipio}"`)
         : q.eq('ubicacion_ciudad', nombre)
-      q = catRow ? q.eq('categoria_id', catRow.id) : q.eq('subcategoria', categoriaSlug)
+      q = q.eq('subcategoria', subcategoria)
 
       const { count } = await q
       return (count || 0) > 0

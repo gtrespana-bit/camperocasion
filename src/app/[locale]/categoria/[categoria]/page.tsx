@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
@@ -103,7 +104,7 @@ async function getProductos(categoriaSlug: string): Promise<{ productos: Product
 }
 
 function jsonLd(value: unknown) {
-  return JSON.stringify(value).replace(/</g, '\\u003c')
+  return serializeJsonLd(value)
 }
 
 export default async function CategoriaPage({ params }: Props) {

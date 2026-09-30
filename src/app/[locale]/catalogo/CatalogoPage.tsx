@@ -1,4 +1,5 @@
 'use client'
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import { formatPrecio } from '@/lib/precio'
 
 import { useEffect, useMemo, useState, useRef, memo } from 'react'
@@ -385,7 +386,7 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbSchema) }}
       />
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Breadcrumbs visuales */}

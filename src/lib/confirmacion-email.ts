@@ -31,6 +31,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { randomBytes } from 'crypto'
 import { emailLayout } from '@/lib/email-layout'
+import { escapeHtml } from '@/lib/html-escape'
 import { enviarEmailDetallado } from '@/lib/server-email'
 
 const SITIO_URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'
@@ -67,26 +68,18 @@ export function smtpConfigurado(): boolean {
 
 function htmlConfirmacion(nombre: string, accionLink: string): string {
   const nombreHtml = nombre ? `<strong>${escapeHtml(nombre)}</strong>` : ''
+  const accionLinkHtml = escapeHtml(accionLink)
   return emailLayout(
     'Confirma tu cuenta',
     `<p style="margin:0 0 16px">Hola ${nombreHtml},</p>
      <p style="margin:0 0 20px">¡Bienvenido a CamperOcasión! Solo falta un paso para activar tu cuenta: confirmar tu correo electrónico.</p>
      <p style="margin:0 0 20px">Haz clic en el botón y tu cuenta quedará lista para publicar anuncios gratis y contactar vendedores.</p>
      <p style="margin:0 0 8px;font-size:12px;color:#64748B">Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
-     <p style="margin:0 0 8px;font-size:12px;word-break:break-all"><a href="${accionLink}" style="color:#0F172A">${accionLink}</a></p>
+     <p style="margin:0 0 8px;font-size:12px;word-break:break-all"><a href="${accionLinkHtml}" style="color:#0F172A">${accionLinkHtml}</a></p>
      <p style="margin:20px 0 0;font-size:12px;color:#94A3B8">¿No te registraste en CamperOcasión? Ignora este correo; el enlace caduca en 24 horas.</p>`,
     'CONFIRMAR MI CUENTA',
     accionLink,
   )
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
 }
 
 /** Genera el enlace de confirmación vía service-role (sin enviar nada). */

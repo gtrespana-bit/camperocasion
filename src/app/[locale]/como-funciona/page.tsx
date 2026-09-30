@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { CheckCircle, Zap, Shield, MessageCircle, Eye, Camera, DollarSign, X } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
@@ -78,7 +79,7 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <div className="min-h-screen bg-gray-50">
         <div className="bg-gradient-to-r from-brand-primary to-brand-dark text-white py-16 px-4">
           <div className="max-w-3xl mx-auto text-center">

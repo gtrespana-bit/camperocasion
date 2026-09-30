@@ -5,84 +5,159 @@ import { getSupabaseServerClient } from '@/lib/supabase-server-client'
 import fs from 'fs'
 import path from 'path'
 import { CIUDADES_SEO, CATEGORIAS_POPULARES } from '@/lib/ubicaciones-seo'
-import { CATEGORIAS_SEO_LIST } from '@/lib/categorias-seo'
+import { CATEGORIAS_SEO_LIST, SUBCATEGORIAS_SEO } from '@/lib/categorias-seo'
 import { TIPOS_ITP } from '@/lib/itp'
 
 const BASE_URL = 'https://camperocasion.online'
-const LAST_MODIFIED_DATE = new Date('2026-09-15')
+const PAGE_SIZE = 1000
 
-// ÚNICO sitemap del sitio. No crear otro en [locale]/.
-// El blog vive en src/content/blog/*.md (fs), NO en una tabla de Supabase:
-// la versión anterior consultaba `blog_posts` en la DB y devolvía 0 URLs.
+// El sitemap se regenera periódicamente para descubrir anuncios nuevos sin
+// necesitar un despliegue. El de imágenes conserva su caché independiente.
+export const revalidate = 21600
 
-function getBlogSlugs(): { slug: string; lastModified: Date }[] {
+// El blog vive en src/content/blog/*.md, no en una tabla de Supabase.
+function getBlogSlugs(): { slug: string; lastModified?: Date }[] {
   const dir = path.join(process.cwd(), 'src/content/blog')
   if (!fs.existsSync(dir)) return []
+
   return fs
     .readdirSync(dir)
-    .filter((f) => f.endsWith('.md'))
-    .map((f) => {
-      const slug = f.replace(/\.md$/, '')
-      let lastModified = LAST_MODIFIED_DATE
+    .filter((file) => file.endsWith('.md'))
+    .map((file) => {
+      const slug = file.replace(/\.md$/, '')
       try {
-        const raw = fs.readFileSync(path.join(dir, f), 'utf-8')
-        const m = raw.match(/^date:\s*(.+)$/m)
-        if (m) {
-          const d = new Date(m[1].trim())
-          if (!isNaN(d.getTime())) lastModified = d
+        const raw = fs.readFileSync(path.join(dir, file), 'utf-8')
+        const match = raw.match(/^date:\s*(.+)$/m)
+        if (match) {
+          const date = new Date(match[1].trim())
+          if (!Number.isNaN(date.getTime())) return { slug, lastModified: date }
         }
       } catch {
-        // usar fecha de contingencia
+        // Sin fecha válida, la URL se incluye sin inventar lastmod.
       }
-      return { slug, lastModified }
+      return { slug }
     })
 }
 
-// Productos activos. Intenta leer `slug` (migración de URLs semánticas);
-// si la columna aún no existe, cae a id para no dejar el sitemap vacío.
+/** Productos activos y aprobados, excluyendo muestras que tienen noindex. */
 async function getProductos(supabase: any) {
+  if (!supabase) return []
+
   const moderacion = 'estado_moderacion.is.null,estado_moderacion.eq.aprobado'
-  // Los anuncios de demostración (`es_demo`) quedan FUERA del sitemap: no son
-  // inventario real, no deben competir en Google ni llenar el índice de
-  // páginas sin valor. Si la migración 202609180003 no está aplicada, la
-  // consulta falla y se reintenta sin el filtro para no dejar el sitemap vacío.
-  const withSlug = await supabase
-    .from('productos')
-    .select('id, slug, user_id, actualizado_en')
-    .eq('activo', true)
-    .eq('es_demo', false)
-    .or(moderacion)
-    .limit(4000) // Reducir ligeramente para evitar límites de tamaño de sitemap
+  const products: any[] = []
+  let legacySchema = false
 
-  if (!withSlug.error) return withSlug.data || []
+  // Supabase puede limitar una respuesta a 1.000 filas aunque el límite pedido
+  // sea mayor; paginar evita dejar fuera anuncios del sitemap.
+  for (let offset = 0; offset < 4000; offset += PAGE_SIZE) {
+    let response = await supabase
+      .from('productos')
+      .select(legacySchema ? 'id, user_id, actualizado_en' : 'id, slug, user_id, actualizado_en')
+      .eq('activo', true)
+      .eq('es_demo', false)
+      .or(moderacion)
+      .order('id', { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1)
 
-  // Sin `es_demo` (migración 202609180003 aún sin aplicar): se reintenta
-  // manteniendo el slug para no perder las URLs semánticas.
-  const sinDemo = await supabase
-    .from('productos')
-    .select('id, slug, user_id, actualizado_en')
-    .eq('activo', true)
-    .or(moderacion)
-    .limit(4000)
+    // Compatibilidad con instalaciones antiguas sin columna slug. Nunca se
+    // reintenta sin es_demo: esos productos declaran noindex.
+    if (response.error && !legacySchema && /slug/i.test(response.error.message || '')) {
+      legacySchema = true
+      response = await supabase
+        .from('productos')
+        .select('id, user_id, actualizado_en')
+        .eq('activo', true)
+        .eq('es_demo', false)
+        .or(moderacion)
+        .order('id', { ascending: true })
+        .range(offset, offset + PAGE_SIZE - 1)
+    }
 
-  if (!sinDemo.error) return sinDemo.data || []
+    if (response.error) return []
+    const page = response.data || []
+    products.push(...page)
+    if (page.length < PAGE_SIZE) break
+  }
 
-  // Último recurso (sin `slug`): sitemap por id, mejor que vacío.
-  const fallback = await supabase
-    .from('productos')
-    .select('id, user_id, actualizado_en')
-    .eq('activo', true)
-    .or(moderacion)
-    .limit(4000)
+  return products
+}
 
-  return fallback.data || []
+function normalize(value: string | null | undefined) {
+  return (value || '')
+    .trim()
+    .toLocaleLowerCase('es-ES')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+type IndexableLandings = {
+  cities: Set<string>
+  cityCategories: Set<string>
+}
+
+function emptyLandings(): IndexableLandings {
+  return { cities: new Set(), cityCategories: new Set() }
+}
+
+/**
+ * Solo incluye landings locales que tienen al menos un anuncio visible. Se
+ * consulta paginando para no depender del límite máximo de filas de Supabase.
+ * Si la base de datos no está disponible, no se envían URLs locales vacías al
+ * sitemap. Los anuncios de muestra siguen contando para la experiencia visual,
+ * pero sus fichas se excluyen porque llevan noindex.
+ */
+async function getIndexableLandings(supabase: any): Promise<IndexableLandings> {
+  if (!supabase) return emptyLandings()
+
+  const cityByName = new Map<string, string>()
+  for (const city of CIUDADES_SEO) {
+    cityByName.set(normalize(city.nombre), city.slug)
+    if (city.municipio) cityByName.set(normalize(city.municipio), city.slug)
+  }
+
+  const categoryByName = new Map(
+    SUBCATEGORIAS_SEO.map((category) => [normalize(category.categoria), category.slug]),
+  )
+  const cities = new Set<string>()
+  const cityCategories = new Set<string>()
+  const moderation = 'estado_moderacion.is.null,estado_moderacion.eq.aprobado'
+
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from('productos')
+      .select('id, ubicacion_ciudad, subcategoria')
+      .eq('activo', true)
+      .or(moderation)
+      .order('id', { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1)
+
+    if (error) return emptyLandings()
+
+    for (const product of data || []) {
+      const citySlug = cityByName.get(normalize(product.ubicacion_ciudad))
+      if (!citySlug) continue
+      cities.add(citySlug)
+
+      const categorySlug = categoryByName.get(normalize(product.subcategoria))
+      if (categorySlug && CATEGORIAS_POPULARES.includes(categorySlug)) {
+        cityCategories.add(`${citySlug}/${categorySlug}`)
+      }
+    }
+
+    if (!data || data.length < PAGE_SIZE) break
+  }
+
+  return { cities, cityCategories }
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = getSupabaseServerClient()
 
-  // ── URLs estáticas (páginas indexables y públicas) ──────────────────
-  const staticPaths: { path: string; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency']; priority: number }[] = [
+  const staticPaths: {
+    path: string
+    changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency']
+    priority: number
+  }[] = [
     { path: '', changeFrequency: 'daily', priority: 1 },
     { path: '/catalogo', changeFrequency: 'daily', priority: 0.9 },
     { path: '/blog', changeFrequency: 'weekly', priority: 0.8 },
@@ -94,15 +169,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/politica-de-privacidad', changeFrequency: 'yearly', priority: 0.3 },
     { path: '/politica-de-cookies', changeFrequency: 'yearly', priority: 0.3 },
     { path: '/terminos-y-condiciones', changeFrequency: 'yearly', priority: 0.3 },
-    ...(hayDatosTitular() ? [{ path: '/aviso-legal', changeFrequency: 'yearly' as const, priority: 0.3 }] : []),
+    ...(hayDatosTitular()
+      ? [{ path: '/aviso-legal', changeFrequency: 'yearly' as const, priority: 0.3 }]
+      : []),
     { path: '/gestoria-cambio-nombre', changeFrequency: 'monthly', priority: 0.7 },
     { path: '/marcas', changeFrequency: 'weekly', priority: 0.8 },
-    // Directorio de camperizadores y profesionales con tienda abierta.
     { path: '/tiendas', changeFrequency: 'daily', priority: 0.8 },
-    // Valorador: lead-magnet del vendedor, capta antes de publicar.
     { path: '/cuanto-vale-mi-camper', changeFrequency: 'monthly', priority: 0.9 },
-    // Landings por tipo de vendedor (Fase 3): indexan "comprar camper a
-    // particulares / camperizadores / profesionales".
     { path: '/comprar-a-particulares', changeFrequency: 'daily', priority: 0.8 },
     { path: '/comprar-a-camperizadores', changeFrequency: 'daily', priority: 0.8 },
     { path: '/comprar-a-profesionales', changeFrequency: 'daily', priority: 0.8 },
@@ -112,140 +185,117 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/contacto', changeFrequency: 'monthly', priority: 0.5 },
     { path: '/faq', changeFrequency: 'monthly', priority: 0.5 },
     { path: '/sobre-nosotros', changeFrequency: 'monthly', priority: 0.5 },
-    { path: '/terminos-y-condiciones', changeFrequency: 'yearly', priority: 0.3 },
-    { path: '/politica-de-privacidad', changeFrequency: 'yearly', priority: 0.3 },
   ]
 
-  // Solo se publican URLs en español. La versión /en permanece disponible
-  // para usuarios, pero está fuera del índice mediante X-Robots-Tag.
-  const staticUrls: MetadataRoute.Sitemap = staticPaths.map((p) => ({
-    url: `${BASE_URL}${p.path}`,
-    lastModified: LAST_MODIFIED_DATE,
-    changeFrequency: p.changeFrequency,
-    priority: p.priority,
+  // No se inventa una fecha común de última modificación para páginas que no
+  // han cambiado. La portada canonical es / con barra final.
+  const staticUrls: MetadataRoute.Sitemap = staticPaths.map((page) => ({
+    url: page.path ? `${BASE_URL}${page.path}` : `${BASE_URL}/`,
+    changeFrequency: page.changeFrequency,
+    priority: page.priority,
   }))
 
-  // ── Categorías principales con URL canónica propia ───────────────────
-  const categoryUrls: MetadataRoute.Sitemap = CATEGORIAS_SEO_LIST.map((categoria) => ({
-    url: `${BASE_URL}/categoria/${categoria.slug}`,
-    lastModified: LAST_MODIFIED_DATE,
-    changeFrequency: 'daily' as const,
+  const categoryUrls: MetadataRoute.Sitemap = CATEGORIAS_SEO_LIST.map((category) => ({
+    url: `${BASE_URL}/categoria/${category.slug}`,
+    changeFrequency: 'daily',
     priority: 0.9,
   }))
 
-  // ── Landing pages de ciudad (SEO local) ──────────────────────────────
-  const cityUrls: MetadataRoute.Sitemap = []
-  CIUDADES_SEO.forEach((ciudad) => {
-    cityUrls.push({
-      url: `${BASE_URL}/${ciudad.slug}`,
-      lastModified: LAST_MODIFIED_DATE,
-      changeFrequency: 'weekly' as const,
+  const indexableLandings = await getIndexableLandings(supabase)
+  const cityUrls: MetadataRoute.Sitemap = CIUDADES_SEO
+    .filter((city) => indexableLandings.cities.has(city.slug))
+    .map((city) => ({
+      url: `${BASE_URL}/${city.slug}`,
+      changeFrequency: 'weekly',
       priority: 0.7,
-    })
-  })
+    }))
 
-  // ── Landing pages ciudad + categoría (SEO programático) ──────────────
   const cityCategoryUrls: MetadataRoute.Sitemap = []
-  for (const ciudad of CIUDADES_SEO) {
-    for (const categoria of CATEGORIAS_POPULARES) {
+  for (const city of CIUDADES_SEO) {
+    for (const category of CATEGORIAS_POPULARES) {
+      if (!indexableLandings.cityCategories.has(`${city.slug}/${category}`)) continue
       cityCategoryUrls.push({
-        url: `${BASE_URL}/${ciudad.slug}/${categoria}`,
-        lastModified: LAST_MODIFIED_DATE,
-        changeFrequency: 'weekly' as const,
+        url: `${BASE_URL}/${city.slug}/${category}`,
+        changeFrequency: 'weekly',
         priority: 0.6,
       })
     }
   }
 
-  // ── Landings de ITP por comunidad autónoma (SEO long tail:
-  //    "impuesto comprar camper segunda mano {comunidad}") ────────────────
-  const itpUrls: MetadataRoute.Sitemap = TIPOS_ITP.map((comunidad) => ({
-    url: `${BASE_URL}/calcular-itp/${comunidad.slug}`,
-    lastModified: LAST_MODIFIED_DATE,
-    changeFrequency: 'monthly' as const,
+  const itpUrls: MetadataRoute.Sitemap = TIPOS_ITP.map((community) => ({
+    url: `${BASE_URL}/calcular-itp/${community.slug}`,
+    changeFrequency: 'monthly',
     priority: 0.8,
   }))
 
-  // ── Blog (desde src/content/blog) ────────────────────────────────────
-  const blogUrls: MetadataRoute.Sitemap = []
-  getBlogSlugs().forEach((post) => {
-    blogUrls.push({
-      url: `${BASE_URL}/blog/${post.slug}`,
-      lastModified: post.lastModified,
-      changeFrequency: 'monthly' as const,
-      priority: 0.6,
-    })
-  })
+  const blogUrls: MetadataRoute.Sitemap = getBlogSlugs().map((post) => ({
+    url: `${BASE_URL}/blog/${post.slug}`,
+    ...(post.lastModified ? { lastModified: post.lastModified } : {}),
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }))
 
-  // ── Productos y vendedores (dinámico) ────────────────────────────────
   let dynamicUrls: MetadataRoute.Sitemap = []
-  try {
-    const productos = await getProductos(supabase)
-
-    const productUrls: MetadataRoute.Sitemap = []
-    productos.forEach((p: any) => {
-      const rawDate = p.actualizado_en ? new Date(p.actualizado_en) : LAST_MODIFIED_DATE
-      const validDate = isNaN(rawDate.getTime()) ? LAST_MODIFIED_DATE : rawDate
-
-      productUrls.push({
-        url: `${BASE_URL}/producto/${p.slug || p.id}`,
-        lastModified: validDate,
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      })
-    })
-
-    // Vendedores con al menos un producto activo (perfiles indexables)
-    const vendorIds = [
-      ...new Set((productos as any[]).map((p) => p.user_id).filter(Boolean)),
-    ].slice(0, 1000)
-    
-    const vendorUrls: MetadataRoute.Sitemap = []
-    vendorIds.forEach((id) => {
-      vendorUrls.push({
-        url: `${BASE_URL}/vendedor/${id}`,
-        lastModified: LAST_MODIFIED_DATE,
-        changeFrequency: 'weekly' as const,
-        priority: 0.5,
-      })
-    })
-
-    // Tiendas de profesionales: son páginas de negocio con stock, así que
-    // pesan más que un perfil suelto de vendedor.
-    const tiendaUrls: MetadataRoute.Sitemap = []
+  if (supabase) {
     try {
-      const { data: tiendas } = await supabase
-        .from('perfiles')
-        .select('slug')
-        .eq('tienda_activa', true)
-        .not('slug', 'is', null)
-        .limit(1000)
+      const productos = await getProductos(supabase)
+      const productUrls: MetadataRoute.Sitemap = productos.map((product: any) => {
+        const lastModified = product.actualizado_en
+          ? new Date(product.actualizado_en)
+          : undefined
+        const validLastModified = lastModified && !Number.isNaN(lastModified.getTime())
+          ? lastModified
+          : undefined
 
-      ;(tiendas || []).forEach((t: any) => {
-        if (!t.slug) return
-        tiendaUrls.push({
-          url: `${BASE_URL}/tienda/${t.slug}`,
-          lastModified: LAST_MODIFIED_DATE,
-          changeFrequency: 'daily' as const,
-          priority: 0.7,
-        })
+        return {
+          url: `${BASE_URL}/producto/${product.slug || product.id}`,
+          ...(validLastModified ? { lastModified: validLastModified } : {}),
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        }
       })
-    } catch {
-      // La migración de tiendas puede no estar aplicada: el sitemap sigue.
-    }
 
-    dynamicUrls = [...productUrls, ...vendorUrls, ...tiendaUrls]
-  } catch {
-    // Si Supabase falla, servir al menos las URLs estáticas
+      const vendorIds = [
+        ...new Set((productos as any[]).map((product) => product.user_id).filter(Boolean)),
+      ].slice(0, 1000)
+      const vendorUrls: MetadataRoute.Sitemap = vendorIds.map((id) => ({
+        url: `${BASE_URL}/vendedor/${id}`,
+        changeFrequency: 'weekly',
+        priority: 0.5,
+      }))
+
+      const tiendaUrls: MetadataRoute.Sitemap = []
+      const sellerIds = [...new Set((productos as any[]).map((product) => product.user_id).filter(Boolean))]
+      if (sellerIds.length > 0) {
+        const { data: tiendas, error: tiendasError } = await supabase
+          .from('perfiles')
+          .select('id, slug')
+          .eq('tienda_activa', true)
+          .not('slug', 'is', null)
+          .in('id', sellerIds.slice(0, 1000))
+          .limit(1000)
+
+        if (!tiendasError) {
+          for (const tienda of tiendas || []) {
+            if (!tienda.slug) continue
+            tiendaUrls.push({
+              url: `${BASE_URL}/tienda/${tienda.slug}`,
+              changeFrequency: 'daily',
+              priority: 0.7,
+            })
+          }
+        }
+      }
+
+      dynamicUrls = [...productUrls, ...vendorUrls, ...tiendaUrls]
+    } catch {
+      // Si Supabase falla, se mantienen las URLs estáticas y editoriales.
+    }
   }
 
-  // ── Páginas de modelo con precios de mercado ─────────────────────────
-  // Contenido único (mediana y rango P25-P75 calculados con anuncios reales),
-  // así que merecen prioridad alta y refresco diario.
-  const modeloUrls: MetadataRoute.Sitemap = MARCAS_MODELOS.map((m) => ({
-    url: `${BASE_URL}/modelo/${slugModelo(m)}`,
-    lastModified: LAST_MODIFIED_DATE,
-    changeFrequency: 'daily' as const,
+  const modeloUrls: MetadataRoute.Sitemap = MARCAS_MODELOS.map((model) => ({
+    url: `${BASE_URL}/modelo/${slugModelo(model)}`,
+    changeFrequency: 'daily',
     priority: 0.8,
   }))
 

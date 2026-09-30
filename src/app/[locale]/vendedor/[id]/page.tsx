@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/lib/supabase-server-client'
@@ -214,7 +215,7 @@ export default async function VendedorPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(graphJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(graphJsonLd) }}
       />
       <VendedorClient
         vendedor={perfil}
