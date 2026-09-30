@@ -18,11 +18,14 @@ Si `NEXT_PUBLIC_SUPABASE_URL` apunta a un proyecto y las claves son de otro,
 Supabase responde **`401 Invalid API key`** a absolutamente todo —datos, storage
 y login— porque el `ref` del JWT no coincide con el host.
 
-Qué mirar primero:
+Qué mirar primero: abre `/api/diagnostico/supabase` con sesión de
+administrador; si no puedes iniciar sesión pero existe `CRON_SECRET`, usa el
+header seguro:
 
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" "https://<dominio>/api/diagnostico/supabase"
 ```
-https://<dominio>/api/diagnostico/supabase?token=<CRON_SECRET>
-```
+No pongas nunca `CRON_SECRET` en la URL (queda en historial y logs).
 
 ```jsonc
 "proyecto":  { "ref": "jmbkqelkusxjebsdnjoc" },
@@ -54,14 +57,16 @@ falta, ni un filtro. Es la credencial.
 
 ## 2. Diagnóstico en 30 segundos
 
-Abre en el navegador:
+Con sesión de administrador, abre en el navegador:
 
 ```
-https://<tu-dominio>/api/diagnostico/supabase?token=<CRON_SECRET>
+https://<tu-dominio>/api/diagnostico/supabase
 ```
 
-Si no has definido `CRON_SECRET` en Vercel, funciona sin token (es justo el
-escenario roto en el que más falta hace).
+Si `CRON_SECRET` está definido y no puedes entrar al panel, ejecuta desde una
+terminal `curl -H "Authorization: Bearer $CRON_SECRET" "https://<tu-dominio>/api/diagnostico/supabase"`.
+Si `CRON_SECRET` no está definido, el endpoint responde sin token (el escenario
+roto que esta herramienta ayuda a diagnosticar).
 
 El endpoint **nunca devuelve el valor de ninguna clave**: solo el tipo, la
 longitud, los claims del payload (`role`, `ref`, `exp`) y el resultado real de
@@ -121,8 +126,9 @@ Ejemplo de respuesta (recortada):
 3. **Redeploy.** Las variables `NEXT_PUBLIC_*` se incrustan en el bundle en
    *build time*: guardarlas no basta, hay que reconstruir
    (*Deployments → ⋯ → Redeploy*).
-4. Vuelve a abrir `/api/diagnostico/supabase?token=…`: ambas `pruebas` deben
-   decir `"status": 200` y `"ok": true`.
+4. Vuelve a consultar `/api/diagnostico/supabase` como admin o con el header
+   `Authorization: Bearer $CRON_SECRET`: ambas `pruebas` deben decir
+   `"status": 200` y `"ok": true`. No envíes el secreto en query params.
 
 ### Causas más frecuentes
 
@@ -162,7 +168,7 @@ Keys* (es reversible).
 |---|---|
 | `/api/anuncios/active` devolvía **500** en cada carga de página | Devuelve `200 {ok:true, anuncio:null}` y registra un aviso con prefijo `[supabase-credenciales]` / `[supabase-red]` |
 | El catálogo mostraba el texto crudo de Supabase («Invalid API key») | Muestra `catalog.serviceUnavailable` («El catálogo no está disponible en este momento…»), traducido |
-| No había forma de saber qué clave fallaba sin entrar al panel | `GET /api/diagnostico/supabase?token=<CRON_SECRET>` |
+| No había forma de saber qué clave fallaba sin entrar al panel | `GET /api/diagnostico/supabase` |
 | — | `src/lib/supabase-diagnostico.ts` con helpers puros + 30 tests unitarios |
 
 Ficheros:

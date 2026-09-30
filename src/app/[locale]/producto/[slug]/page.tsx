@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase-server-client'
@@ -528,7 +529,7 @@ export default async function ProductoPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(graphJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(graphJsonLd) }}
       />
       <Breadcrumbs items={breadcrumbItems} />
       <Suspense fallback={<div className="max-w-7xl mx-auto px-4 py-20 text-center">{t('loading')}</div>}>

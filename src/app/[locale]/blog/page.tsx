@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import LocalLink from '@/components/LocalLink'
 import fs from 'fs'
@@ -129,7 +130,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(graphJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(graphJsonLd) }} />
       <div className="min-h-screen bg-white">
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand-primary to-brand-dark py-12 md:py-16">

@@ -98,12 +98,19 @@ describe('datos del titular', () => {
     'NEXT_PUBLIC_TITULAR_NIF',
     'NEXT_PUBLIC_TITULAR_DOMICILIO',
     'NEXT_PUBLIC_TITULAR_EMAIL',
-    'NEXT_PUBLIC_TITULAR_TELEFONO',
     'NEXT_PUBLIC_TITULAR_REGISTRO',
   ] as const
 
   afterEach(() => {
     for (const clave of CLAVES) delete process.env[clave]
+    delete process.env.NEXT_PUBLIC_TITULAR_TELEFONO
+    delete process.env.NEXT_PUBLIC_TELEFONO_CONTACTO
+  })
+
+  it('no publica un teléfono de contacto, aunque queden variables antiguas', () => {
+    process.env.NEXT_PUBLIC_TITULAR_TELEFONO = '+34 600 123 456'
+    process.env.NEXT_PUBLIC_TELEFONO_CONTACTO = '+34 600 123 456'
+    expect(datosTitular()).not.toHaveProperty('telefono')
   })
 
   it('sin configurar: no se publica el aviso legal en el pie ni se indexa', () => {

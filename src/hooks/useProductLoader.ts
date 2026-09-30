@@ -125,7 +125,7 @@ export const useProductLoader = (): UseProductLoaderResult => {
       if (esErrorDeCredenciales(err)) {
         console.error(
           '[supabase-credenciales] Supabase rechazó NEXT_PUBLIC_SUPABASE_ANON_KEY. ' +
-            'Compruébalo en /api/diagnostico/supabase?token=<CRON_SECRET>.',
+            'Compruébalo en /api/diagnostico/supabase con sesión admin.',
         );
       }
       setError(err instanceof Error ? err.message : 'Error desconocido');

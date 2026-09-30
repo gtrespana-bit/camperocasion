@@ -9,6 +9,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { emailLayout } from '@/lib/email-layout'
+import { escapeHtml } from '@/lib/html-escape'
 import { enviarEmailSMTP } from '@/lib/server-email'
 
 const SITIO_URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'
@@ -22,23 +23,15 @@ function getAdminClient() {
   })
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
-
 function htmlRecuperacion(nombre: string, accionLink: string): string {
   const nombreHtml = nombre ? ` <strong>${escapeHtml(nombre)}</strong>` : ''
+  const accionLinkHtml = escapeHtml(accionLink)
   return emailLayout(
     'Recupera tu contraseña',
     `<p style="margin:0 0 16px">Hola${nombreHtml},</p>
      <p style="margin:0 0 20px">Recibimos una solicitud para restablecer la contraseña de tu cuenta en CamperOcasión. Haz clic en el botón para crear una nueva contraseña.</p>
      <p style="margin:0 0 8px;font-size:12px;color:#64748B">Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
-     <p style="margin:0 0 8px;font-size:12px;word-break:break-all"><a href="${accionLink}" style="color:#0F172A">${accionLink}</a></p>
+     <p style="margin:0 0 8px;font-size:12px;word-break:break-all"><a href="${accionLinkHtml}" style="color:#0F172A">${accionLinkHtml}</a></p>
      <p style="margin:20px 0 0;font-size:12px;color:#94A3B8">¿No solicitaste este cambio? Ignora este correo; tu contraseña seguirá igual. El enlace caduca en 1 hora.</p>`,
     'RESTABLECER CONTRASEÑA',
     accionLink,

@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 import './globals.css'
@@ -151,7 +152,7 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
+            __html: serializeJsonLd({
               '@context': 'https://schema.org',
               '@type': 'WebSite',
               '@id': 'https://camperocasion.online/#website',

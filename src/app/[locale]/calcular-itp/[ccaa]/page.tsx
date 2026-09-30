@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
@@ -90,7 +91,7 @@ export default async function ITPComunidadPage({ params }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <Breadcrumbs items={[
         { label: 'Calculadora de ITP', href: '/calcular-itp' },
         { label: comunidad.nombre, href: `/calcular-itp/${comunidad.slug}` },

@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { FileSignature, Calculator, ShieldCheck } from 'lucide-react'
@@ -89,7 +90,7 @@ export default function ContratoCompraventaPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <Breadcrumbs items={[{ label: 'Contrato de compraventa', href: '/contrato-compraventa' }]} />
 
       <div className="max-w-4xl mx-auto px-4 py-8">

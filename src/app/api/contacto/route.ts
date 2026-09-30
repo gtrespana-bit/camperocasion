@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { sanitizeString, isValidEmail, isValidLength } from '@/lib/validation'
+import { escapeHtml } from '@/lib/html-escape'
 import { enviarEmailDetallado, emailConfigurado } from '@/lib/server-email'
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
@@ -17,16 +18,16 @@ async function checkContactRateLimit(ip: string): Promise<boolean> {
 async function sendTelegramAlert(asunto: string, nombre: string, email: string, mensaje: string) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return
   const text =
-    `📩 *Nuevo mensaje de contacto*\n\n` +
-    `👤 *Nombre:* ${nombre}\n` +
-    `📧 *Email:* ${email}\n` +
-    `📋 *Asunto:* ${asunto}\n\n` +
-    `📝 *Mensaje:*\n${mensaje}`
+    `📩 Nuevo mensaje de contacto\n\n` +
+    `👤 Nombre: ${nombre}\n` +
+    `📧 Email: ${email}\n` +
+    `📋 Asunto: ${asunto}\n\n` +
+    `📝 Mensaje:\n${mensaje}`
   try {
     await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text, parse_mode: 'Markdown' }),
+      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text }),
     })
   } catch {
     // Silent fail - Telegram is secondary
@@ -40,12 +41,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Demasiados intentos. Espera un momento.' }, { status: 429 })
   }
 
-  const body = await req.json()
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+  }
   const { nombre, email, asunto, mensaje } = body as {
-    nombre: string
-    email: string
-    asunto: string
-    mensaje: string
+    nombre?: string
+    email?: string
+    asunto?: string
+    mensaje?: string
   }
 
   // Validación
@@ -64,6 +73,11 @@ export async function POST(req: NextRequest) {
   const emailClean = sanitizeString(email, 254)
   const asuntoClean = sanitizeString(asunto || '(sin asunto)', 200)
   const mensajeClean = sanitizeString(mensaje, 5000)
+  // sanitizeString quita etiquetas, pero no codifica para el contexto HTML.
+  const nombreHtml = escapeHtml(nombreClean)
+  const emailHtml = escapeHtml(emailClean)
+  const asuntoHtml = escapeHtml(asuntoClean)
+  const mensajeHtml = escapeHtml(mensajeClean)
 
   if (!(await emailConfigurado())) {
     console.warn('⚠️ Sin canal de email configurado - contacto')
@@ -75,13 +89,13 @@ export async function POST(req: NextRequest) {
       <div style="font-family:sans-serif;max-width:600px;padding:24px">
         <h2 style="color:#0F172A">📩 Nuevo mensaje de contacto</h2>
         <table style="width:100%;border-collapse:collapse;margin:16px 0">
-          <tr><td style="padding:8px 0;font-weight:bold;color:#333">Nombre</td><td style="padding:8px 0">${nombreClean}</td></tr>
-          <tr><td style="padding:8px 0;font-weight:bold;color:#333">Email</td><td style="padding:8px 0"><a href="mailto:${emailClean}">${emailClean}</a></td></tr>
-          <tr><td style="padding:8px 0;font-weight:bold;color:#333">Asunto</td><td style="padding:8px 0">${asuntoClean}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:bold;color:#333">Nombre</td><td style="padding:8px 0">${nombreHtml}</td></tr>
+          <tr><td style="padding:8px 0;font-weight:bold;color:#333">Email</td><td style="padding:8px 0"><a href="mailto:${emailHtml}">${emailHtml}</a></td></tr>
+          <tr><td style="padding:8px 0;font-weight:bold;color:#333">Asunto</td><td style="padding:8px 0">${asuntoHtml}</td></tr>
         </table>
         <div style="background:#f5f5f5;border-radius:8px;padding:16px;margin-top:8px">
           <strong>Mensaje:</strong><br>
-          <div style="margin-top:8px;white-space:pre-wrap">${mensajeClean}</div>
+          <div style="margin-top:8px;white-space:pre-wrap">${mensajeHtml}</div>
         </div>
         <p style="margin-top:24px;color:#999;font-size:12px">CamperOcasión · ${new Date().toLocaleString('es-ES')}</p>
       </div>
@@ -100,7 +114,7 @@ export async function POST(req: NextRequest) {
       // Telegram sigue saliendo aunque falle el email.
       await sendTelegramAlert(asuntoClean, nombreClean, emailClean, mensajeClean)
       return NextResponse.json(
-        { error: 'No se pudo enviar el mensaje por email. Inténtalo de nuevo o escríbenos por Telegram.' },
+        { error: 'No se pudo enviar el mensaje por email. Inténtalo de nuevo o escríbenos a soporte@camperocasion.online.' },
         { status: 502 },
       )
     }

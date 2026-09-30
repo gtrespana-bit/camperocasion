@@ -17,10 +17,11 @@ Con esas tres primeras, el aviso legal se enlaza en el pie y pasa a indexarse
 solo. Si más adelante constituyes la sociedad específica, solo hay que cambiar
 estos valores: no se toca código.
 
-Opcional pero recomendable (atención al cliente y confianza):
+La atención al cliente se ofrece exclusivamente por correo electrónico; no se
+publica un teléfono de contacto. Para sociedades, añade los datos registrales
+cuando estén disponibles:
 
 ```
-NEXT_PUBLIC_TITULAR_TELEFONO=+34 ...
 NEXT_PUBLIC_TITULAR_REGISTRO=Inscrita en el Registro Mercantil de Las Palmas, tomo …, folio …, hoja …
 ```
 

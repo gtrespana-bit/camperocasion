@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Breadcrumbs from '@/components/Breadcrumbs'
@@ -79,7 +80,7 @@ export default async function CalcularITPPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <Breadcrumbs items={[{ label: 'Calculadora de ITP', href: '/calcular-itp' }]} />
 
       <div className="max-w-6xl mx-auto px-4 py-8">

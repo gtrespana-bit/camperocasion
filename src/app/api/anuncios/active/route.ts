@@ -54,7 +54,7 @@ export async function GET(_request: NextRequest) {
         console.error(
           '[supabase-credenciales] /api/anuncios/active: Supabase rechazó la clave ' +
             `(service_role): ${error.message}. Revisa SUPABASE_SERVICE_ROLE_KEY en Vercel ` +
-            'o abre /api/diagnostico/supabase?token=<CRON_SECRET>.',
+            'o revisa /api/diagnostico/supabase como admin.',
         )
         return NextResponse.json({ ok: true, anuncio: null })
       }

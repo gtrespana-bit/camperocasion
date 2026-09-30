@@ -1,5 +1,8 @@
 'use server'
 import { enviarEmailSMTP } from '@/lib/server-email'
+import { escapeHtml } from '@/lib/html-escape'
+
+const htmlText = (value: unknown) => escapeHtml(String(value ?? ''))
 
 async function enviar(_fromName: string, email: string, subject: string, html: string) {
   // Canal central: Resend API (RESEND_API_KEY) con fallback a SMTP.
@@ -20,16 +23,16 @@ export async function enviarEmailProducto(
   precio: string,
   slug: string
 ) {
-  const url = `${process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'}/producto/${slug}`
+  const url = `${process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'}/producto/${encodeURIComponent(slug)}`
   return enviar('CamperOcasión', email, '✅ Tu anuncio fue publicado', `
     <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
-      <h2 style="color:#1e3a8a">Hola ${nombre}!</h2>
+      <h2 style="color:#1e3a8a">Hola ${htmlText(nombre)}!</h2>
       <p>Tu anuncio fue publicado exitosamente:</p>
       <div style="background:#f3f4f6;padding:16px;border-radius:10px;margin:16px 0">
-        <p style="margin:0;font-size:18px;font-weight:bold">${titulo}</p>
-        <p style="margin:8px 0 0;color:#1e3a8a;font-size:20px;font-weight:bold">${precio}</p>
+        <p style="margin:0;font-size:18px;font-weight:bold">${htmlText(titulo)}</p>
+        <p style="margin:8px 0 0;color:#1e3a8a;font-size:20px;font-weight:bold">${htmlText(precio)}</p>
       </div>
-      <a href="${url}" style="display:inline-block;background:#1e3a8a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold;margin-top:8px">Ver anuncio →</a>
+      <a href="${htmlText(url)}" style="display:inline-block;background:#1e3a8a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold;margin-top:8px">Ver anuncio →</a>
       <p style="color:#6b7280;font-size:12px;margin-top:28px">CamperOcasión — Publica más, vende más</p>
     </div>
   `)
@@ -62,16 +65,16 @@ export async function enviarEmailMensaje(
 
   return enviar('CamperOcasión', email, asunto, `
     <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
-      <h2 style="color:#1e3a8a">¡Hola ${nombreDestinatario}!</h2>
-      <p><strong>${nombreRemitente}</strong> está interesado en:</p>
-      <p style="font-weight:bold">${producto}</p>
-      <div style="background:#f3f4f6;padding:16px;border-radius:10px;margin:16px 0;font-style:italic">&ldquo;${mensajePreview}&rdquo;</div>
+      <h2 style="color:#1e3a8a">¡Hola ${htmlText(nombreDestinatario)}!</h2>
+      <p><strong>${htmlText(nombreRemitente)}</strong> está interesado en:</p>
+      <p style="font-weight:bold">${htmlText(producto)}</p>
+      <div style="background:#f3f4f6;padding:16px;border-radius:10px;margin:16px 0;font-style:italic">&ldquo;${htmlText(mensajePreview)}&rdquo;</div>
       ${total > 1 ? `<p style="color:#6b7280;font-size:14px">Y ${total - 1} mensaje${total - 1 === 1 ? '' : 's'} más sin leer.</p>` : ''}
-      <a href="${url}" style="display:inline-block;background:#1e3a8a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold">Responder &rarr;</a>
+      <a href="${htmlText(url)}" style="display:inline-block;background:#1e3a8a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold">Responder &rarr;</a>
       <p style="color:#6b7280;font-size:13px;margin-top:20px">Los compradores contactan con varios vendedores a la vez: quien responde antes, vende.</p>
       <p style="color:#6b7280;font-size:12px;margin-top:24px">
         CamperOcasión &middot;
-        <a href="${base}/dashboard?tab=perfil" style="color:#6b7280">Dejar de recibir estos avisos</a>
+        <a href="${htmlText(`${base}/dashboard?tab=perfil`)}" style="color:#6b7280">Dejar de recibir estos avisos</a>
       </p>
     </div>
   `)
@@ -88,11 +91,11 @@ export async function enviarEmailCreditos(
 ) {
   return enviar('CamperOcasión', email, `✅ +${cantidad} créditos en tu cuenta`, `
     <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
-      <h2 style="color:#1e3a8a">Hola ${nombre}!</h2>
-      <p>Se acreditaron <strong style="color:#1e3a8a;font-size:22px">${cantidad} créditos</strong> a tu cuenta.</p>
+      <h2 style="color:#1e3a8a">Hola ${htmlText(nombre)}!</h2>
+      <p>Se acreditaron <strong style="color:#1e3a8a;font-size:22px">${htmlText(cantidad)} créditos</strong> a tu cuenta.</p>
       <div style="background:#e8f5e9;padding:16px;border-radius:10px;margin:16px 0;text-align:center">
         <p style="margin:0;color:#6b7280;font-size:12px">Balance total</p>
-        <p style="margin:4px 0 0;font-size:28px;font-weight:bold;color:#1e3a8a">${balanceTotal}</p>
+        <p style="margin:4px 0 0;font-size:28px;font-weight:bold;color:#1e3a8a">${htmlText(balanceTotal)}</p>
       </div>
       <p style="color:#6b7280;font-size:12px;margin-top:28px">CamperOcasión</p>
     </div>
@@ -108,13 +111,13 @@ export async function enviarEmailVerificacion(
 ) {
   return enviar('CamperOcasión', email, '🎉 Tu cuenta fue verificada!', `
     <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
-      <h2 style="color:#1e3a8a">Hola ${nombre}!</h2>
+      <h2 style="color:#1e3a8a">Hola ${htmlText(nombre)}!</h2>
       <div style="text-align:center;padding:20px">
         <p style="font-size:48px;margin:0">✅</p>
         <p style="font-size:20px;font-weight:bold;margin:12px 0">Tu cuenta fue verificada</p>
         <p>Ahora tienes el sello de verificación visible en todos tus anuncios. Los compradores confían más en vendedores verificados.</p>
       </div>
-      <a href="${process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'}/dashboard" style="display:inline-block;background:#1e3a8a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold">Ir a tu perfil →</a>
+      <a href="${htmlText(`${process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'}/dashboard`)}" style="display:inline-block;background:#1e3a8a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold">Ir a tu perfil →</a>
       <p style="color:#6b7280;font-size:12px;margin-top:28px">CamperOcasión</p>
     </div>
   `)
@@ -138,13 +141,13 @@ export async function enviarEmailNivel(
   const emoji = nivelesEmoji[nivelNuevo] || '⭐'
   return enviar('CamperOcasión', email, `${emoji} Subiste de nivel: ${nivelNuevo}!`, `
     <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
-      <h2 style="color:#1e3a8a">Hola ${nombre}!</h2>
+      <h2 style="color:#1e3a8a">Hola ${htmlText(nombre)}!</h2>
       <div style="text-align:center;padding:20px">
         <p style="font-size:48px;margin:0">${emoji}</p>
-        <p style="font-size:20px;font-weight:bold;margin:12px 0">Ahora eres ${nivelNuevo}</p>
-        <p>Subiste de <strong>${nivelAnterior}</strong> a <strong>${nivelNuevo}</strong>!</p>
+        <p style="font-size:20px;font-weight:bold;margin:12px 0">Ahora eres ${htmlText(nivelNuevo)}</p>
+        <p>Subiste de <strong>${htmlText(nivelAnterior)}</strong> a <strong>${htmlText(nivelNuevo)}</strong>!</p>
       </div>
-      <a href="${process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'}/dashboard?tab=perfil" style="display:inline-block;background:#1e3a8a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold">Ver perfil →</a>
+      <a href="${htmlText(`${process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'}/dashboard?tab=perfil`)}" style="display:inline-block;background:#1e3a8a;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold">Ver perfil →</a>
       <p style="color:#6b7280;font-size:12px;margin-top:28px">CamperOcasión</p>
     </div>
   `)
@@ -203,21 +206,21 @@ export async function enviarDigestVendedor(
 ) {
   const url = `${process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'}/dashboard`
   const topLine = stats.topTitulo
-    ? `<p style="margin:8px 0 0;color:#4b5563">Tu anuncio más visto: <strong>${stats.topTitulo}</strong></p>`
+    ? `<p style="margin:8px 0 0;color:#4b5563">Tu anuncio más visto: <strong>${htmlText(stats.topTitulo)}</strong></p>`
     : ''
   return enviar('CamperOcasión', email, `📊 ${stats.visitas} personas vieron tus anuncios esta semana`, `
     <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
-      <h2 style="color:#0F172A">Hola ${nombre}!</h2>
+      <h2 style="color:#0F172A">Hola ${htmlText(nombre)}!</h2>
       <p>Así fueron tus anuncios esta semana en CamperOcasión:</p>
       <div style="background:#f3f4f6;padding:16px;border-radius:10px;margin:16px 0;text-align:center">
-        <p style="margin:0;font-size:32px;font-weight:bold;color:#0F172A">👀 ${stats.visitas}</p>
+        <p style="margin:0;font-size:32px;font-weight:bold;color:#0F172A">👀 ${htmlText(stats.visitas)}</p>
         <p style="margin:4px 0 12px;color:#6b7280">vistas esta semana</p>
-        <p style="margin:0;font-size:20px;font-weight:bold;color:#0F172A">❤️ ${stats.guardados}</p>
+        <p style="margin:0;font-size:20px;font-weight:bold;color:#0F172A">❤️ ${htmlText(stats.guardados)}</p>
         <p style="margin:4px 0 0;color:#6b7280">personas guardaron tus anuncios</p>
         ${topLine}
       </div>
       <p>¿Ya renovaste tus anuncios? Renovar los sube como "recién publicados" — gratis.</p>
-      <a href="${url}" style="display:inline-block;background:#0F172A;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold">Ver mis anuncios →</a>
+      <a href="${htmlText(url)}" style="display:inline-block;background:#0F172A;color:#fff;padding:12px 28px;text-decoration:none;border-radius:8px;font-weight:bold">Ver mis anuncios →</a>
       <p style="color:#6b7280;font-size:12px;margin-top:28px">CamperOcasión — Publica más, vende más</p>
     </div>
   `)

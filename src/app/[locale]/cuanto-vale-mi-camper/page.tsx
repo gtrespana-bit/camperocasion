@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { setRequestLocale } from 'next-intl/server'
 import { MARCAS_MODELOS, agruparPorFabricante, etiquetaModelo } from '@/lib/marcas'
@@ -86,7 +87,7 @@ export default async function ValorarPage({ params }: { params: Promise<{ locale
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <ValorarClient grupos={grupos} faq={faq} />
     </>

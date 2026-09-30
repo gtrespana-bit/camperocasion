@@ -34,8 +34,8 @@ export default async function AvisoLegalPage({ params }: { params: Promise<{ loc
   const esIngles = idioma === 'en'
 
   const etiquetas = esIngles
-    ? { nombre: 'Name', nif: 'Tax ID', domicilio: 'Address', email: 'Email', telefono: 'Phone', registro: 'Registry details', pendiente: 'Pending completion' }
-    : { nombre: 'Nombre o razón social', nif: 'NIF/CIF', domicilio: 'Domicilio', email: 'Correo electrónico', telefono: 'Teléfono', registro: 'Datos registrales', pendiente: 'Pendiente de completar' }
+    ? { nombre: 'Name', nif: 'Tax ID', domicilio: 'Address', email: 'Email', registro: 'Registry details', pendiente: 'Pending completion' }
+    : { nombre: 'Nombre o razón social', nif: 'NIF/CIF', domicilio: 'Domicilio', email: 'Correo electrónico', registro: 'Datos registrales', pendiente: 'Pendiente de completar' }
 
   const filas: Array<[string, string]> = [
     [etiquetas.nombre, titular.nombre],
@@ -43,7 +43,6 @@ export default async function AvisoLegalPage({ params }: { params: Promise<{ loc
     [etiquetas.domicilio, titular.domicilio],
     [etiquetas.email, titular.email],
   ]
-  if (titular.telefono) filas.push([etiquetas.telefono, titular.telefono])
   if (titular.registro) filas.push([etiquetas.registro, titular.registro])
 
   return (

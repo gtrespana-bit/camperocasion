@@ -1,5 +1,6 @@
 'use client'
 
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import LocalLink from '@/components/LocalLink'
 import { ChevronRight, Home } from 'lucide-react'
 
@@ -28,7 +29,7 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }}
       />
       <nav aria-label="Breadcrumb" className="py-3 px-4 bg-gray-50 border-b">
         <ol className="max-w-7xl mx-auto flex items-center gap-2 text-sm text-gray-600 flex-wrap">

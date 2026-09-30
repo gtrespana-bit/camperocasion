@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import LandingCiudad from './LandingCiudad'
@@ -196,20 +197,20 @@ export default async function CiudadPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(cityJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(cityJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(collectionPageJsonLd) }}
       />
       {itemListJsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(itemListJsonLd) }}
         />
       )}
       <Breadcrumbs items={breadcrumbItems} />

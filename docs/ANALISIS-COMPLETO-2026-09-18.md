@@ -22,7 +22,7 @@
 |---|---|---|
 | `login`, `register`, `confirm`, `reset-password` | El logotipo escrito a mano **«VendeT-España»** (lo que viste) | Componente único `src/components/BrandLogo.tsx` (icono real + «Camper**Ocasión**» + descriptor). Las cuatro pantallas lo usan |
 | `ContactForm`, `DashboardHeader`, `producto/editar` | Prefijos de teléfono **+58 412** (Venezuela) en textos y valores por defecto | Prefijo español `+34 600 123 456` |
-| `contacto` | Teléfono **falso visible** `+58 412 XXX XXXX` | Bloque real: email, WhatsApp; el teléfono solo si existe `NEXT_PUBLIC_TELEFONO_CONTACTO`. **Nunca un número de relleno** |
+| `contacto` | Teléfono **falso visible** `+58 412 XXX XXXX` | Se quitó el dato inventado. Actualización 2026-09-30: el soporte se atiende solo por email; no se ofrece teléfono ni WhatsApp de soporte. Los canales que el vendedor publique en su anuncio son contacto entre usuarios, no soporte de la plataforma. |
 | `creditos` | Etiqueta **«Cédula»** en los datos de pago | «Titular» (`holder`); se ha eliminado la clave `idCard` |
 | `como-funciona` | Claves i18n `vendetTitle`, `vendet1..5` | Renombradas a `camperTitle`, `camper1..5` |
 | `scripts/performance-test.js` | Medía Lighthouse sobre **vendet.online** | Ahora sobre `camperocasion.online` |

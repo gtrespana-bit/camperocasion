@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase-server-client'
 import { CATALOG_PAGE_SIZE } from '@/lib/catalog-pagination'
@@ -154,18 +155,18 @@ export default async function CatalogoPage({ searchParams }: PageProps) {
       {nextPage && <link rel="next" href={baseUrl + '?pagina=' + nextPage} />}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumb) }}
       />
       {itemList && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(itemList) }}
         />
       )}
       {collectionPage && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPage) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(collectionPage) }}
         />
       )}
       <Suspense>

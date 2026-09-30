@@ -25,8 +25,9 @@ import { getSessionUser } from '@/lib/require-auth'
  *   - el diagnóstico en claro y los pasos para arreglarlo.
  *
  * Uso:
- *   /api/diagnostico/supabase?token=<CRON_SECRET>
- * Si el despliegue no tiene CRON_SECRET definido, el endpoint responde igual
+ *   curl -H "Authorization: Bearer $CRON_SECRET" https://<dominio>/api/diagnostico/supabase
+ * O abre /admin → Estado. Si el despliegue no tiene CRON_SECRET definido,
+ * el endpoint responde igual
  * (es justo el escenario roto en el que más falta hace).
  *
  * NO devuelve el valor de ninguna clave: solo tipo, longitud y claims del
@@ -45,10 +46,10 @@ const VARS_NUEVAS = [
 
 async function autorizado(request: NextRequest): Promise<boolean> {
   const cron = process.env.CRON_SECRET
-  const token = request.nextUrl.searchParams.get('token')
+  const bearer = request.headers.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1]
 
-  // 1) Token explícito: la forma normal de usarlo en producción.
-  if (cron && token && token === cron) return true
+  // 1) Token explícito por header: no meter CRON_SECRET en URL/logs/historial.
+  if (cron && bearer && bearer === cron) return true
 
   // 2) Sesión de admin (cuando las claves funcionan, /admin puede abrirlo).
   try {
@@ -121,7 +122,7 @@ export async function GET(request: NextRequest) {
       {
         ok: false,
         error: 'No autorizado',
-        como: 'Abre /api/diagnostico/supabase?token=<CRON_SECRET> (o entra con tu cuenta de admin).',
+        como: 'Entra con tu cuenta de admin o envía Authorization: Bearer <CRON_SECRET> desde un cliente seguro.',
       },
       { status: 401 },
     )

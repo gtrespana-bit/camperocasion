@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { Store, Shield, BarChart3, Star, Camera, FileCheck2 } from 'lucide-react'
 import { setRequestLocale } from 'next-intl/server'
@@ -63,7 +64,7 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <div className="max-w-5xl mx-auto px-4 py-12">
       <p className="text-sm font-semibold text-brand-accent uppercase tracking-wide mb-2">
         Talleres, camperizadores y compraventas

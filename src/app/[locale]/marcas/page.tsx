@@ -1,3 +1,4 @@
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { ChevronRight, Factory, ArrowRight } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
@@ -121,7 +122,7 @@ export default async function MarcasPage({ params }: { params: Promise<{ locale:
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <div className="bg-gray-50 min-h-screen">
         {/* ═══════════ HERO ═══════════ */}
