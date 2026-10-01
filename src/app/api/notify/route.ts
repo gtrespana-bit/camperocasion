@@ -56,7 +56,13 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(payload),
     })
     const data = await res.json()
-    return NextResponse.json({ ok: data.ok === true, telegram: data })
+    if (!res.ok || data?.ok !== true) {
+      return NextResponse.json(
+        { ok: false, error: typeof data?.description === 'string' ? data.description : 'Telegram rechazó el mensaje' },
+        { status: 502 },
+      )
+    }
+    return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 })
   }
