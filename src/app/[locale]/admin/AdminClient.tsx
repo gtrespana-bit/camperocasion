@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   LayoutDashboard, Package, ShieldAlert, Users, ShieldCheck, CreditCard, History,
@@ -59,6 +59,7 @@ export default function AdminPage() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [perfiles, setPerfiles] = useState<Record<string, Perfil>>({})
   const [counts, setCounts] = useState({ transacciones: 0, publicaciones: 0, moderacion: 0, verificacion: 0, homologacion: 0, inspecciones: 0, gestoria: 0 })
+  const navRef = useRef<HTMLElement>(null)
 
   const isAdmin = ADMIN_EMAILS.includes((user?.email || '').toLowerCase())
   const activeNav = NAV.find((n) => n.id === tab) || NAV[0]
@@ -75,9 +76,18 @@ export default function AdminPage() {
       setTimeout(() => router.push('/'), 1500)
       return
     }
-    const urlTab = searchParams?.get('tab')
+    const urlTab =
+      (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null) ??
+      searchParams?.get('tab')
     if (urlTab && NAV.some((n) => n.id === urlTab)) setTab(urlTab)
   }, [user, session, isAdmin, searchParams, router])
+
+  useEffect(() => {
+    const activeBtn = navRef.current?.querySelector<HTMLElement>('[data-active="true"]')
+    if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
+      activeBtn.scrollIntoView({ block: 'nearest' })
+    }
+  }, [tab])
 
   async function loadPerfiles() {
     try {
@@ -215,10 +225,11 @@ export default function AdminPage() {
           <LocalLink href="/" className="text-xs font-semibold text-brand-primary hover:underline">Ver sitio</LocalLink>
         </div>
         {mobileOpen && (
-          <div className="mt-2 grid grid-cols-2 gap-1.5">
+          <div className="mt-2 grid max-h-[calc(100vh-4rem)] grid-cols-2 gap-1.5 overflow-y-auto overscroll-contain pb-1">
             {NAV.map((n) => (
               <button
                 key={n.id}
+                type="button"
                 onClick={() => navigate(n.id)}
                 className={`flex items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold transition ${tab === n.id ? 'bg-brand-primary text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
               >
@@ -231,8 +242,15 @@ export default function AdminPage() {
 
       <div className="mx-auto flex max-w-[1600px]">
         {/* sidebar */}
-        <aside className="sticky top-0 hidden h-screen w-64 flex-shrink-0 flex-col border-r border-gray-200 bg-white px-3 py-5 lg:flex">
-          <div className="mb-6 flex items-center gap-3 px-2">
+        <aside
+          onWheel={(e) => {
+            const nav = navRef.current
+            if (!nav || nav.contains(e.target as Node)) return
+            nav.scrollTop += e.deltaY
+          }}
+          className="sticky top-0 hidden h-screen max-h-screen w-64 flex-shrink-0 self-start flex-col overflow-y-auto overscroll-contain border-r border-gray-200 bg-white px-3 py-5 lg:flex"
+        >
+          <div className="mb-6 flex shrink-0 items-center gap-3 px-2">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-primary text-white"><Sparkles size={20} /></span>
             <div>
               <p className="text-sm font-black text-gray-900">Admin CamperOcasión</p>
@@ -240,10 +258,17 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <nav className="flex-1 space-y-1">
+          <nav
+            ref={navRef}
+            aria-label="Secciones del panel"
+            className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1"
+          >
             {NAV.map((n) => (
               <button
                 key={n.id}
+                type="button"
+                data-active={tab === n.id ? 'true' : undefined}
+                aria-current={tab === n.id ? 'page' : undefined}
                 onClick={() => navigate(n.id)}
                 className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${tab === n.id ? 'bg-brand-primary text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
               >
@@ -257,7 +282,7 @@ export default function AdminPage() {
             ))}
           </nav>
 
-          <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
+          <div className="mt-4 shrink-0 space-y-2 border-t border-gray-100 pt-4">
             <div className="rounded-xl bg-gray-50 px-3 py-2.5">
               <p className="truncate text-xs font-bold text-gray-800">{user.email}</p>
               <p className="text-[11px] text-gray-500">Administrador</p>
@@ -294,6 +319,8 @@ export default function AdminPage() {
             {tab === 'verificacion' && <VerificacionTab notify={notify} />}
             {tab === 'homologacion' && <AdminHomologacion notify={notify} />}
             {tab === 'reservas' && <AdminReservas notify={notify} />}
+            {tab === 'inspecciones' && <AdminInspecciones notify={notify} />}
+            {tab === 'gestoria' && <AdminGestoria notify={notify} />}
             {tab === 'transacciones' && <AdminTransacciones notify={notify} perfiles={perfiles} onPerfilesChange={setPerfiles} />}
             {tab === 'auditoria' && <AdminAuditoria notify={notify} />}
             {tab === 'categorias' && <AdminCategorias notify={notify} />}
