@@ -35,8 +35,8 @@ export interface DocumentoLegal {
 }
 
 const ACTUALIZADO: Record<IdiomaLegal, string> = {
-  es: 'Última actualización: septiembre de 2026',
-  en: 'Last updated: September 2026',
+  es: 'Última actualización: octubre de 2026',
+  en: 'Last updated: October 2026',
 }
 
 const BUZON_PRIVACIDAD = 'privacidad@camperocasion.online'
@@ -231,6 +231,7 @@ export const POLITICA_PRIVACIDAD: Record<IdiomaLegal, DocumentoLegal> = {
         lista: [
           'Supabase (base de datos, autenticación y almacenamiento de archivos), con servidores en la Unión Europea.',
           'Vercel (alojamiento de la web y medición agregada de tráfico y rendimiento).',
+          'Google (Google Analytics 4, estadísticas de uso de la web), únicamente si aceptas la medición en el aviso de cookies; configurado sin Google Signals ni personalización de anuncios.',
           'Resend (envío de los correos del servicio y avisos).',
           'Servicios de notificaciones push del navegador, solo si activas las notificaciones.',
           'Telegram, únicamente para avisos internos de moderación: si escribes en un chat de la plataforma datos de contacto, el aviso interno puede incluirlos.',
@@ -332,6 +333,7 @@ export const POLITICA_PRIVACIDAD: Record<IdiomaLegal, DocumentoLegal> = {
         lista: [
           'Supabase (database, authentication and file storage), with servers in the European Union.',
           'Vercel (website hosting and aggregate traffic and performance measurement).',
+          'Google (Google Analytics 4, website usage statistics), only if you accept measurement in the cookie notice; configured without Google Signals or ad personalization.',
           'Resend (sending service emails and alerts).',
           'Browser push notification services, only if you enable notifications.',
           'Telegram, only for internal moderation alerts: if you write contact details in a platform chat, the internal alert may include them.',
@@ -402,6 +404,7 @@ export const POLITICA_COOKIES: Record<IdiomaLegal, DocumentoLegal> = {
           'Preferencias (necesaria): la clave `cookie-consent` en el almacenamiento local recuerda si aceptaste o rechazaste la medición, para no volver a preguntarte en cada visita.',
           'Aviso de instalación de la app (necesaria): recuerda si ya cerraste el aviso para no repetirlo.',
           'Medición de tráfico y rendimiento (opcional): Vercel Analytics y Speed Insights miden visitas y tiempos de carga de forma agregada, y la medición propia de audiencia anota qué páginas se ven, cuánto tiempo y desde qué web se llega. La medición propia usa un identificador aleatorio guardado en el navegador y **no** guarda tu IP ni tu user-agent. Se carga **solo si pulsas «Aceptar»**; si rechazas o no decides, no se descarga su código.',
+          'Google Analytics 4 (opcional): cookies `_ga` y `_ga_*` de Google que distinguen visitantes y sesiones mediante un identificador aleatorio, para elaborar estadísticas de uso (páginas vistas, origen de la visita, dispositivo y zona geográfica aproximada). Caducan a los 13 meses. Está configurado **sin Google Signals ni personalización de anuncios**, y Google Analytics 4 no almacena direcciones IP. Como el resto de la medición, se carga **solo si pulsas «Aceptar»**; si después cambias de opinión, deja de enviar datos al instante.',
         ],
       },
       {
@@ -442,6 +445,7 @@ export const POLITICA_COOKIES: Record<IdiomaLegal, DocumentoLegal> = {
           'Preferences (essential): the `cookie-consent` key in local storage remembers whether you accepted or rejected measurement, so we do not ask you on every visit.',
           'App install notice (essential): remembers that you already dismissed the notice so it is not shown again.',
           'Traffic and performance measurement (optional): Vercel Analytics and Speed Insights measure visits and load times in aggregate, and our own audience measurement records which pages are viewed, for how long and which website referred you. Our own measurement uses a random identifier stored in your browser and does **not** store your IP or user-agent. It is loaded **only if you press “Accept”**; if you reject or do not decide, its code is not downloaded.',
+          'Google Analytics 4 (optional): Google’s `_ga` and `_ga_*` cookies, which tell visitors and sessions apart using a random identifier in order to produce usage statistics (pages viewed, where the visit came from, device and approximate region). They expire after 13 months. It is configured **without Google Signals or ad personalization**, and Google Analytics 4 does not store IP addresses. Like the rest of the measurement, it is loaded **only if you press “Accept”**; if you change your mind later, it stops sending data immediately.',
         ],
       },
       {

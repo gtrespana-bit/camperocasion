@@ -187,6 +187,24 @@ sin IP ni user-agent, y solo se activa si el usuario pulsa «Aceptar» en el avi
 de cookies (igual que Vercel Analytics). Migración:
 `supabase/migrations/202609290001_analitica_visitas.sql`.
 
+### Google Analytics 4
+
+La propiedad GA4 del proyecto (`G-14MFBYME0R`, `GA_ID_POR_DEFECTO` en
+`src/lib/google-analytics.ts`) se mide en producción sin configurar nada; en
+`npm run dev` no se mide. `NEXT_PUBLIC_GA_MEASUREMENT_ID` (Vercel → Settings →
+Environment Variables; es `NEXT_PUBLIC_`, así que hay que **redeployar** tras
+cambiarla) sirve para medir con otra propiedad (`G-XXXXXXXXXX`) o apagar GA con
+`off`. gtag.js lo carga `src/components/GoogleAnalytics.tsx` con las mismas
+reglas que el resto de la medición: solo tras «Aceptar» en el aviso de cookies,
+después de `load` + idle, nunca en `/admin`, sin Google Signals ni
+personalización de anuncios y con cookies de 13 meses. Las páginas vistas de la
+navegación SPA las registra la *medición mejorada* de GA4 (activada por defecto
+en la propiedad: *Administrar → Flujos de datos → Medición mejorada → Cambios de
+página basados en eventos del historial del navegador*), así que no se envía
+`page_view` a mano. Si el usuario retira el consentimiento, GA deja de enviar
+datos al instante (`window['ga-disable-<ID>']`). La CSP de `next.config.js` ya
+permite `googletagmanager.com`, `google-analytics.com` y `analytics.google.com`.
+
 ## Despliegue en Vercel
 
 La build es *zero-config*: Vercel detecta Next.js por `package.json` y usa
