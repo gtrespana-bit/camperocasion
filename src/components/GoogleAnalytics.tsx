@@ -9,6 +9,7 @@ import {
   GA_SCRIPT_ID,
   desactivarMedicion,
   gtag,
+  idEntornoInvalido,
 } from '@/lib/google-analytics'
 
 /**
@@ -46,14 +47,12 @@ export default function GoogleAnalytics({ id = GA_MEASUREMENT_ID }: { id?: strin
   }, [id, pathname])
 
   useEffect(() => {
-    if (!id) {
-      if (process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID) {
-        console.warn(
-          '[GoogleAnalytics] NEXT_PUBLIC_GA_MEASUREMENT_ID no tiene formato G-XXXXXXXXXX; Google Analytics no se cargará.',
-        )
-      }
-      return
+    if (idEntornoInvalido(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)) {
+      console.warn(
+        `[GoogleAnalytics] NEXT_PUBLIC_GA_MEASUREMENT_ID no tiene formato G-XXXXXXXXXX (ni es "off"); se ignora${id ? ` y se mide con ${id}` : ''}.`,
+      )
     }
+    if (!id) return
 
     if (document.getElementById(GA_SCRIPT_ID)) {
       // Ya estaba cargado (aceptó, rechazó y volvió a aceptar): solo reactivar.

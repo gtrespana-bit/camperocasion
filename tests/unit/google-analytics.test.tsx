@@ -10,10 +10,13 @@ import { render } from '@testing-library/react'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 import {
   GA_COOKIE_EXPIRES_SECONDS,
+  GA_ID_POR_DEFECTO,
   GA_SCRIPT_ID,
   claveDesactivar,
+  idEntornoInvalido,
   medicionDesactivada,
   normalizarIdMedicion,
+  resolverIdMedicion,
 } from '@/lib/google-analytics'
 
 let rutaActual = '/'
@@ -56,6 +59,41 @@ describe('normalizarIdMedicion', () => {
     expect(normalizarIdMedicion('UA-12345-1')).toBeNull()
     expect(normalizarIdMedicion('GTM-ABCD12')).toBeNull()
     expect(normalizarIdMedicion('G-')).toBeNull()
+  })
+})
+
+describe('resolverIdMedicion', () => {
+  it('la propiedad del proyecto es un ID de GA4 válido', () => {
+    expect(normalizarIdMedicion(GA_ID_POR_DEFECTO)).toBe(GA_ID_POR_DEFECTO)
+  })
+
+  it('en producción, sin variable, mide con la propiedad del proyecto', () => {
+    expect(resolverIdMedicion(undefined, true)).toBe(GA_ID_POR_DEFECTO)
+    expect(resolverIdMedicion('', true)).toBe(GA_ID_POR_DEFECTO)
+  })
+
+  it('en desarrollo y tests, sin variable, no mide (no ensucia las estadísticas reales)', () => {
+    expect(resolverIdMedicion(undefined, false)).toBeNull()
+    expect(resolverIdMedicion('', false)).toBeNull()
+  })
+
+  it('la variable manda si trae un ID válido, en cualquier entorno', () => {
+    expect(resolverIdMedicion('G-OTRA1234', true)).toBe('G-OTRA1234')
+    expect(resolverIdMedicion(' g-otra1234 ', false)).toBe('G-OTRA1234')
+  })
+
+  it('"off" apaga la medición también en producción', () => {
+    expect(resolverIdMedicion('off', true)).toBeNull()
+    expect(resolverIdMedicion('OFF', true)).toBeNull()
+    expect(idEntornoInvalido('off')).toBe(false)
+  })
+
+  it('un valor mal escrito (p. ej. el contenedor de Tag Manager) se ignora', () => {
+    expect(resolverIdMedicion('GTM-K642HXJ3', true)).toBe(GA_ID_POR_DEFECTO)
+    expect(resolverIdMedicion('GTM-K642HXJ3', false)).toBeNull()
+    expect(idEntornoInvalido('GTM-K642HXJ3')).toBe(true)
+    expect(idEntornoInvalido('')).toBe(false)
+    expect(idEntornoInvalido('G-OTRA1234')).toBe(false)
   })
 })
 

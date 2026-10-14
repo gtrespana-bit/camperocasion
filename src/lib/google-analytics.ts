@@ -1,10 +1,12 @@
 /**
  * Google Analytics 4 (gtag.js) — configuración compartida.
  *
- * El ID de medición (`G-XXXXXXXXXX`) sale de `NEXT_PUBLIC_GA_MEASUREMENT_ID`
- * (Vercel → Project → Settings → Environment Variables). Es `NEXT_PUBLIC_`
- * porque se incrusta en el bundle en build time: cambiarlo obliga a redeployar.
- * Sin la variable, GA no se carga y la web funciona exactamente igual.
+ * El ID de medición (`G-XXXXXXXXXX`) es el de la propiedad GA4 del proyecto
+ * (`GA_ID_POR_DEFECTO`), que se usa en producción sin configurar nada.
+ * `NEXT_PUBLIC_GA_MEASUREMENT_ID` (Vercel → Project → Settings → Environment
+ * Variables) permite sustituirlo por otra propiedad o apagar la medición con
+ * `off`. Es `NEXT_PUBLIC_` porque se incrusta en el bundle en build time:
+ * cambiarlo obliga a redeployar.
  *
  * Reglas, las mismas que cumplen Vercel Analytics y la medición propia:
  *  - Solo se carga con «Aceptar» en el aviso de cookies (lo decide
@@ -13,6 +15,13 @@
  *    cookies promete que no hay cookies publicitarias ni de perfilado.
  *  - El panel /admin no se mide.
  */
+
+/**
+ * Propiedad GA4 de CamperOcasión (camperocasion.online). No es un secreto —el
+ * ID de medición va en el HTML de cualquier web con Analytics—, por eso vive
+ * aquí: la web mide sin tener que tocar Vercel.
+ */
+export const GA_ID_POR_DEFECTO = 'G-14MFBYME0R'
 
 /** Formato de los ID de medición de GA4. Los `UA-…` (Universal Analytics) ya
  *  no existen y los `GTM-…` son de Tag Manager, otro script distinto. */
@@ -34,8 +43,34 @@ export function normalizarIdMedicion(valor: string | undefined | null): string |
   return PATRON_ID.test(id) ? id : null
 }
 
-/** ID de medición configurado en el entorno (null si no hay o no es válido). */
-export const GA_MEASUREMENT_ID = normalizarIdMedicion(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
+/** `true` si la variable está definida pero no es ni un ID válido ni `off`. */
+export function idEntornoInvalido(valorEntorno: string | undefined | null): boolean {
+  const valor = (valorEntorno || '').trim()
+  return valor !== '' && valor.toLowerCase() !== 'off' && normalizarIdMedicion(valor) === null
+}
+
+/**
+ * Decide qué propiedad se mide:
+ *  - `NEXT_PUBLIC_GA_MEASUREMENT_ID=off` → nada.
+ *  - Un `G-…` válido en la variable → esa propiedad.
+ *  - Sin variable (o mal escrita) → en producción la propiedad del proyecto;
+ *    en desarrollo (`npm run dev`) y en tests nada, para no mezclar pruebas
+ *    locales con las estadísticas reales.
+ */
+export function resolverIdMedicion(
+  valorEntorno: string | undefined | null,
+  produccion: boolean,
+): string | null {
+  const valor = (valorEntorno || '').trim()
+  if (valor.toLowerCase() === 'off') return null
+  return normalizarIdMedicion(valor) ?? (produccion ? GA_ID_POR_DEFECTO : null)
+}
+
+/** ID de medición activo en esta build (null = no se carga GA). */
+export const GA_MEASUREMENT_ID = resolverIdMedicion(
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+  process.env.NODE_ENV === 'production',
+)
 
 type Gtag = (...args: unknown[]) => void
 

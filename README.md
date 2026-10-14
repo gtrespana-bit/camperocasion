@@ -189,11 +189,14 @@ de cookies (igual que Vercel Analytics). Migración:
 
 ### Google Analytics 4
 
-Opcional: con `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX` (Vercel → Settings →
+La propiedad GA4 del proyecto (`G-14MFBYME0R`, `GA_ID_POR_DEFECTO` en
+`src/lib/google-analytics.ts`) se mide en producción sin configurar nada; en
+`npm run dev` no se mide. `NEXT_PUBLIC_GA_MEASUREMENT_ID` (Vercel → Settings →
 Environment Variables; es `NEXT_PUBLIC_`, así que hay que **redeployar** tras
-ponerla) se carga gtag.js desde `src/components/GoogleAnalytics.tsx` con las
-mismas reglas que el resto de la medición: solo tras «Aceptar» en el aviso de
-cookies, después de `load` + idle, nunca en `/admin`, sin Google Signals ni
+cambiarla) sirve para medir con otra propiedad (`G-XXXXXXXXXX`) o apagar GA con
+`off`. gtag.js lo carga `src/components/GoogleAnalytics.tsx` con las mismas
+reglas que el resto de la medición: solo tras «Aceptar» en el aviso de cookies,
+después de `load` + idle, nunca en `/admin`, sin Google Signals ni
 personalización de anuncios y con cookies de 13 meses. Las páginas vistas de la
 navegación SPA las registra la *medición mejorada* de GA4 (activada por defecto
 en la propiedad: *Administrar → Flujos de datos → Medición mejorada → Cambios de
