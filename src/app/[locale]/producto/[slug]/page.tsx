@@ -313,7 +313,7 @@ async function getFavoritosCount(productoId: string) {
  * y llevan producto_id). Con ≥1 reseña se expone AggregateRating en el schema:
  * Google dibuja las estrellas en el resultado → CTR.
  */
-export const getResumenResenas = cache(
+const getResumenResenas = cache(
   async (productoId: string): Promise<{ count: number; avg: number }> => {
     if (!supabase) return { count: 0, avg: 0 }
     try {
