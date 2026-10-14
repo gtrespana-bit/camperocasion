@@ -147,15 +147,18 @@ const nextConfig = withNextIntl({
       },
       {
         // CSP progresiva compatible con Supabase, R2, Vercel, Sentry, fonts, imágenes
+        // y Google Analytics 4 (gtag.js se sirve desde googletagmanager.com y
+        // envía a google-analytics.com / analytics.google.com; dominios según
+        // https://developers.google.com/tag-platform/security/guides/csp).
         key: 'Content-Security-Policy',
         value: [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://*.vercel-analytics.com https://*.vercel-scripts.com https://va.vercel-scripts.com",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://*.vercel-analytics.com https://*.vercel-scripts.com https://va.vercel-scripts.com https://*.googletagmanager.com",
           "style-src 'self' 'unsafe-inline'",
           "font-src 'self' data:",
           "img-src 'self' data: blob: https: ",
           "media-src 'self' blob: https://*.supabase.co https://*.r2.dev https://*.r2.cloudflarestorage.com",
-          "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.r2.dev https://pub-d212837165c545e3956251da001fa37a.r2.dev https://*.r2.cloudflarestorage.com https://vercel.live https://*.vercel-analytics.com https://*.vercel-scripts.com https://va.vercel-scripts.com https://*.sentry.io https://*.ingest.sentry.io https://api.telegram.org",
+          "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.r2.dev https://pub-d212837165c545e3956251da001fa37a.r2.dev https://*.r2.cloudflarestorage.com https://vercel.live https://*.vercel-analytics.com https://*.vercel-scripts.com https://va.vercel-scripts.com https://*.sentry.io https://*.ingest.sentry.io https://api.telegram.org https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
           "frame-src 'self'",
           "frame-ancestors 'none'",
           "base-uri 'self'",

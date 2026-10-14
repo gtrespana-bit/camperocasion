@@ -7,6 +7,7 @@ import {
   leerConsentimiento,
   type Consentimiento,
 } from '@/lib/cookie-consent'
+import { GA_MEASUREMENT_ID } from '@/lib/google-analytics'
 
 const Analytics = dynamic(
   () => import('@vercel/analytics/react').then((m) => m.Analytics),
@@ -23,6 +24,9 @@ const ServiceWorkerRegistration = dynamic(
 // Medición propia de audiencia: es la que alimenta la pestaña «Audiencia» del
 // panel. Solo se monta con consentimiento, igual que Vercel Analytics.
 const AnaliticaVisitas = dynamic(() => import('@/components/AnaliticaVisitas'), { ssr: false })
+// Google Analytics 4: mismas reglas (consentimiento + idle). Si no hay
+// NEXT_PUBLIC_GA_MEASUREMENT_ID el chunk ni siquiera se descarga.
+const GoogleAnalytics = dynamic(() => import('@/components/GoogleAnalytics'), { ssr: false })
 const WebVitalsReporter = dynamic(() => import('@/components/WebVitalsReporter'), { ssr: false })
 
 function onIdleAfterLoad(callback: () => void) {
@@ -61,11 +65,11 @@ function onIdleAfterLoad(callback: () => void) {
  * Se activan después de load + idle para que analytics, Speed Insights y el
  * Service Worker no compitan con Lighthouse ni con el usuario en el arranque.
  *
- * La medición (Analytics y Speed Insights) solo se carga si el usuario ha
- * aceptado en el banner de cookies: antes se cargaba siempre, así que quien
- * pulsaba «Rechazar» seguía siendo medido. El Service Worker no depende del
- * consentimiento —es lo que da el modo offline y las notificaciones push— así
- * que se registra igual.
+ * La medición (Vercel Analytics, Speed Insights, medición propia y Google
+ * Analytics) solo se carga si el usuario ha aceptado en el banner de cookies:
+ * antes se cargaba siempre, así que quien pulsaba «Rechazar» seguía siendo
+ * medido. El Service Worker no depende del consentimiento —es lo que da el modo
+ * offline y las notificaciones push— así que se registra igual.
  */
 export default function RootClientEffects() {
   const [enabled, setEnabled] = useState(false)
@@ -93,6 +97,7 @@ export default function RootClientEffects() {
           <Analytics />
           <SpeedInsights />
           <AnaliticaVisitas />
+          {GA_MEASUREMENT_ID && <GoogleAnalytics />}
         </>
       )}
       <WebVitalsReporter />
