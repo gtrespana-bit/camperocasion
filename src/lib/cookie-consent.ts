@@ -52,16 +52,30 @@ export function guardarConsentimiento(valor: Consentimiento): void {
 }
 
 /**
- * Llama a `callback` cada vez que el usuario cambia su elección.
+ * Llama a `callback` cada vez que el usuario cambia su elección, también al
+ * reabrir el aviso (null = permiso retirado) o al cambiarla en otra pestaña.
  * Devuelve la función para dejar de escuchar.
  */
 export function alCambiarConsentimiento(
-  callback: (valor: Consentimiento) => void,
+  callback: (valor: Consentimiento | null) => void,
 ): () => void {
   if (typeof window === 'undefined') return () => {}
-  const handler = (evento: Event) => callback((evento as CustomEvent).detail as Consentimiento)
+  const handler = (evento: Event) => {
+    const valor = (evento as CustomEvent).detail
+    callback(valor === 'accepted' || valor === 'rejected' ? valor : null)
+  }
+  const reabrir = () => callback(null)
+  const sincronizar = (evento: StorageEvent) => {
+    if (evento.key === CONSENT_KEY || evento.key === null) callback(leerConsentimiento())
+  }
   window.addEventListener(CONSENT_EVENT, handler)
-  return () => window.removeEventListener(CONSENT_EVENT, handler)
+  window.addEventListener(CONSENT_REOPEN_EVENT, reabrir)
+  window.addEventListener('storage', sincronizar)
+  return () => {
+    window.removeEventListener(CONSENT_EVENT, handler)
+    window.removeEventListener(CONSENT_REOPEN_EVENT, reabrir)
+    window.removeEventListener('storage', sincronizar)
+  }
 }
 
 /**

@@ -7,6 +7,8 @@ import './globals.css'
 import dynamic from 'next/dynamic'
 const AuthProvider = dynamic(() => import('@/components/AuthProvider').then(m => ({ default: m.AuthProvider })))
 import RootClientEffects from '@/components/RootClientEffects'
+import GoogleAnalyticsScript from '@/components/GoogleAnalyticsScript'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 // Fuente Inter autohospedada (woff2 locales) en lugar de next/font/google.
 const inter = localFont({
@@ -130,6 +132,7 @@ export default async function RootLayout({
   return (
     <html lang="es" className={inter.variable} suppressHydrationWarning>
       <head>
+        <GoogleAnalyticsScript />
         <link rel="preconnect" href={SUPABASE_ORIGIN} />
         <link rel="dns-prefetch" href={SUPABASE_ORIGIN} />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -187,6 +190,7 @@ export default async function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <GoogleAnalytics />
         <RootClientEffects />
       </body>
     </html>

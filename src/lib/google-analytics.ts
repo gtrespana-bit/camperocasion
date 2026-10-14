@@ -8,9 +8,10 @@
  * `off`. Es `NEXT_PUBLIC_` porque se incrusta en el bundle en build time:
  * cambiarlo obliga a redeployar.
  *
- * Reglas, las mismas que cumplen Vercel Analytics y la medición propia:
- *  - Solo se carga con «Aceptar» en el aviso de cookies (lo decide
- *    `RootClientEffects`), nunca antes.
+ * Reglas:
+ *  - El snippet propio está en el <head> del HTML inicial. La librería remota
+ *    gtag.js solo se carga con «Aceptar», sin esperar a load/idle ni a React.
+ *  - Consent Mode básico: sin permiso no hay cookies ni pings de Google.
  *  - Sin Google Signals ni personalización de anuncios: la política de
  *    cookies promete que no hay cookies publicitarias ni de perfilado.
  *  - El panel /admin no se mide.
@@ -27,8 +28,14 @@ export const GA_ID_POR_DEFECTO = 'G-14MFBYME0R'
  *  no existen y los `GTM-…` son de Tag Manager, otro script distinto. */
 const PATRON_ID = /^G-[A-Z0-9]{4,}$/
 
+/** Id del snippet propio, visible en el HTML inicial. */
+export const GA_BOOTSTRAP_ID = 'ga4-bootstrap'
+
 /** Id del <script> de gtag.js: sirve de guarda para no cargarlo dos veces. */
 export const GA_SCRIPT_ID = 'ga4-gtag'
+
+/** El puente React avisa al snippet de los cambios de ruta de Next.js. */
+export const GA_NAVIGATION_EVENT = 'camperocasion:ga-navigation'
 
 /**
  * Caducidad de las cookies `_ga` / `_ga_*`: 13 meses, en lugar de los 2 años
@@ -90,30 +97,7 @@ export function claveDesactivar(id: string): string {
   return `ga-disable-${id}`
 }
 
-export function desactivarMedicion(id: string, desactivar: boolean): void {
-  if (typeof window === 'undefined') return
-  ;(window as unknown as Record<string, unknown>)[claveDesactivar(id)] = desactivar
-}
-
 export function medicionDesactivada(id: string): boolean {
   if (typeof window === 'undefined') return true
   return (window as unknown as Record<string, unknown>)[claveDesactivar(id)] === true
-}
-
-/**
- * Equivalente al `gtag()` del snippet oficial. Crea `dataLayer` y
- * `window.gtag` si aún no existen, así que puede llamarse antes de que
- * gtag.js haya terminado de descargarse: la librería procesa la cola al llegar.
- */
-export function gtag(...args: unknown[]): void {
-  if (typeof window === 'undefined') return
-  if (!window.gtag) {
-    window.dataLayer = window.dataLayer || []
-    window.gtag = function () {
-      // gtag.js reconoce las órdenes de la cola porque son objetos `arguments`,
-      // no arrays: hay que empujar `arguments` tal cual, como el snippet oficial.
-      window.dataLayer!.push(arguments)
-    }
-  }
-  window.gtag(...args)
 }
