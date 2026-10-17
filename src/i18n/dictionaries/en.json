@@ -164,6 +164,13 @@
       },
       "cta": "Sell for free",
       "buyCta": "Buy from {tipo}"
+    },
+    "guides": {
+      "title": "Camper guides and tips",
+      "subtitle": "Budgets, homologation, safe buying and market prices: everything you need before buying or selling a camper.",
+      "viewAll": "See all guides",
+      "readMore": "Read guide",
+      "minRead": "min read"
     }
   },
   "notFound": {

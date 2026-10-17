@@ -52,8 +52,8 @@ function getPosts(): Post[] {
 }
 
 export const metadata: Metadata = {
-  title: 'Blog de Compra y Venta en España',
-  description: 'Guías, precios del mercado español y consejos para comprar y vender sin estafas. Todo sobre emprendimiento y comercio electrónico en España.',
+  title: 'Blog de CamperOcasión — Guías para comprar camper y autocaravana',
+  description: 'Guías de compra de furgonetas camper y autocaravanas de ocasión: presupuestos de camperización, homologación de vehículo vivienda, cómo elegir entre gran volumen, mediana, perfilada, capuchina o integral, y precios del mercado español.',
   alternates: {
     canonical: 'https://camperocasion.online/blog',
     languages: {
@@ -65,8 +65,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'Blog de Compra y Venta en España',
-    description: 'Guías del mercado español, consejos para emprendedores y mucho más.',
+    title: 'Blog de CamperOcasión — Guías para comprar camper y autocaravana',
+    description: 'Guías de compra de furgonetas camper y autocaravanas de ocasión: presupuestos, homologación y cómo elegir tu camper.',
     url: 'https://camperocasion.online/blog',
     siteName: 'CamperOcasión',
     type: 'website',

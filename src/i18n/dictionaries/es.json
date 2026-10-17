@@ -164,6 +164,13 @@
       },
       "cta": "Vender gratis",
       "buyCta": "Comprar a {tipo}"
+    },
+    "guides": {
+      "title": "Guías y consejos de camper",
+      "subtitle": "Presupuestos, homologación, compra segura y precios del mercado: todo lo que necesitas antes de comprar o vender tu camper.",
+      "viewAll": "Ver todas las guías",
+      "readMore": "Leer guía",
+      "minRead": "min de lectura"
     }
   },
   "notFound": {

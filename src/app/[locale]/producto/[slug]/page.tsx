@@ -12,6 +12,8 @@ import LocalLink from '@/components/LocalLink'
 import { isUuid } from '@/lib/product-url'
 import { getCiudadByMunicipioYEstado } from '@/lib/ubicaciones-seo'
 import { formatPrecio } from '@/lib/precio'
+import { modeloPorValor, slugModelo } from '@/lib/marcas'
+import { TIPOS_ITP } from '@/lib/itp'
 
 // IMPORTANTE — Ruta DINÁMICA a propósito: ver el comentario en
 // src/app/[locale]/[ciudad]/page.tsx. Con generateStaticParams + revalidate
@@ -347,7 +349,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const canonicalSlug = producto.slug || slug
   const esDemo = await getEsDemo(producto.id)
 
+  // Año y kilometraje del JSONB (claves canónicas o históricas):
+  // enriquecen el título para CTR en SERP. El usuario busca
+  // "Ducato camper 2019 95.000 km", no solo "Ducato camper".
+  const specs = (producto.especificaciones || {}) as Record<string, unknown>
+  const anioTexto = String(
+    specs['Año de matriculación'] || specs['Año'] || specs['Ano de matriculación'] || '',
+  ).trim()
+  const kmTexto = String(
+    specs['Kilómetros'] || specs['Kilometraje (km)'] || specs['Kilometraje'] || '',
+  ).trim()
+  const anioKm = [anioTexto, kmTexto ? `${kmTexto} km` : ''].filter(Boolean).join(' · ')
+
   const parts = [producto.titulo]
+  if (anioKm) {
+    parts.push(anioKm)
+  }
   if (producto.precio_usd) {
     parts.push(formatPrecio(producto.precio_usd))
   }
@@ -582,6 +599,72 @@ export default async function ProductoPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      {/* ── Enlazado interno contextual ──
+          Google descubre jerarquía y topicalidad con enlaces en el
+          cuerpo de la ficha: landing de la provincia, página del
+          modelo, calculadora de ITP de la comunidad y checklist. */}
+      <section className="max-w-7xl mx-auto px-4 py-8 border-t border-gray-100 mt-8">
+        <h2 className="text-lg font-black text-gray-900 mb-3">
+          Explora más sobre este vehículo
+        </h2>
+        <ul className="space-y-2 text-sm">
+          {ciudadSEO && (
+            <li>
+              <LocalLink
+                href={`/${ciudadSEO.slug}`}
+                className="text-brand-primary font-semibold hover:underline"
+              >
+                Ver más furgonetas camper y autocaravanas de ocasión en {ciudadSEO.nombre}
+              </LocalLink>
+            </li>
+          )}
+          {(() => {
+            const modelo = producto.marca ? modeloPorValor(producto.marca) : undefined
+            if (!modelo) return null
+            return (
+              <li>
+                <LocalLink
+                  href={`/modelo/${slugModelo(modelo)}`}
+                  className="text-brand-primary font-semibold hover:underline"
+                >
+                  Precios y anuncios de {modelo.fabricante} {modelo.modelo || modelo.valor} en toda España
+                </LocalLink>
+              </li>
+            )
+          })()}
+          {(() => {
+            const ccaa = TIPOS_ITP.find(c => c.nombre === producto.ubicacion_estado)
+            if (!ccaa) return null
+            return (
+              <li>
+                <LocalLink
+                  href={`/calcular-itp/${ccaa.slug}`}
+                  className="text-brand-primary font-semibold hover:underline"
+                >
+                  Calcula el impuesto de transmisiones (ITP) al comprar en {ccaa.nombre}
+                </LocalLink>
+              </li>
+            )
+          })()}
+          <li>
+            <LocalLink
+              href="/compra-segura-camper"
+              className="text-brand-primary font-semibold hover:underline"
+            >
+              Checklist de compra segura de camper: qué revisar antes de pagar
+            </LocalLink>
+          </li>
+          <li>
+            <LocalLink
+              href="/contrato-compraventa"
+              className="text-brand-primary font-semibold hover:underline"
+            >
+              Contrato de compraventa de camper descargable
+            </LocalLink>
+          </li>
+        </ul>
+      </section>
     </>
   )
 }
