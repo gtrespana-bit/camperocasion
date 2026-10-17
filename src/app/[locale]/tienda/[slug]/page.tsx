@@ -6,6 +6,10 @@ import { supabase } from '@/lib/supabase-server-client'
 import { COLUMNAS_PRECIO } from '@/lib/precio'
 import { slugValido } from '@/lib/tiendas'
 import { productAbsoluteUrl } from '@/lib/product-url'
+import {
+  getCiudadByMunicipio,
+  getCiudadByMunicipioYEstado,
+} from '@/lib/ubicaciones-seo'
 import TiendaClient from './TiendaClient'
 
 /**
@@ -118,6 +122,44 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+/**
+ * Coordenadas GeoCoordinates + hasMap para el AutoDealer.
+ *
+ * No hay columnas lat/lng en `perfiles` todavía: resolvemos la
+ * capital provincial del perfil (dato público, ver
+ * src/lib/ubicaciones.ts). Orden de resolución:
+ *   1. ciudad + comunidad exacta (la ciudad ES capital de provincia)
+ *   2. coincidencia por nombre de ciudad
+ * Si nada cuadra, NO emitimos geo: una coordenada de otra
+ * provincia es peor que nada (Google puede ignorar o penalizar
+ * datos de localización falsos). Cuando `perfiles` gane lat/lng
+ * propios (geocodificación a futuro), usarlos aquí primero.
+ */
+function geoTienda(perfil: any): {
+  geo: { '@type': string; latitude: number; longitude: number }
+  hasMap: string
+} | Record<string, never> {
+  const ciudad = (perfil.ciudad || '').toString().trim()
+  const estado = (perfil.estado || '').toString().trim()
+
+  const candidata =
+    (ciudad && estado
+      ? getCiudadByMunicipioYEstado(ciudad, estado)
+      : undefined) ||
+    (ciudad ? getCiudadByMunicipio(ciudad) : undefined)
+
+  if (!candidata) return {}
+
+  return {
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: candidata.lat,
+      longitude: candidata.lng,
+    },
+    hasMap: `https://maps.google.com/?q=${candidata.lat},${candidata.lng}`,
+  }
+}
+
 export default async function TiendaPage({ params }: Props) {
   const { locale, slug } = await params
   setRequestLocale(locale)
@@ -168,6 +210,11 @@ export default async function TiendaPage({ params }: Props) {
         containedInPlace: { '@type': 'Country', name: 'España' }
       }
     } : {}),
+    // geo (lat/lng) para Local Pack. Sin columnas de coordenadas
+    // en `perfiles` aún: resolvemos la capital provincial del
+    // perfil (dato público) — mejor aproximación que nada y
+    // Google la acepta como GeoCoordinates válida.
+    ...geoTienda(perfil),
     ...(perfil.horario ? { openingHours: perfil.horario } : {}),
     priceRange: '€€',
     ...(totalResenas > 0

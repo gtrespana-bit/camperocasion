@@ -93,6 +93,22 @@ con preload, `next/image` con avif+webp, hero con `priority`,
   publicar/editar (antes solo home + catálogo). Sin esto, un
   anuncio nuevo tardaba hasta 10 min en verse en su landing.
 
+## Tanda 4 — `geo` en dealers (Local Pack)
+
+- **Coordenadas de las 52 capitales provinciales** en
+  `src/lib/ubicaciones.ts` (`lat`/`lng` en `Municipio`,
+  dato público WGS84) y propagadas a `CiudadSEO`.
+- **`/[ciudad]`**: el `AdministrativeArea` JSON-LD ahora lleva
+  `geo: GeoCoordinates` (señal de zona para búsquedas locales).
+- **`/tienda/[slug]`**: `AutoDealer` gana `geo` + `hasMap`
+  (enlace a Google Maps con las coordenadas). Resolución:
+  ciudad+comunidad exacta → coincidencia por nombre → **nada**
+  (no se inventan coordenadas de otra provincia). Cuando
+  `perfiles` tenga `lat`/`lng` propios, usarlos primero.
+- Migración futura (manual): columnas `lat`/`lng` en
+  `perfiles` + geocodificación de `direccion` para precisión
+  de calle en el Local Pack.
+
 --
 
 ## Verificación

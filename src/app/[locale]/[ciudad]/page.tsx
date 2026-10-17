@@ -155,6 +155,13 @@ export default async function CiudadPage({ params }: Props) {
     },
     description: ciudadSEO.descripcion,
     url: cityUrl,
+    // Coordenadas de la capital provincial: señalan la zona a
+    // Google para búsquedas locales ("camper cerca de mí").
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: ciudadSEO.lat,
+      longitude: ciudadSEO.lng,
+    },
   }
 
   const breadcrumbJsonLd = {

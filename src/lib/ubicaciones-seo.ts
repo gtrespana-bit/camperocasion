@@ -18,6 +18,9 @@ export interface CiudadSEO {
   descripcion: string
   keywords: string[]
   titulo: string
+  /** Coordenadas de la capital provincial (LocalBusiness / geo). */
+  lat: number
+  lng: number
 }
 
 function slugify(texto: string): string {
@@ -35,7 +38,7 @@ const ciudades: CiudadSEO[] = []
 
 // Recorre la tabla completa (17 CC.AA. + Ceuta + Melilla).
 Object.entries(MUNICIPIOS_POR_ESTADO).forEach(([comunidad, provincias]) => {
-  provincias.forEach(({ nombre }) => {
+  provincias.forEach(({ nombre, lat, lng }) => {
     const provinciaMin = nombre.toLowerCase()
     const comunidadMin = comunidad.toLowerCase()
     ciudades.push({
@@ -43,6 +46,8 @@ Object.entries(MUNICIPIOS_POR_ESTADO).forEach(([comunidad, provincias]) => {
       nombre,
       municipio: nombre,
       estado: comunidad,
+      lat,
+      lng,
       // Sin marca: el template del layout raíz (%s | CamperOcasión) la agrega
       // una sola vez.
       titulo: `Furgonetas camper segunda mano ${nombre} — Autocaravanas de ocasión`,
