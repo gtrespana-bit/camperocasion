@@ -53,6 +53,26 @@ mitad del ranking: **contenido, topicalidad y enlazado interno**.
 
 --
 
+## Segunda tanda (2026-10-16, mismo día)
+
+- **`/modelo/[slug]`**: FAQ dinámica visible + `FAQPage` schema (precio
+  mediano/rango solo si hay muestra ≥ 3; nº de anuncios; qué revisar;
+  permiso de conducción según MMA).
+- **Blog**: 4 guías largas más →
+  `homologar-vehiculo-vivienda-2026.md` (pasos, costes y errores de la
+  homologación 2448/3148), `itp-autocaravana-camper-comunidad.md`
+  (cálculo por CC.AA., tipos incrementados, base liquidable),
+  `mejores-campers-familiares-2026.md` (gran volumen y perfiladas
+  familiares) y `vivir-en-camper-espana.md` (legalidad del vanlife:
+  pernocta, ITV de vehículo vivienda, seguro, residencia fiscal).
+  Todas con tablas, H2/H3 y enlaces internos a landings, modelos,
+  calculadora ITP y checklist. Total: **11 posts**.
+- **`/marcas`**: sección guía "Cómo elegir la marca de tu camper",
+  FAQ visible (6 Q&A) + `FAQPage` schema en el `@graph`, y
+  `alternates.languages` (hreflang) que faltaba en su metadata.
+
+--
+
 ## Verificación
 
 - `tsc --noEmit` → **0 errores**.
