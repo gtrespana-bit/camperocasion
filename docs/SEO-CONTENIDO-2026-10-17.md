@@ -71,6 +71,28 @@ mitad del ranking: **contenido, topicalidad y enlazado interno**.
   FAQ visible (6 Q&A) + `FAQPage` schema en el `@graph`, y
   `alternates.languages` (hreflang) que faltaba en su metadata.
 
+## Tanda 3 — Rendimiento / CWV (2026-10-16)
+
+Diagnóstico: la base ya era buena (fuentes Inter autohospedadas woff2
+con preload, `next/image` con avif+webp, hero con `priority`,
+`compress: true`). Los problemos reales:
+
+- **Assets muertos pesados**: `public/og-image.png` (1,1 MB) y
+  `public/placeholder-product.png` (533 KB) sin ninguna referencia
+  en código ni SQL → eliminados. (Los `.ttf` de Inter NO: los usa
+  el generador de OG dinámico `api/og/catalog`.)
+- **TTFB en landings**: `/[ciudad]` y `/[ciudad]/[categoria]`
+  renderizaban dinámico **sin caché** en cada request. Ahora llevan
+  `export const revalidate = 600` (ISR on-demand, misma pattern
+  que `/producto/[slug]`): TTFB de estática para rastreadores y
+  visitas repetidas, sin el riesgo del SSG que causaba el
+  `DYNAMIC_SERVER_USAGE`.
+- **Freshness de landings**: `revalidarListadosPublicos()` ahora
+  acepta `{ubicacionCiudad, ubicacionEstado, subcategoria}` e
+  invalida también `/[ciudad]` e `/[ciudad]/[categoria]` al
+  publicar/editar (antes solo home + catálogo). Sin esto, un
+  anuncio nuevo tardaba hasta 10 min en verse en su landing.
+
 --
 
 ## Verificación
