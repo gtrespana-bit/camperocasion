@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { setRequestLocale } from 'next-intl/server'
 import { supabase } from '@/lib/supabase-server-client'
-import { COLUMNAS_PRECIO, getPrecioEur } from '@/lib/precio'
+import { COLUMNAS_PRECIO, formatPrecio, getPrecioEur } from '@/lib/precio'
 import {
   MARCAS_MODELOS,
   etiquetaModelo,
@@ -17,6 +17,8 @@ import {
 } from '@/lib/precios-mercado'
 import ModeloClient from './ModeloClient'
 import { productAbsoluteUrl } from '@/lib/product-url'
+import LocalLink from '@/components/LocalLink'
+import { ArrowRight } from 'lucide-react'
 
 /**
  * Página de modelo: «Fiat Ducato camper de ocasión: precios reales».
@@ -140,6 +142,43 @@ export default async function ModeloPage({ params }: Props) {
 
   const pageUrl = SITIO + '/modelo/' + slug
 
+  // FAQ dinámica: las dos primeras respuestas se construyen con las
+  // estadísticas REALES del inventario (nunca se publica una cifra
+  // sin muestra suficiente — ver la regla del comentario arriba).
+  const nombre = modelo.valor
+  const faqs: { pregunta: string; respuesta: string }[] = []
+  if (est && est.muestra >= 3 && est.mediana) {
+    faqs.push({
+      pregunta: `¿Cuánto cuesta un ${nombre} camper de segunda mano?`,
+      respuesta: `Según los ${est.muestra} anuncios activos de CamperOcasión, el precio de referencia de un ${nombre} camper es de ${formatPrecio(est.mediana)} de mediana, con la mitad de los anuncios entre ${formatPrecio(est.p25)} y ${formatPrecio(est.p75)}. El precio final depende del año, los kilómetros, el equipamiento de autonomía y de si la camperización está homologada como vehículo vivienda.`,
+    })
+  }
+  faqs.push({
+    pregunta: `¿Cuántos ${nombre} hay en venta ahora mismo?`,
+    respuesta: anuncios.length > 0
+      ? `Hay ${anuncios.length} anuncios activos de ${nombre} en CamperOcasión, de toda España. Puedes filtrarlos por precio, kilómetros, año y homologación verificada en el catálogo filtrado por ${nombre}.`
+      : `Ahora mismo no hay anuncios activos de ${nombre}, pero puedes publicar el tuyo gratis o filtrar el catálogo por la marca ${modelo.fabricante} para ver modelos cercanos.`,
+  })
+  faqs.push({
+    pregunta: `¿Qué debo revisar en un ${nombre} camper de segunda mano?`,
+    respuesta: `Antes de pagar: la ficha técnica (homologación 2448/3148 si promete vida a bordo), la ITV al día, el estado del chasis y la corrosión, el motor y la caja de cambios, y el equipamiento de autonomía (batería auxiliar, placa solar, calefacción, agua y fugas). Tenemos el checklist completo en nuestra guía de compra segura de camper.`,
+  })
+  faqs.push({
+    pregunta: `¿Se puede conducir un ${nombre} con el permiso B?`,
+    respuesta: `Sí, mientras la MMA (peso máximo autorizado) no supere los 3.500 kg, lo habitual en un ${nombre}. Versiones muy cargadas o con célula pueden superar ese límite y exigir B+E o C1: comprueba siempre la MMA en la ficha técnica antes de comprar.`,
+  })
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': pageUrl + '#faq',
+    mainEntity: faqs.map(f => ({
+      '@type': 'Question',
+      name: f.pregunta,
+      acceptedAnswer: { '@type': 'Answer', text: f.respuesta },
+    })),
+  }
+
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -211,6 +250,7 @@ export default async function ModeloPage({ params }: Props) {
       breadcrumbJsonLd,
       productModelJsonLd,
       ...(itemListJsonLd ? [itemListJsonLd] : []),
+      faqJsonLd,
     ],
   }
 
@@ -232,6 +272,35 @@ export default async function ModeloPage({ params }: Props) {
           slug: slugModelo(h),
         }))}
       />
+
+      {/* FAQ visible (Google la usa para "La gente también pregunta") */}
+      <section className="max-w-7xl mx-auto px-4 py-10 border-t border-gray-100">
+        <h2 className="text-xl md:text-2xl font-black text-gray-900 mb-4">
+          Preguntas frecuentes sobre el {nombre} camper
+        </h2>
+        <div className="space-y-3">
+          {faqs.map((f, i) => (
+            <details key={i} className="bg-white border border-gray-200 rounded-xl p-4 group">
+              <summary className="font-bold text-gray-900 cursor-pointer list-none flex justify-between items-center gap-4">
+                {f.pregunta}
+                <ArrowRight size={16} className="text-brand-accent shrink-0 transition-transform group-open:rotate-90" />
+              </summary>
+              <p className="mt-3 text-sm text-gray-700 leading-relaxed">{f.respuesta}</p>
+            </details>
+          ))}
+        </div>
+        <p className="mt-6 text-sm text-gray-500">
+          ¿Quieres vender el tuyo?{' '}
+          <LocalLink href="/publicar" className="text-brand-primary font-semibold hover:underline">
+            Publica gratis tu {nombre}
+          </LocalLink>{' '}
+          o consulta el{' '}
+          <LocalLink href="/cuanto-vale-mi-camper" className="text-brand-primary font-semibold hover:underline">
+            valorador de campers
+          </LocalLink>{' '}
+          para saber cuánto vale tu vehículo.
+        </p>
+      </section>
     </>
   )
 }
