@@ -11,6 +11,8 @@ import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import { resumenFabricantes } from '@/lib/marcas'
 import { CIUDADES_SEO } from '@/lib/ubicaciones-seo'
 import { aplicarOrdenCatalogo, ordenarProductosCatalogo } from '@/lib/catalog-consulta'
+import fs from 'fs'
+import path from 'path'
 
 // ── Metadata ──────────────────────────────────────────────────────────────
 
@@ -192,6 +194,29 @@ function getProvinciasPopulares() {
     .filter((c): c is NonNullable<typeof c> => Boolean(c))
 }
 
+/** Últimas guías del blog para la sección de contenido de la home. */
+function getUltimasGuias(limit = 3) {
+  const dir = path.join(process.cwd(), 'src/content/blog')
+  if (!fs.existsSync(dir)) return []
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.md'))
+    .map((file) => {
+      const raw = fs.readFileSync(path.join(dir, file), 'utf-8')
+      const get = (key: string) => raw.match(new RegExp(`^${key}:\\s*"?(.*?)"?$`, 'm'))?.[1]?.replace(/^"|"$/g, '') || ''
+      return {
+        slug: file.replace(/\.md$/, ''),
+        title: get('title'),
+        excerpt: get('excerpt'),
+        date: get('date'),
+        readTime: get('readTime'),
+      }
+    })
+    .filter(g => g.title)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, limit)
+}
+
 function relativeTime(iso?: string | null, t?: any): string | null {
   if (!iso || !t) return null
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
@@ -295,6 +320,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   ])
 
   const provincias = getProvinciasPopulares()
+  const guias = getUltimasGuias(3)
   const subs = categoriasData.camper.subs
   const jsonLd = generateItemListSchema(recientes, 'https://camperocasion.online')
   const orgSchema = generateOrganizationSchema()
@@ -569,6 +595,29 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <SectionHeader title={t('home.autocaravanas.title')} subtitle={t('home.autocaravanas.subtitle')} href="/catalogo?subcategoria=Autocaravana%20Integral" viewAll={t('home.viewAll')} icon="🏭" />
           <SectionGrid items={autocaravanas} t={t} />
         </section>
+
+        {/* ═══════════ GUÍAS (enlazado al blog = frescor + long-tail) ═══════════ */}
+        {guias.length > 0 && (
+          <section className="pb-10">
+            <SectionHeader title={t('home.guides.title')} subtitle={t('home.guides.subtitle')} href="/blog" viewAll={t('home.guides.viewAll')} icon="📚" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {guias.map(g => (
+                <LocalLink
+                  key={g.slug}
+                  href={`/blog/${g.slug}`}
+                  className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition p-6 flex flex-col"
+                >
+                  <p className="text-xs text-gray-400 mb-2">{g.readTime}</p>
+                  <h3 className="font-black text-gray-900 text-lg group-hover:text-brand-primary transition-colors leading-snug">{g.title}</h3>
+                  <p className="text-sm text-gray-500 mt-2 line-clamp-3 flex-1">{g.excerpt}</p>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-brand-accent">
+                    {t('home.guides.readMore')} <ArrowRight size={14} />
+                  </span>
+                </LocalLink>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ═══════════ PROVINCIAS POPULARES ═══════════ */}
         <section className="pb-12">

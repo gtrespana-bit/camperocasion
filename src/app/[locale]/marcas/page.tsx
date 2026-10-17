@@ -13,6 +13,8 @@ import {
   type SubSlug,
 } from '@/lib/marcas'
 
+const SITIO = 'https://camperocasion.online'
+
 export const metadata: Metadata = {
   title: 'Marcas y modelos de campers y autocaravanas | CamperOcasión',
   description:
@@ -28,13 +30,17 @@ export const metadata: Metadata = {
     'marcas caravanas',
   ],
   alternates: {
-    canonical: 'https://camperocasion.online/marcas',
+    canonical: `${SITIO}/marcas`,
+    languages: {
+      'es-ES': `${SITIO}/marcas`,
+      'x-default': `${SITIO}/marcas`,
+    },
   },
   openGraph: {
     title: 'Marcas y modelos de campers y autocaravanas',
     description:
       'Catálogo completo de fabricantes y modelos camper organizado por marca y tipo de vehículo: gran volumen, camper mediana, minicamper, perfiladas, capuchinas, integrales y 4x4.',
-    url: 'https://camperocasion.online/marcas',
+    url: `${SITIO}/marcas`,
     siteName: 'CamperOcasión',
     locale: 'es_ES',
     type: 'website',
@@ -113,9 +119,47 @@ export default async function MarcasPage({ params }: { params: Promise<{ locale:
       url: SITIO + '/modelo/' + slugModelo(m),
     })),
   }
+  // FAQ visible + FAQPage schema: responde las dudas de marca
+  // que Google muestra en "La gente también pregunta".
+  const faqs = [
+    {
+      pregunta: '¿Qué marcas de furgonetas camper hay en España?',
+      respuesta: 'Las bases camper más habituales son Fiat Ducato, Citroën Jumper, Peugeot Boxer, Renault Master, Volkswagen Crafter, Mercedes-Benz Sprinter, Ford Transit, MAN TGE y Opel Movano (gran volumen); Volkswagen Transporter/California, Mercedes Vito y Marco Polo, Ford Transit Custom, Renault Trafic y Opel Vivaro (camper mediana); y Citroën Berlingo, Peugeot Rifter, VW Caddy y Fiat Doblò (minicamper). En autocaravanas, los carroceros habituales son Adria, Hymer, Challenger, Laika, Swift, Roller Team, Benimar, PIK y Autocamper.',
+    },
+    {
+      pregunta: '¿Qué marca de camper es más fiable?',
+      respuesta: 'No hay una marca universalmente mejor: la fiabilidad depende del motor y chasis concretos (año, kilómetros, mantenimiento), no del logotipo. Como regla general, los diésel 2.0/2.2 MultiJet (Ducato, Boxer, Jumper), EcoBlue (Transit) y OM651 (Sprinter) tienen red de talleres amplia y recambios accesibles. Antes de comprar, revisa el historial de mantenimiento y el estado de la camperización, no solo la marca.',
+    },
+    {
+      pregunta: '¿Hay marcas de autocaravanas españolas?',
+      respuesta: 'Sí: Benimar, PIK y Autocamper son carroceros españoles con larga trayectoria, y varias marcas internacionales (Adria, Hymer, Challenger, Laika, Swift, Roller Team) tienen amplia red de distribución y servicio en España. En el catálogo puedes filtrar por marca y ver los precios reales de cada modelo en su página de mercado.',
+    },
+    {
+      pregunta: '¿VW California o Ducato camperizado?',
+      respuesta: 'Son segmentos distintos: la VW California es una camper mediana de fábrica (calidad de construcción y reventa altas, precio superior, espacio limitado), mientras que un Ducato camperizado es gran volumen (más espacio, baño y cama fija a mejor precio por metro, pero más grande para ciudad). Para parejas y uso urbano, California; para familias y viajes largos, Ducato/Boxer/Jumper camperizados.',
+    },
+    {
+      pregunta: '¿Todas estas marcas se venden de segunda mano en CamperOcasión?',
+      respuesta: 'El catálogo refleja las marcas y modelos presentes en el mercado de ocasión español: si un modelo no tiene anuncios activos, no aparecerá en el listado de precios. Las páginas de modelo muestran mediana y rango P25–P75 solo cuando hay una muestra suficiente de anuncios reales; nunca publicamos cifras inventadas.',
+    },
+    {
+      pregunta: '¿Dónde veo el precio real de un modelo concreto?',
+      respuesta: 'En la página de cada modelo (/modelo/[modelo]): mostramos el precio mediano, el rango P25–P75 y el precio por tramo de antigüedad, calculados con los anuncios activos de CamperOcasión. Es la referencia más útil antes de negociar una compra o de publicar tu propia camper.',
+    },
+  ]
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': SITIO + '/marcas#faq',
+    mainEntity: faqs.map(f => ({
+      '@type': 'Question',
+      name: f.pregunta,
+      acceptedAnswer: { '@type': 'Answer', text: f.respuesta },
+    })),
+  }
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@graph': [breadcrumbJsonLd, collectionJsonLd, itemListJsonLd],
+    '@graph': [breadcrumbJsonLd, collectionJsonLd, itemListJsonLd, faqJsonLd],
   }
 
   return (
@@ -160,7 +204,18 @@ export default async function MarcasPage({ params }: { params: Promise<{ locale:
           </div>
         </div>
 
-        {/* ═══════════ SECCIONES POR TIPO, AGRUPADAS POR FAMILIA ═══════════ */}
+          {/* ═══════════ GUÍA DE MARCA ═══════════ */}
+          <section className="max-w-4xl mx-auto py-4">
+            <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-4">
+              {t('guideTitle')}
+            </h2>
+            <div className="space-y-4 text-gray-700 leading-relaxed">
+              <p>{t('guideP1')}</p>
+              <p>{t('guideP2')}</p>
+            </div>
+          </section>
+
+          {/* ═══════════ SECCIONES POR TIPO, AGRUPADAS POR FAMILIA ═══════════ */}
         <div className="max-w-7xl mx-auto px-4 py-10 space-y-14">
           {FAMILIAS.map(familia => {
             const subsFamilia = familia.subs
@@ -276,6 +331,24 @@ export default async function MarcasPage({ params }: { params: Promise<{ locale:
             </div>
             )
           })}
+
+          {/* ═══════════ FAQ ═══════════ */}
+          <section className="max-w-4xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-5">
+              {t('faqTitle')}
+            </h2>
+            <div className="space-y-3">
+              {faqs.map((f, i) => (
+                <details key={i} className="bg-white border border-gray-200 rounded-xl p-5 group">
+                  <summary className="font-bold text-gray-900 cursor-pointer list-none flex justify-between items-center gap-4">
+                    {f.pregunta}
+                    <ArrowRight size={16} className="text-brand-accent shrink-0 transition-transform group-open:rotate-90" />
+                  </summary>
+                  <p className="mt-3 text-sm text-gray-700 leading-relaxed">{f.respuesta}</p>
+                </details>
+              ))}
+            </div>
+          </section>
 
           {/* ═══════════ CTA ═══════════ */}
           <section className="bg-gradient-to-r from-brand-primary to-brand-dark rounded-3xl p-8 md:p-10 text-white text-center">

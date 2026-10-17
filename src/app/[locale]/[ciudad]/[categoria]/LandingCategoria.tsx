@@ -2,11 +2,13 @@ import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase-server-client'
 import { aplicarOrdenCatalogo } from '@/lib/catalog-consulta'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, ArrowRight } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import { productUrl } from '@/lib/product-url'
-import { SUBCATEGORIAS_SEO } from '@/lib/categorias-seo'
-import { formatPrecio } from '@/lib/precio'
+import { SUBCATEGORIAS_SEO, getSubcategoriaSEO } from '@/lib/categorias-seo'
+import { formatPrecio, formatRango } from '@/lib/precio'
+import { estadisticasCiudad } from '@/lib/seo-landings'
+import { serializeJsonLd } from '@/lib/serialize-json-ld'
 
 interface Props {
   ciudadSlug: string
@@ -42,7 +44,7 @@ async function getProductos(ciudadNombre: string, ciudadMunicipio: string | unde
     }
 
     if (ciudadMunicipio && ciudadMunicipio !== ciudadNombre) {
-      query = query.or(`ubicacion_ciudad.eq."${ciudadNombre}",ubicacion_ciudad.eq."${ciudadMunicipio}"`)
+      query = query.or(`ubicacion_ciudad.eq.\"${ciudadNombre}\",ubicacion_ciudad.eq.\"${ciudadMunicipio}\"`)
     } else {
       query = query.eq('ubicacion_ciudad', ciudadNombre)
     }
@@ -95,20 +97,71 @@ function ProductosGrid({ productos, categoriaNombre, ciudadNombre, t }: { produc
   )
 }
 
-export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciudadMunicipio, categoriaSlug, categoriaNombre }: Props) {
+export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciudadMunicipio, estado, categoriaSlug, categoriaNombre }: Props) {
   // getTranslations (API server de next-intl) en vez de useTranslations:
   // useTranslations dentro de un Server Component async bajo <Suspense>
   // lanzaba "Expected a suspended thenable" en Next 16 → 500.
   const t = await getTranslations('catLanding')
-  const productos = await getProductos(ciudadNombre, ciudadMunicipio, categoriaSlug)
+  const subLabel = CATEGORIA_MAP[categoriaSlug]
+  const [productos, stats] = await Promise.all([
+    getProductos(ciudadNombre, ciudadMunicipio, categoriaSlug),
+    // Agregados de ESTA categoría en ESTA provincia (fail-open:
+    // si la DB falla, stats.total = 0 y las secciones se omiten).
+    estadisticasCiudad(supabase, ciudadNombre, ciudadMunicipio, subLabel),
+  ])
+  const seoCat = getSubcategoriaSEO(categoriaSlug)
 
   // Categorias relacionadas para la ciudad
   const categoriasRelacionadas = Object.entries(CATEGORIA_MAP)
     .filter(([k]) => k !== categoriaSlug)
     .map(([k, v]) => ({ slug: k, nombre: CATEGORIA_NAMES[k] || k }))
 
+  // FAQ: la de la categoría (ya redactada) + 2 específicas de
+  // provincia con datos reales de precio → contenido único por URL.
+  const precioTexto =
+    stats.precioMedio !== null
+      ? `alrededor de ${formatPrecio(stats.precioMedio)} de media`
+      : null
+  const rangoTexto =
+    stats.precioMin !== null && stats.precioMax !== null
+      ? formatRango(stats.precioMin, stats.precioMax)
+      : null
+
+  const faqs = [
+    ...(seoCat?.faq || []),
+    {
+      pregunta: `¿Cuánto cuesta una ${categoriaNombre.toLowerCase()} en ${ciudadNombre}?`,
+      respuesta:
+        precioTexto && rangoTexto
+          ? `En ${ciudadNombre} (${estado}) el precio medio de una ${categoriaNombre.toLowerCase()} de ocasión es ${precioTexto}, con anuncios que van ${rangoTexto} según año, kilometraje y equipamiento. Filtra el catálogo por rango de precio para ajustar la búsqueda y calcula el ITP de tu comunidad antes de comprar.`
+          : `El precio de una ${categoriaNombre.toLowerCase()} de ocasión en ${ciudadNombre} depende del año, los kilómetros y el equipamiento. Filtra el catálogo por rango de precio para ajustar la búsqueda y calcula el ITP de tu comunidad antes de comprar.`,
+    },
+    {
+      pregunta: `¿Dónde veo todas las ${categoriaNombre.toLowerCase()} de ${ciudadNombre}?`,
+      respuesta: `Esta landing muestra las ${stats.total > 0 ? stats.total : 'principales'} ${categoriaNombre.toLowerCase()} de ocasión en ${ciudadNombre}. Para ver el listado completo con todos los filtros (precio, kilómetros, año, homologación verificada), entra al catálogo filtrado por ${ciudadNombre}.`,
+    },
+  ]
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `https://camperocasion.online/${ciudadSlug}/${categoriaSlug}#faq`,
+    mainEntity: faqs.map(f => ({
+      '@type': 'Question',
+      name: f.pregunta,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: f.respuesta,
+      },
+    })),
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqJsonLd) }}
+      />
       <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6 flex-wrap">
         <LocalLink href="/" className="hover:text-brand-primary">{t('breadcrumb')}</LocalLink>
         <ChevronRight size={14} />
@@ -133,10 +186,57 @@ export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciuda
         ))}
       </div>
 
+      {/* ── Contenido único por ciudad + categoría ── */}
+      {(stats.total > 0 || seoCat?.introduccion) && (
+        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 mb-8">
+          {stats.total > 0 && (
+            <p className="text-gray-700 leading-relaxed mb-4">
+              <strong>{stats.total} {stats.total === 1 ? 'anuncio' : 'anuncios'} de {categoriaNombre.toLowerCase()}</strong> de ocasión en {ciudadNombre} ({estado})
+              {precioTexto ? <> con un precio medio de <strong>{formatPrecio(stats.precioMedio)}</strong></> : ''}
+              {rangoTexto ? <> (rango {rangoTexto})</> : ''}.
+              {stats.porMarca.length > 0 && (
+                <> Las marcas más habituales en {ciudadNombre} para esta categoría: {stats.porMarca.slice(0, 4).map(m => m.marca).join(', ')}.</>
+              )}
+            </p>
+          )}
+          {seoCat?.introduccion?.map((parrafo, i) => (
+            <p key={i} className="text-gray-700 leading-relaxed mb-4">{parrafo}</p>
+          ))}
+        </section>
+      )}
+
       {/* Sin <Suspense>: los productos ya están cargados (await arriba) y el
           Suspense alrededor de un Server Component con thenables de next-intl
           causaba "Expected a suspended thenable" en Next 16. */}
       <ProductosGrid productos={productos} categoriaNombre={categoriaNombre} ciudadNombre={ciudadNombre} t={t} />
+
+      {/* ── FAQ (La gente también pregunta) ── */}
+      <section className="mt-12">
+        <h2 className="text-xl md:text-2xl font-black text-gray-900 mb-4">
+          Preguntas frecuentes: {categoriaNombre} en {ciudadNombre}
+        </h2>
+        <div className="space-y-3">
+          {faqs.map((f, i) => (
+            <details key={i} className="bg-white border border-gray-200 rounded-xl p-4 group">
+              <summary className="font-bold text-gray-900 cursor-pointer list-none flex justify-between items-center gap-4">
+                {f.pregunta}
+                <ArrowRight size={16} className="text-brand-accent shrink-0 transition-transform group-open:rotate-90" />
+              </summary>
+              <p className="mt-3 text-sm text-gray-700 leading-relaxed">{f.respuesta}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Enlazado interno: volver a la provincia y al catálogo ── */}
+      <section className="mt-10 flex flex-wrap gap-3">
+        <LocalLink href={`/${ciudadSlug}`} className="inline-flex items-center gap-1.5 text-sm font-bold text-brand-primary hover:underline">
+          <ArrowRight size={14} className="rotate-180" /> Todas las campers de ocasión en {ciudadNombre}
+        </LocalLink>
+        <LocalLink href={`/catalogo?subcategoria=${encodeURIComponent(subLabel || categoriaNombre)}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-brand-primary">
+          Ver todas las {categoriaNombre.toLowerCase()} de España <ArrowRight size={14} />
+        </LocalLink>
+      </section>
     </div>
   )
 }

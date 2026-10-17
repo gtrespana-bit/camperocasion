@@ -1,4 +1,6 @@
 import { revalidatePath } from 'next/cache'
+import { getCiudadByMunicipioYEstado } from './ubicaciones-seo'
+import { SUBCATEGORIAS_SEO } from './categorias-seo'
 
 /**
  * Rutas públicas que muestran anuncios y que hay que invalidar cuando un
@@ -14,6 +16,33 @@ import { revalidatePath } from 'next/cache'
 const RUTAS_CATALOGO = ['/', '/en', '/catalogo', '/en/catalogo'] as const
 
 /**
+ * Landings ISR afectadas por un anuncio: su provincia (`/{ciudad}`) y,
+ * si aplica, la combinación provincia + subcategoría (`/{ciudad}/{cat}`).
+ * Devuelve vacío si la ciudad no tiene landing SEO o la categoría no
+ * es una de las 7 con landing (fail-safe: no invalidamos nada).
+ */
+function rutasLanding(
+  ubicacionCiudad?: string | null,
+  ubicacionEstado?: string | null,
+  subcategoria?: string | null,
+): string[] {
+  if (!ubicacionCiudad) return []
+  const ciudadSEO = getCiudadByMunicipioYEstado(ubicacionCiudad, ubicacionEstado || '')
+  if (!ciudadSEO) return []
+  const rutas = [`/${ciudadSEO.slug}`, `/en/${ciudadSEO.slug}`]
+  if (subcategoria) {
+    const sub = SUBCATEGORIAS_SEO.find(s => s.categoria === subcategoria)
+    if (sub) {
+      rutas.push(
+        `/${ciudadSEO.slug}/${sub.slug}`,
+        `/en/${ciudadSEO.slug}/${sub.slug}`,
+      )
+    }
+  }
+  return rutas
+}
+
+/**
  * Invalida las superficies públicas con listados de anuncios.
  *
  * Antes cada endpoint repetía su propia lista: `/api/publicar` invalidaba solo
@@ -21,13 +50,26 @@ const RUTAS_CATALOGO = ['/', '/en', '/catalogo', '/en/catalogo'] as const
  * viejos) y `/api/productos/editar` las cuatro. Centralizarlo evita que la
  * próxima ruta que toque anuncios se olvide de alguna.
  *
+ * Con `ops` (ciudad/estado/subcategoría del anuncio) se invalidan también las
+ * landings `/[ciudad]` e `/[ciudad]/[categoria]`, que desde la tanda de SEO
+ * cachean su render 10 min (ISR on-demand): sin esto, un anuncio nuevo tardaría
+ * hasta 10 min en aparecer en su landing provincial.
+ *
  * La home y el catálogo además declaran `revalidate = 600`, de modo que aunque
  * esta invalidación no llegara a ejecutarse (por ejemplo si el proceso muere
  * después de escribir en la base de datos) ninguna superficie queda congelada
  * más de 10 minutos.
  */
-export function revalidarListadosPublicos(): void {
-  for (const ruta of RUTAS_CATALOGO) {
+export function revalidarListadosPublicos(ops?: {
+  ubicacionCiudad?: string | null
+  ubicacionEstado?: string | null
+  subcategoria?: string | null
+}): void {
+  const rutas = [
+    ...RUTAS_CATALOGO,
+    ...rutasLanding(ops?.ubicacionCiudad, ops?.ubicacionEstado, ops?.subcategoria),
+  ]
+  for (const ruta of rutas) {
     try {
       revalidatePath(ruta)
     } catch {

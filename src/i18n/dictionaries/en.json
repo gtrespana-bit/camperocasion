@@ -164,6 +164,13 @@
       },
       "cta": "Sell for free",
       "buyCta": "Buy from {tipo}"
+    },
+    "guides": {
+      "title": "Camper guides and tips",
+      "subtitle": "Budgets, homologation, safe buying and market prices: everything you need before buying or selling a camper.",
+      "viewAll": "See all guides",
+      "readMore": "Read guide",
+      "minRead": "min read"
     }
   },
   "notFound": {
@@ -316,7 +323,11 @@
       "capuchina": "Overcab motorhomes with a fixed bed above the cabin: the family classic with the most sleeping berths.",
       "integral": "Integrated motorhomes from the great European manufacturers: own bodywork and cab, maximum comfort on wheels.",
       "overland": "Pickups and 4x4s with slide-in cells or overland builds for off-grid adventure and total self-sufficiency."
-    }
+    },
+    "guideTitle": "How to choose your camper brand",
+    "guideP1": "There is no universally «best» brand: the choice depends on the base vehicle (Fiat Ducato, Mercedes Sprinter, Ford Transit, Volkswagen…), the coachbuilder (Benimar, Adria, Hymer, Challenger, Laika, Swift…) and how you will use it. CamperOcasión organises models by manufacturer and shows real market prices — median and P25–P75 range from our own inventory — so you compare with data, not feelings.",
+    "guideP2": "Quick rule: for camperising, the base determines parts, workshop network and fuel use; for motorhomes, the coachbuilder determines build quality and insulation. Click «View market prices» on any model to see its real-price page, and always filter by verified homologation before buying.",
+    "faqTitle": "Camper brands FAQ"
   },
   "catalog": {
     "title": "Catalog",

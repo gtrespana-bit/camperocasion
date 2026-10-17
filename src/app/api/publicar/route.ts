@@ -188,8 +188,14 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // El anuncio aparece ya en portada, catálogo y buscador (es/en).
-    revalidarListadosPublicos()
+    // El anuncio aparece ya en portada, catálogo, buscador (es/en)
+    // y, si procede, en las landings ISR de su provincia y
+    // provincia+subcategoría.
+    revalidarListadosPublicos({
+      ubicacionCiudad: data.ubicacion_ciudad,
+      ubicacionEstado: data.ubicacion_estado,
+      subcategoria: data.subcategoria,
+    })
 
     // Telegram alert if the server-side moderation marked the product pending.
     // Plain text avoids HTML/Markdown injection through user content.

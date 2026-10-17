@@ -164,6 +164,13 @@
       },
       "cta": "Vender gratis",
       "buyCta": "Comprar a {tipo}"
+    },
+    "guides": {
+      "title": "Guías y consejos de camper",
+      "subtitle": "Presupuestos, homologación, compra segura y precios del mercado: todo lo que necesitas antes de comprar o vender tu camper.",
+      "viewAll": "Ver todas las guías",
+      "readMore": "Leer guía",
+      "minRead": "min de lectura"
     }
   },
   "notFound": {
@@ -316,7 +323,11 @@
       "capuchina": "Autocaravanas capuchinas con cama fija sobre la cabina: el clásico familiar con el máximo de plazas para dormir.",
       "integral": "Autocaravanas integrales de los grandes fabricantes europeos: carrocería y cabina propias, el máximo confort sobre ruedas.",
       "overland": "Pickups y todoterrenos con célula o preparación overland para aventura fuera de ruta y autonomía total."
-    }
+    },
+    "guideTitle": "Cómo elegir la marca de tu camper",
+    "guideP1": "No existe una marca «mejor» universal: la elección depende de la base (Fiat Ducato, Mercedes Sprinter, Ford Transit, Volkswagen…), del carrocero (Benimar, Adria, Hymer, Challenger, Laika, Swift…) y del uso que le vayas a dar. En CamperOcasión organizamos los modelos por fabricante y te mostramos los precios reales de mercado de cada modelo — mediana y rango P25–P75 calculados con nuestro propio inventario — para que compares con datos, no con sensaciones.",
+    "guideP2": "Regla rápida: para camperizar, la base determina recambios, red de taller y consumo; para autocaravana, el carrocero determina calidad de construcción y aislamiento. Pulsa «Ver precios de mercado» en cualquier modelo para ver su página de precios reales, y recuerda filtrar por homologación verificada antes de comprar.",
+    "faqTitle": "Preguntas frecuentes sobre marcas de camper"
   },
   "catalog": {
     "title": "Catálogo",

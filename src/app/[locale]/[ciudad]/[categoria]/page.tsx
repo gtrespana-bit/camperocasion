@@ -140,6 +140,12 @@ async function getProductosCategoria(ciudadNombre: string, municipio: string | u
 // src/app/[locale]/[ciudad]/page.tsx. generateStaticParams aquí hacía que
 // Next 16 intentara "static generation on demand" al recibir cualquier
 // request de /ciudad/categoria, lanzando DYNAMIC_SERVER_USAGE → 500.
+//
+// ISR on-demand (misma pattern que /producto/[slug]): el primer request
+// renderiza dinámico y el resultado queda cacheado 10 min → TTFB de
+// estática para Googlebot sin el riesgo del SSG. Una publicación nueva
+// invalida al instante vía revalidarListadosPublicos().
+export const revalidate = 600
 
 export default async function CategoriaPage({ params }: Props) {
   const { ciudad, categoria, locale } = await params

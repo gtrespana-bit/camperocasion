@@ -112,6 +112,13 @@ async function getProductosCiudad(ciudadNombre: string, municipio?: string) {
 // quedaba marcada SSG sin páginas prerenderizadas: cada visita intentaba una
 // "static generation on demand" que fallaba. Sin generateStaticParams la ruta
 // se sirve igual que la home (/catalogo, /buscar): SSR dinámico y sin 500.
+//
+// ISR on-demand (misma pattern que /producto/[slug]): el primer request
+// renderiza dinámico y el resultado queda cacheado 10 min, así Googlebot
+// y visitantes repetidos tienen TTFB de estática sin el riesgo del SSG.
+// Cada publicación nueva invalida al instante vía revalidarListadosPublicos().
+export const revalidate = 600
+
 export default async function CiudadPage({ params }: Props) {
   const { ciudad, locale } = await params
   const ciudadSEO = getCiudadBySlug(ciudad)
@@ -148,6 +155,13 @@ export default async function CiudadPage({ params }: Props) {
     },
     description: ciudadSEO.descripcion,
     url: cityUrl,
+    // Coordenadas de la capital provincial: señalan la zona a
+    // Google para búsquedas locales ("camper cerca de mí").
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: ciudadSEO.lat,
+      longitude: ciudadSEO.lng,
+    },
   }
 
   const breadcrumbJsonLd = {

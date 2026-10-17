@@ -272,7 +272,7 @@ export async function PATCH(request: NextRequest) {
     .update(updateData)
     .eq('id', body.productId)
     .eq('user_id', auth.user.id)
-    .select('id, slug, titulo, activo, vendido, estado_moderacion')
+    .select('id, slug, titulo, activo, vendido, estado_moderacion, ubicacion_ciudad, ubicacion_estado, subcategoria')
     .maybeSingle()
 
   if (error) {
@@ -282,7 +282,13 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'No se pudo guardar el producto' }, { status: 409 })
   }
 
-  revalidarListadosPublicos()
+  // Ciudad/subcategoría de la fila actualizada: un cambio de
+  // ubicación mueve el anuncio entre landings ISR.
+  revalidarListadosPublicos({
+    ubicacionCiudad: data.ubicacion_ciudad,
+    ubicacionEstado: data.ubicacion_estado,
+    subcategoria: data.subcategoria,
+  })
   revalidarFichaProducto(data.slug)
 
   return NextResponse.json({ ok: true, product: data })
