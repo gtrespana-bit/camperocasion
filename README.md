@@ -210,6 +210,12 @@ decisión» o retirar el permiso en otra pestaña desactiva GA inmediatamente
 (`window['ga-disable-<ID>']` y consentimiento denegado). Volver a aceptar no
 vuelve a descargar gtag.js ni a configurar la propiedad.
 
+El **aviso de cookies** (`CookieConsent`, montado en el layout raíz) es la única
+puerta de entrada a ese consentimiento: si no aparece en la web, nadie puede
+aceptar y GA4 medirá 0 visitas (le pasó al sitio en 2026-10; diagnóstico
+completo en `docs/DIAGNOSTICO-GOOGLE-ANALYTICS-2026-10-18.md`). El test
+`tests/unit/cookie-consent-banner.test.tsx` vigila que siga montado.
+
 `GoogleAnalytics.tsx` solo comunica los cambios de ruta para excluir el panel.
 Las páginas vistas de la navegación SPA las registra la *medición mejorada* de
 GA4 (activada por defecto en la propiedad: *Administrar → Flujos de datos →
