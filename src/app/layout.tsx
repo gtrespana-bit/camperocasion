@@ -9,6 +9,7 @@ const AuthProvider = dynamic(() => import('@/components/AuthProvider').then(m =>
 import RootClientEffects from '@/components/RootClientEffects'
 import GoogleAnalyticsScript from '@/components/GoogleAnalyticsScript'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import CookieConsent from '@/components/CookieConsent'
 
 // Fuente Inter autohospedada (woff2 locales) en lugar de next/font/google.
 const inter = localFont({
@@ -191,6 +192,14 @@ export default async function RootLayout({
           {children}
         </AuthProvider>
         <GoogleAnalytics />
+        {/* AVISO DE COOKIES — debe permanecer montado en TODAS las páginas.
+            El Consent Mode es estricto: sin pulsar «Aceptar», `localStorage`
+            nunca vale 'accepted', no se descarga gtag.js y GA4 (ni Vercel
+            Analytics ni AnaliticaVisitas) no envían nada. En 2026-10 se detectó
+            que el banner había quedado sin montar y la web entera medía 0
+            visitas en Analytics. No quitarlo sin sustituirlo por otro mecanismo
+            de consentimiento que escriba la misma clave (`cookie-consent`). */}
+        <CookieConsent />
         <RootClientEffects />
       </body>
     </html>
