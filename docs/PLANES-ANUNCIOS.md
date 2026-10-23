@@ -4,57 +4,61 @@
 > créditos) está en
 > [`MODELO-CUENTAS-Y-MONETIZACION-2026-10.md`](./MODELO-CUENTAS-Y-MONETIZACION-2026-10.md).
 
-## Cupos
+## Modelo simplificado (decisión 2026-10-22)
+
+Después de construir la escalera de tres packs se llegó a la conclusión de
+que **el mercado no la llena**: la mayoría de vendedores tiene una camper y los
+negocios reales, unas pocas. Tres niveles por número de anuncios añadían
+decisión, soporte y superficie de fallo a cambio de muy poco. Queda un único
+plan de pago.
 
 | Plan | Anuncios activos | Destacados/mes | Fotos | Mensual | Anual (2 meses gratis) |
 | --- | --- | --- | --- | --- | --- |
 | Gratis (cualquier identidad) | 1 | 0 (créditos) | 10 | 0 € | 0 € |
-| Starter | 5 | 3 | 10 | 9 €/mes | 90 €/año |
-| Plus | 15 | 5 | 20 | 19 €/mes | 190 €/año |
-| Unlimited Flota | sin límite | 15 | 30 | 39 €/mes | 390 €/año |
+| **Profesional** | 15 | 5 | 20 | **19 €/mes** | **190 €/año** |
 
-- El **tipo de vendedor** (particular / camperizador / profesional) es gratis y
-  no es un plan: define el sello y los filtros.
-- Abrir el **escaparate** (`/tienda/slug`) exige un pack activo o el mes de
-  prueba. Las tiendas ya publicadas antes de 2026-10-22 se mantienen.
-- Si un **particular** contrata un pack, el webhook lo pasa a `profesional`
+- El **tipo de vendedor** (particular / camperizador / profesional) sigue
+  siendo gratis y no es un plan: define el sello y los filtros. El plan se
+  llama «Profesional», pero no cambia la identidad por sí solo.
+- **Créditos** para todos: 15/40/100 créditos por 5/10/20 €. Sirven para
+  subir al nº 1 o destacar un anuncio suelto. No son un plan ni caducan.
+- Abrir el **escaparate** (`/tienda/slug`) exige el plan Profesional o la
+  prueba activa. Las tiendas ya publicadas se mantienen.
+- Si un **particular** contrata el plan, el webhook lo pasa a `profesional`
   para que reciba el cupo pagado (`aplicarPlanPerfil` →
   `promoverAProfesional`).
 
-## Qué añade cada escalón (no es solo cupo)
+### Qué incluye Profesional
 
-Lo que empuja a subir de pack no es el número de anuncios: es que el pack de
-arriba hace un trabajo que el de abajo obliga a hacer a mano.
+| Función | Gratis | Profesional |
+| --- | --- | --- |
+| Anuncios activos | 1 | 15 |
+| Fotos por anuncio | 10 | 20 |
+| Destacados incluidos al mes | — | 5 |
+| Escaparate `/tienda/tu-taller` | — | ✅ |
+| Estadísticas: totales | ✅ | ✅ |
+| Estadísticas: por anuncio, mercado, 90 días y CSV | — | ✅ |
+| Importar stock desde CSV | — | ✅ (hasta 100 filas) |
 
-| Función | Gratis | Starter | Plus | Flota |
-| --- | --- | --- | --- | --- |
-| Comerciales con acceso propio | — | — | — | Hasta 3 |
-| Estadísticas del periodo | Totales | + por anuncio y diagnóstico | + serie diaria, mercado y 90 días | + exportación CSV |
-| Importar stock desde CSV | — | — | ✅ (hasta 100 filas) | ✅ |
-| Fotos por anuncio | 10 | 10 | 20 | 30 |
-| Escaparate | — | ✅ | ✅ | ✅ |
-
-- **Rendimiento** (`/dashboard?tab=rendimiento`): la escalera vive en
-  `nivelPlan()` (`src/lib/rendimiento.ts`) y es la única fuente de verdad; la
-  pestaña no decide nada por su cuenta. El RPC `rendimiento_vendedor()` solo
-  es accesible con `service_role`.
+- **Rendimiento** (`/dashboard?tab=rendimiento`): `nivelPlan()` distingue solo
+  gratis (0) y Profesional (3). El RPC `rendimiento_vendedor()` solo es
+  accesible con `service_role`.
 - **Importación CSV** (`/dashboard?tab=importar`,
   `POST /api/productos/importar`): previa obligatoria y después confirmación.
-  Solo Plus y Flota; el cupo se recorta en el servidor (`min(restantes,
+  Solo Profesional; el cupo se recorta en el servidor (`min(restantes,
   válidas)`) y la moderación se recalcula allí, igual que en `/api/publicar`.
   Cada fila es un alta: reimportar el mismo archivo duplica.
-- **Equipo** (`/dashboard?tab=equipo`, `POST /api/equipo`): solo Flota. El
-  titular invita por email (máximo 3 comerciales), cada uno entra con su
-  usuario y todos comparten el cupo, los destacados y la factura. El plan se
-  lee siempre del titular (`fn_cuenta_titular()`); el comercial no puede
-  gestionar la suscripción. Al aceptar hay que entrar con el email invitado.
-  Un usuario solo puede estar en un equipo activo. La base impone el tope con
-  `fn_equipo_limite()`, no solo la API.
+- **Equipo de comerciales**: **no se ofrece**. El código y la migración de la
+  fase anterior se retiraron: era una función para un negocio que aún no
+  existe en el catálogo. Se recupera de git si algún día aparece una flota real.
+- **Valores heredados** (`starter`, `unlimited`): ya no se venden. `etiquetaPlan`
+  los nombra «heredado» si quedara alguno en la base, y la validación SQL sigue
+  aceptándolos para no romper datos antiguos.
 
 ## Prueba de 30 días (fase 2, 2026-10-22)
 
 - Cada cuenta tiene **fechas reales de prueba** en `perfiles`:
-  `trial_iniciado_en`, `trial_hasta` y `trial_plan` (Plus).
+  `trial_iniciado_en`, `trial_hasta` y `trial_plan` (`plus`, mostrado como Profesional).
 - **Cuándo empieza**: al darse de alta como camperizador/profesional (trigger
   `fn_iniciar_trial_perfil`), al cambiar de particular a profesional, o cuando
   el usuario pulsa «Probar 30 días gratis» (`POST /api/planes/prueba`). En ese
@@ -96,7 +100,7 @@ with efectivo as (
   select p.id, p.nombre,
     case
       when p.tipo_vendedor not in ('camperizador','profesional') then 'gratis'
-      when p.plan_anuncios in ('starter','plus','unlimited')
+      when p.plan_anuncios in ('plus','starter','unlimited')
            and (p.plan_hasta is null or p.plan_hasta >= now()) then p.plan_anuncios
       when p.trial_hasta is not null
            and p.tipo_vendedor in ('camperizador','profesional')
@@ -108,7 +112,7 @@ with efectivo as (
 ),
 cupos as (
   select id, case plan
-    when 'starter' then 5 when 'plus' then 15 when 'unlimited' then null else 1
+    when 'plus' then 15 when 'starter' then 5 when 'unlimited' then null else 1
   end as cupo
   from efectivo
 ),
@@ -163,23 +167,23 @@ si no hay canal, el aviso se marca igualmente y se ve en el panel.
 ## Regalo directo desde el panel
 
 Además del mes de prueba global y de los cupones, el admin puede **regalar días
-de pack a un usuario concreto**: `/admin` → *Planes y cupones* → «Regalar pack a
+de plan a un usuario concreto**: `/admin` → *Planes y cupones* → «Regalar plan a
 un usuario» (o el botón 🎁 de la pestaña Usuarios). Es `POST
 /api/admin/regalar-plan`, que escribe `perfiles.plan_anuncios` / `plan_hasta`
 —los mismos campos que Stripe— y deja constancia en la tabla `planes_regalos`
-(quién, qué pack, cuántos días, modo, motivo y qué admin lo hizo).
+(quién, qué plan, cuántos días, modo, motivo y qué admin lo hizo).
 
 - **Días**: 1 – 3650. Atajos de 7, 15, 30, 90, 180 y 365 en el modal.
 - **Modo**: `extender` suma los días al final del periodo vigente (si es el
   mismo pack); `reemplazar` empieza a contar ahora.
-- **Sin pack** (`gratis`) retira el pack: vuelve al plan gratuito.
+- **Sin plan** (`gratis`) retira el plan: vuelve al plan gratuito.
 - El canje de cupones exige cuenta profesional; el regalo del admin **no**: si
-  el usuario es «particular» y se le regala un pack, el modal ofrece marcarlo
+  el usuario es «particular» y se le regala Profesional, el modal ofrece marcarlo
   como profesional, porque si no el cupo de 1 anuncio sigue aplicando.
 - El usuario recibe un email de aviso (`emailPlanRegalado`) para que no le
   extrañe tener más cupo sin haber pagado.
 
-`GET /api/admin/regalar-plan` devuelve quién tiene pack activo ahora (con los
+`GET /api/admin/regalar-plan` devuelve quién tiene plan de pago activo ahora (con los
 días que le quedan) y los últimos 50 regalos, que es lo que se ve en esa misma
 pestaña.
 

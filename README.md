@@ -164,19 +164,19 @@ Hay tres capas separadas (análisis completo en
 
 1. **Identidad** (`particular` / `camperizador` / `profesional`): gratis. Da
    sello y filtros; no es un plan.
-2. **Plan** (`gratis` / Starter 9 € / Plus 19 € / Unlimited 39 €, o anual con 2
-   meses gratis): capacidad de anuncios, fotos, destacados incluidos y
-   escaparate. Se cobra con Stripe (suscripción) y se gestiona desde el portal
-   de cliente.
+2. **Plan** (`gratis` / **Profesional 19 €**, o 190 €/año con 2 meses gratis):
+   15 anuncios, 20 fotos, 5 destacados al mes y escaparate. Un único plan de
+   pago, sin escalones. Se cobra con Stripe (suscripción) y se gestiona desde
+   el portal de cliente.
 3. **Créditos** (2 / 15 / 40 / 100): visibilidad puntual (boost al #1 y
    destacados), pago único por Stripe, Bizum, transferencia o PayPal.
 
-Publicar la primera camper es gratis. El escaparate requiere un pack (o la
+Publicar la primera camper es gratis. El escaparate requiere el plan Profesional (o la
 prueba de 30 días) para tiendas nuevas; las ya publicadas se mantienen.
 
 La prueba tiene **fechas reales por cuenta**, 7 días de gracia al terminar y
 avisos por email/push (10, 3 y 1 días). Cuando acaba, los anuncios que exceden
-el cupo se **pausan, no se borran**, y se reactivan al ampliar el pack. Si falla
+el cupo se **pausan, no se borran**, y se reactivan al pasar a Profesional. Si falla
 un cobro, el plan sigue activo hasta `plan_hasta` y se avisa por email
 (`invoice.payment_failed`), con recordatorios a 3 y 7 días.
 
@@ -196,8 +196,8 @@ categorías, comunicación, planes y cupones, exportación y ajustes.
   mano), con comparativa contra el periodo anterior, top de páginas y anuncios,
   dispositivos, idioma, fuentes de tráfico, horas y días de la semana, y la
   lista de anuncios activos sin ninguna visita. Se exporta a CSV.
-- **Regalar pack** (`/admin` → *Planes y cupones* o desde la ficha de un
-  usuario): días de Starter, Plus o Unlimited gratis para una cuenta concreta,
+- **Regalar plan** (`/admin` → *Planes y cupones* o desde la ficha de un
+  usuario): días de Profesional gratis para una cuenta concreta,
   sin cupón y sin Stripe, sumando al final del periodo vigente o empezando
   ahora. Queda en la bitácora `planes_regalos` y al usuario se le avisa por
   email.

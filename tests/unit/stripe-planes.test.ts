@@ -18,12 +18,12 @@ describe('stripe-planes', () => {
       planDesdeSuscripcion({
         items: { data: [{ price: { lookup_key: 'camperocasion_unlimited_anual' } }] },
       }),
-    ).toBe('unlimited')
+    ).toBeNull()
     expect(
       planDesdeSuscripcion({
         items: { data: [{ price: { metadata: { plan: 'starter' } } }] },
       }),
-    ).toBe('starter')
+    ).toBeNull()
     expect(
       planDesdeSuscripcion({ items: { data: [{ price: { lookup_key: 'otro_producto' } }] } }),
     ).toBeNull()

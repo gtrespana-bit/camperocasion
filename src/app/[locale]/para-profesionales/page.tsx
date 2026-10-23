@@ -23,14 +23,14 @@ import PlanesClient from './PlanesClient'
 export const metadata: Metadata = {
   title: 'Planes para profesionales y camperizadores',
   description:
-    'Publica todo tu stock sin comisión por venta. Starter 9 €, Plus 19 € o Unlimited 39 € al mes, o 2 meses gratis con el anual. Escaparate, destacados y prioridad.',
+    'Publica todo tu stock sin comisión por venta. 19 €/mes, o 190 €/año con 2 meses gratis. 15 anuncios, escaparate, estadísticas y destacados.',
   alternates: {
     canonical: 'https://camperocasion.online/para-profesionales',
     languages: { 'es-ES': 'https://camperocasion.online/para-profesionales', 'x-default': 'https://camperocasion.online/para-profesionales' },
   },
   openGraph: {
     title: 'Planes para profesionales y camperizadores',
-    description: 'Starter 9 €, Plus 19 € o Unlimited 39 € al mes. Sin comisión por venta, sin permanencia y con 2 meses gratis en el anual.',
+    description: 'Un solo plan: 19 €/mes o 190 €/año. 15 anuncios, escaparate y estadísticas. Sin comisión por venta ni permanencia.',
     url: 'https://camperocasion.online/para-profesionales',
     siteName: 'CamperOcasión',
     type: 'website',
@@ -63,17 +63,12 @@ const extras = [
   {
     icon: FileSpreadsheet,
     title: 'Importa todo tu stock de una vez',
-    desc: 'Sube el CSV de tu Excel o del DMS y publica hasta 100 anuncios con vista previa. Incluido en Plus y Flota.',
-  },
-  {
-    icon: Users,
-    title: 'Tu equipo, cada uno con su usuario',
-    desc: 'En Flota, hasta 3 comerciales publican con su propia cuenta y comparten cupo, destacados y factura. Sin contraseñas compartidas.',
+    desc: 'Sube el CSV de tu Excel o del DMS y publica hasta 100 anuncios con vista previa, sin formulario a formulario.',
   },
   {
     icon: TrendingUp,
     title: 'Sabes qué anuncio funciona',
-    desc: 'Visitas, favoritos y contactos por anuncio, comparados con el mercado de tu categoría. Plus añade la serie diaria y 90 días de histórico.',
+    desc: 'Visitas, favoritos y contactos por anuncio, serie diaria y comparativa con el mercado de tu categoría. 90 días de histórico.',
   },
   {
     icon: BadgeEuro,
@@ -90,20 +85,17 @@ const extras = [
 const filasComparativa: {
   label: string
   gratis: string
-  starter: string
-  plus: string
-  unlimited: string
+  profesional: string
 }[] = [
-  { label: 'Anuncios activos a la vez', gratis: '1', starter: '5', plus: '15', unlimited: 'Ilimitados' },
-  { label: 'Fotos por anuncio', gratis: '10', starter: '10', plus: '20', unlimited: '30' },
-  { label: 'Destacados incluidos al mes', gratis: '—', starter: '3', plus: '5', unlimited: '15' },
-  { label: 'Escaparate /tienda/tu-taller', gratis: '—', starter: 'Sí', plus: 'Sí', unlimited: 'Sí' },
-  { label: 'Prioridad en homologación', gratis: 'Normal', starter: 'Alta', plus: 'Muy alta', unlimited: 'Máxima' },
-  { label: 'Estadísticas del vendedor', gratis: 'Totales', starter: 'Por anuncio', plus: 'Con mercado', unlimited: 'Con exportación' },
-  { label: 'Importar stock desde CSV', gratis: '—', starter: '—', plus: 'Hasta 100 filas', unlimited: 'Hasta 100 filas' },
-  { label: 'Comerciales con acceso propio', gratis: '—', starter: '—', plus: '—', unlimited: 'Hasta 3' },
-  { label: 'Créditos extra', gratis: 'Se compran', starter: 'Se compran', plus: 'Se compran', unlimited: 'Se compran' },
-  { label: 'Comisión por venta', gratis: '0 %', starter: '0 %', plus: '0 %', unlimited: '0 %' },
+  { label: 'Anuncios activos a la vez', gratis: '1', profesional: '15' },
+  { label: 'Fotos por anuncio', gratis: '10', profesional: '20' },
+  { label: 'Destacados incluidos al mes', gratis: '—', profesional: '5' },
+  { label: 'Escaparate /tienda/tu-taller', gratis: '—', profesional: 'Sí' },
+  { label: 'Estadísticas del vendedor', gratis: 'Totales', profesional: 'Completas' },
+  { label: 'Importar stock desde CSV', gratis: '—', profesional: 'Hasta 100 filas' },
+  { label: 'Prioridad en homologación', gratis: 'Normal', profesional: 'Alta' },
+  { label: 'Créditos extra', gratis: 'Se compran', profesional: 'Se compran' },
+  { label: 'Comisión por venta', gratis: '0 %', profesional: '0 %' },
 ]
 
 const faqs = [
@@ -121,11 +113,7 @@ const faqs = [
   },
   {
     q: '¿Qué pasa si me paso del cupo?',
-    a: 'No se borra nada. Los anuncios ya publicados siguen visibles; lo que no podrás hacer es publicar nuevos hasta ampliar el pack, pausar o marcar alguno como vendido. Puedes cambiar de pack en cualquier momento y Stripe prorratea la diferencia.',
-  },
-  {
-    q: '¿Pueden publicar mis comerciales con su propio usuario?',
-    a: 'Sí, en Unlimited Flota: el titular invita por email hasta a 3 comerciales desde Panel → Equipo. Cada uno entra con su cuenta y publica sus anuncios; el cupo, los destacados y la factura son de la cuenta. Los anuncios de todo el equipo aparecen en el escaparate del titular. Sin compartir contraseñas.',
+    a: 'No se borra nada. Los anuncios ya publicados siguen visibles; lo que no podrás hacer es publicar nuevos hasta pasar a Profesional, pausar o marcar alguno como vendido.',
   },
   {
     q: '¿Los créditos caducan?',
@@ -133,7 +121,7 @@ const faqs = [
   },
   {
     q: '¿Puedo pagar con Bizum?',
-    a: 'Las suscripciones de los packs se cobran con tarjeta (incluye Apple Pay y Google Pay), porque Bizum no permite cobros recurrentes. Para comprar créditos sí puedes pagar con Bizum, tarjeta o los métodos manuales.',
+    a: 'La suscripción Profesional se cobra con tarjeta (incluye Apple Pay y Google Pay), porque Bizum no permite cobros recurrentes. Para comprar créditos sí puedes pagar con Bizum, tarjeta o los métodos manuales.',
   },
   {
     q: '¿Hay factura?',
@@ -141,7 +129,7 @@ const faqs = [
   },
   {
     q: '¿Hay prueba gratis?',
-    a: 'Cuando la promoción está activa, cada cuenta profesional nueva tiene 30 días con el pack Plus (15 anuncios y 5 destacados) sin cobro. En tu panel ves los días que quedan en todo momento. No se cobra automáticamente al terminar: si no contratas, pasas al plan gratuito.',
+    a: 'Cuando la promoción está activa, cada cuenta profesional nueva tiene 30 días con el plan Profesional (15 anuncios y 5 destacados) sin cobro. En tu panel ves los días que quedan en todo momento. No se cobra automáticamente al terminar: si no contratas, pasas al plan gratuito.',
   },
 ]
 
@@ -164,7 +152,7 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
         '@type': 'Product',
         '@id': SITIO + '/para-profesionales#plans',
         name: 'Planes para profesionales y camperizadores',
-        description: 'Starter 9 €, Plus 19 € o Unlimited 39 € al mes. Sin comisión por venta, sin permanencia y con 2 meses gratis en el anual.',
+        description: 'Un solo plan: 19 €/mes o 190 €/año. 15 anuncios, escaparate y estadísticas. Sin comisión por venta ni permanencia.',
         brand: { '@type': 'Brand', name: 'CamperOcasión' },
         offers: PLANES_PRO.map(p => ({
           '@type': 'Offer',
@@ -199,8 +187,9 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
             Publica todo tu stock. Sin comisión por venta.
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl">
-            Elige un pack por número de anuncios y listo. Mensual o anual, sin permanencia.
-            Si solo vendes tu camper, el plan gratuito es todo lo que necesitas.
+            Un solo plan: Profesional, 19 €/mes, mensual o anual y sin permanencia. 15 anuncios,
+            escaparate, estadísticas y destacados. Si solo vendes tu camper, el plan gratuito es
+            todo lo que necesitas.
           </p>
           <div className="mt-6 flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
             {[
@@ -241,10 +230,10 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
               <div className="flex items-center gap-2 text-slate-900 font-bold">
                 <Sparkles size={18} className="text-brand-accent" aria-hidden="true" /> Plan
               </div>
-              <p className="text-xs font-semibold text-emerald-700 mt-1">Cuota fija por capacidad</p>
+              <p className="text-xs font-semibold text-emerald-700 mt-1">19 €/mes, todo incluido</p>
               <p className="text-sm text-slate-600 mt-2">
-                Cuántos anuncios activos tienes a la vez, fotos, destacados incluidos y escaparate.
-                Es lo que se contrata en esta página.
+                15 anuncios activos, 20 fotos, 5 destacados al mes, escaparate y estadísticas.
+                Sin comisión por venta y sin permanencia.
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -260,7 +249,7 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
           </div>
         </section>
 
-        <h2 className="text-2xl font-black text-slate-900 mb-1">Elige tu pack</h2>
+        <h2 className="text-2xl font-black text-slate-900 mb-1">Gratis o Profesional</h2>
         <p className="text-sm text-slate-600 mb-5">
           Los precios son en euros. El plan anual equivale a 10 mensualidades: pagas 10 y usas 12.
         </p>
@@ -279,17 +268,15 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
                 <tr className="border-b border-slate-200 bg-slate-50 text-left">
                   <th scope="col" className="px-4 py-3 font-bold text-slate-900">Qué incluye</th>
                   <th scope="col" className="px-4 py-3 text-center font-bold text-slate-700">Gratis</th>
-                  <th scope="col" className="px-4 py-3 text-center font-bold text-slate-700">Starter<br /><span className="text-xs font-normal">9 €/mes</span></th>
-                  <th scope="col" className="px-4 py-3 text-center font-bold text-brand-accent">Plus<br /><span className="text-xs font-normal">19 €/mes</span></th>
-                  <th scope="col" className="px-4 py-3 text-center font-bold text-slate-700">Unlimited<br /><span className="text-xs font-normal">39 €/mes</span></th>
+                  <th scope="col" className="px-4 py-3 text-center font-bold text-brand-accent">Profesional<br /><span className="text-xs font-normal">19 €/mes</span></th>
                 </tr>
               </thead>
               <tbody>
                 {filasComparativa.map((fila, i) => (
                   <tr key={fila.label} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}>
                     <th scope="row" className="px-4 py-3 text-left font-medium text-slate-700">{fila.label}</th>
-                    {[fila.gratis, fila.starter, fila.plus, fila.unlimited].map((valor, j) => (
-                      <td key={j} className={`px-4 py-3 text-center ${j === 2 ? 'bg-emerald-50/60 font-semibold text-emerald-900' : 'text-slate-700'}`}>
+                    {[fila.gratis, fila.profesional].map((valor, j) => (
+                      <td key={j} className={`px-4 py-3 text-center ${j === 1 ? 'bg-emerald-50/60 font-semibold text-emerald-900' : 'text-slate-700'}`}>
                         {valor === 'Sí' ? (
                           <Check size={16} className="mx-auto text-emerald-600" aria-label="Incluido" />
                         ) : valor === '—' ? (
@@ -305,13 +292,13 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
             </table>
           </div>
           <p className="text-xs text-slate-500 mt-3">
-            El escaparate se abre con cualquier pack. Si ya tenías una tienda activa antes de este cambio, se mantiene.
+            El escaparate se abre con el plan Profesional. Si ya tenías una tienda activa antes de este cambio, se mantiene.
           </p>
         </section>
 
         {/* Qué resuelve */}
         <section className="mt-14">
-          <h2 className="text-2xl font-black text-slate-900 mb-4">Qué consigues con un pack</h2>
+          <h2 className="text-2xl font-black text-slate-900 mb-4">Qué consigues con Profesional</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {extras.map(e => (
               <div key={e.title} className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -367,10 +354,10 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
         </section>
 
         <section className="mt-14 rounded-2xl bg-brand-primary p-6 sm:p-8 text-white">
-          <h2 className="text-2xl font-black">Empieza gratis. Sube de plan cuando tengas stock.</h2>
+          <h2 className="text-2xl font-black">Empieza gratis. Hazte Profesional cuando vendas de forma habitual.</h2>
           <p className="text-slate-300 mt-2 max-w-2xl">
-            Publica tu primera camper sin pagar nada. Si eres taller o compraventa, el pack te da
-            capacidad, escaparate y visibilidad sin comisiones por venta.
+            Publica tu primera camper sin pagar nada. Si eres taller o compraventa, 19 €/mes te dan
+            capacidad, escaparate y estadísticas sin comisiones por venta.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <LocalLink href="/publicar" className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-5 py-3 text-sm font-bold text-white hover:bg-brand-accent-dark">

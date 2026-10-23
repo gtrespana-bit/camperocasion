@@ -3,7 +3,6 @@ import {
   descuentoAnualPct,
   diasRestantesTrial,
   etiquetaPlan,
-  planRecomendado,
   precioMensualEquivalente,
   precioPlan,
 } from '@/lib/planes-anuncios'
@@ -14,9 +13,9 @@ describe('precios de los packs', () => {
       expect(precioPlan(plan.id, 'anual')).toBe(plan.precioMes * 10)
       expect(precioPlan(plan.id, 'mensual')).toBe(plan.precioMes)
     }
-    expect(precioPlan('starter', 'anual')).toBe(90)
+    expect(PLANES_PRO).toHaveLength(1)
+    expect(precioPlan('plus', 'mensual')).toBe(19)
     expect(precioPlan('plus', 'anual')).toBe(190)
-    expect(precioPlan('unlimited', 'anual')).toBe(390)
   })
 
   test('el descuento anual es el real, no uno inventado', () => {
@@ -30,28 +29,16 @@ describe('precios de los packs', () => {
   })
 
   test('el equivalente mensual no redondea a la baja el precio', () => {
-    expect(precioMensualEquivalente('starter')).toBe(7.5)
     expect(precioMensualEquivalente('plus')).toBeCloseTo(15.83, 2)
-    expect(precioMensualEquivalente('unlimited')).toBe(32.5)
-  })
-
-  test('recomienda el pack según el stock declarado', () => {
-    expect(planRecomendado(0)).toBe('starter')
-    expect(planRecomendado(5)).toBe('starter')
-    expect(planRecomendado(6)).toBe('plus')
-    expect(planRecomendado(15)).toBe('plus')
-    expect(planRecomendado(16)).toBe('unlimited')
-    expect(planRecomendado(120)).toBe('unlimited')
-    // Un valor raro no debe romper la página de precios.
-    expect(planRecomendado(Number.NaN)).toBe('starter')
   })
 
   test('etiqueta del plan siempre tiene un nombre humano', () => {
-    expect(etiquetaPlan('starter')).toBe('Starter')
-    expect(etiquetaPlan('plus')).toBe('Plus')
-    expect(etiquetaPlan('unlimited')).toBe('Unlimited Flota')
+    expect(etiquetaPlan('plus')).toBe('Profesional')
     expect(etiquetaPlan('gratis')).toBe('Gratis')
     expect(etiquetaPlan(null)).toBe('Gratis')
+    // Valores de la escalera antigua: se nombran como heredados, no se mienten.
+    expect(etiquetaPlan('starter')).toBe('Starter (heredado)')
+    expect(etiquetaPlan('unlimited')).toBe('Unlimited Flota (heredado)')
   })
 })
 

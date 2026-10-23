@@ -128,7 +128,7 @@ export async function PUT(req: NextRequest) {
           ok: false,
           codigo: 'PLAN',
           error:
-            'El escaparate está incluido en los packs Starter, Plus y Flota. Elige un pack para abrir tu tienda; tus anuncios siguen publicados mientras tanto.',
+            'El escaparate está incluido en el plan Profesional. Actívalo para abrir tu tienda; tus anuncios siguen publicados mientras tanto.',
         },
         { status: 403 }
       )

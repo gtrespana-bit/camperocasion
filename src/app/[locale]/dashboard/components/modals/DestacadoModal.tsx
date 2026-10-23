@@ -85,7 +85,7 @@ export default function DestacadoModal({
             onClick={onIncluido}
             className="w-full mb-4 p-3 rounded-xl border-2 border-emerald-300 bg-emerald-50 text-left"
           >
-            <span className="block font-bold text-emerald-900">Usar destacado del pack (7 días)</span>
+            <span className="block font-bold text-emerald-900">Usar destacado del plan (7 días)</span>
             <span className="text-xs text-emerald-800">Te quedan {restantes} este mes. No gasta créditos.</span>
           </button>
         )}

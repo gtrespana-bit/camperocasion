@@ -270,19 +270,19 @@ export async function enviarEmailTrialTermina(
   const cuerpo = `
     <p style="margin:0 0 14px;font-size:16px;color:${COLORS.dark}">Hola ${htmlText(nombre)},</p>
     <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
-      Tu prueba del pack <strong style="color:${COLORS.dark}">${htmlText(plan)}</strong> termina ${htmlText(cuando)}${opts.fechaFin ? ` (${htmlText(fechaLarga(opts.fechaFin))})` : ''}.
+      Tu prueba de <strong style="color:${COLORS.dark}">${htmlText(plan)}</strong> termina ${htmlText(cuando)}${opts.fechaFin ? ` (${htmlText(fechaLarga(opts.fechaFin))})` : ''}.
     </p>
     <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
-      <strong style="color:${COLORS.dark}">No se borra ninguno de tus anuncios.</strong> Si no activas un pack,
+      <strong style="color:${COLORS.dark}">No se borra ninguno de tus anuncios.</strong> Si no pasas a Profesional,
       tu cuenta volverá al plan gratuito y se pausarán los que excedan el cupo; podrás reactivarlos cuando quieras.
     </p>
     <p style="margin:0 0 18px;font-size:15px;color:${COLORS.gray};line-height:1.6">
-      Si quieres mantener el cupo, el escaparate y los destacados incluidos, elige el pack que encaje con tu stock.
+      Si quieres mantener el cupo, el escaparate y los destacados incluidos, pasa a Profesional por 19 €/mes.
       Sin permanencia y se cancela en dos clics.
     </p>
-    ${boton('Ver packs y activar', `${SITE_URL}/dashboard?tab=plan`)}
+    ${boton('Ver Profesional', `${SITE_URL}/dashboard?tab=plan`)}
     <p style="margin:18px 0 0;font-size:13px;color:${COLORS.gray}">
-      Si ya has activado un pack, ignora este mensaje.
+      Si ya has pasado a Profesional, ignora este mensaje.
     </p>
     <p style="margin:22px 0 0;font-size:13px;color:${COLORS.gray}">CamperOcasión — Publica más, vende más</p>
   `
@@ -311,11 +311,11 @@ export async function enviarEmailTrialGracia(
     </p>
     <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
       Durante la gracia todo sigue como está: tus anuncios publicados, tu escaparate y tus estadísticas.
-      Después, si no activas un pack, se pausarán los anuncios que excedan el cupo del plan gratuito.
+      Después, si no pasas a Profesional, se pausarán los anuncios que excedan el cupo del plan gratuito.
       <strong style="color:${COLORS.dark}">No se borra nada.</strong>
     </p>
     ${pausados > 0 ? `<p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray}">Ahora mismo tienes <strong>${pausados}</strong> anuncio${pausados === 1 ? '' : 's'} más de los que permite el plan gratuito.</p>` : ''}
-    ${boton('Activar mi pack', `${SITE_URL}/dashboard?tab=plan`)}
+    ${boton('Activar Profesional', `${SITE_URL}/dashboard?tab=plan`)}
     <p style="margin:18px 0 0;font-size:13px;color:${COLORS.gray}">
       ¿Prefieres otra cosa? Desde tu panel puedes pausar anuncios y seguir gratis.
     </p>
@@ -330,7 +330,7 @@ export async function enviarEmailTrialGracia(
 }
 
 /**
- * Dunning: no se ha podido cobrar el pack. Nunca se corta el acceso en este
+ * Dunning: no se ha podido cobrar el plan. Nunca se corta el acceso en este
  * email; se pide actualizar la tarjeta y se recuerda hasta cuándo hay servicio.
  */
 export async function enviarEmailPagoFallido(
@@ -338,7 +338,7 @@ export async function enviarEmailPagoFallido(
   nombre: string,
   opts: { plan: string; fechaFin?: string | null; diasGracia?: number },
 ) {
-  const plan = opts.plan || 'tu pack'
+  const plan = opts.plan || 'tu plan Profesional'
   const cuerpo = `
     <p style="margin:0 0 14px;font-size:16px;color:${COLORS.dark}">Hola ${htmlText(nombre)},</p>
     <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
@@ -359,8 +359,8 @@ export async function enviarEmailPagoFallido(
   return enviar(
     'CamperOcasión',
     email,
-    'No hemos podido cobrar tu pack: actualiza la tarjeta',
-    emailLayout('Problema con el pago de tu pack', cuerpo),
+    'No hemos podido cobrar tu plan: actualiza la tarjeta',
+    emailLayout('Problema con el pago de tu plan', cuerpo),
   )
 }
 
@@ -394,12 +394,12 @@ export async function enviarEmailAnunciosPausados(
     <ul style="margin:0 0 16px;padding-left:20px">${lista}</ul>
     ${resto}
     <p style="margin:0 0 16px;font-size:15px;color:${COLORS.gray};line-height:1.6">
-      Puedes reactivarlos en un clic si amplías el pack, o pausar otro para dejar sitio. También puedes dejarlos
+      Puedes reactivarlos en un clic si pasas a Profesional, o pausar otro para dejar sitio. También puedes dejarlos
       pausados sin coste: siguen guardados y se republican cuando quieras.
     </p>
     ${boton('Ver mis anuncios', `${SITE_URL}/dashboard?tab=productos`)}
     <p style="margin:18px 0 0;font-size:13px;color:${COLORS.gray}">
-      Si quieres recuperar todos a la vez: <a href="${htmlText(`${SITE_URL}/dashboard?tab=plan`)}" style="color:${COLORS.accent}">ampliar el pack</a>.
+      Si quieres recuperar todos a la vez: <a href="${htmlText(`${SITE_URL}/dashboard?tab=plan`)}" style="color:${COLORS.accent}">pasar a Profesional</a>.
     </p>
     <p style="margin:22px 0 0;font-size:13px;color:${COLORS.gray}">CamperOcasión</p>
   `
@@ -413,11 +413,11 @@ export async function enviarEmailAnunciosPausados(
 
 /**
  * Win-back: una semana después de que se acabe la gracia de la prueba o de que
- * se confirme la baja del pack.
+ * se confirme la baja del plan.
  *
  * No promete nada que no sea cierto: el cupo vuelve al contratar, los anuncios
  * siguen guardados y no hay permanencia. Si `WINBACK_CUPON` está configurado,
- * se muestra el código para canjearlo en la página de packs (así la oferta se
+ * se muestra el código para canjearlo en la página de planes (así la oferta se
  * cambia sin tocar código ni desplegar).
  */
 export async function enviarEmailWinback(
@@ -425,27 +425,27 @@ export async function enviarEmailWinback(
   nombre: string,
   opts: { plan?: string; fechaFin?: string | null; anunciosPausados?: number },
 ) {
-  const plan = opts.plan || 'profesional'
+  const plan = opts.plan || 'Profesional'
   const cupon = (process.env.WINBACK_CUPON || '').trim()
   const pausados = Number(opts.anunciosPausados) || 0
   const cuerpo = `
     <p style="margin:0 0 14px;font-size:16px;color:${COLORS.dark}">Hola ${htmlText(nombre)},</p>
     <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
-      Hace una semana que terminó tu pack <strong style="color:${COLORS.dark}">${htmlText(plan)}</strong>${opts.fechaFin ? ` (${htmlText(fechaLarga(opts.fechaFin))})` : ''}.
+      Hace una semana que terminó tu plan <strong style="color:${COLORS.dark}">${htmlText(plan)}</strong>${opts.fechaFin ? ` (${htmlText(fechaLarga(opts.fechaFin))})` : ''}.
       Tu cuenta sigue funcionando y <strong style="color:${COLORS.dark}">no se ha borrado ningún anuncio</strong>.
     </p>
     <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
-      Lo que cambia es el cupo: sin pack, la cuenta vuelve a 1 anuncio activo y los que sobran quedan pausados.
-      ${pausados > 0 ? `Ahora mismo tienes <strong style="color:${COLORS.dark}">${pausados} pausado${pausados === 1 ? '' : 's'}</strong>; al activar un pack vuelven a publicarse solos.` : 'Al activar un pack vuelven a publicarse solos.'}
+      Lo que cambia es el cupo: sin plan de pago, la cuenta vuelve a 1 anuncio activo y los que sobran quedan pausados.
+      ${pausados > 0 ? `Ahora mismo tienes <strong style="color:${COLORS.dark}">${pausados} pausado${pausados === 1 ? '' : 's'}</strong>; al activar Profesional vuelven a publicarse solos.` : 'Al activar Profesional vuelven a publicarse solos.'}
     </p>
     <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
-      Puedes volver con el pack que necesites desde <strong style="color:${COLORS.dark}">9 €/mes</strong> (5 anuncios),
-      sin permanencia y cancelando en dos clics. Si tu stock es pequeño, Starter suele ser suficiente.
+      Puedes volver con el plan Profesional por <strong style="color:${COLORS.dark}">19 €/mes</strong> (15 anuncios,
+      5 destacados al mes y escaparate), sin permanencia y cancelando en dos clics.
     </p>
     ${cupon ? `<p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">Si vuelves esta semana, usa el código <strong style="color:${COLORS.dark}">${htmlText(cupon)}</strong> al contratar.</p>` : ''}
     ${boton('Recuperar mi cupo', `${SITE_URL}/para-profesionales`)}
     <p style="margin:18px 0 0;font-size:13px;color:${COLORS.gray}">
-      Si ya has vuelto a activar un pack, ignora este mensaje.
+      Si ya has vuelto a activar Profesional, ignora este mensaje.
       ¿Tienes dudas? Escríbenos a <a href="mailto:soporte@camperocasion.online" style="color:${COLORS.accent}">soporte@camperocasion.online</a>.
     </p>
     <p style="margin:22px 0 0;font-size:13px;color:${COLORS.gray}">CamperOcasión — Publica más, vende más</p>
@@ -453,7 +453,7 @@ export async function enviarEmailWinback(
   return enviar(
     'CamperOcasión',
     email,
-    `Tu pack ${plan} terminó: tus anuncios siguen aquí`,
+    `Tu plan ${plan} terminó: tus anuncios siguen aquí`,
     emailLayout('Vuelve cuando quieras', cuerpo),
   )
 }

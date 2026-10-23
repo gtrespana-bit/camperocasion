@@ -269,7 +269,7 @@ export function mensajeAvisoPlan(
     case 'trial_3d':
       return {
         titulo: `Tu pack ${plan} termina en ${dias ?? 3} días`,
-        cuerpo: 'Elige Starter, Plus o Flota antes de que termine. Tus anuncios no se borran.',
+        cuerpo: 'Activa el plan Profesional antes de que termine. Tus anuncios no se borran.',
         url: '/dashboard?tab=plan',
       }
     case 'trial_ultimo_dia':
@@ -311,7 +311,7 @@ export function mensajeAvisoPlan(
     case 'winback':
       return {
         titulo: 'Tu pack terminó hace unos días',
-        cuerpo: 'Tus anuncios siguen ahí. Vuelve desde 9 €/mes y recupera el cupo cuando quieras.',
+        cuerpo: 'Tus anuncios siguen ahí. Vuelve por 19 €/mes y recupera el cupo cuando quieras.',
         url: '/para-profesionales',
       }
   }

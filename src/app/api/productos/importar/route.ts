@@ -6,7 +6,7 @@
  *   · `{ csv, confirmar: true }`     → importa las filas válidas que caben.
  *
  * Reglas que no se negocian:
- *  · **Solo Plus y Flota.** Es la función que justifica el salto de Starter
+ *  · **Solo Profesional.** Es la función que justifica el plan de Starter
  *    (5 anuncios se publican a mano) a Plus (15). El tope se comprueba aquí,
  *    no en la vista.
  *  · **El cupo manda.** Si el pack permite 15 y ya hay 12 activos, se importan
@@ -75,15 +75,15 @@ export async function POST(req: NextRequest) {
 
   const confirmar = body?.confirmar === true
 
-  // ── Plan: solo Plus y Flota ──────────────────────────────────────────────
+  // ── Plan: solo Profesional ──────────────────────────────────────────────
   const estado = await estadoPlanUsuario(userId)
-  if (estado.plan !== 'plus' && estado.plan !== 'unlimited') {
+  if (estado.plan !== 'plus') {
     return NextResponse.json(
       {
         ok: false,
         codigo: 'PLAN',
         error:
-          'La importación desde CSV está incluida en Plus y Unlimited Flota. Con Starter puedes publicar hasta 5 anuncios desde el formulario.',
+          'La importación desde CSV está incluida en el plan Profesional. En el plan gratuito puedes publicar tu camper desde el formulario.',
       },
       { status: 403 },
     )

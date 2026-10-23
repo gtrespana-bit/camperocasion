@@ -54,7 +54,7 @@ export default function PlanBar({ onAbrirPlan }: { onAbrirPlan: (tab: DashboardT
 
   const cupo = estado.cupo
   const nombre = estado.trial
-    ? 'Prueba Plus'
+    ? 'Prueba Profesional'
     : estado.trialGracia
       ? 'Prueba terminada (gracia)'
       : etiquetaPlan(estado.planPagoVigente ? estado.planContratado : estado.plan)
@@ -99,7 +99,7 @@ export default function PlanBar({ onAbrirPlan }: { onAbrirPlan: (tab: DashboardT
             ? 'Activar'
             : estado.planPagoVigente
               ? 'Gestionar'
-              : 'Ver packs'}
+              : 'Ver Profesional'}
         <ArrowRight size={13} aria-hidden="true" />
       </span>
     </button>

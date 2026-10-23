@@ -12,12 +12,10 @@ import {
   tasaContacto,
 } from '@/lib/rendimiento'
 
-describe('rendimiento - escalera de packs', () => {
+describe('rendimiento - plan único', () => {
   test('nivel por plan', () => {
     expect(nivelPlan('gratis')).toBe(0)
-    expect(nivelPlan('starter')).toBe(1)
-    expect(nivelPlan('plus')).toBe(2)
-    expect(nivelPlan('unlimited')).toBe(3)
+    expect(nivelPlan('plus')).toBe(3)
   })
 
   test('un plan desconocido o nulo cae a gratis (falla cerrado)', () => {
@@ -26,42 +24,17 @@ describe('rendimiento - escalera de packs', () => {
     expect(nivelPlan('plan-inventado')).toBe(0)
   })
 
-  test('cada pack añade una capacidad nueva, no las quita', () => {
+  test('gratis ve totales; Profesional lo ve todo', () => {
     const gratis = capacidades('gratis')
-    const starter = capacidades('starter')
-    const plus = capacidades('plus')
-    const flota = capacidades('unlimited')
+    const pro = capacidades('plus')
 
-    // Gratis ve totales, pero no el detalle.
     expect(gratis.totales).toBe(true)
     expect(gratis.porAnuncio).toBe(false)
     expect(gratis.mercado).toBe(false)
+    expect(gratis.exportar).toBe(false)
 
-    // Starter desbloquea el detalle.
-    expect(starter.porAnuncio).toBe(true)
-    expect(starter.serie).toBe(false)
-
-    // Plus desbloquea mercado y serie.
-    expect(plus.serie).toBe(true)
-    expect(plus.mercado).toBe(true)
-    expect(plus.precioVsMercado).toBe(true)
-    expect(plus.exportar).toBe(false)
-
-    // Flota añade la exportación.
-    expect(flota.exportar).toBe(true)
-  })
-
-  test('los packs superiores conservan lo del inferior', () => {
-    for (const [menor, mayor] of [
-      ['gratis', 'starter'],
-      ['starter', 'plus'],
-      ['plus', 'unlimited'],
-    ] as const) {
-      const a = capacidades(menor)
-      const b = capacidades(mayor)
-      for (const clave of Object.keys(a) as (keyof typeof a)[]) {
-        if (a[clave]) expect(b[clave]).toBe(true)
-      }
+    for (const clave of Object.keys(pro) as (keyof typeof pro)[]) {
+      expect(pro[clave]).toBe(true)
     }
   })
 })
@@ -76,11 +49,9 @@ describe('rendimiento - periodos', () => {
     expect(normalizarPeriodo('basura')).toBe(30)
   })
 
-  test('90 días necesita Plus o superior', () => {
+  test('90 días necesita Profesional', () => {
     expect(periodoPermitido(90, 'gratis')).toBe(false)
-    expect(periodoPermitido(90, 'starter')).toBe(false)
     expect(periodoPermitido(90, 'plus')).toBe(true)
-    expect(periodoPermitido(90, 'unlimited')).toBe(true)
     // 7 y 30 están en todos.
     expect(periodoPermitido(30, 'gratis')).toBe(true)
   })
@@ -237,9 +208,11 @@ describe('rendimiento - textos', () => {
     expect(antiguedad(12)).toBe('hace 12 días')
   })
 
-  test('cada bloqueo explica qué desbloquea y con qué pack', () => {
-    expect(motivoUpsell('porAnuncio').detalle).toContain('Starter')
-    expect(motivoUpsell('mercado').detalle).toContain('Plus')
-    expect(motivoUpsell('exportar').detalle).toContain('Flota')
+  test('cada bloqueo explica qué desbloquea, siempre con Profesional', () => {
+    for (const capacidad of ['porAnuncio', 'serie', 'mercado', 'exportar', 'periodo90'] as const) {
+      const { titulo, detalle } = motivoUpsell(capacidad)
+      expect(titulo.length).toBeGreaterThan(0)
+      expect(detalle).toContain('Profesional')
+    }
   })
 })

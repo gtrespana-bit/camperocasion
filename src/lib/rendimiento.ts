@@ -12,17 +12,22 @@
  * justifica pagar:
  *
  *   Gratis      totales del periodo
- *   Starter     + detalle y diagnóstico por anuncio
+ *   Gratis      totales del periodo
  *   Plus        + mercado, serie diaria y precio frente a la mediana de su categoría
- *   Flota       + exportación del informe en CSV
+ *   Profesional todo: detalle, mercado, 90 días y CSV
  */
 
 export type NivelPlan = 0 | 1 | 2 | 3
 
+/**
+ * Con un solo plan de pago ya no hay escalera: gratis ve totales y
+ * Profesional lo ve todo. Los valores antiguos se conservan por si algún
+ * perfil quedó con ellos en la base.
+ */
 const NIVELES: Record<string, NivelPlan> = {
   gratis: 0,
   starter: 1,
-  plus: 2,
+  plus: 3,
   unlimited: 3,
 }
 
@@ -70,9 +75,9 @@ export function normalizarPeriodo(valor: unknown): Periodo {
   return (PERIODOS as readonly number[]).includes(n) ? (n as Periodo) : 30
 }
 
-/** Un periodo de 90 días necesita Plus; 7 y 30 están en todos los packs. */
+/** Un periodo de 90 días necesita Profesional; 7 y 30 están en todos. */
 export function periodoPermitido(periodo: Periodo, plan: string | null | undefined): boolean {
-  return periodo !== 90 || nivelPlan(plan) >= 2
+  return periodo !== 90 || nivelPlan(plan) >= 3
 }
 
 // ── Diagnóstico por anuncio ────────────────────────────────────────────────
@@ -355,29 +360,29 @@ export function motivoUpsell(
       return {
         titulo: 'Mira qué anuncio te trae compradores',
         detalle:
-          'Con Starter ves visitas, favoritos y contactos de cada anuncio, y un diagnóstico de qué cambiar.',
+          'Con Profesional ves visitas, favoritos y contactos de cada anuncio, y un diagnóstico de qué cambiar.',
       }
     case 'serie':
       return {
         titulo: 'Descubre si tu stock está subiendo o bajando',
         detalle:
-          'Plus añade la evolución diaria de 90 días y la comparativa con el resto de tu categoría.',
+          'Profesional añade la evolución diaria de 90 días y la comparativa con el resto de tu categoría.',
       }
     case 'mercado':
       return {
         titulo: 'Compara tu precio con el mercado',
         detalle:
-          'Plus te dice el precio mediano de tu categoría y cuánto tarda en venderse un anuncio como el tuyo.',
+          'Profesional te dice el precio mediano de tu categoría y cuánto tarda en venderse un anuncio como el tuyo.',
       }
     case 'exportar':
       return {
         titulo: 'Llévate el informe a tu hoja de cálculo',
-        detalle: 'Unlimited Flota permite descargar el rendimiento de todos tus anuncios en CSV.',
+        detalle: 'Profesional permite descargar el rendimiento de todos tus anuncios en CSV.',
       }
     case 'periodo90':
       return {
         titulo: 'Necesitas más perspectiva',
-        detalle: 'El periodo de 90 días está incluido en Plus y Unlimited Flota.',
+        detalle: 'El periodo de 90 días está incluido en Profesional.',
       }
   }
 }

@@ -5,7 +5,6 @@ import { setRequestLocale } from 'next-intl/server'
 import { supabase } from '@/lib/supabase-server-client'
 import { COLUMNAS_PRECIO } from '@/lib/precio'
 import { slugValido } from '@/lib/tiendas'
-import { idsDeCuenta } from '@/lib/equipo'
 import { productAbsoluteUrl } from '@/lib/product-url'
 import {
   getCiudadByMunicipio,
@@ -49,9 +48,6 @@ async function getTienda(slug: string) {
   // Una tienda desactivada no se publica, aunque conserve su slug.
   if (!perfil.tienda_activa) return null
 
-  // En Flota, el escaparate es de la cuenta: enseña también el stock que han
-  // publicado los comerciales del equipo.
-  const ids = await idsDeCuenta(perfil.id)
   const { data: prods } = await supabase
     .from('productos')
     .select(
@@ -59,7 +55,7 @@ async function getTienda(slug: string) {
         'ubicacion_ciudad, ubicacion_estado, estado, boosteado_en, destacado, destacado_hasta, ' +
         'vendedor_verificado, vendedor_tipo, verificacion_homologacion, reservado, es_demo'
     )
-    .in('user_id', ids)
+    .eq('user_id', perfil.id)
     .eq('activo', true)
     .or('estado_moderacion.is.null,estado_moderacion.eq.aprobado,estado_moderacion.eq.pendiente')
     .order('creado_en', { ascending: false })

@@ -40,7 +40,7 @@ export function planDesdeSuscripcion(sub: {
     const price = item?.price
     const key = price?.lookup_key
     if (typeof key === 'string') {
-      const match = key.match(/^camperocasion_(starter|plus|unlimited)_(mensual|anual)$/)
+      const match = key.match(/^camperocasion_(plus)_(mensual|anual)$/)
       if (match) return match[1]
     }
     const porMetadata = planDesdeMetadata(price?.metadata)

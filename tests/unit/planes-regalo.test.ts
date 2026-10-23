@@ -52,16 +52,16 @@ describe('regalo de pack desde el admin', () => {
     expect(res.extendido).toBe(false)
   })
 
-  test('cambiar de pack empieza a contar ahora, aunque pidiera extender', () => {
+  test('regalar el plan a quien no tenía nada empieza a contar ahora', () => {
     const res = calcularRegaloPlan({
-      planActual: 'starter',
-      hastaActual: EN_UN_MES,
-      plan: 'unlimited',
+      planActual: null,
+      hastaActual: null,
+      plan: 'plus',
       dias: 60,
       modo: 'extender',
       ahora: AHORA,
     })
-    expect(res.plan).toBe('unlimited')
+    expect(res.plan).toBe('plus')
     expect(dias(res.planHasta)).toBe(60)
     expect(res.extendido).toBe(false)
   })
@@ -102,7 +102,7 @@ describe('regalo de pack desde el admin', () => {
     // Con días inválidos no se regala nada: no se toca la fecha.
     const res = calcularRegaloPlan({ plan: 'plus', dias: 0, modo: 'extender', ahora: AHORA })
     expect(res.planHasta).toBeNull()
-    expect(textoResumenRegalo(res)).toContain('Plus')
+    expect(textoResumenRegalo(res)).toContain('Profesional')
   })
 })
 
@@ -111,7 +111,7 @@ describe('estado del pack', () => {
     expect(planVigente('plus', EN_UN_MES, AHORA)).toBe(true)
     expect(planVigente('plus', '2026-09-01T10:00:00Z', AHORA)).toBe(false)
     expect(planVigente('gratis', EN_UN_MES, AHORA)).toBe(false)
-    expect(planVigente('unlimited', null, AHORA)).toBe(true)
+    expect(planVigente('plus', null, AHORA)).toBe(true)
   })
 
   test('días restantes', () => {
@@ -121,9 +121,9 @@ describe('estado del pack', () => {
   })
 
   test('etiquetas y validadores', () => {
-    expect(etiquetaPlan('starter')).toBe('Starter')
-    expect(etiquetaPlan('unlimited')).toBe('Unlimited')
-    expect(etiquetaPlan(null)).toBe('Sin pack')
+    expect(etiquetaPlan('starter')).toBe('Starter (heredado)')
+    expect(etiquetaPlan('unlimited')).toBe('Unlimited (heredado)')
+    expect(etiquetaPlan(null)).toBe('Sin plan')
     expect(esPlanRegalable('gratis')).toBe(true)
     expect(esPlanRegalable('plus')).toBe(true)
     expect(esPlanRegalable('oro')).toBe(false)

@@ -76,7 +76,7 @@ export async function obtenerPrecioPlan(
     unit_amount: Math.round(precioPlan(plan, periodicidad) * 100),
     recurring: { interval: periodicidad === 'anual' ? 'year' : 'month' },
     lookup_key,
-    // Precio final para el cliente: 9/19/39 € ya llevan IVA. Stripe lo
+    // Precio final para el cliente: 19 € ya llevan IVA. Stripe lo
     // desglosa en la factura sin sumarlo por encima.
     tax_behavior: 'inclusive',
     metadata: { plan, periodicidad },

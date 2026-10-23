@@ -18,7 +18,6 @@ import LocalLink from '@/components/LocalLink'
 import {
   PLANES_PRO,
   descuentoAnualPct,
-  planRecomendado,
   precioMensualEquivalente,
   precioPlan,
   type Periodicidad,
@@ -49,12 +48,6 @@ type EstadoPlan = {
   creditos: number
 }
 
-const OPCIONES_STOCK = [
-  { id: 'pequeno', label: '1–4', vehiculos: 3 },
-  { id: 'medio', label: '5–15', vehiculos: 10 },
-  { id: 'grande', label: '16 o más', vehiculos: 16 },
-] as const
-
 function nombrePlan(id: string | null): string {
   if (!id) return ''
   return PLANES_PRO.find(p => p.id === id)?.nombre || id
@@ -70,7 +63,6 @@ export default function PlanesClient() {
   const { session, user, loading: authLoading } = useAuth()
   const pathname = usePathname()
   const [periodicidad, setPeriodicidad] = useState<Periodicidad>('mensual')
-  const [stock, setStock] = useState<(typeof OPCIONES_STOCK)[number]['id']>('medio')
   const [cupon, setCupon] = useState('')
   const [mostrarCupon, setMostrarCupon] = useState(false)
   const [msg, setMsg] = useState('')
@@ -139,8 +131,6 @@ export default function PlanesClient() {
       vivo = false
     }
   }, [session, pago, cargarEstado])
-
-  const recomendado = planRecomendado(OPCIONES_STOCK.find(o => o.id === stock)?.vehiculos ?? 5)
 
   async function contratar(plan: PlanPago) {
     setMsg('')
@@ -235,9 +225,9 @@ export default function PlanesClient() {
         <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 flex items-start gap-3">
           <BadgeCheck className="text-emerald-600 mt-0.5 shrink-0" size={22} />
           <div className="flex-1">
-            <p className="font-bold text-emerald-900">¡Pack activado! Gracias por confiar en CamperOcasión.</p>
+            <p className="font-bold text-emerald-900">¡Plan Profesional activado! Gracias por confiar en CamperOcasión.</p>
             <p className="text-sm text-emerald-800 mt-1">
-              {planPagado ? `Ya tienes el pack ${nombrePlan(planPagado)}. ` : ''}
+              {planPagado ? `Ya tienes el plan ${nombrePlan(planPagado)}. ` : ''}
               Puedes publicar tu siguiente anuncio ahora mismo. La factura llega por email desde Stripe.
             </p>
             <div className="flex flex-wrap gap-3 mt-3">
@@ -273,7 +263,7 @@ export default function PlanesClient() {
             href="/dashboard?tab=plan"
             className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2 text-sm font-bold text-white hover:bg-brand-accent-dark"
           >
-            Activar mi pack <ArrowRight size={14} />
+            Activar Profesional <ArrowRight size={14} />
           </LocalLink>
         </div>
       )}
@@ -281,11 +271,11 @@ export default function PlanesClient() {
         <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
           <div>
             <p className="font-bold text-amber-900">
-              Estás probando el pack Plus{estado.diasTrial > 0 ? ` · quedan ${estado.diasTrial} días` : ''}
+              Estás probando el plan Profesional{estado.diasTrial > 0 ? ` · quedan ${estado.diasTrial} días` : ''}
             </p>
             <p className="text-sm text-amber-800">
               Aprovecha para publicar todo tu stock. Al terminar hay 7 días de gracia y después se pausan
-              los anuncios que sobren, sin borrarlos. Activa un pack cuando quieras.
+              los anuncios que sobren, sin borrarlos. Activa Profesional cuando quieras.
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -306,13 +296,13 @@ export default function PlanesClient() {
       {session && estado?.trialElegible && (
         <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
           <div>
-            <p className="font-bold text-emerald-900">Puedes probar Plus 30 días, gratis</p>
+            <p className="font-bold text-emerald-900">Puedes probar Profesional 30 días, gratis</p>
             <p className="text-sm text-emerald-800">
               15 anuncios, 5 destacados al mes y escaparate. Sin tarjeta y sin cobro automático.
               Al terminar, 7 días de gracia y no se borra ningún anuncio.
               {estado?.tipo === 'particular' && (
                 <span className="mt-1 block text-xs text-emerald-700">
-                  Al empezar, tu cuenta pasa a «profesional» (gratis) para recibir el cupo de Plus.
+                  Al empezar, tu cuenta pasa a «profesional» (gratis) para recibir el cupo de Profesional.
                 </span>
               )}
             </p>
@@ -329,27 +319,14 @@ export default function PlanesClient() {
         </div>
       )}
 
-      {/* Selector de stock + periodicidad */}
+      {/* Periodicidad */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
           <div>
-            <p className="text-sm font-bold text-slate-900">¿Cuántas camper tienes a la venta?</p>
-            <p className="text-xs text-slate-500 mt-0.5">Te marcamos el pack que encaja. Puedes cambiarlo cuando quieras.</p>
-            <div className="mt-3 inline-flex rounded-xl bg-slate-100 p-1" role="group" aria-label="Vehículos en stock">
-              {OPCIONES_STOCK.map(o => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => setStock(o.id)}
-                  aria-pressed={stock === o.id}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
-                    stock === o.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  {o.label}
-                </button>
-              ))}
-            </div>
+            <p className="text-sm font-bold text-slate-900">Un único plan, sin escalones</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Todo lo que necesita un profesional, con 15 anuncios activos. Si algún día necesitas más, se habla.
+            </p>
           </div>
 
           <div className="lg:text-right">
@@ -381,11 +358,10 @@ export default function PlanesClient() {
         </div>
       </div>
 
-      {/* Tarjetas */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      {/* Tarjeta única */}
+      <div className="mx-auto grid max-w-md gap-4">
         {PLANES_PRO.map(p => {
           const esActual = planActual === p.id
-          const esRecomendado = recomendado === p.id
           const precio = precioPlan(p.id, periodicidad)
           const ahorro = descuentoAnualPct(p.id)
           const porAnuncio = p.cupo
@@ -394,20 +370,12 @@ export default function PlanesClient() {
           return (
             <div
               key={p.id}
-              className={`relative flex flex-col rounded-2xl border bg-white p-5 sm:p-6 transition ${
-                esRecomendado
-                  ? 'border-brand-accent shadow-lg ring-1 ring-brand-accent lg:-translate-y-1'
-                  : 'border-slate-200 hover:border-slate-300'
-              }`}
+              className={`relative flex flex-col rounded-2xl border border-brand-accent bg-white p-5 shadow-lg ring-1 ring-brand-accent sm:p-6`}
             >
               <div className="flex items-start justify-between gap-2 min-h-[24px]">
-                {esRecomendado ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-brand-accent px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-white">
-                    <Sparkles size={12} /> Recomendado para tu stock
-                  </span>
-                ) : (
-                  <span />
-                )}
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand-accent px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-white">
+                  <Sparkles size={12} /> Único plan
+                </span>
                 {esActual && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-bold text-white">
                     <Check size={12} /> Tu plan
@@ -458,9 +426,7 @@ export default function PlanesClient() {
                 className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition disabled:opacity-70 ${
                   esActual
                     ? 'bg-slate-100 text-slate-500'
-                    : esRecomendado
-                      ? 'bg-brand-accent text-white hover:bg-brand-accent-dark'
-                      : 'bg-slate-900 text-white hover:bg-slate-800'
+                    : 'bg-brand-accent text-white hover:bg-brand-accent-dark'
                 }`}
               >
                 {loading === p.id ? (
@@ -474,10 +440,6 @@ export default function PlanesClient() {
                 ) : !session ? (
                   <>
                     Empezar con {p.nombre} <ArrowRight size={16} />
-                  </>
-                ) : estado?.suscripcionStripe ? (
-                  <>
-                    Cambiar a {p.nombre} <ArrowRight size={16} />
                   </>
                 ) : estado?.trial && estado.plan === p.id ? (
                   <>
@@ -593,7 +555,7 @@ export default function PlanesClient() {
                   setError(data.error || 'No se pudo canjear el cupón.')
                   return
                 }
-                setMsg(`Cupón canjeado: pack ${data.plan} activo hasta ${fechaCorta(data.hasta)}.`)
+                setMsg(`Cupón canjeado: plan ${data.plan} activo hasta ${fechaCorta(data.hasta)}.`)
                 await cargarEstado()
               }}
               disabled={loading === 'cupon'}
@@ -604,7 +566,7 @@ export default function PlanesClient() {
           </div>
         )}
         <p className="mt-3 text-xs text-slate-500">
-          El descuento se aplica al pulsar «Elegir pack». Los cupones de días se canjean aquí sin pasar por el pago.
+          El descuento se aplica al pulsar «Elegir Profesional». Los cupones de días se canjean aquí sin pasar por el pago.
         </p>
       </div>
 
@@ -632,7 +594,7 @@ export default function PlanesClient() {
 
       {session && estado?.tipo === 'particular' && (
         <p className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-          Al contratar un pack, tu perfil pasa a <strong>profesional</strong> automáticamente (es gratis). Así
+          Al contratar Profesional, tu perfil pasa a <strong>profesional</strong> automáticamente (es gratis). Así
           recibes el cupo que pagas en lugar de quedarte en el límite de 1 anuncio.
         </p>
       )}
