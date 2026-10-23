@@ -51,6 +51,14 @@ Actualizar el paquete `stripe` no sustituye actualizar Node.
    con `cumple: true`. Si dice `cumple: false`, producción sigue vulnerable:
    redesplegar y, si persiste, escalar al proveedor.
 
+   Vigilancia automática: el cron diario `/api/cron/runtime-check` (08:00 UTC)
+   lee la versión del proceso real, guarda el último estado en
+   `plataforma_ajustes` (clave `runtime_node`) y avisa por Telegram
+   (`TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`) **solo cuando cambia algo**:
+   cuando por fin alcanza el mínimo, cuando aparece otra versión aún vulnerable
+   o cuando hay una regresión. Sin Telegram configurado no falla: responde con
+   `avisado: false`.
+
    Como comprobación secundaria, `instrumentation.ts` escribe `[runtime] Node.js ...`
    en los logs de función al arrancar cada instancia (solo en logs de ejecución,
    no en los de build). Es fácil que esa línea se pierda entre peticiones; el
@@ -78,6 +86,29 @@ respuestas que la función descarga de otros servidores**. En este código:
 No hay ningún punto donde se descomprima Brotli controlado por un tercero, así
 que el vector remoto de la aplicación está cerrado por diseño mientras se
 completa el parche del runtime.
+
+## Si Vercel sigue sirviendo un runtime sin parchear
+
+Comprobado el 2026-10-23, tras dos redespliegues sin caché y con `engines.node`
+a `>=24.22.1 <25`:
+
+| Fecha | Runtime reportado |
+|---|---|
+| 2026-10-23 22:08 | 22.23.2 (`iad1`) |
+| 2026-10-23 22:33 | 24.21.0 (`iad1`) |
+| 2026-10-23 22:4x | 24.21.0 (`iad1`, redeploy manual) |
+
+El build sí cumple el mínimo: con `engine-strict=true`, un build por debajo de
+24.22.1 habría fallado. Lo que queda desactualizado es la imagen de las
+funciones, que Vercel gestiona por su cuenta y va rotando de forma gradual.
+
+No hay ajuste en el repositorio que lo resuelva: `engines.node` fija la rama y
+el selector del dashboard solo ofrece majors. Mientras se resuelve:
+
+- El WAF de Vercel bloquea el vector de entrada del CVE desde el 21 de octubre.
+- La aplicación no decodifica Brotli de terceros (ver la sección de exposición).
+- Rotar la clave de Stripe **después** de que el runtime cumpla, no antes.
+- Escalar a Vercel con el commit, la región y la evidencia de la tabla anterior.
 
 ## Rotación después de asegurar los entornos
 
