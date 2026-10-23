@@ -28,9 +28,27 @@ Actualizar el paquete `stripe` no sustituye actualizar Node.
    que ya esté parcheado. Confirmar con el proveedor si es necesario.
 4. Desplegar los cambios desde una fuente revisada, sin reutilizar la caché de
    build. El build debe mostrar Node 22.23.4 o un parche posterior de la rama 22.
-5. Invocar una ruta dinámica del servidor y comprobar en los logs de funciones
-   el mensaje `[runtime] Node.js ...`. Verificar **también** allí >=22.23.4 <23.
-   La comprobación del build no comprueba el runtime de las funciones serverless.
+5. Preguntar al runtime real, no al build. Abrir con sesión de admin:
+
+   ```
+   https://<dominio>/api/diagnostico/runtime
+   ```
+
+   o desde terminal (sin pegar el secreto en el historial compartido):
+
+   ```
+   curl -s -H "Authorization: Bearer $CRON_SECRET" https://<dominio>/api/diagnostico/runtime
+   ```
+
+   La respuesta trae `runtime.node`, `runtime.cumple`, `runtime.region` y el
+   `commit` desplegado. Debe indicar 22.23.4 o un parche posterior de la rama 22
+   con `cumple: true`. Si dice `cumple: false`, producción sigue vulnerable:
+   redesplegar y, si persiste, escalar al proveedor.
+
+   Como comprobación secundaria, `instrumentation.ts` escribe `[runtime] Node.js ...`
+   en los logs de función al arrancar cada instancia (solo en logs de ejecución,
+   no en los de build). Es fácil que esa línea se pierda entre peticiones; el
+   endpoint es la fuente fiable.
    Si producción sigue vulnerable, no considerar el incidente resuelto: solicitar
    actualización al proveedor y restringir/suspender el servicio afectado según
    el riesgo hasta disponer de un runtime parcheado.
