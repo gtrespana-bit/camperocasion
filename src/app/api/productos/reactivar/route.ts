@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { requireUser } from '@/lib/require-auth'
 import { requireUUIDs } from '@/lib/validation'
 import { revalidarListadosPublicos } from '@/lib/revalidar'
+import { cupoDeUsuario } from '@/lib/planes-servidor'
 
 export async function POST(request: NextRequest) {
   const auth = await requireUser(request)
@@ -42,11 +43,43 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Un producto rechazado requiere revisión administrativa' }, { status: 409 })
   }
 
-  const { error } = await sb
+  // Republicar un vendido vuelve a ocupar cupo.
+  const { resumen } = await cupoDeUsuario(auth.user.id)
+  if (!resumen.puedePublicar) {
+    return NextResponse.json(
+      {
+        error: resumen.max == null
+          ? 'No se pudo reactivar el producto.'
+          : `Tu plan permite ${resumen.max} anuncio${resumen.max === 1 ? '' : 's'} activo${resumen.max === 1 ? '' : 's'}. Pausa otro o amplía el pack.`,
+        codigo: 'CUPO',
+        cupo: { max: resumen.max, usados: resumen.usados },
+      },
+      { status: 403 },
+    )
+  }
+
+  let { error } = await sb
     .from('productos')
-    .update({ activo: true, vendido: false, vendido_en: null, comprador_id: null })
+    .update({
+      activo: true,
+      vendido: false,
+      vendido_en: null,
+      comprador_id: null,
+      pausado_por_plan: false,
+      pausado_en: null,
+    })
     .eq('id', body.productoId)
     .eq('user_id', auth.user.id)
+
+  if (error) {
+    // Compatibilidad si la migración de la fase 2 aún no está aplicada.
+    const retry = await sb
+      .from('productos')
+      .update({ activo: true, vendido: false, vendido_en: null, comprador_id: null })
+      .eq('id', body.productoId)
+      .eq('user_id', auth.user.id)
+    error = retry.error
+  }
 
   if (error) {
     return NextResponse.json({ error: 'No se pudo reactivar el producto' }, { status: 500 })

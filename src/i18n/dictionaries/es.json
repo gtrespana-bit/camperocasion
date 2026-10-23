@@ -163,6 +163,7 @@
         "desc": "Rota tu stock de campers y autocaravanas con perfil verificado y llega a compradores que buscan justo lo que vendes."
       },
       "cta": "Vender gratis",
+      "plansCta": "Planes y precios",
       "buyCta": "Comprar a {tipo}"
     },
     "guides": {
@@ -226,7 +227,8 @@
       "error": "Error al registrar",
       "subtitle": "Únete gratis. Empieza a vender hoy.",
       "creating": "Creando cuenta...",
-      "sellerTypeLabel": "¿Qué tipo de vendedor eres?"
+      "sellerTypeLabel": "¿Cómo vas a vender?",
+    "sellerTypeHint": "Es gratis y podrás cambiarlo cuando quieras. Tu primera camper se publica sin coste."
     },
     "confirmacion": {
       "title": "¡Casi listo!",
@@ -445,7 +447,7 @@
   "tiposVendedor": {
     "particular": "Particular",
     "camperizador": "Camperizador",
-    "profesional": "Pro",
+    "profesional": "Profesional",
     "particularDesc": "Vendo mi camper o equipamiento",
     "camperizadorDesc": "Camperizo y vendo mis proyectos",
     "profesionalDesc": "Empresa, taller o concesionario",
@@ -545,6 +547,8 @@
     "successTitle": "¡Publicado con éxito! 🎉",
     "successDesc": "Tu camper ya está publicado en CamperOcasión. Te avisaremos cuando te escriban.",
     "successFree": "Publicación 100% GRATIS · 0 comisiones · Siempre",
+    "successBoostCta": "Destacar este anuncio",
+    "successPlansCta": "Tengo más stock: ver packs",
     "whatsappMsg": "Hola, vi tu anuncio de {title} en CamperOcasión. ¿Sigue disponible?",
     "relatedTitle": "También te puede interesar",
     "savedCount": "{count, plural, =1 {1 persona lo guardó} other {# personas lo guardaron}}",
@@ -629,13 +633,14 @@
     "title": "Publicar algo",
     "freeBanner": "Publicar tu camper es gratis",
     "freeBannerDesc": "Sin comisión por venta. Los particulares tienen un cupo de anuncios activos para que el catálogo no se llene de stock de empresa.",
-    "lanzamientoBanner": "Mes de prueba profesional",
-    "lanzamientoBannerDesc": "Desde tu alta tienes el pack Plus (15 anuncios) mientras el admin mantenga la promo.",
+    "lanzamientoBanner": "Estás probando el pack Plus",
+    "lanzamientoBannerDesc": "Tienes 15 anuncios y 5 destacados de prueba. Cuando termine, tus anuncios siguen publicados y no se cobra nada automáticamente.",
     "cupoResumen": "{usados} de {max} anuncios activos ({restantes} libres).",
     "cupoLlenoTitulo": "Has llegado al cupo de anuncios activos",
     "cupoLleno": "Has llegado al límite de anuncios activos. Pausa o marca como vendido uno, o amplía como profesional.",
-    "verPlanes": "Ver planes para profesionales",
-    "cambiarAPro": "Si eres taller o compraventa, cambia tu tipo de vendedor en el panel",
+    "verPlanes": "Ver packs (desde 9 €/mes)",
+    "cambiarAPro": "Contratar un pack",
+    "pausarUno": "Pausar o marcar vendido uno",
     "stepsDesc": "Completa la información en 4 pasos sencillos.",
     "stepCategory": "Categoría",
     "stepDetails": "Detalles",
@@ -784,7 +789,8 @@
     "noReviews": "Aun no tienes resenas. Los compradores podran dejarte una despues de una transaccion.",
     "tabReservations": "Reservas",
     "tabInspecciones": "Inspecciones",
-    "sellerTypeLabel": "¿Qué tipo de vendedor eres?",
+    "sellerTypeLabel": "¿Cómo vas a vender?",
+    "sellerTypeHint": "Es gratis y podrás cambiarlo cuando quieras. Tu primera camper se publica sin coste.",
     "sellerTypeHint": "Se muestra junto a tus anuncios para que los compradores sepan quién vende."
   },
   "contact": {

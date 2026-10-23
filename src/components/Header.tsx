@@ -4,7 +4,7 @@ import LocalLink from '@/components/LocalLink'
 import SiteAnnouncement from '@/components/SiteAnnouncement'
 import { useState, useEffect, Fragment } from 'react'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Search, PlusCircle, MessageCircle, Zap, ChevronLeft, Globe } from 'lucide-react'
+import { Menu, X, Search, PlusCircle, MessageCircle, Zap, ChevronLeft, Globe, Sparkles } from 'lucide-react'
 import { useAuth } from '@/components/AuthProvider'
 import BrandLogo from '@/components/BrandLogo'
 import Avatar from '@/components/Avatar'
@@ -192,9 +192,13 @@ export function Header() {
                 <span className="text-xs font-medium">{isEn ? 'ES' : 'EN'}</span>
               </a>
 
-              {/* Credits — solo usuarios con sesión */}
+              {/* Credits y plan — solo usuarios con sesión */}
               {user && (
               <>
+              <LocalLink href="/para-profesionales" className="hidden lg:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm font-medium transition" title="Planes y packs">
+                <Sparkles size={16} className="text-brand-accent" />
+                <span className="hidden xl:inline">Planes</span>
+              </LocalLink>
               <LocalLink href="/creditos" className="relative hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm font-medium transition" title={t('header.creditsTitle')}>
                 <Zap size={16} className="text-brand-accent" />
                 <span className="hidden lg:inline">{t('header.credits')}</span>
@@ -304,8 +308,10 @@ export function Header() {
                     <LocalLink href="/chat" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/10 transition">💬 {t('header.messages')}{unreadCount > 0 ? t('header.messagesWithCount').replace('{count}', String(unreadCount)) : ''}</LocalLink>
                     <LocalLink href="/dashboard" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/10 transition">👤 {t('header.myPanel')}</LocalLink>
                     <LocalLink href="/creditos" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/10 transition">⚡ {t('header.credits')}{creditoChecked && creditoBalance !== null && creditoBalance > 0 ? t('header.creditsAvailable').replace('{count}', String(creditoBalance)) : ''}</LocalLink>
+                    <LocalLink href="/para-profesionales" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/10 transition">🏷️ Planes y packs</LocalLink>
                   </>
                 )}
+                <LocalLink href="/para-profesionales" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/10 transition">🏷️ Planes para profesionales</LocalLink>
                 <LocalLink href="/blog" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/10 transition">📝 {t('header.blog')}</LocalLink>
                 <LocalLink href="/catalogo" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/10 transition">{t('header.viewCatalog')}</LocalLink>
               </nav>

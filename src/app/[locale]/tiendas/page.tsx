@@ -112,14 +112,14 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
           <Store size={36} className="mx-auto text-gray-300 mb-3" />
           <p className="text-gray-700 font-semibold mb-1">Todavía no hay tiendas publicadas</p>
           <p className="text-sm text-gray-500 mb-5">
-            ¿Eres camperizador o vendedor profesional? Abre tu tienda gratis y enseña todo tu stock
-            en una página propia.
+            ¿Eres camperizador o vendedor profesional? Abre tu escaparate con un pack desde 9 €/mes
+            y enseña todo tu stock en una página propia.
           </p>
           <LocalLink
-            href="/dashboard"
+            href="/para-profesionales"
             className="inline-block bg-brand-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-dark transition"
           >
-            Abrir mi tienda
+            Ver packs y abrir mi tienda
           </LocalLink>
         </div>
       ) : (
@@ -172,14 +172,14 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
           <div className="bg-gradient-to-br from-brand-primary to-brand-dark text-white rounded-2xl p-8 mt-10 text-center">
             <h2 className="text-2xl font-bold mb-2">¿Vendes campers de forma profesional?</h2>
             <p className="opacity-90 mb-5 max-w-xl mx-auto">
-              Abre tu tienda gratis: una página con tu logo, tu stock completo y tu dirección web
-              propia que puedes enlazar desde tu Instagram.
+              Abre tu escaparate con un pack: una página con tu logo, tu stock completo y tu
+              dirección web propia que puedes enlazar desde tu Instagram.
             </p>
             <LocalLink
-              href="/dashboard"
+              href="/para-profesionales"
               className="inline-block bg-white text-brand-primary px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition"
             >
-              Abrir mi tienda
+              Ver packs
             </LocalLink>
           </div>
         </>

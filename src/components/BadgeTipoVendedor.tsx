@@ -10,7 +10,7 @@ export function esTipoVendedor(valor: unknown): valor is TipoVendedor {
 }
 
 /**
- * Chip "Particular / Camperizador / Pro" que identifica quién vende el
+ * Chip "Particular / Camperizador / Profesional" que identifica quién vende el
  * anuncio. Colores y emoji por tipo para reconocerlo de un vistazo en
  * cards, ficha de producto, página del vendedor y publicación.
  */

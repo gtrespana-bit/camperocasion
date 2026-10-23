@@ -159,9 +159,29 @@ public/                        # Logo, iconos PWA, og-image, manifest
 
 ## Monetización
 
-Publicar es gratis. Opcionalmente, los vendedores compran **créditos**
-(boost al #1 y destacados) por **Bizum, transferencia o PayPal**, con
-comprobante y aprobación. Paquetes: 2 / 15 / 40 / 100 créditos.
+Hay tres capas separadas (análisis completo en
+[`docs/MODELO-CUENTAS-Y-MONETIZACION-2026-10.md`](./docs/MODELO-CUENTAS-Y-MONETIZACION-2026-10.md)):
+
+1. **Identidad** (`particular` / `camperizador` / `profesional`): gratis. Da
+   sello y filtros; no es un plan.
+2. **Plan** (`gratis` / Starter 9 € / Plus 19 € / Unlimited 39 €, o anual con 2
+   meses gratis): capacidad de anuncios, fotos, destacados incluidos y
+   escaparate. Se cobra con Stripe (suscripción) y se gestiona desde el portal
+   de cliente.
+3. **Créditos** (2 / 15 / 40 / 100): visibilidad puntual (boost al #1 y
+   destacados), pago único por Stripe, Bizum, transferencia o PayPal.
+
+Publicar la primera camper es gratis. El escaparate requiere un pack (o la
+prueba de 30 días) para tiendas nuevas; las ya publicadas se mantienen.
+
+La prueba tiene **fechas reales por cuenta**, 7 días de gracia al terminar y
+avisos por email/push (10, 3 y 1 días). Cuando acaba, los anuncios que exceden
+el cupo se **pausan, no se borran**, y se reactivan al ampliar el pack. Si falla
+un cobro, el plan sigue activo hasta `plan_hasta` y se avisa por email
+(`invoice.payment_failed`), con recordatorios a 3 y 7 días.
+
+Migración de la fase 2:
+`supabase/migrations/202610220001_planes_prueba_gracia_dunning.sql`.
 
 ## Panel admin
 

@@ -82,6 +82,7 @@ export function Footer() {
                   ['Contrato de compraventa', '/contrato-compraventa'],
                   ['Gestoría cambio de nombre', '/gestoria-cambio-nombre'],
                   ['Compra segura', '/compra-segura-camper'],
+                  ['Planes para profesionales', '/para-profesionales'],
                   [t('footer.howItWorks'), '/como-funciona'],
                   [t('footer.aboutUs'), '/sobre-nosotros'],
                   ['FAQ', '/faq'],

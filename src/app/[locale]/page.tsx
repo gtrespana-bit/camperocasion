@@ -566,6 +566,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   >
                     {t('home.audiences.buyCta', { tipo: t(`tiposVendedor.${a.plural}`) })}
                   </LocalLink>
+                  {a.key !== 'private' && (
+                    <LocalLink
+                      href="/para-profesionales"
+                      className="inline-flex items-center gap-1 text-sm font-semibold text-brand-primary hover:text-brand-accent transition"
+                    >
+                      {t('home.audiences.plansCta')} <ArrowRight size={13} />
+                    </LocalLink>
+                  )}
                 </div>
               </div>
             ))}

@@ -3,7 +3,7 @@
 import LocalLink from '@/components/LocalLink'
 
 import { useState, useEffect } from 'react'
-import { CreditCard, Zap, Star, X, CheckCircle, Upload, Loader2 } from 'lucide-react'
+import { CreditCard, Zap, Star, X, CheckCircle, Upload, Loader2, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import { PAQUETES_CREDITO } from '@/lib/creditos'
@@ -68,6 +68,22 @@ export default function TabCreditos({ creditos, refreshCreditos }: { creditos: n
             <p className="text-sm text-gray-600 mt-1">4cr/12h · 6cr/24h · 10cr/48h</p>
           </div>
         </div>
+      </div>
+
+      {/* Puente plan <-> créditos */}
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <p className="font-bold text-gray-900">¿Publicas varias camper?</p>
+          <p className="text-sm text-gray-600">
+            Con un pack tienes más anuncios y destacados incluidos cada mes. Desde 9 €/mes.
+          </p>
+        </div>
+        <LocalLink
+          href="/para-profesionales"
+          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-brand-primary px-4 py-2 text-sm font-bold text-white hover:bg-brand-dark"
+        >
+          Ver packs <ArrowRight size={15} />
+        </LocalLink>
       </div>
 
       {/* Paquetes */}

@@ -1,8 +1,87 @@
 # Stripe — créditos y suscripciones de packs
 
 Los packs profesionales (Starter/Plus/Unlimited) se cobran como **suscripción**
-(`POST /api/planes/checkout`). En el webhook de Stripe hay que escuchar también
-`customer.subscription.updated` y `customer.subscription.deleted`.
+(`POST /api/planes/checkout`). En el webhook de Stripe hay que escuchar:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.paid` → renueva `plan_hasta` en cada periodo (sin esto el plan
+  caducaría aunque el cliente siga pagando)
+- `invoice.payment_failed` → no corta el acceso de inmediato; deja el plan
+  hasta `plan_hasta`
+
+## Suscripciones (2026-10-22)
+
+- **Mensual o anual.** El anual son 10 mensualidades (2 meses gratis):
+  Starter 90 €, Plus 190 €, Flota 390 €.
+- Los precios viven en Stripe con `lookup_key` estable
+  (`camperocasion_<plan>_<mensual|anual>`, ver `src/lib/stripe-precios.ts`).
+  No se usa `price_data` en suscripciones: así el producto es siempre el mismo,
+  el portal y las facturas son coherentes y se puede cambiar de pack sin abrir
+  una segunda suscripción.
+- **Bizum no admite cobros recurrentes.** En suscripciones solo se ofrece
+  tarjeta (Apple Pay / Google Pay incluidos). Bizum sigue disponible para
+  créditos.
+- **Cambio de pack**: `POST /api/planes/checkout` actualiza la suscripción
+  existente con prorrateo; el webhook `customer.subscription.updated` aplica el
+  nuevo plan y `plan_hasta`.
+- **Portal de cliente**: `POST /api/planes/portal`. Activarlo no es suficiente:
+  hay que configurar la **configuración por defecto** en Stripe →
+  Settings → Billing → Customer portal:
+  - datos del negocio (nombre, dirección, email de soporte, condiciones y
+    privacidad) — obligatorio en la UE;
+  - activar actualización de método de pago, historial de facturas,
+    cancelación **al final del periodo**, dirección y NIF/CIF;
+  - «cambiar de plan»: si lo activas, el plan se deduce del `lookup_key` del
+    precio en el webhook, pero el prorrateo y el upsell dejan de pasar por
+    nuestro checkout. Recomendado dejarlo apagado.
+  - No hace falta crear una `configuration` propia: la API usa la de defecto.
+- **NIF/CIF**: el checkout usa `tax_id_collection`.
+- **IVA incluido**: los precios se crean con `tax_behavior: 'inclusive'`
+  (9/19/39 € son precio final). `obtenerPrecioPlan` corrige los precios
+  existentes que estuvieran en `unspecified`; si ya eran `exclusive` (Stripe
+  no deja cambiarlo), crea un precio nuevo con el mismo `lookup_key` para que
+  las altas nuevas no paguen el IVA por encima. **Los suscriptores antiguos
+  siguen en el precio viejo**: si los hubiera, hay que cambiarles el precio a
+  mano desde Stripe (Suscripción → actualizar precio). No actives Stripe Tax
+  para ventas nacionales.
+- Si un particular contrata, el webhook lo pasa a `profesional`.
+
+### Dunning y fin de periodo
+
+| Evento | Qué hace |
+|---|---|
+| `invoice.paid` | Renueva `plan_hasta` con `current_period_end`, limpia `pago_pendiente_desde` y republica los anuncios pausados por cupo. |
+| `invoice.payment_failed` | Marca `pago_pendiente_desde` (solo el primer fallo del ciclo), manda el email de tarjeta y **no corta el acceso**. El cron `/api/cron/planes` recuerda a los 3 y 7 días. |
+| `customer.subscription.deleted` | Baja a `gratis`, limpia el dunning. El cron pausa al día siguiente los anuncios que exceden el cupo (no borra). |
+| `customer.subscription.updated` | Aplica el plan del metadata o, si falta, del `lookup_key`; en `past_due` no toca el plan. |
+
+`invoice.*` se resuelve recuperando la suscripción y su `current_period_end`:
+una factura no trae el fin de periodo de forma fiable en todas las versiones
+de la API.
+
+**Quién corta el acceso**: no lo decide la web, lo decide el calendario de
+reintentos de Stripe. Configúralo en Settings → Billing → Subscriptions and
+emails → «Manage failed payments» (recomendado: 4 reintentos en 2 semanas y
+cancelar al final). Cuando Stripe marca la suscripción como `unpaid` o la
+cancela, llega `customer.subscription.updated/deleted` y el webhook baja a
+`gratis`. Nuestros emails a 1, 3 y 7 días son recordatorios, no el corte.
+
+### Checklist de prueba en modo test
+
+1. Contratar Starter mensual → webhook → plan activo.
+2. Contratar anual → precio 90 €.
+3. Cambiar a Plus → una sola suscripción, prorrateo.
+4. Abrir portal → cancelar al final del periodo → seguir activo hasta
+   `plan_hasta` → al llegar la fecha, `customer.subscription.deleted` y baja.
+5. Simular fallo de tarjeta (`4000 0000 0000 0341`) → email de dunning, plan
+   sigue activo; pagar la factura → `invoice.paid` limpia el aviso.
+6. Terminar una prueba (`trial_hasta` en el pasado) → 7 días de gracia →
+   el cron pausa los anuncios que sobran y llega el email con los títulos.
+7. `stripe listen --forward-to localhost:3000/api/stripe/webhook` para probar
+   los eventos firmados en local.
 
 # Stripe — cobro automático de créditos
 

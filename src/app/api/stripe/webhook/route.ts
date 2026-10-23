@@ -17,19 +17,48 @@
  *
  * Configuración en Stripe (Dashboard → Developers → Webhooks):
  *   URL     https://camperocasion.online/api/stripe/webhook
- *   Eventos checkout.session.completed, checkout.session.async_payment_succeeded
+ *   Eventos checkout.session.completed, checkout.session.async_payment_succeeded,
+ *           customer.subscription.updated, customer.subscription.deleted,
+ *           invoice.paid, invoice.payment_failed
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import type Stripe from 'stripe'
 import { getStripe, getWebhookSecret } from '@/lib/stripe'
 import { decidirAccionPago, esEventoAcreditable } from '@/lib/stripe-pagos'
-import { aplicarPlanPerfil, sbAdmin } from '@/lib/planes-servidor'
-import { esCheckoutDePlan, planDesdeMetadata, periodoHastaUnix, userIdDesdeStripe } from '@/lib/stripe-planes'
+import { aplicarPlanPerfil, marcarPagoFallido, sbAdmin } from '@/lib/planes-servidor'
+import { esCheckoutDePlan, planDesdeMetadata, planDesdeSuscripcion, periodoHastaUnix, userIdDesdeStripe } from '@/lib/stripe-planes'
+import { etiquetaPlan } from '@/lib/planes-anuncios'
+import { enviarEmailPagoFallido } from '@/email/server-email'
 
 export const dynamic = 'force-dynamic'
 // El cuerpo debe llegar tal cual para poder verificar la firma.
 export const runtime = 'nodejs'
+
+/**
+ * Aviso inmediato de cobro fallido. Solo se envía la primera vez del ciclo
+ * (`marcarPagoFallido` devuelve la fecha marcada o null): Stripe reintenta
+ * varias veces y no queremos un email por reintento.
+ */
+async function avisarPagoFallido(userId: string, plan: string | null, fechaFin: string | null) {
+  try {
+    const sb = sbAdmin()
+    const [{ data: authData }, { data: perfil }] = await Promise.all([
+      sb.auth.admin.getUserById(userId),
+      sb.from('perfiles').select('nombre').eq('id', userId).maybeSingle(),
+    ])
+    const email = authData?.user?.email
+    if (!email) return
+    await enviarEmailPagoFallido(email, perfil?.nombre || '', {
+      plan: plan ? etiquetaPlan(plan) : 'tu pack',
+      fechaFin,
+    })
+  } catch (e: any) {
+    // Un fallo del correo no debe hacer que Stripe reintente el webhook: el
+    // cobro ya está registrado y el aviso se reintenta en el cron diario.
+    console.error('[stripe/webhook] email de cobro fallido:', e?.message || e)
+  }
+}
 
 export async function POST(req: NextRequest) {
   const stripe = getStripe()
@@ -66,17 +95,87 @@ export async function POST(req: NextRequest) {
       await aplicarPlanPerfil(userId, { plan: 'gratis', hasta: null, stripeSubscriptionId: sub.id })
       return NextResponse.json({ recibido: true, plan: 'gratis' })
     }
-    const plan = planDesdeMetadata(sub.metadata as Record<string, string>)
+    // El metadata manda; si falta (cambio desde el portal), se deduce del
+    // `lookup_key` del precio.
+    const plan = planDesdeSuscripcion(sub)
     if (plan && (sub.status === 'active' || sub.status === 'trialing')) {
       await aplicarPlanPerfil(userId, {
         plan,
         hasta: periodoHastaUnix((sub as any).current_period_end),
         stripeCustomerId: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
         stripeSubscriptionId: sub.id,
+        // Un particular que contrata un pack pasa a profesional: es la única
+        // forma de que reciba de verdad el cupo que está pagando.
+        promoverAProfesional: true,
       })
       return NextResponse.json({ recibido: true, plan })
     }
     return NextResponse.json({ recibido: true, status: sub.status })
+  }
+
+  // Renovaciones y fallos de cobro de una suscripción.
+  //
+  // `customer.subscription.updated` no siempre llega en cada renovación, y sin
+  // esto el `plan_hasta` de la base se quedaría en el primer periodo: el
+  // cliente pagaría el segundo mes y la web le bajaría al plan gratuito. El
+  // evento `invoice.paid` es la señal fiable de que el dinero ha entrado.
+  if (evento.type === 'invoice.paid' || evento.type === 'invoice.payment_failed') {
+    const invoice = evento.data.object as any
+    const subId =
+      typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : invoice.subscription?.id || invoice.parent?.subscription_details?.subscription
+    if (!subId) {
+      return NextResponse.json({ recibido: true, ignorado: 'factura sin suscripción' })
+    }
+    try {
+      const sub = await stripe.subscriptions.retrieve(String(subId))
+      const userId = userIdDesdeStripe(sub)
+      const plan = planDesdeSuscripcion(sub)
+      const hasta = periodoHastaUnix((sub as any).current_period_end)
+
+      if (evento.type === 'invoice.payment_failed') {
+        // Dunning: se marca el primer fallo del ciclo y se avisa una sola vez.
+        // El acceso NO se corta aquí: `plan_hasta` sigue mandando y el cron
+        // diario recuerda a los 3 y 7 días.
+        if (userId) {
+          const marcado = await marcarPagoFallido(userId)
+          if (marcado) {
+            await avisarPagoFallido(userId, plan, hasta)
+            // El cron diario también mira este fallo; se deja la marca para no
+            // mandar dos veces el aviso del día 1.
+            try {
+              await sbAdmin().from('plan_avisos').insert({
+                user_id: userId,
+                clave: `pago_fallido_1d:${marcado.slice(0, 10)}`,
+                tipo: 'pago_fallido_1d',
+                canal: 'email',
+              })
+            } catch {
+              /* migración pendiente */
+            }
+          }
+        }
+        return NextResponse.json({ recibido: true, status: sub.status, factura: evento.type })
+      }
+
+      // invoice.paid: renovación (o primer cobro). Sin esto, el segundo mes
+      // pagado podía dejar `plan_hasta` en el primer periodo.
+      if (userId && plan && (sub.status === 'active' || sub.status === 'trialing')) {
+        await aplicarPlanPerfil(userId, {
+          plan,
+          hasta,
+          stripeCustomerId: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
+          stripeSubscriptionId: sub.id,
+          promoverAProfesional: true,
+        })
+        return NextResponse.json({ recibido: true, plan, factura: evento.type })
+      }
+      return NextResponse.json({ recibido: true, status: sub.status, factura: evento.type })
+    } catch (e: any) {
+      console.error('[stripe/webhook] factura de suscripción:', e?.message || e)
+      return NextResponse.json({ recibido: true, error: 'suscripción no recuperable' })
+    }
   }
 
   // Solo nos interesan los pagos completados. El resto se confirma con 200
@@ -109,6 +208,7 @@ export async function POST(req: NextRequest) {
       hasta,
       stripeCustomerId: typeof session.customer === 'string' ? session.customer : session.customer?.id,
       stripeSubscriptionId: subId || null,
+      promoverAProfesional: true,
     })
     const codigo = session.metadata?.cupon
     if (codigo) {

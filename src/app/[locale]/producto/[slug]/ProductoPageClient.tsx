@@ -299,6 +299,22 @@ function ProductoPageClientInner({
                   {copiado ? t('copied') : t('copyLink')}
                 </button>
               </div>
+              {/* Momento de máxima intención: acaba de publicar y ve su anuncio.
+                  Aquí sí tiene sentido ofrecer visibilidad, no antes. */}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <LocalLink
+                  href="/dashboard?tab=productos"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-2 text-xs font-bold text-amber-900 hover:bg-amber-200"
+                >
+                  ⭐ {t('successBoostCta')}
+                </LocalLink>
+                <LocalLink
+                  href="/para-profesionales"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-green-300 bg-white px-3 py-2 text-xs font-bold text-green-800 hover:bg-green-50"
+                >
+                  {t('successPlansCta')}
+                </LocalLink>
+              </div>
             </div>
           </div>
         </div>

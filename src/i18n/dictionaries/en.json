@@ -163,6 +163,7 @@
         "desc": "Rotate your camper and motorhome stock with a verified profile and reach buyers looking for exactly what you sell."
       },
       "cta": "Sell for free",
+      "plansCta": "Plans & pricing",
       "buyCta": "Buy from {tipo}"
     },
     "guides": {
@@ -226,7 +227,8 @@
       "error": "Registration error",
       "subtitle": "Join for free. Start selling today.",
       "creating": "Creating account...",
-      "sellerTypeLabel": "What kind of seller are you?"
+      "sellerTypeLabel": "How will you sell?",
+    "sellerTypeHint": "It's free and you can change it later. Your first camper listing costs nothing."
     },
     "confirmacion": {
       "title": "Almost there!",
@@ -445,7 +447,7 @@
   "tiposVendedor": {
     "particular": "Private seller",
     "camperizador": "Camper builder",
-    "profesional": "Pro",
+    "profesional": "Professional",
     "particularDesc": "Selling my camper or gear",
     "camperizadorDesc": "I build and sell camper projects",
     "profesionalDesc": "Company, workshop or dealership",
@@ -545,6 +547,8 @@
     "successTitle": "Published successfully! 🎉",
     "successDesc": "Your camper is now live on CamperOcasión. We'll notify you about new messages.",
     "successFree": "100% FREE listing · 0 commissions · Always",
+    "successBoostCta": "Feature this listing",
+    "successPlansCta": "I have more stock: see packs",
     "whatsappMsg": "Hi, I saw your listing {title} on CamperOcasión. Is it still available?",
     "relatedTitle": "You might also like",
     "savedCount": "{count, plural, =1 {1 person saved it} other {# people saved it}}",
@@ -629,13 +633,14 @@
     "title": "Post something",
     "freeBanner": "Listing your camper is free",
     "freeBannerDesc": "No sale commission. Private sellers have an active-listing cap so company stock cannot hide behind a personal account.",
-    "lanzamientoBanner": "Professional trial month",
-    "lanzamientoBannerDesc": "From sign-up you get the Plus pack (15 listings) while the admin keeps the promo on.",
+    "lanzamientoBanner": "You are trying the Plus pack",
+    "lanzamientoBannerDesc": "You have 15 listings and 5 featured slots during the trial. When it ends your listings stay live and nothing is charged automatically.",
     "cupoResumen": "{usados} of {max} active listings ({restantes} left).",
     "cupoLlenoTitulo": "You have reached your active listing quota",
     "cupoLleno": "You have reached the active listing limit. Pause or mark one as sold, or upgrade as a professional.",
-    "verPlanes": "See professional plans",
-    "cambiarAPro": "If you are a workshop or dealer, change your seller type in the dashboard",
+    "verPlanes": "See packs (from €9/month)",
+    "cambiarAPro": "Get a pack",
+    "pausarUno": "Pause or mark one as sold",
     "stepsDesc": "Complete the information in 4 simple steps.",
     "stepCategory": "Category",
     "stepDetails": "Details",
@@ -784,7 +789,8 @@
     "noReviews": "No reviews yet. Buyers can leave one after a transaction.",
     "tabReservations": "Reservations",
     "tabInspecciones": "Inspections",
-    "sellerTypeLabel": "What kind of seller are you?",
+    "sellerTypeLabel": "How will you sell?",
+    "sellerTypeHint": "It's free and you can change it later. Your first camper listing costs nothing.",
     "sellerTypeHint": "Shown next to your listings so buyers know who is selling."
   },
   "contact": {

@@ -185,12 +185,24 @@ async function informeEstado(sb: Cliente, rango: Rango): Promise<EstadoPlataform
 
   // Planes: se leen los perfiles con la columna de pack (paginado, tope 5.000).
   const perfiles: any[] = []
+  // `trial_hasta` es de la migración de fase 2. Si aún no está aplicada, se
+  // cae al cálculo antiguo en vez de dejar las estadísticas vacías.
+  let conTrialGuardado = true
   for (let pagina = 0; pagina < 5; pagina += 1) {
+    const columnas = conTrialGuardado
+      ? 'id, plan_anuncios, plan_hasta, tipo_vendedor, creado_en, trial_hasta'
+      : 'id, plan_anuncios, plan_hasta, tipo_vendedor, creado_en'
     const { data, error } = await sb
       .from('perfiles')
-      .select('id, plan_anuncios, plan_hasta, tipo_vendedor, creado_en')
+      .select(columnas)
       .order('creado_en', { ascending: false })
       .range(pagina * PAGINA_SUPABASE, pagina * PAGINA_SUPABASE + PAGINA_SUPABASE - 1)
+
+    if (error && conTrialGuardado) {
+      conTrialGuardado = false
+      pagina -= 1
+      continue
+    }
     if (error || !data || data.length === 0) break
     perfiles.push(...data)
     if (data.length < PAGINA_SUPABASE) break
@@ -222,15 +234,19 @@ async function informeEstado(sb: Cliente, rango: Rango): Promise<EstadoPlataform
     mesGratisActivo = valor.mes_gratis_activo !== false
     diasGratis = Number(valor.dias_gratis) > 0 ? Number(valor.dias_gratis) : 30
   }
-  const usuariosEnPrueba = mesGratisActivo
-    ? perfiles.filter(
-        (p) =>
-          p.tipo_vendedor !== 'particular' &&
-          !vigente(p) &&
-          p.creado_en &&
-          new Date(p.creado_en).getTime() + diasGratis * 86400000 >= ahora,
-      ).length
-    : 0
+  const usuariosEnPrueba = perfiles.filter((p) => {
+    if (p.tipo_vendedor === 'particular' || vigente(p)) return false
+    if (p.trial_hasta) {
+      // Fechas reales: la prueba sigue viva aunque el ajuste global esté apagado.
+      return new Date(p.trial_hasta).getTime() >= ahora
+    }
+    // Compatibilidad con bases sin la migración de fase 2.
+    return Boolean(
+      mesGratisActivo &&
+        p.creado_en &&
+        new Date(p.creado_en).getTime() + diasGratis * 86400000 >= ahora,
+    )
+  }).length
 
   const packsPorPlan = ['starter', 'plus', 'unlimited'].map((plan) => ({
     plan,
