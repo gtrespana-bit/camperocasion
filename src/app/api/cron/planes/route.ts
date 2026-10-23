@@ -143,7 +143,7 @@ function textoEmail(
       return enviarEmailPagoFallido(perfil.email, perfil.nombre || '', {
         plan: perfil.plan_anuncios && perfil.plan_anuncios !== 'gratis'
           ? etiquetaPlan(perfil.plan_anuncios)
-          : 'tu pack',
+          : 'tu plan Profesional',
         fechaFin: perfil.plan_hasta,
         diasGracia: DIAS_GRACIA_TRIAL,
       })
@@ -412,7 +412,7 @@ export async function GET(request: NextRequest) {
       if (email) {
         try {
           const r = await enviarEmailWinback(email, perfil.nombre || '', {
-            plan: baja.tipo && baja.tipo !== 'baja' ? etiquetaPlan(baja.tipo) : 'profesional',
+            plan: baja.tipo && baja.tipo !== 'baja' ? etiquetaPlan(baja.tipo) : 'Profesional',
             fechaFin: fecha,
           })
           if (r) {

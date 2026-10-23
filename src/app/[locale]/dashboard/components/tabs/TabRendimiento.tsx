@@ -163,9 +163,9 @@ function Bloqueo({
               href="/para-profesionales"
               className="inline-flex items-center gap-1.5 rounded-xl bg-brand-primary px-3.5 py-2 text-sm font-bold text-white hover:bg-brand-dark"
             >
-              Ver packs <ArrowRight size={14} />
+              Ver Profesional <ArrowRight size={14} />
             </LocalLink>
-            <span className="text-xs text-slate-500">Desde 9 €/mes · sin permanencia</span>
+            <span className="text-xs text-slate-500">19 €/mes · sin permanencia</span>
           </div>
         </div>
       </div>
@@ -279,7 +279,7 @@ export default function TabRendimiento() {
         </div>
         <div className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-white p-1">
           {PERIODOS.map((p) => {
-            const bloqueado = p === 90 && datos.nivel < 2
+            const bloqueado = p === 90 && datos.nivel < 3
             return (
               <button
                 key={p}
@@ -435,7 +435,7 @@ export default function TabRendimiento() {
             </button>
           ) : (
             <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
-              <Lock size={12} /> Exportar en Flota
+              <Lock size={12} /> Exportar en Profesional
             </span>
           )}
         </div>
@@ -528,30 +528,23 @@ export default function TabRendimiento() {
         )}
       </section>
 
-      {/* Cierre: qué desbloquea el siguiente pack */}
-      {datos.nivel < 3 && (
+      {/* Cierre: qué desbloquea el plan Profesional */}
+      {datos.nivel === 0 && (
         <section className="rounded-2xl border border-brand-primary/20 bg-gradient-to-br from-brand-primary/5 to-brand-accent/5 p-5">
           <p className="flex items-center gap-2 font-bold text-slate-900">
             <CheckCircle2 size={17} className="text-brand-primary" />
-            {datos.nivel === 0
-              ? 'Starter te enseña qué anuncio te trae compradores'
-              : datos.nivel === 1
-                ? 'Plus compara tu precio y tu velocidad de venta con el mercado'
-                : 'Flota te deja exportar el informe completo'}
+            Profesional te enseña qué anuncio te trae compradores
           </p>
           <p className="mt-1 text-sm text-slate-600">
-            {datos.nivel === 0
-              ? 'Detalle por anuncio, contactos reales y diagnóstico automático. Desde 9 €/mes.'
-              : datos.nivel === 1
-                ? 'Precio mediano de tu categoría, días hasta vender y evolución de 90 días. Desde 19 €/mes.'
-                : 'CSV con visitas, favoritos, contactos y diagnóstico de todos tus anuncios.'}
+            Detalle por anuncio, contactos reales, comparativa con el mercado, 90 días de histórico
+            y exportación en CSV. 19 €/mes.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <LocalLink
               href="/para-profesionales"
               className="inline-flex items-center gap-1.5 rounded-xl bg-brand-primary px-4 py-2 text-sm font-bold text-white hover:bg-brand-dark"
             >
-              {datos.nivel === 0 ? 'Empezar con Starter' : datos.nivel === 1 ? 'Pasar a Plus' : 'Ver Flota'}
+              Hacerme Profesional
               <ArrowRight size={14} />
             </LocalLink>
             <LocalLink href="/dashboard?tab=plan" className="text-sm font-semibold text-slate-600 hover:underline">

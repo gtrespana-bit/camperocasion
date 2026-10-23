@@ -437,12 +437,12 @@ export default function CreditosPage() {
       </div>
 
       {/* Puente plan <-> créditos: quien compra visibilidad varias veces al
-          mes ahorra con un pack, que ya incluye destacados. */}
+          mes ahorra con el plan Profesional, que ya incluye destacados. */}
       <div className="mb-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <p className="font-bold text-gray-900">¿Tienes varias camper a la venta?</p>
           <p className="text-sm text-gray-600">
-            Los packs desde 9 €/mes incluyen 3–15 destacados al mes, más anuncios y
+            El plan Profesional (19 €/mes) incluye 5 destacados al mes, 15 anuncios y
             escaparate propio. Suele salir más barato que comprar créditos sueltos.
           </p>
         </div>
@@ -450,7 +450,7 @@ export default function CreditosPage() {
           href="/para-profesionales"
           className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-dark"
         >
-          Ver packs <ArrowRight size={15} />
+          Ver planes <ArrowRight size={15} />
         </LocalLink>
       </div>
 

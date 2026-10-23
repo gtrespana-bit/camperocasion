@@ -33,8 +33,8 @@ describe('RegalarPlanModal', () => {
   it('previsualiza la fecha de fin sumando los días al pack vigente', () => {
     render(<RegalarPlanModal usuario={USUARIO} onClose={() => {}} notify={() => {}} />)
 
-    // 30 días de Plus sumados al final del pack que ya tenía.
-    expect(screen.getByText(/Plus hasta el/i)).toBeInTheDocument()
+    // 30 días de Profesional sumados al final del plan que ya tenía.
+    expect(screen.getByText(/Profesional hasta el/i)).toBeInTheDocument()
     expect(screen.getByText(/Se suman 30 días al final/i)).toBeInTheDocument()
     expect(screen.getByText(/quedan \d+ días/)).toBeInTheDocument()
   })
@@ -55,7 +55,7 @@ describe('RegalarPlanModal', () => {
       ok: true,
       json: async () => ({
         ok: true,
-        resumen: 'Unlimited hasta el 29 de octubre de 2026',
+        resumen: 'Profesional hasta el 29 de octubre de 2026',
         emailEnviado: true,
         cambiaTipo: false,
       }),
@@ -65,10 +65,9 @@ describe('RegalarPlanModal', () => {
 
     render(<RegalarPlanModal usuario={USUARIO} onClose={onClose} notify={notify} />)
 
-    await user.click(screen.getByText('Unlimited'))
     await user.click(screen.getByRole('button', { name: /90/i }))
     await user.type(screen.getByPlaceholderText(/acuerdo de colaboración/i), 'colaboración')
-    await user.click(screen.getByRole('button', { name: /Regalar 90 días de Unlimited/i }))
+    await user.click(screen.getByRole('button', { name: /Regalar 90 días de Profesional/i }))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled())
     const [url, opciones] = fetchMock.mock.calls[0]
@@ -76,12 +75,12 @@ describe('RegalarPlanModal', () => {
     const cuerpo = JSON.parse(String((opciones as RequestInit).body))
     expect(cuerpo).toMatchObject({
       userId: USUARIO.id,
-      plan: 'unlimited',
+      plan: 'plus',
       dias: 90,
       modo: 'extender',
       motivo: 'colaboración',
     })
-    expect(notify).toHaveBeenCalledWith(expect.stringContaining('Unlimited'))
+    expect(notify).toHaveBeenCalledWith(expect.stringContaining('Profesional'))
     expect(onClose).toHaveBeenCalled()
   })
 
@@ -89,8 +88,8 @@ describe('RegalarPlanModal', () => {
     const user = userEvent.setup()
     render(<RegalarPlanModal usuario={USUARIO} onClose={() => {}} notify={() => {}} />)
 
-    await user.click(screen.getByText('Sin pack'))
-    expect(screen.getByRole('button', { name: /Quitar pack/i })).toBeInTheDocument()
+    await user.click(screen.getByText('Sin plan'))
+    expect(screen.getByRole('button', { name: /Quitar plan/i })).toBeInTheDocument()
     expect(screen.queryByText(/^Días$/)).not.toBeInTheDocument()
     expect(screen.getByText(/La cuenta vuelve al plan gratuito/i)).toBeInTheDocument()
   })

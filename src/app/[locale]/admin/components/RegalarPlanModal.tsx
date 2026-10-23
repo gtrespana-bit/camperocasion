@@ -23,17 +23,15 @@ export interface UsuarioRegalable {
 }
 
 const PACKS: { id: PlanRegalable; nombre: string; detalle: string; emoji: string }[] = [
-  { id: 'starter', nombre: 'Starter', detalle: '5 anuncios · 3 destacados', emoji: '🚐' },
-  { id: 'plus', nombre: 'Plus', detalle: '15 anuncios · 5 destacados', emoji: '⭐' },
-  { id: 'unlimited', nombre: 'Unlimited', detalle: 'anuncios ilimitados', emoji: '💠' },
-  { id: 'gratis', nombre: 'Sin pack', detalle: 'quitar el pack regalado', emoji: '↩️' },
+  { id: 'plus', nombre: 'Profesional', detalle: '15 anuncios · 5 destacados', emoji: '⭐' },
+  { id: 'gratis', nombre: 'Sin plan', detalle: 'quitar el plan regalado', emoji: '↩️' },
 ]
 
 /**
- * Modal para regalar días de pack a un usuario concreto.
+ * Modal para regalar días de plan a un usuario concreto.
  *
  * Es la pieza que faltaba: el admin ve en la propia previsualización hasta
- * cuándo queda activo el pack (`calcularRegaloPlan`, la misma función que usa
+ * cuándo queda activo el plan (`calcularRegaloPlan`, la misma función que usa
  * la API) y decide si los días se suman al final del periodo vigente o si
  * empiezan a contar ahora.
  */
@@ -119,7 +117,7 @@ export default function RegalarPlanModal({
       onClose={onClose}
       title={
         <span className="inline-flex items-center gap-2">
-          <Gift size={17} className="text-brand-primary" /> Regalar pack
+          <Gift size={17} className="text-brand-primary" /> Regalar plan
         </span>
       }
       subtitle={`${usuario.nombre || 'Usuario'}${usuario.email ? ` · ${usuario.email}` : ''}`}
@@ -133,7 +131,7 @@ export default function RegalarPlanModal({
             disabled={busy || (plan !== 'gratis' && dias < 1)}
           >
             {busy ? <RefreshCw className="animate-spin" size={14} /> : <Gift size={14} />}
-            {plan === 'gratis' ? 'Quitar pack' : `Regalar ${dias} días de ${etiquetaPlan(plan)}`}
+            {plan === 'gratis' ? 'Quitar plan' : `Regalar ${dias} días de ${etiquetaPlan(plan)}`}
           </Button>
         </>
       }
@@ -151,7 +149,7 @@ export default function RegalarPlanModal({
         </div>
 
         <div>
-          <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500">Pack</label>
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500">Plan</label>
           <div className="grid grid-cols-2 gap-2">
             {PACKS.map((p) => (
               <button
@@ -216,8 +214,8 @@ export default function RegalarPlanModal({
               />
               <p className="mt-1 text-[11px] text-gray-400">
                 {modo === 'extender'
-                  ? 'Si ya tiene el mismo pack activo, los días se añaden al final; si no, empiezan ahora.'
-                  : 'Los días empiezan a contar ahora, aunque tuviera pack pendiente.'}
+                  ? 'Si ya tiene el mismo plan activo, los días se añaden al final; si no, empiezan ahora.'
+                  : 'Los días empiezan a contar ahora, aunque tuviera plan pendiente.'}
               </p>
             </div>
           </>
@@ -244,7 +242,7 @@ export default function RegalarPlanModal({
             />
             <span>
               Marcar la cuenta como <strong>profesional</strong> si ahora es particular. Un particular tiene 1 anuncio
-              activo aunque se le regale un pack: sin este cambio, los 5/15/ilimitados no sirven de nada.
+              activo aunque se le regale un plan: sin este cambio, los 5/15/ilimitados no sirven de nada.
             </span>
           </label>
         )}
@@ -260,9 +258,9 @@ export default function RegalarPlanModal({
               </p>
               <p className="mt-0.5 text-xs text-gray-500">
                 {previsualizacion.extendido
-                  ? `Se suman ${dias} días al final del pack que ya tenía.`
+                  ? `Se suman ${dias} días al final del plan que ya tenía.`
                   : plan === 'gratis'
-                    ? 'Se borra la fecha de fin del pack.'
+                    ? 'Se borra la fecha de fin del plan.'
                     : `Empieza a contar ahora (${dias} días).`}
                 {previsualizacion.plan !== 'gratis' ? ' Sin cargos ni Stripe: es un regalo.' : ''}
               </p>

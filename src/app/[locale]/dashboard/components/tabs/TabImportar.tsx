@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Importación de stock desde CSV (Plus y Unlimited Flota).
+ * Importación de stock desde CSV (plan Profesional).
  *
  * Es la función que hace que un compraventa con 14 furgonetas pueda pasar de
  * Excel a publicado en dos minutos. Por eso la vista previa es obligatoria:
@@ -87,7 +87,7 @@ export default function TabImportar() {
       .finally(() => setCargandoPlan(false))
   }, [])
 
-  const permitido = plan === 'plus' || plan === 'unlimited'
+  const permitido = plan === 'plus'
 
   const analizar = useCallback(async () => {
     setError('')
@@ -207,17 +207,16 @@ export default function TabImportar() {
                 <Lock size={16} />
               </span>
               <div>
-                <p className="font-bold text-slate-800">Disponible en Plus y Unlimited Flota</p>
+                <p className="font-bold text-slate-800">Disponible en el plan Profesional</p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Starter permite 5 anuncios, que se publican a mano en un rato. La importación
-                  masiva tiene sentido a partir de 15: Plus (15 anuncios y 20 fotos) o Flota (sin
-                  límite, 30 fotos y exportación de informes).
+                  Con 15 anuncios activos, subir el stock a mano son 15 formularios. La importación
+                  desde CSV los publica de una vez, con vista previa y errores por línea.
                 </p>
                 <LocalLink
                   href="/para-profesionales"
                   className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-brand-primary px-4 py-2 text-sm font-bold text-white hover:bg-brand-dark"
                 >
-                  Ver packs desde 9 €/mes <ArrowRight size={14} />
+                  Ver Profesional, 19 €/mes <ArrowRight size={14} />
                 </LocalLink>
               </div>
             </div>
@@ -344,7 +343,7 @@ export default function TabImportar() {
             <p className="mt-2 text-sm text-amber-800">
               {resultado.sinCupo} anuncio(s) válidos no caben en tu plan.{' '}
               <LocalLink href="/para-profesionales" className="font-semibold underline">
-                Amplía el pack
+                Hazte Profesional
               </LocalLink>{' '}
               y vuelve a subir solo esas filas.
             </p>
@@ -481,7 +480,7 @@ export default function TabImportar() {
                 {previa.restantes ?? '∞'}. Se importarán las primeras {previa.importables} filas
                 válidas.{' '}
                 <LocalLink href="/para-profesionales" className="font-semibold underline">
-                  Ver packs
+                  Ver Profesional
                 </LocalLink>
               </span>
             </div>

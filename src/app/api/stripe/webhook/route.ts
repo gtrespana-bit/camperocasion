@@ -50,7 +50,7 @@ async function avisarPagoFallido(userId: string, plan: string | null, fechaFin: 
     const email = authData?.user?.email
     if (!email) return
     await enviarEmailPagoFallido(email, perfil?.nombre || '', {
-      plan: plan ? etiquetaPlan(plan) : 'tu pack',
+      plan: plan ? etiquetaPlan(plan) : 'tu plan Profesional',
       fechaFin,
     })
   } catch (e: any) {

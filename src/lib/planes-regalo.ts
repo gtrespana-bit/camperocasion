@@ -124,10 +124,10 @@ export function diasRestantesDePlan(
 }
 
 export function etiquetaPlan(plan: string | null | undefined): string {
-  if (plan === 'starter') return 'Starter'
-  if (plan === 'plus') return 'Plus'
-  if (plan === 'unlimited') return 'Unlimited'
-  return 'Sin pack'
+  if (plan === 'plus') return 'Profesional'
+  if (plan === 'starter') return 'Starter (heredado)'
+  if (plan === 'unlimited') return 'Unlimited (heredado)'
+  return 'Sin plan'
 }
 
 /** ¿Tiene el usuario un pack de pago vigente ahora mismo? */
@@ -143,7 +143,7 @@ export function planVigente(
 }
 
 export function textoResumenRegalo(resultado: ResultadoRegalo): string {
-  if (resultado.plan === 'gratis') return 'Pack retirado: la cuenta vuelve al plan gratuito.'
+  if (resultado.plan === 'gratis') return 'Plan retirado: la cuenta vuelve al plan gratuito.'
   const hasta = resultado.planHasta
   const fecha = hasta
     ? hasta.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })

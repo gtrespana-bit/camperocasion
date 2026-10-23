@@ -53,7 +53,7 @@ type RegaloPlan = {
 
 type PacksInfo = {
   ok: boolean
-  resumen: { starter: number; plus: number; unlimited: number; total: number }
+  resumen: { plus: number; total: number }
   packs: PackActivo[]
   regalos: RegaloPlan[]
 }
@@ -203,7 +203,7 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
         <div>
           <h2 className="text-xl font-black text-gray-900">Planes, regalos y cupones</h2>
           <p className="text-sm text-gray-500">
-            Packs de pago, prueba gratuita, cupones y regalos directos de tiempo gratis a un usuario.
+            Planes de pago, prueba gratuita, cupones y regalos directos de tiempo gratis a un usuario.
           </p>
         </div>
         <RefreshButton onClick={refrescarTodo} loading={refreshing} />
@@ -212,7 +212,7 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
       <Card>
         <h3 className="font-bold text-gray-900 mb-1">Prueba gratuita (nuevas altas)</h3>
         <p className="text-sm text-gray-500 mb-4">
-          Si está activo, cada profesional/camperizador nuevo tiene {diasGratis} días con el pack Plus
+          Si está activo, cada profesional/camperizador nuevo tiene {diasGratis} días con el plan Profesional
           desde el alta (o desde que un particular se pasa a profesional). Apagarlo deja de conceder
           pruebas nuevas, pero <strong>no corta</strong> las que ya están en curso: sus fechas están
           guardadas en el perfil. Al terminar hay 7 días de gracia.
@@ -237,13 +237,13 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
         </div>
       </Card>
 
-      {/* ── Regalo directo de pack ─────────────────────────────── */}
+      {/* ── Regalo directo de plan ─────────────────────────────── */}
       <Card className="border-brand-primary/30">
         <h3 className="mb-1 flex items-center gap-2 font-bold text-gray-900">
-          <Gift size={18} className="text-brand-primary" /> Regalar pack a un usuario
+          <Gift size={18} className="text-brand-primary" /> Regalar plan a un usuario
         </h3>
         <p className="mb-4 text-sm text-gray-500">
-          Días de Starter, Plus o Unlimited gratis para una cuenta concreta, sin cupón y sin Stripe. El usuario recibe
+          Días de Profesional gratis para una cuenta concreta, sin cupón y sin Stripe. El usuario recibe
           un email de aviso y el regalo queda anotado en la bitácora de abajo.
         </p>
 
@@ -278,7 +278,7 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
                     {restantes != null ? ` · ${restantes} d` : ''}
                   </Badge>
                 ) : (
-                  <span className="hidden text-xs text-gray-400 sm:block">Sin pack</span>
+                  <span className="hidden text-xs text-gray-400 sm:block">Sin plan</span>
                 )}
                 <Button size="xs" variant={vigente ? 'outline' : 'primary'} onClick={() => setRegalo(u)}>
                   <Gift size={13} /> Regalar
@@ -297,14 +297,12 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
       {packsInfo && (
         <Card>
           <h3 className="mb-3 flex items-center gap-2 font-bold text-gray-900">
-            <Users size={18} className="text-brand-primary" /> Packs activos ahora mismo
+            <Users size={18} className="text-brand-primary" /> Planes activos ahora mismo
           </h3>
           <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { label: 'Starter', valor: packsInfo.resumen.starter, tone: 'blue' as const },
-              { label: 'Plus', valor: packsInfo.resumen.plus, tone: 'brand' as const },
-              { label: 'Unlimited', valor: packsInfo.resumen.unlimited, tone: 'purple' as const },
-              { label: 'Total con pack', valor: packsInfo.resumen.total, tone: 'gray' as const },
+              { label: 'Profesional', valor: packsInfo.resumen.plus, tone: 'brand' as const },
+              { label: 'Total con plan', valor: packsInfo.resumen.total, tone: 'gray' as const },
             ].map((kpi) => (
               <div key={kpi.label} className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
                 <p className="text-2xl font-black text-gray-900">{kpi.valor}</p>
@@ -320,7 +318,7 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
               <thead>
                 <tr className="border-b text-left text-xs uppercase tracking-wide text-gray-500">
                   <th className="py-2">Usuario</th>
-                  <th>Pack</th>
+                  <th>Plan</th>
                   <th>Activo hasta</th>
                   <th>Restan</th>
                   <th>Tipo de cuenta</th>
@@ -365,7 +363,7 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
               </tbody>
             </table>
             {packsInfo.packs.length === 0 && (
-              <p className="py-4 text-sm text-gray-500">Nadie tiene pack de pago todavía (ni regalado).</p>
+              <p className="py-4 text-sm text-gray-500">Nadie tiene plan de pago todavía (ni regalado).</p>
             )}
           </div>
 
@@ -410,7 +408,7 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
               </tbody>
             </table>
             {packsInfo.regalos.length === 0 && (
-              <p className="py-4 text-sm text-gray-500">Aún no has regalado ningún pack.</p>
+              <p className="py-4 text-sm text-gray-500">Aún no has regalado ningún plan.</p>
             )}
           </div>
         </Card>
@@ -422,7 +420,7 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
           <label className="block">
             Tipo
             <select value={tipo} onChange={e => setTipo(e.target.value as any)} className="mt-1 w-full border rounded-lg px-3 py-2">
-              <option value="regalo_dias">Regalo de días de pack</option>
+              <option value="regalo_dias">Regalo de días de plan</option>
               <option value="descuento">Descuento % en Stripe</option>
             </select>
           </label>
@@ -431,11 +429,9 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
             <input value={codigo} onChange={e => setCodigo(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2" placeholder="MAYO-20" />
           </label>
           <label className="block">
-            Pack
+            Plan
             <select value={plan} onChange={e => setPlan(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2">
-              <option value="starter">Starter</option>
-              <option value="plus">Plus</option>
-              <option value="unlimited">Unlimited</option>
+              <option value="plus">Profesional</option>
             </select>
           </label>
           <label className="block">
@@ -444,7 +440,7 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
           </label>
           {tipo === 'regalo_dias' ? (
             <label className="block">
-              Días de pack
+              Días de plan
               <input type="number" value={dias} onChange={e => setDias(Number(e.target.value))} className="mt-1 w-full border rounded-lg px-3 py-2" />
             </label>
           ) : (
@@ -475,7 +471,7 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
         <Button className="mt-4" onClick={crear}>Generar cupón</Button>
         <p className="mt-2 text-xs text-gray-400">
           El cupón lo canjea el propio usuario desde su panel y exige cuenta profesional. Para dárselo tú directamente, usa
-          «Regalar pack a un usuario».
+          «Regalar plan a un usuario».
         </p>
       </Card>
 
@@ -500,7 +496,7 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
                   <td>{c.tipo === 'descuento' ? 'Descuento' : 'Regalo'}</td>
                   <td>
                     {c.tipo === 'descuento'
-                      ? `${c.porcentaje}% × ${c.meses_descuento} mes(es) ${c.plan || 'cualquier pack'}`
+                      ? `${c.porcentaje}% × ${c.meses_descuento} mes(es) ${c.plan || 'cualquier plan'}`
                       : `${c.dias} días de ${c.plan}`}
                   </td>
                   <td>{c.usos}{c.max_usos != null ? ` / ${c.max_usos}` : ''}</td>

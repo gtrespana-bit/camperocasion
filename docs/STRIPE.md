@@ -1,6 +1,6 @@
-# Stripe — créditos y suscripciones de packs
+# Stripe — créditos y suscripción Profesional
 
-Los packs profesionales (Starter/Plus/Unlimited) se cobran como **suscripción**
+El plan Profesional se cobra como **suscripción**
 (`POST /api/planes/checkout`). En el webhook de Stripe hay que escuchar:
 
 - `checkout.session.completed`
@@ -15,18 +15,20 @@ Los packs profesionales (Starter/Plus/Unlimited) se cobran como **suscripción**
 ## Suscripciones (2026-10-22)
 
 - **Mensual o anual.** El anual son 10 mensualidades (2 meses gratis):
-  Starter 90 €, Plus 190 €, Flota 390 €.
+  **19 €/mes o 190 €/año**. Un único plan de pago.
+- El plan se muestra como «Profesional»; su id interno sigue siendo `plus`
+  para no romper las constraints y funciones SQL que ya lo conocen. Las claves
+  de Stripe son `camperocasion_plus_mensual` y `camperocasion_plus_anual`.
 - Los precios viven en Stripe con `lookup_key` estable
   (`camperocasion_<plan>_<mensual|anual>`, ver `src/lib/stripe-precios.ts`).
   No se usa `price_data` en suscripciones: así el producto es siempre el mismo,
-  el portal y las facturas son coherentes y se puede cambiar de pack sin abrir
-  una segunda suscripción.
+  el portal y las facturas son coherentes y no se abren suscripciones duplicadas.
 - **Bizum no admite cobros recurrentes.** En suscripciones solo se ofrece
   tarjeta (Apple Pay / Google Pay incluidos). Bizum sigue disponible para
   créditos.
-- **Cambio de pack**: `POST /api/planes/checkout` actualiza la suscripción
-  existente con prorrateo; el webhook `customer.subscription.updated` aplica el
-  nuevo plan y `plan_hasta`.
+- **Cambio de periodicidad**: `POST /api/planes/checkout` actualiza la
+  suscripción existente con prorrateo; el webhook
+  `customer.subscription.updated` aplica el plan y `plan_hasta`.
 - **Un cliente por vendedor**: la compra de créditos (`POST /api/stripe/checkout`)
   reutiliza `perfiles.stripe_customer_id` igual que la suscripción, y lo guarda
   si Stripe crea uno al vuelo. Así el portal enseña facturas de packs y de
@@ -75,16 +77,16 @@ cancela, llega `customer.subscription.updated/deleted` y el webhook baja a
 
 ### Checklist de prueba en modo test
 
-1. Contratar Starter mensual → webhook → plan activo.
-2. Contratar anual → precio 90 €.
-3. Cambiar a Plus → una sola suscripción, prorrateo.
+1. Contratar Profesional mensual → webhook → plan activo.
+2. Contratar anual → precio 190 €.
+3. Cambiar de mensual a anual → una sola suscripción, prorrateo.
 4. Abrir portal → cancelar al final del periodo → seguir activo hasta
    `plan_hasta` → al llegar la fecha, `customer.subscription.deleted` y baja.
 5. Simular fallo de tarjeta (`4000 0000 0000 0341`) → email de dunning, plan
    sigue activo; pagar la factura → `invoice.paid` limpia el aviso.
-6. Terminar una prueba (`trial_hasta` en el pasado) → 7 días de gracia →
+5. Terminar una prueba (`trial_hasta` en el pasado) → 7 días de gracia →
    el cron pausa los anuncios que sobran y llega el email con los títulos.
-7. `stripe listen --forward-to localhost:3000/api/stripe/webhook` para probar
+6. `stripe listen --forward-to localhost:3000/api/stripe/webhook` para probar
    los eventos firmados en local.
 
 # Stripe — cobro automático de créditos

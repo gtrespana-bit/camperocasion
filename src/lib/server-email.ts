@@ -320,8 +320,8 @@ export async function emailSubidaNivel(
   ))
 }
 
-// ─── 6. Pack regalado por el equipo ────────────────────────
-// El admin puede regalar días de pack desde /admin → Planes y cupones o desde
+// ─── 6. Plan regalado por el equipo ────────────────────────
+// El admin puede regalar días de plan desde /admin → Planes y cupones o desde
 // la ficha de un usuario. Avisar por email evita el «¿por qué tengo 15
 // anuncios si yo no he pagado nada?».
 export async function emailPlanRegalado(
@@ -331,13 +331,13 @@ export async function emailPlanRegalado(
   hasta: string,
   dias: number,
 ): Promise<boolean> {
-  return enviar(email, `🎁 Te hemos activado el pack ${planNombre}`, emailLayout(
-    `Pack ${planNombre} de regalo`,
+  return enviar(email, `🎁 Te hemos activado el plan ${planNombre}`, emailLayout(
+    `Plan ${planNombre} de regalo`,
     `<p style="margin:0 0 16px">Hola <strong>${htmlText(nombre)}</strong>,</p>
-     <p style="margin:0 0 20px">El equipo de CamperOcasión te ha activado el pack <strong>${htmlText(planNombre)}</strong> sin coste, para que puedas publicar y vender con más margen.</p>
+     <p style="margin:0 0 20px">El equipo de CamperOcasión te ha activado el plan <strong>${htmlText(planNombre)}</strong> sin coste, para que puedas publicar y vender con más margen.</p>
      ${card(`
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-         ${priceLine('Pack', planNombre)}
+         ${priceLine('Plan', planNombre)}
          ${priceLine('Días regalados', `${dias}`)}
          <tr style="border-top:1px solid ${COLORS.lightGray}"><td style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:14px;color:${COLORS.gray}">Activo hasta</td><td align="right" style="padding-top:8px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:18px;font-weight:700;color:${COLORS.success}">${htmlText(hasta)}</td></tr>
        </table>
@@ -348,24 +348,3 @@ export async function emailPlanRegalado(
   ))
 }
 
-// ─── Equipo de Flota ───────────────────────────────────────
-
-/**
- * Invitación a la cuenta Flota. El enlace lleva el token de un solo uso; el
- * comercial debe entrar con el mismo email al que se envía.
- */
-export async function emailInvitacionEquipo(
-  email: string,
-  nombreInvitado: string,
-  nombreTitular: string,
-  enlace: string,
-): Promise<boolean> {
-  return enviar(email, `🤝 ${nombreTitular} te invita a su equipo en CamperOcasión`, emailLayout(
-    'Te han invitado a un equipo',
-    `<p style="margin:0 0 16px">Hola <strong>${htmlText(nombreInvitado || 'comercial')}</strong>,</p>
-     <p style="margin:0 0 20px"><strong>${htmlText(nombreTitular)}</strong> te ha añadido como comercial de su cuenta <strong>Unlimited Flota</strong>. Podrás publicar anuncios con tu propio usuario, dentro del cupo del equipo y sin pagar nada.</p>
-     <p style="margin:0 0 20px;color:${COLORS.gray};font-size:14px">Entra con la cuenta de CamperOcasión de <strong>${htmlText(email)}</strong> para aceptar. Si no tienes cuenta, créala con este mismo email.</p>`,
-    'Aceptar invitación',
-    enlace,
-  ))
-}

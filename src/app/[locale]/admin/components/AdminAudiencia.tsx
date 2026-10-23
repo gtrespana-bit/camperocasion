@@ -609,7 +609,7 @@ export default function AdminAudiencia({ notify }: { notify: (msg: string) => vo
               { label: 'Anuncios activos', valor: estado.anunciosActivos },
               { label: 'Anuncios vendidos', valor: estado.anunciosVendidos },
               { label: 'Usuarios activos en el periodo', valor: estado.usuariosActivos },
-              { label: 'Usuarios con pack de pago', valor: estado.usuariosConPack },
+              { label: 'Usuarios con plan de pago', valor: estado.usuariosConPack },
               { label: 'En mes de prueba', valor: estado.usuariosEnPrueba },
               { label: 'Vendidos en el periodo', valor: estado.anunciosVendidosPeriodo },
               { label: 'Reseñas en el periodo', valor: actividad.resenas },
@@ -622,10 +622,10 @@ export default function AdminAudiencia({ notify }: { notify: (msg: string) => vo
             ))}
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-gray-600">
-            <span className="font-semibold">Packs activos:</span>
+            <span className="font-semibold">Planes activos:</span>
             {estado.packsPorPlan.map((p) => (
-              <Badge key={p.plan} tone={p.plan === 'starter' ? 'blue' : p.plan === 'plus' ? 'brand' : 'purple'}>
-                {p.plan === 'starter' ? 'Starter' : p.plan === 'plus' ? 'Plus' : 'Unlimited'} · {p.usuarios}
+              <Badge key={p.plan} tone={p.plan === 'plus' ? 'brand' : 'gray'}>
+                {p.plan === 'plus' ? 'Profesional' : `${p.plan} (heredado)`} · {p.usuarios}
               </Badge>
             ))}
             {estado.porcentajeAnunciosConVisitas != null && (

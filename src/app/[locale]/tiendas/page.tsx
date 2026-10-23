@@ -112,14 +112,14 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
           <Store size={36} className="mx-auto text-gray-300 mb-3" />
           <p className="text-gray-700 font-semibold mb-1">Todavía no hay tiendas publicadas</p>
           <p className="text-sm text-gray-500 mb-5">
-            ¿Eres camperizador o vendedor profesional? Abre tu escaparate con un pack desde 9 €/mes
+            ¿Eres camperizador o vendedor profesional? Abre tu escaparate con el plan Profesional por 19 €/mes
             y enseña todo tu stock en una página propia.
           </p>
           <LocalLink
             href="/para-profesionales"
             className="inline-block bg-brand-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-dark transition"
           >
-            Ver packs y abrir mi tienda
+            Ver planes y abrir mi tienda
           </LocalLink>
         </div>
       ) : (
@@ -179,7 +179,7 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
               href="/para-profesionales"
               className="inline-block bg-white text-brand-primary px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition"
             >
-              Ver packs
+              Ver planes
             </LocalLink>
           </div>
         </>

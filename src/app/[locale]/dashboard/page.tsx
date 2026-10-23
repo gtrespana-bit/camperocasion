@@ -16,7 +16,6 @@ import TabMensajes from './components/tabs/TabMensajes'
 import TabCreditos from './components/tabs/TabCreditos'
 import TabRendimiento from './components/tabs/TabRendimiento'
 import TabImportar from './components/tabs/TabImportar'
-import TabEquipo from './components/tabs/TabEquipo'
 import TabFavoritos from './components/tabs/TabFavoritos'
 import BoostModal from './components/modals/BoostModal'
 import DestacadoModal from './components/modals/DestacadoModal'
@@ -355,11 +354,6 @@ export default function DashboardPage() {
           {activeTab === 'importar' && (
             <Suspense fallback={<div className="p-12 text-center text-gray-500">Cargando…</div>}>
               <TabImportar />
-            </Suspense>
-          )}
-          {activeTab === 'equipo' && (
-            <Suspense fallback={<div className="p-12 text-center text-gray-500">Cargando…</div>}>
-              <TabEquipo />
             </Suspense>
           )}
           {activeTab === 'mensajes' && <TabMensajes />}
