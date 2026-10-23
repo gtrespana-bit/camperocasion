@@ -21,6 +21,28 @@
   para que reciba el cupo pagado (`aplicarPlanPerfil` →
   `promoverAProfesional`).
 
+## Qué añade cada escalón (no es solo cupo)
+
+Lo que empuja a subir de pack no es el número de anuncios: es que el pack de
+arriba hace un trabajo que el de abajo obliga a hacer a mano.
+
+| Función | Gratis | Starter | Plus | Flota |
+| --- | --- | --- | --- | --- |
+| Estadísticas del periodo | Totales | + por anuncio y diagnóstico | + serie diaria, mercado y 90 días | + exportación CSV |
+| Importar stock desde CSV | — | — | ✅ (hasta 100 filas) | ✅ |
+| Fotos por anuncio | 10 | 10 | 20 | 30 |
+| Escaparate | — | ✅ | ✅ | ✅ |
+
+- **Rendimiento** (`/dashboard?tab=rendimiento`): la escalera vive en
+  `nivelPlan()` (`src/lib/rendimiento.ts`) y es la única fuente de verdad; la
+  pestaña no decide nada por su cuenta. El RPC `rendimiento_vendedor()` solo
+  es accesible con `service_role`.
+- **Importación CSV** (`/dashboard?tab=importar`,
+  `POST /api/productos/importar`): previa obligatoria y después confirmación.
+  Solo Plus y Flota; el cupo se recorta en el servidor (`min(restantes,
+  válidas)`) y la moderación se recalcula allí, igual que en `/api/publicar`.
+  Cada fila es un alta: reimportar el mismo archivo duplica.
+
 ## Prueba de 30 días (fase 2, 2026-10-22)
 
 - Cada cuenta tiene **fechas reales de prueba** en `perfiles`:

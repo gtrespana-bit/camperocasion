@@ -482,13 +482,16 @@ Principios de UI que ya están aplicados:
 ### 1–2 meses (P2)
 
 16. **Diferenciación real de packs** (lo que justifica subir de Starter a
-    Plus/Flota y aún no existe):
-    - importación CSV/XML de stock y sincronización con DMS;
-    - varios usuarios por cuenta (comerciales);
-    - estadísticas avanzadas: contactos, tiempo de venta, comparativa de
-      mercado;
-    - publicación automática en Instagram/Facebook;
-    - generador de ficha con IA a partir de fotos.
+    Plus/Flota). Estado a 2026-10-22:
+    - ✅ **estadísticas del vendedor** (`/dashboard?tab=rendimiento`): visitas,
+      favoritos y contactos por anuncio, diagnóstico, serie diaria, comparativa
+      con el mercado de la categoría y exportación CSV en Flota;
+    - ✅ **importación de stock desde CSV** (`/dashboard?tab=importar`), solo
+      Plus y Flota: vista previa con errores por línea, cupo recortado en el
+      servidor y moderación recalculada. XML y la sincronización automática con
+      DMS siguen pendientes;
+    - pendiente: varios usuarios por cuenta (comerciales), publicación en
+      Instagram/Facebook y ficha generada con IA a partir de fotos.
 17. **Cambio de plan desde el portal** (configurar planes en Stripe) o
     mantener el cambio actual con prorrateo.
 18. **Stripe Tax** si se factura a empresas fuera de España.
