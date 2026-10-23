@@ -73,6 +73,7 @@ export const PLANES_PRO = [
       '15 destacados incluidos al mes',
       'Hasta 30 fotos por anuncio',
       'Importar stock desde CSV o DMS',
+      'Hasta 3 comerciales con su propio acceso',
       'Estadísticas completas y exportación en CSV',
       'Escaparate con portada y descripción',
       'Máxima prioridad en homologación',

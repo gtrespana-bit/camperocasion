@@ -66,6 +66,11 @@ const extras = [
     desc: 'Sube el CSV de tu Excel o del DMS y publica hasta 100 anuncios con vista previa. Incluido en Plus y Flota.',
   },
   {
+    icon: Users,
+    title: 'Tu equipo, cada uno con su usuario',
+    desc: 'En Flota, hasta 3 comerciales publican con su propia cuenta y comparten cupo, destacados y factura. Sin contraseñas compartidas.',
+  },
+  {
     icon: TrendingUp,
     title: 'Sabes qué anuncio funciona',
     desc: 'Visitas, favoritos y contactos por anuncio, comparados con el mercado de tu categoría. Plus añade la serie diaria y 90 días de histórico.',
@@ -96,6 +101,7 @@ const filasComparativa: {
   { label: 'Prioridad en homologación', gratis: 'Normal', starter: 'Alta', plus: 'Muy alta', unlimited: 'Máxima' },
   { label: 'Estadísticas del vendedor', gratis: 'Totales', starter: 'Por anuncio', plus: 'Con mercado', unlimited: 'Con exportación' },
   { label: 'Importar stock desde CSV', gratis: '—', starter: '—', plus: 'Hasta 100 filas', unlimited: 'Hasta 100 filas' },
+  { label: 'Comerciales con acceso propio', gratis: '—', starter: '—', plus: '—', unlimited: 'Hasta 3' },
   { label: 'Créditos extra', gratis: 'Se compran', starter: 'Se compran', plus: 'Se compran', unlimited: 'Se compran' },
   { label: 'Comisión por venta', gratis: '0 %', starter: '0 %', plus: '0 %', unlimited: '0 %' },
 ]
@@ -116,6 +122,10 @@ const faqs = [
   {
     q: '¿Qué pasa si me paso del cupo?',
     a: 'No se borra nada. Los anuncios ya publicados siguen visibles; lo que no podrás hacer es publicar nuevos hasta ampliar el pack, pausar o marcar alguno como vendido. Puedes cambiar de pack en cualquier momento y Stripe prorratea la diferencia.',
+  },
+  {
+    q: '¿Pueden publicar mis comerciales con su propio usuario?',
+    a: 'Sí, en Unlimited Flota: el titular invita por email hasta a 3 comerciales desde Panel → Equipo. Cada uno entra con su cuenta y publica sus anuncios; el cupo, los destacados y la factura son de la cuenta. Los anuncios de todo el equipo aparecen en el escaparate del titular. Sin compartir contraseñas.',
   },
   {
     q: '¿Los créditos caducan?',

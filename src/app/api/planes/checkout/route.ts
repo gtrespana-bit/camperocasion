@@ -10,6 +10,7 @@ import {
 } from '@/lib/planes-anuncios'
 import { cuponAplicable, normalizarCodigo } from '@/lib/cupones'
 import { sbAdmin } from '@/lib/planes-servidor'
+import { resolverCuenta } from '@/lib/equipo'
 import { obtenerPrecioPlan } from '@/lib/stripe-precios'
 import { getStripe, getSiteUrl, stripeConfigurado } from '@/lib/stripe'
 
@@ -35,6 +36,21 @@ export async function POST(req: NextRequest) {
 
   const user = await getSessionUser(req)
   if (!user) return NextResponse.json({ ok: false, error: 'Inicia sesión.' }, { status: 401 })
+
+  // Un comercial de un equipo Flota no contrata nada: el pack ya está pagado
+  // por el titular. Evita el doble cobro y una segunda suscripción huérfana.
+  const cuenta = await resolverCuenta(user.id)
+  if (!cuenta.esTitular) {
+    return NextResponse.json(
+      {
+        ok: false,
+        codigo: 'EQUIPO',
+        error:
+          'Formas parte de un equipo con pack contratado. Tu suscripción la gestiona el titular de la cuenta.',
+      },
+      { status: 409 },
+    )
+  }
 
   let body: any
   try {

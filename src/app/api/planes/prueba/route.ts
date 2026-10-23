@@ -13,12 +13,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireUser } from '@/lib/require-auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { iniciarTrialPerfil } from '@/lib/planes-servidor'
+import { resolverCuenta } from '@/lib/equipo'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const auth = await requireUser(req)
   if ('response' in auth) return auth.response
+
+  // La prueba es de una cuenta, no de un comercial: el titular ya tiene pack.
+  const cuenta = await resolverCuenta(auth.user.id)
+  if (!cuenta.esTitular) {
+    return NextResponse.json(
+      {
+        ok: false,
+        codigo: 'EQUIPO',
+        error: 'Formas parte de un equipo con pack: no necesitas una prueba propia.',
+      },
+      { status: 409 },
+    )
+  }
 
   const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
   const rl = await checkRateLimit('planes:prueba', auth.user.id, { ip })

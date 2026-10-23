@@ -347,3 +347,25 @@ export async function emailPlanRegalado(
     `${URL}/dashboard`,
   ))
 }
+
+// ─── Equipo de Flota ───────────────────────────────────────
+
+/**
+ * Invitación a la cuenta Flota. El enlace lleva el token de un solo uso; el
+ * comercial debe entrar con el mismo email al que se envía.
+ */
+export async function emailInvitacionEquipo(
+  email: string,
+  nombreInvitado: string,
+  nombreTitular: string,
+  enlace: string,
+): Promise<boolean> {
+  return enviar(email, `🤝 ${nombreTitular} te invita a su equipo en CamperOcasión`, emailLayout(
+    'Te han invitado a un equipo',
+    `<p style="margin:0 0 16px">Hola <strong>${htmlText(nombreInvitado || 'comercial')}</strong>,</p>
+     <p style="margin:0 0 20px"><strong>${htmlText(nombreTitular)}</strong> te ha añadido como comercial de su cuenta <strong>Unlimited Flota</strong>. Podrás publicar anuncios con tu propio usuario, dentro del cupo del equipo y sin pagar nada.</p>
+     <p style="margin:0 0 20px;color:${COLORS.gray};font-size:14px">Entra con la cuenta de CamperOcasión de <strong>${htmlText(email)}</strong> para aceptar. Si no tienes cuenta, créala con este mismo email.</p>`,
+    'Aceptar invitación',
+    enlace,
+  ))
+}

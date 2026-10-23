@@ -28,6 +28,7 @@ arriba hace un trabajo que el de abajo obliga a hacer a mano.
 
 | Función | Gratis | Starter | Plus | Flota |
 | --- | --- | --- | --- | --- |
+| Comerciales con acceso propio | — | — | — | Hasta 3 |
 | Estadísticas del periodo | Totales | + por anuncio y diagnóstico | + serie diaria, mercado y 90 días | + exportación CSV |
 | Importar stock desde CSV | — | — | ✅ (hasta 100 filas) | ✅ |
 | Fotos por anuncio | 10 | 10 | 20 | 30 |
@@ -42,6 +43,13 @@ arriba hace un trabajo que el de abajo obliga a hacer a mano.
   Solo Plus y Flota; el cupo se recorta en el servidor (`min(restantes,
   válidas)`) y la moderación se recalcula allí, igual que en `/api/publicar`.
   Cada fila es un alta: reimportar el mismo archivo duplica.
+- **Equipo** (`/dashboard?tab=equipo`, `POST /api/equipo`): solo Flota. El
+  titular invita por email (máximo 3 comerciales), cada uno entra con su
+  usuario y todos comparten el cupo, los destacados y la factura. El plan se
+  lee siempre del titular (`fn_cuenta_titular()`); el comercial no puede
+  gestionar la suscripción. Al aceptar hay que entrar con el email invitado.
+  Un usuario solo puede estar en un equipo activo. La base impone el tope con
+  `fn_equipo_limite()`, no solo la API.
 
 ## Prueba de 30 días (fase 2, 2026-10-22)
 

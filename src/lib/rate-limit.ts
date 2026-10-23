@@ -12,6 +12,9 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   // Importación CSV: cada intento sube hasta 100 anuncios, así que el límite
   // es mucho más bajo que el de publicar a mano.
   'producto:importar': { max: 6, windowMs: 60 * 60 * 1000 },
+  // Invitaciones al equipo Flota: 10 por hora evita usar la API como
+  // lanzadera de correo.
+  'equipo:invitar': { max: 10, windowMs: 60 * 60 * 1000 },
   'mensaje:create': { max: 200, windowMs: 60 * 60 * 1000 },
   'denuncia:create': { max: 10, windowMs: 60 * 60 * 1000 },
   'auth:login': { max: 5, windowMs: 15 * 60 * 1000 },
