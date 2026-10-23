@@ -6,6 +6,7 @@ import Breadcrumbs from '@/components/Breadcrumbs'
 import LocalLink from '@/components/LocalLink'
 import FormularioGestoria from './FormularioGestoria'
 import { GESTORIA_PRECIO_MAX, GESTORIA_PRECIO_MIN } from '@/lib/gestoria'
+import { descripcionSeo, tituloSeo } from '@/lib/seo'
 
 /**
  * Gestoría del cambio de nombre DGT (plan de confianza §4.2, fase captación).
@@ -18,9 +19,9 @@ import { GESTORIA_PRECIO_MAX, GESTORIA_PRECIO_MIN } from '@/lib/gestoria'
 const CANONICAL = 'https://camperocasion.online/gestoria-cambio-nombre'
 
 export const metadata: Metadata = {
-  title: `Gestoría del cambio de nombre DGT para tu camper (${GESTORIA_PRECIO_MIN}-${GESTORIA_PRECIO_MAX} €)`,
+  title: tituloSeo(`Gestoría DGT para tu camper (${GESTORIA_PRECIO_MIN}-${GESTORIA_PRECIO_MAX} €)`),
   description:
-    'Tramitamos por ti el cambio de titularidad de tu furgoneta camper o autocaravana: documentación, ITP (modelo 620), tasas de la DGT y notificación de venta. Déjanos tus datos y te contactamos con presupuesto cerrado.',
+    descripcionSeo('Tramitamos el cambio de titularidad de tu camper: documentación, ITP, tasas DGT y notificación de venta. Te contactamos con presupuesto cerrado.'),
   keywords: [
     'gestoría cambio de nombre camper',
     'cambio de titularidad autocaravana DGT',

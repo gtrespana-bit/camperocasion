@@ -5,6 +5,7 @@ import LocalLink from '@/components/LocalLink'
 import fs from 'fs'
 import path from 'path'
 import { ArrowLeft, Calendar, Clock, Tag, ArrowRight, ChevronRight } from 'lucide-react'
+import { alternatesSeo, descripcionSeo, limpiarComillas, tituloSeo } from '@/lib/seo'
 
 interface Post {
   slug: string
@@ -35,7 +36,7 @@ function getPostBySlug(slug: string): Post | null {
     if (colonIndex > 0) {
       const key = line.substring(0, colonIndex).trim()
       const value = line.substring(colonIndex + 1).trim()
-      frontmatter[key] = value
+      frontmatter[key] = limpiarComillas(value)
     }
   })
 
@@ -68,19 +69,14 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   if (!post) return { title: 'Post no encontrado' }
 
   const ogImg = post.ogImage || 'https://camperocasion.online/api/og/catalog?categoria=camper'
+  const description = descripcionSeo(post.excerpt)
   return {
-    title: post.title,
-    description: post.excerpt,
-    alternates: {
-      canonical: `https://camperocasion.online/blog/${post.slug}`,
-      languages: {
-        'es-ES': `https://camperocasion.online/blog/${post.slug}`,
-        'x-default': `https://camperocasion.online/blog/${post.slug}`,
-      },
-    },
+    title: tituloSeo(post.title),
+    description,
+    alternates: alternatesSeo(`/blog/${post.slug}`),
     openGraph: {
       title: post.title,
-      description: post.excerpt,
+      description,
       url: `https://camperocasion.online/blog/${post.slug}`,
       siteName: 'CamperOcasión',
       type: 'article',
@@ -93,7 +89,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
     twitter: {
       card: 'summary_large_image',
       title: post.title,
-      description: post.excerpt,
+      description,
       images: [ogImg],
     },
   }

@@ -127,8 +127,27 @@ export default function PublicarPage() {
     }
   }, [])
 
-  if (authLoading) return <div className="min-h-[60vh] flex items-center justify-center"><p>{t('loading')}</p></div>
-  if (!session) return null
+  if (authLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <h1 className="sr-only">{t('title')}</h1>
+        <p>{t('loading')}</p>
+      </div>
+    )
+  }
+  if (!session) {
+    // No dejar una pantalla vacía mientras se redirige al login: también es
+    // el contenido que puede rastrear Google en la primera respuesta HTML.
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 mb-3">{t('title')}</h1>
+        <p className="text-gray-600 mb-6">{t('freeBannerDesc')}</p>
+        <LocalLink href="/login" className="inline-flex bg-brand-primary text-white px-6 py-3 rounded-lg font-bold hover:opacity-90">
+          {t('loginButton')}
+        </LocalLink>
+      </div>
+    )
+  }
 
   // Marketplace 100% camper: la categoría es siempre `camper` (se envía fija
   // al API); lo que elige el usuario es la FAMILIA y luego el tipo.

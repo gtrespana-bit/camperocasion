@@ -20,9 +20,9 @@ import { RECUERDOS_POSTFIRMA } from '@/lib/contrato'
 const CANONICAL = 'https://camperocasion.online/contrato-compraventa'
 
 export const metadata: Metadata = {
-  title: 'Contrato de compraventa de furgoneta camper — modelo gratuito',
+  title: 'Contrato de compraventa de camper gratis',
   description:
-    'Modelo de contrato de compraventa entre particulares para furgonetas camper y autocaravanas de ocasión: cláusulas completas, precio, estado del vehículo y cambios de titularidad. Se rellena con los datos del anuncio y se descarga en PDF.',
+    'Modelo gratuito de contrato para campers y autocaravanas de ocasión: cláusulas, precio, estado del vehículo y cambio de titularidad. Descárgalo en PDF.',
   keywords: [
     'contrato compraventa camper',
     'modelo contrato compraventa autocaravana',

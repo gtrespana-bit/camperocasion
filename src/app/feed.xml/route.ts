@@ -7,6 +7,7 @@
  */
 import fs from 'fs'
 import path from 'path'
+import { limpiarComillas } from '@/lib/seo'
 
 const BASE_URL = 'https://camperocasion.online'
 
@@ -32,7 +33,7 @@ function getPosts(): Post[] {
       const raw = fs.readFileSync(path.join(dir, f), 'utf-8')
       const fm = (key: string) => {
         const m = raw.match(new RegExp(`^${key}:\\s*"?(.+?)"?\\s*$`, 'm'))
-        return m ? m[1].trim() : ''
+        return m ? limpiarComillas(m[1]) : ''
       }
       return {
         slug,

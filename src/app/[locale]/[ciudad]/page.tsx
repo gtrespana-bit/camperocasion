@@ -8,6 +8,7 @@ import { getTranslations } from 'next-intl/server'
 import { getSupabaseServerClient } from '@/lib/supabase-server-client'
 import { hayAnunciosEnCiudad } from '@/lib/seo-landings'
 import { productAbsoluteUrl } from '@/lib/product-url'
+import { alternatesSeo, descripcionSeo, tituloSeo } from '@/lib/seo'
 
 type Props = {
   params: Promise<{ ciudad: string; locale: string }>
@@ -39,14 +40,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const title = ciudadSEO.titulo
-  const description = ciudadSEO.descripcion
+  const description = descripcionSeo(ciudadSEO.descripcion)
 
   // OG dinámica por ciudad (usa endpoint existente con param categoria simulando ciudad)
   // Para provincia usamos el OG genérico pero con URL canónica correcta para CTR en WhatsApp
   const ogImage = `https://camperocasion.online/api/og/catalog?categoria=camper`
 
   return {
-    title,
+    title: tituloSeo(title),
     description,
     keywords: ciudadSEO.keywords,
     openGraph: {
@@ -63,13 +64,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       images: [ogImage],
     },
-    alternates: {
-      canonical: `https://camperocasion.online/${ciudad}`,
-      languages: {
-        'es-ES': `https://camperocasion.online/${ciudad}`,
-        'x-default': `https://camperocasion.online/${ciudad}`,
-      },
-    },
+    alternates: alternatesSeo(`/${ciudad}`),
     robots: {
       // Ciudad sin anuncios = página vacía: fuera del índice (pero se
       // rastrea) hasta que haya inventario. Fail-open si la DB falla.

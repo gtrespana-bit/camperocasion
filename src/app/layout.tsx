@@ -43,11 +43,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://camperocasion.online'),
   title: {
-    default: 'CamperOcasión — Furgonetas camper y autocaravanas de ocasión en España',
+    default: 'Furgonetas camper y autocaravanas de ocasión | CamperOcasión',
     template: '%s | CamperOcasión',
   },
   description:
-    'El marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Gran volumen, camper medianas, minicamper, perfiladas, capuchinas, integrales y 4x4 overland, de 20.000 € a 80.000 €. Publica gratis.',
+    'Marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Anuncios con precio, fotos y ficha técnica. Publica gratis.',
   keywords: [
     'furgonetas camper segunda mano',
     'autocaravanas de ocasión',
@@ -76,9 +76,9 @@ export const metadata: Metadata = {
     locale: 'es_ES',
     url: 'https://camperocasion.online',
     siteName: 'CamperOcasión',
-    title: 'CamperOcasión — Furgonetas camper y autocaravanas de ocasión en España',
+    title: 'Furgonetas camper y autocaravanas de ocasión | CamperOcasión',
     description:
-      'El marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Publica gratis y encuentra tu próxima furgoneta camper.',
+      'Marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Publica gratis y encuentra tu próxima camper.',
     images: [
       {
         url: '/og-image.webp',
@@ -90,9 +90,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CamperOcasión — Furgonetas camper y autocaravanas de ocasión en España',
+    title: 'Furgonetas camper y autocaravanas de ocasión | CamperOcasión',
     description:
-      'El marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Publica gratis.',
+      'Marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Publica gratis.',
     images: ['/og-image.webp'],
     creator: '@camperocasion',
   },
@@ -158,28 +158,52 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{
             __html: serializeJsonLd({
               '@context': 'https://schema.org',
-              '@type': 'WebSite',
-              '@id': 'https://camperocasion.online/#website',
-              name: 'CamperOcasión',
-              url: 'https://camperocasion.online',
-              description:
-                'El marketplace especializado en furgonetas camper y autocaravanas de ocasión en España.',
-              potentialAction: {
-                '@type': 'SearchAction',
-                target: 'https://camperocasion.online/catalogo?q={search_term_string}',
-                'query-input': 'required name=search_term_string'
-              },
-              publisher: {
-                '@type': 'Organization',
-                '@id': 'https://camperocasion.online/#organization',
-                name: 'CamperOcasión',
-                url: 'https://camperocasion.online',
-                logo: 'https://camperocasion.online/icon-192.png',
-                sameAs: [
-                  'https://instagram.com/camperocasion',
-                  'https://facebook.com/camperocasion'
-                ]
-              }
+              '@graph': [
+                {
+                  '@type': 'Organization',
+                  '@id': 'https://camperocasion.online/#organization',
+                  name: 'CamperOcasión',
+                  url: 'https://camperocasion.online/',
+                  logo: {
+                    '@type': 'ImageObject',
+                    url: 'https://camperocasion.online/logo-camperocasion.png',
+                    width: 320,
+                    height: 320
+                  },
+                  email: process.env.CONTACTO_EMAIL?.trim() || 'soporte@camperocasion.online',
+                  contactPoint: {
+                    '@type': 'ContactPoint',
+                    email: process.env.CONTACTO_EMAIL?.trim() || 'soporte@camperocasion.online',
+                    contactType: 'customer service',
+                    availableLanguage: ['Spanish', 'English'],
+                    areaServed: 'ES'
+                  },
+                  areaServed: { '@type': 'Country', name: 'España' },
+                  sameAs: [
+                    'https://twitter.com/camperocasion',
+                    'https://facebook.com/camperocasion',
+                    'https://instagram.com/camperocasion'
+                  ]
+                },
+                {
+                  '@type': 'WebSite',
+                  '@id': 'https://camperocasion.online/#website',
+                  name: 'CamperOcasión',
+                  url: 'https://camperocasion.online/',
+                  inLanguage: 'es-ES',
+                  description:
+                    'Marketplace especializado en furgonetas camper y autocaravanas de ocasión en España.',
+                  publisher: { '@id': 'https://camperocasion.online/#organization' },
+                  potentialAction: {
+                    '@type': 'SearchAction',
+                    target: {
+                      '@type': 'EntryPoint',
+                      urlTemplate: 'https://camperocasion.online/catalogo?q={search_term_string}'
+                    },
+                    'query-input': 'required name=search_term_string'
+                  }
+                }
+              ]
             })
           }}
         />

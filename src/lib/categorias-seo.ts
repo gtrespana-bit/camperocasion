@@ -27,7 +27,7 @@ export const CATEGORIAS_SEO: Record<string, CategoriaSEO> = {
     slug: 'camper',
     nombre: CAT.label,
     icono: CAT.icon,
-    titulo: 'Furgonetas camper y autocaravanas de ocasión en España — CamperOcasión',
+    titulo: 'Furgonetas camper y autocaravanas de ocasión en España',
     descripcion: 'El marketplace especializado en furgonetas camperizadas y autocaravanas de ocasión en España. Gran volumen, camper medianas, minicamper, perfiladas, capuchinas, integrales y 4x4 overland. Publica gratis.',
     introduccion: [
       'CamperOcasión reúne furgonetas camper y autocaravanas de segunda mano de toda España: Fiat Ducato, Peugeot Boxer, Citroën Jumper, Renault Master, Volkswagen Crafter, Mercedes Sprinter, MAN TGE, VW California y mucho más, en un rango habitual de 20.000 € a 80.000 €.',
@@ -248,7 +248,7 @@ const SUBS: SubcategoriaSEO[] = CAT.subs.map((sub) => {
     nombre: sub.label,
     icono: sub.icon,
     categoria: sub.label,
-    titulo: `${sub.label} de ocasión en España — CamperOcasión`,
+    titulo: `${sub.label} de ocasión en España`,
     descripcion: info.descripcion,
     terminos: info.terminos,
     introduccion: info.introduccion,

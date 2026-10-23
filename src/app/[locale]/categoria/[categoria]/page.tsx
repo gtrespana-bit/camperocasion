@@ -8,6 +8,7 @@ import { aplicarOrdenCatalogo } from '@/lib/catalog-consulta'
 import { CATEGORIAS_SEO_LIST, getCategoriaSEO } from '@/lib/categorias-seo'
 import { productUrl } from '@/lib/product-url'
 import { formatPrecio } from '@/lib/precio'
+import { alternatesSeo, descripcionSeo, tituloSeo } from '@/lib/seo'
 
 const BASE_URL = 'https://camperocasion.online'
 const PRODUCT_LIMIT = 24
@@ -44,16 +45,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const canonical = `${BASE_URL}/categoria/${categoria.slug}`
 
   return {
-    title: categoria.titulo,
-    description: categoria.descripcion,
+    title: tituloSeo(categoria.titulo),
+    description: descripcionSeo(categoria.descripcion),
     keywords: categoria.terminos,
-    alternates: {
-      canonical,
-      languages: {
-        'es-ES': canonical,
-        'x-default': canonical,
-      },
-    },
+    alternates: alternatesSeo(`/categoria/${categoria.slug}`),
     openGraph: {
       type: 'website',
       locale: 'es_ES',

@@ -9,6 +9,7 @@ import CalculadoraITP from '../CalculadoraITP'
 import { faqComunidad } from '../contenido'
 import { CHECKLIST_COMPRA_SEGURA, REVISADO_EN, TIPOS_ITP, getComunidadITP } from '@/lib/itp'
 import { getTranslations } from 'next-intl/server'
+import { descripcionSeo, tituloSeo } from '@/lib/seo'
 
 type Props = {
   params: Promise<{ ccaa: string; locale: string }>
@@ -28,16 +29,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const canonical = `https://camperocasion.online/calcular-itp/${comunidad.slug}`
-  const titulo = `ITP de una camper de segunda mano en ${comunidad.nombre} (${new Date().getFullYear()})`
+  const titulo = `ITP camper en ${comunidad.nombre} (${new Date().getFullYear()})`
   const description = `Cuánto se paga de ITP al comprar una camper o autocaravana de ocasión en ${comunidad.nombre}: tipo` +
     ` general del ${comunidad.tipo} %${comunidad.tipoIncrementado ? `, ${comunidad.tipoIncrementado.tipo} % para ${comunidad.tipoIncrementado.aplica}` : ''}` +
     `${comunidad.cuotaFija ? `, cuota fija desde ${comunidad.cuotaFija.minAnios} años` : ''}` +
     `${comunidad.exencionPorAntiguedad ? `, exento desde ${comunidad.exencionPorAntiguedad.minAnios} años` : ''}` +
     `. Plazo: ${comunidad.plazoDias} ${comunidad.plazoDiasHabiles ? 'días hábiles' : 'días'}. Calculadora gratuita y checklist de compra segura.`
 
+  const descriptionSeo = descripcionSeo(description)
+
   return {
-    title: titulo,
-    description,
+    title: tituloSeo(titulo),
+    description: descriptionSeo,
     keywords: [
       `impuesto comprar camper segunda mano ${comunidad.nombre.toLowerCase()}`,
       `ITP camper ${comunidad.nombre.toLowerCase()}`,
@@ -50,8 +53,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical,
       languages: { 'es-ES': canonical, 'x-default': canonical },
     },
-    openGraph: { title: titulo, description, type: 'website', locale: 'es_ES', url: canonical, images: [{ url: 'https://camperocasion.online/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: titulo }] },
-    twitter: { card: 'summary_large_image', title: titulo, description, images: ['https://camperocasion.online/api/og/catalog?categoria=camper'] },
+    openGraph: { title: titulo, description: descriptionSeo, type: 'website', locale: 'es_ES', url: canonical, images: [{ url: 'https://camperocasion.online/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: titulo }] },
+    twitter: { card: 'summary_large_image', title: titulo, description: descriptionSeo, images: ['https://camperocasion.online/api/og/catalog?categoria=camper'] },
   }
 }
 

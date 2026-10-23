@@ -10,6 +10,7 @@ import { hayAnunciosEnCiudadCategoria } from '@/lib/seo-landings'
 import { notFound } from 'next/navigation'
 import { productAbsoluteUrl } from '@/lib/product-url'
 import { SUBCATEGORIAS_SEO } from '@/lib/categorias-seo'
+import { alternatesSeo, descripcionSeo, tituloSeo } from '@/lib/seo'
 
 const CATEGORIAS_SEO: Record<string, { nombre: string; descripcion: string }> = Object.fromEntries(
   CATEGORIAS_POPULARES.map((slug) => {
@@ -58,8 +59,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cityName = ciudadSEO.nombre
   const stateName = ciudadSEO.estado
   
-  const title = `${cat.nombre} de ocasión en ${cityName}, ${stateName}`
-  const description = `${cat.descripcion} Publica gratis tu camper en CamperOcasín.`
+  const title = `${cat.nombre} de ocasión en ${cityName}`
+  const description = descripcionSeo(`${cat.nombre} de ocasión en ${cityName}, ${stateName}. ${cat.descripcion} Publica gratis tu camper en CamperOcasión.`)
   
   const keywords = [
     `${cat.nombre.toLowerCase()} ${cityName.toLowerCase()}`,
@@ -72,7 +73,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ogParam = ogCategoriaParam(categoria)
 
   return {
-    title,
+    title: tituloSeo(title),
     description,
     keywords,
     openGraph: {
@@ -89,13 +90,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       images: [`https://camperocasion.online/api/og/catalog?categoria=${ogParam}`],
     },
-    alternates: {
-      canonical: `https://camperocasion.online/${ciudad}/${categoria}`,
-      languages: {
-        'es-ES': `https://camperocasion.online/${ciudad}/${categoria}`,
-        'x-default': `https://camperocasion.online/${ciudad}/${categoria}`,
-      },
-    },
+    alternates: alternatesSeo(`/${ciudad}/${categoria}`),
     robots: {
       // Combinación sin anuncios = página vacía: noindex hasta que haya
       // inventario (fail-open si la DB falla).

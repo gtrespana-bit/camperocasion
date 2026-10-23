@@ -1,12 +1,14 @@
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
+import { alternatesSeo } from '@/lib/seo'
 import { CheckCircle, Zap, Shield, MessageCircle, Eye, Camera, DollarSign, X } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 export const metadata: Metadata = {
-  title: '¿Cómo Funciona?',
-  description: 'Publica gratis en CamperOcasión en 4 pasos simples. Compra y vende en España sin comisiones.',
+  title: 'Cómo funciona el marketplace camper',
+  description: 'Publica gratis tu camper en cuatro pasos y contacta directamente con compradores y vendedores en toda España, sin comisiones por venta.',
+  alternates: alternatesSeo('/como-funciona'),
 }
 
 export default async function ComoFuncionaPage({ params }: { params: Promise<{ locale: string }> }) {

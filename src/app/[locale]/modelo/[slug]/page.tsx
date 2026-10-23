@@ -19,6 +19,7 @@ import ModeloClient from './ModeloClient'
 import { productAbsoluteUrl } from '@/lib/product-url'
 import LocalLink from '@/components/LocalLink'
 import { ArrowRight } from 'lucide-react'
+import { alternatesSeo, descripcionSeo, tituloSeo } from '@/lib/seo'
 
 /**
  * Página de modelo: «Fiat Ducato camper de ocasión: precios reales».
@@ -100,7 +101,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? `${nombre} de ocasión: precios reales ${anio} (${est.muestra} anuncios)`
     : `${nombre} de ocasión en España`
 
-  const description = resumenMercado(nombre, est)
+  const description = descripcionSeo(resumenMercado(nombre, est))
   const url = `${SITIO}/modelo/${slug}`
 
   // OG con categoria según el modelo (usa endpoint existente)
@@ -117,9 +118,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ogParam = ogParamMap[subCat] || 'camper'
 
   return {
-    title,
+    title: tituloSeo(title),
     description,
-    alternates: { canonical: url, languages: { 'es-ES': url, 'x-default': url } },
+    alternates: alternatesSeo(`/modelo/${slug}`),
     openGraph: { title, description, url, siteName: 'CamperOcasión', locale: 'es_ES', images: [{ url: `https://camperocasion.online/api/og/catalog?categoria=${ogParam}`, width: 1200, height: 630, alt: title }] },
     twitter: { card: 'summary_large_image', title, description, images: [`https://camperocasion.online/api/og/catalog?categoria=${ogParam}`] },
   }
