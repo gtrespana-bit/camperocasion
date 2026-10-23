@@ -9,7 +9,7 @@ Ceuta y Melilla), en una única moneda: **el euro (€)**.
 
 ## Runtime y seguridad
 
-Usar **Node.js 22.23.4 o un parche posterior de la rama 22**. Con nvm:
+Usar **Node.js 24.22.1 o un parche posterior de la rama 24**. Con nvm:
 `nvm install && nvm use`, después `npm ci`. Las instalaciones/builds rechazan versiones inferiores al mínimo configurado.
 Para que el CI utilice `.nvmrc`, copiar `docs/ci/ci-node-security.yml` sobre
 `.github/workflows/ci.yml` desde GitHub (actualización manual pendiente).

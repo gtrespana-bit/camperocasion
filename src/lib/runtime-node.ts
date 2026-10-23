@@ -1,15 +1,16 @@
 /**
  * Versión mínima de Node.js admitida en ejecución.
  *
- * La fuente de verdad es `engines.node` de package.json (`>=22.23.4 <23`).
+ * La fuente de verdad es `engines.node` de package.json (`>=24.22.1 <25`).
  * El mínimo es el parche de seguridad publicado el 2026-10-21; si se sube,
- * hay que actualizar también `.nvmrc` y `scripts/check-node-version.cjs`.
+ * hay que actualizar también `.nvmrc`. `scripts/check-node-version.cjs` lee
+ * este mismo `engines.node`, y los tests comprueban que ambas reglas coinciden.
  *
  * Solo se usa en el servidor: el endpoint de diagnóstico y su comprobación.
  */
 import pkg from '../../package.json'
 
-/** `engines.node` tal cual, p. ej. `>=22.23.4 <23`. */
+/** `engines.node` tal cual, p. ej. `>=24.22.1 <25`. */
 export const ENGINES_NODE: string = pkg.engines.node
 
 type Rango = { minimo: [number, number, number]; maxExclusivo: number }
