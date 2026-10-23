@@ -14,8 +14,9 @@ Usar **Node.js 22.23.4 o un parche posterior de la rama 22**. Con nvm:
 Para que el CI utilice `.nvmrc`, copiar `docs/ci/ci-node-security.yml` sobre
 `.github/workflows/ci.yml` desde GitHub (actualización manual pendiente).
 
-El runtime de producción y la rotación de claves requieren comprobación aparte:
-[procedimiento Node.js / Stripe](docs/SEGURIDAD-NODE-STRIPE.md).
+El runtime real de producción se consulta en `/api/diagnostico/runtime` (sesión de
+admin o `Authorization: Bearer <CRON_SECRET>`). La rotación de claves y el resto
+del procedimiento están en [Node.js / Stripe](docs/SEGURIDAD-NODE-STRIPE.md).
 
 ## Subcategorías
 
