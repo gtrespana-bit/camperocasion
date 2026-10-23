@@ -490,8 +490,12 @@ Principios de UI que ya están aplicados:
       Plus y Flota: vista previa con errores por línea, cupo recortado en el
       servidor y moderación recalculada. XML y la sincronización automática con
       DMS siguen pendientes;
-    - pendiente: varios usuarios por cuenta (comerciales), publicación en
-      Instagram/Facebook y ficha generada con IA a partir de fotos.
+    - ✅ **varios usuarios por cuenta** (`/dashboard?tab=equipo`): el titular
+      de Flota invita hasta 3 comerciales por email; cada uno publica con su
+      usuario y comparten cupo, destacados y factura. El escaparate del
+      titular enseña el stock de todo el equipo;
+    - pendiente: publicación en Instagram/Facebook y ficha generada con IA a
+      partir de fotos.
 17. **Cambio de plan desde el portal** (configurar planes en Stripe) o
     mantener el cambio actual con prorrateo.
 18. **Stripe Tax** si se factura a empresas fuera de España.

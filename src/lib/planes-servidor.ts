@@ -1,4 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
+import { sbAdmin } from '@/lib/sb-admin'
+import { resolverCuenta } from '@/lib/equipo'
 import {
   DIAS_MES_GRATIS_DEFAULT,
   cupoMaximo,
@@ -10,13 +11,8 @@ import {
 } from '@/lib/planes-anuncios'
 import { calcularTrial, estadoTrial, trialDisponible } from '@/lib/planes-prueba'
 
-export function sbAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  )
-}
+// Reexportado por compatibilidad: media app importa `sbAdmin` desde aquí.
+export { sbAdmin }
 
 export async function leerAjustesPlanes(sb = sbAdmin()) {
   try {
@@ -85,25 +81,37 @@ async function leerPerfilPlan(sb: any, userId: string) {
   return { ...(basic.data || {}), ...(await leerCamposTrial(sb, userId)) }
 }
 
-async function contarActivos(sb: any, userId: string): Promise<number> {
-  const { count } = await sb
+/**
+ * Anuncios activos de una cuenta. Acepta un usuario o toda una lista: en
+ * Flota, el cupo es de la cuenta, así que los anuncios de los tres
+ * comerciales suman contra el mismo límite.
+ */
+async function contarActivos(sb: any, userId: string | string[]): Promise<number> {
+  const ids = Array.isArray(userId) ? userId : [userId]
+  if (ids.length === 0) return 0
+  let query = sb
     .from('productos')
     .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
     .eq('activo', true)
     .neq('vendido', true)
+  query = ids.length === 1 ? query.eq('user_id', ids[0]) : query.in('user_id', ids)
+  const { count } = await query
   return count || 0
 }
 
 export async function cupoDeUsuario(userId: string) {
   const sb = sbAdmin()
   const ajustes = await leerAjustesPlanes(sb)
-  const perfil = await leerPerfilPlan(sb, userId)
-  const usados = await contarActivos(sb, userId)
+  // En Flota el pack es de la cuenta: el titular paga y los comerciales
+  // comparten cupo. Para cualquier otro usuario, `ids` es él mismo.
+  const cuenta = await resolverCuenta(userId, sb)
+  const perfil = await leerPerfilPlan(sb, cuenta.titularId)
+  const usados = await contarActivos(sb, cuenta.ids)
 
   return {
     perfil,
     ajustes,
+    cuenta,
     resumen: resumenCupo({
       tipo: perfil?.tipo_vendedor,
       plan: perfil?.plan_anuncios,
@@ -361,8 +369,11 @@ export async function iniciarTrialPerfil(userId: string): Promise<ResultadoInici
 export async function estadoPlanUsuario(userId: string) {
   const sb = sbAdmin()
   const ajustes = await leerAjustesPlanes(sb)
-  const perfil = await leerPerfilPlan(sb, userId)
-  const usados = await contarActivos(sb, userId)
+  const cuenta = await resolverCuenta(userId, sb)
+  // El plan se lee del titular: un comercial no paga ni puede gestionar la
+  // suscripción, pero publica contra el cupo de la cuenta.
+  const perfil = await leerPerfilPlan(sb, cuenta.titularId)
+  const usados = await contarActivos(sb, cuenta.ids)
 
   const ahora = new Date()
   const planHasta = perfil?.plan_hasta ? new Date(perfil.plan_hasta) : null
@@ -410,13 +421,17 @@ export async function estadoPlanUsuario(userId: string) {
 
   let pausadosPorPlan = 0
   try {
-    const { count } = await sb
+    let consulta = sb
       .from('productos')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
       .eq('activo', false)
       .eq('vendido', false)
       .eq('pausado_por_plan', true)
+    consulta =
+      cuenta.ids.length === 1
+        ? consulta.eq('user_id', cuenta.ids[0])
+        : consulta.in('user_id', cuenta.ids)
+    const { count } = await consulta
     pausadosPorPlan = count || 0
   } catch {
     /* columna pendiente de migrar */
@@ -429,7 +444,19 @@ export async function estadoPlanUsuario(userId: string) {
     planHasta: perfil?.plan_hasta || null,
     planPagoVigente,
     suscripcionStripe: Boolean(planPagoVigente && perfil?.stripe_subscription_id),
-    gestionable: Boolean(perfil?.stripe_customer_id && process.env.STRIPE_SECRET_KEY),
+    // Un comercial no gestiona la tarjeta ni la factura del titular.
+    gestionable: Boolean(
+      cuenta.esTitular && perfil?.stripe_customer_id && process.env.STRIPE_SECRET_KEY,
+    ),
+    equipo: {
+      titularId: cuenta.titularId,
+      esTitular: cuenta.esTitular,
+      rol: cuenta.rol,
+      miembros: Math.max(0, cuenta.ids.length - 1),
+      max: 3,
+      // Solo el titular de un Flota activo puede invitar.
+      puedeInvitar: Boolean(cuenta.esTitular && resumen.plan === 'unlimited'),
+    },
     trial: trial.enPrueba,
     trialHasta: trial.hasta ? trial.hasta.toISOString() : resumen.trialHasta,
     trialInicio: trial.inicio ? trial.inicio.toISOString() : null,
