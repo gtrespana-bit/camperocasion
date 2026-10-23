@@ -21,7 +21,7 @@ interface Producto {
   creado_en: string;
   subcategoria: string | null;
   boosteado_en: string | null;
-  /** Anuncio de demostración: se etiqueta para no confundirlo con stock real. */
+  /** Ver ProductCard: los anuncios sembrados no se etiquetan. */
   es_demo?: boolean | null;
   destacado: boolean;
   destacado_hasta: string | null;
@@ -71,11 +71,6 @@ export const ProductCardLazy = ({ p, t, priority = false }: ProductCardLazyProps
         {isBoosted && !isFeatured && (
           <div className="absolute top-2 left-2 z-10 bg-green-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
             ⚡ <span className="text-white">{t('productCard.boost')}</span>
-          </div>
-        )}
-        {p.es_demo && (
-          <div className="absolute bottom-2 left-2 z-10 bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-            {t('productCard.demo')}
           </div>
         )}
         <Image
