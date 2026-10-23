@@ -16,7 +16,7 @@
  *   curl -H "Authorization: Bearer $CRON_SECRET" https://<dominio>/api/diagnostico/runtime
  * o abrir la URL en el navegador con sesión de admin iniciada.
  *
- * Referencia: https://github.com/nodejs/node/releases/tag/v22.23.4
+ * Referencia: https://github.com/nodejs/node/releases/tag/v24.22.1
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'node:crypto'

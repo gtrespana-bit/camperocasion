@@ -2,8 +2,10 @@
 
 ## Cambios preparados en el repositorio
 
-- `.nvmrc`: Node 22.23.4 para desarrollo y para la plantilla de CI.
-- `package.json`: admite `>=22.23.4 <23`; `.npmrc` exige engines compatibles.
+- `.nvmrc`: Node 24.22.1 para desarrollo y para la plantilla de CI.
+- `package.json`: admite `>=24.22.1 <25`; `.npmrc` exige engines compatibles.
+  El `engines` de `package.json` **manda sobre el selector de Vercel**: el
+  proyecto tenía el dashboard en 22.x y el runtime seguía reportando 22.23.2.
 - Comprobación previa a instalación, desarrollo, build (incluidas variantes) y start.
 - Plantilla de CI preparada en `docs/ci/ci-node-security.yml`: copiar su contenido
   a `.github/workflows/ci.yml` desde GitHub para activarla. Verifica el runtime
@@ -12,7 +14,8 @@
 - `instrumentation.ts` registra la versión efectiva en logs del servidor Node,
   sin exponer variables de entorno ni crear un endpoint público.
 
-Referencia: https://github.com/nodejs/node/releases/tag/v22.23.4
+Referencia: https://github.com/nodejs/node/releases/tag/v24.22.1
+Aviso del proveedor: https://vercel.com/kb/bulletin/node-js-security-advisory
 Este es el mínimo adoptado ante el aviso, no una garantía contra futuros fallos.
 Actualizar el paquete `stripe` no sustituye actualizar Node.
 
@@ -23,11 +26,14 @@ Actualizar el paquete `stripe` no sustituye actualizar Node.
 2. Conservar y revisar los logs del proveedor y de Stripe. Si hay indicios de
    compromiso, aislar el servicio y reconstruir desde una base confiable antes
    de introducir credenciales nuevas. No borrar evidencia al «limpiar».
-3. En Vercel, revisar Settings → Build and Deployment → Node.js Version y usar
-   la rama 22.x. Vercel controla el parche efectivo: seleccionar 22.x no prueba
-   que ya esté parcheado. Confirmar con el proveedor si es necesario.
+3. En Vercel, `engines.node` de `package.json` prevalece sobre
+   Settings → Build and Deployment → Node.js Version. El dashboard solo ofrece
+   majors (20.x, 22.x, 24.x) y **Vercel decide el parche**. Por eso este repo
+   fija la rama 24 (`>=24.22.1 <25`) y verifica el parche en ejecución.
+   Comprobado el 2026-10-23: con el dashboard en 22.x, el runtime seguía en
+   **22.23.2** (sin parche) en la región `iad1`.
 4. Desplegar los cambios desde una fuente revisada, sin reutilizar la caché de
-   build. El build debe mostrar Node 22.23.4 o un parche posterior de la rama 22.
+   build.
 5. Preguntar al runtime real, no al build. Abrir con sesión de admin:
 
    ```
@@ -41,7 +47,7 @@ Actualizar el paquete `stripe` no sustituye actualizar Node.
    ```
 
    La respuesta trae `runtime.node`, `runtime.cumple`, `runtime.region` y el
-   `commit` desplegado. Debe indicar 22.23.4 o un parche posterior de la rama 22
+   `commit` desplegado. Debe indicar 24.22.1 o un parche posterior de la rama 24
    con `cumple: true`. Si dice `cumple: false`, producción sigue vulnerable:
    redesplegar y, si persiste, escalar al proveedor.
 
@@ -51,9 +57,27 @@ Actualizar el paquete `stripe` no sustituye actualizar Node.
    endpoint es la fuente fiable.
    Si producción sigue vulnerable, no considerar el incidente resuelto: solicitar
    actualización al proveedor y restringir/suspender el servicio afectado según
-   el riesgo hasta disponer de un runtime parcheado.
+   el riesgo hasta disponer de un runtime parcheado. El build falla (`.npmrc`
+   tiene `engine-strict=true`) si el runtime no cumple el mínimo: es preferible
+   un despliegue detenido a uno vulnerable.
 6. Retirar o proteger despliegues antiguos accesibles que conserven runtimes
    vulnerables. No hacer rollback a un despliegue vulnerable.
+
+## Exposición concreta de esta aplicación (revisado 2026-10-23)
+
+CVE-2026-111497 se explota decodificando Brotli controlado por un atacante.
+Vercel aplica reglas WAF a todo el tráfico entrante, pero **no cubre las
+respuestas que la función descarga de otros servidores**. En este código:
+
+- Optimizador de imágenes: solo Supabase Storage y los dos hosts de R2
+  (`next.config.js`); no acepta hosts arbitrarios.
+- `/api/admin/comprobante`: exige host de Supabase, carpeta `comprobantes` y
+  sesión de admin.
+- `/api/notify` y el resto de llamadas salientes: URL fija a Telegram.
+
+No hay ningún punto donde se descomprima Brotli controlado por un tercero, así
+que el vector remoto de la aplicación está cerrado por diseño mientras se
+completa el parche del runtime.
 
 ## Rotación después de asegurar los entornos
 
@@ -71,7 +95,10 @@ Actualizar el paquete `stripe` no sustituye actualizar Node.
    coordinando actualización y despliegue para evitar perder eventos.
 5. Verificar checkout, recepción de webhooks, procesamiento idempotente y tareas
    programadas. Revisar eventos fallidos y reintentarlos según corresponda.
-6. Monitorizar actividad tras la rotación y confirmar que las claves antiguas ya
+6. **Si la clave se generó mientras producción seguía en un runtime vulnerable,
+   rotarla otra vez** con el entorno ya parcheado. Stripe recomienda limpiar el
+   entorno *antes* de generar claves nuevas.
+7. Monitorizar actividad tras la rotación y confirmar que las claves antiguas ya
    no funcionan. Registrar versiones efectivas, despliegue, fecha de revocación
    y resultados de las verificaciones, nunca los valores de las claves.
 
