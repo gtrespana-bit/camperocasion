@@ -17,7 +17,14 @@
         "semilla": "node scripts/semilla-anuncios.js",
         "semilla:reset": "node scripts/semilla-anuncios.js --reset",
         "performance-test": "npm run build && node scripts/performance-test.js",
-        "apply-optimizations": "node scripts/apply-optimizations.js"
+        "apply-optimizations": "node scripts/apply-optimizations.js",
+        "check:node": "node scripts/check-node-version.cjs",
+        "preinstall": "npm run check:node",
+        "predev": "npm run check:node",
+        "prebuild": "npm run check:node",
+        "prebuild:standalone": "npm run check:node",
+        "prebuild:analyze": "npm run check:node",
+        "prestart": "npm run check:node"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1044.0",
@@ -61,5 +68,8 @@
         "tailwindcss": "^3.4.17",
         "ts-jest": "^29.4.11",
         "typescript": "^5.7.3"
+    },
+    "engines": {
+        "node": ">=22.23.4 <23"
     }
 }

@@ -7,6 +7,16 @@ mundo camper: compra, venta y publicación de **furgonetas camperizadas y
 autocaravanas de ocasión** en todo el territorio español (50 provincias +
 Ceuta y Melilla), en una única moneda: **el euro (€)**.
 
+## Runtime y seguridad
+
+Usar **Node.js 22.23.4 o un parche posterior de la rama 22**. Con nvm:
+`nvm install && nvm use`, después `npm ci`. Las instalaciones/builds rechazan versiones inferiores al mínimo configurado.
+Para que el CI utilice `.nvmrc`, copiar `docs/ci/ci-node-security.yml` sobre
+`.github/workflows/ci.yml` desde GitHub (actualización manual pendiente).
+
+El runtime de producción y la rotación de claves requieren comprobación aparte:
+[procedimiento Node.js / Stripe](docs/SEGURIDAD-NODE-STRIPE.md).
+
 ## Subcategorías
 
 | Subcategoría | Ejemplos |
