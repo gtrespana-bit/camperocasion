@@ -19,7 +19,7 @@ export const COLORS = {
 }
 
 const URL_BASE = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_URL) || 'https://camperocasion.online'
-const CONTACT = 'contacto@camperocasion.online'
+const CONTACT = 'soporte@camperocasion.online'
 const LOGO = `${URL_BASE}/logo-camperocasion.png`
 
 export function emailLayout(title: string, body: string, ctaText?: string, ctaUrl?: string): string {

@@ -10,6 +10,7 @@ import { categoriasData, resolverCampos, esCampoMarca, FAMILIAS } from '@/lib/ca
 import { agruparPorFabricante, etiquetaModelo } from '@/lib/marcas'
 import { ESTADOS, getMunicipiosNombres } from '@/lib/ubicaciones'
 import { formatPrecio } from '@/lib/precio'
+import { etiquetaPlan } from '@/lib/planes-anuncios'
 import { Camera, X, UploadCloud, AlertCircle, Phone, Mail, MapPin, MessageSquare } from 'lucide-react'
 import { verificarContenido, formatearAlertaModeracion } from '@/lib/moderacion'
 import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
@@ -71,8 +72,13 @@ export default function PublicarPage() {
     restantes: number | null
     puedePublicar: boolean
     trial: boolean
+    trialGracia: boolean
     profesional: boolean
     fotosMax: number
+    plan: string
+    planContratado: string
+    trialHasta: string | null
+    graciaHasta: string | null
   } | null>(null)
 
   // Redirect if not logged in
@@ -422,6 +428,26 @@ export default function PublicarPage() {
   const canGoToStep2 = familia && subcategoria
   const canGoToStep3 = titulo && descripcion && estadoProd && precioUsd
 
+  // ── Resumen del plan en el propio formulario ───────────────────────────
+  // Quien está publicando es justo quien topa con el cupo: aquí tiene que ver
+  // qué plan tiene, cuántos días le quedan y qué pasa cuando termine. Antes
+  // solo decía «estás en prueba», sin fecha ni consecuencia.
+  const diasHasta = (iso: string | null | undefined) => {
+    if (!iso) return 0
+    const ms = new Date(iso).getTime() - Date.now()
+    return ms <= 0 ? 0 : Math.ceil(ms / 86400000)
+  }
+  const fechaCorta = (iso: string | null | undefined) =>
+    iso
+      ? new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
+      : ''
+  const planNombre = etiquetaPlan(cupo?.plan)
+  const diasPrueba = diasHasta(cupo?.trialHasta)
+  const diasGracia = diasHasta(cupo?.graciaHasta)
+  // `plan` es el efectivo (un pack caducado ya cuenta como gratis);
+  // `planContratado` seguiría diciendo «plus» y el banner mentiría.
+  const packActivo = Boolean(cupo && !cupo.trial && !cupo.trialGracia && cupo.plan !== 'gratis')
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('title')}</h1>
@@ -445,11 +471,15 @@ export default function PublicarPage() {
           }`}
         >
           <p className={`text-sm font-bold ${cupo.puedePublicar ? 'text-green-800' : 'text-amber-900'}`}>
-            {cupo.trial && cupo.profesional
-              ? t('lanzamientoBanner')
-              : cupo.puedePublicar
-                ? t('freeBanner')
-                : t('cupoLlenoTitulo')}
+            {cupo.trial
+              ? t('pruebaTitulo', { plan: planNombre, dias: diasPrueba })
+              : cupo.trialGracia
+                ? t('graciaTitulo', { dias: diasGracia })
+                : packActivo
+                  ? t('packTitulo', { plan: planNombre })
+                  : cupo.puedePublicar
+                    ? t('freeBanner')
+                    : t('cupoLlenoTitulo')}
           </p>
           <p className={`text-xs mt-1 ${cupo.puedePublicar ? 'text-green-700' : 'text-amber-800'}`}>
             {t('cupoResumen', {
@@ -457,8 +487,25 @@ export default function PublicarPage() {
               max: cupo.max == null ? '∞' : cupo.max,
               restantes: cupo.restantes == null ? '∞' : cupo.restantes,
             })}
-            {cupo.trial && cupo.profesional ? ` ${t('lanzamientoBannerDesc')}` : ''}
+            {cupo.trial
+              ? ` ${t('pruebaDetalle', { fecha: fechaCorta(cupo.trialHasta), gracia: fechaCorta(cupo.graciaHasta) })}`
+              : cupo.trialGracia
+                ? ` ${t('graciaDetalle', { fecha: fechaCorta(cupo.graciaHasta) })}`
+                : packActivo
+                  ? ` ${t('packDetalle')}`
+                  : ''}
           </p>
+          {(cupo.trial || cupo.trialGracia) && (
+            <p className="text-xs mt-2">
+              <LocalLink href="/para-profesionales" className="underline font-semibold">
+                {t('verPlanes')}
+              </LocalLink>
+              <span className="mx-1 text-amber-700/60">·</span>
+              <LocalLink href="/dashboard?tab=plan" className="underline font-semibold">
+                {t('verMiPlan')}
+              </LocalLink>
+            </p>
+          )}
           {!cupo.puedePublicar && (
             <p className="text-xs mt-2">
               <LocalLink href="/para-profesionales" className="underline font-semibold">

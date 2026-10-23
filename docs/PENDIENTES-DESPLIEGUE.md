@@ -370,7 +370,9 @@ Orden real en `src/lib/server-email.ts`: 1º Resend API, 2º `SMTP_*`, 3º
 `soporte@camperocasion.online`). Sin canal, el envío devuelve *"Sin canal de envío:
 configura RESEND_API_KEY o SMTP_USER/SMTP_PASS"* y el registro no se verifica.
 
-**Bloque C — opcionales:** `ADMIN_EMAILS` + `NEXT_PUBLIC_ADMIN_EMAILS` (ambas
+**Bloque C — opcionales:** `WINBACK_CUPON` (código que aparece en el email de
+win-back; si está vacío, el email no menciona ninguna oferta),
+`ADMIN_EMAILS` + `NEXT_PUBLIC_ADMIN_EMAILS` (ambas
 con el mismo valor; el fallback ya es `gtrespana@gmail.com`, así que no urge),
 `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (avisos de reservas), par VAPID
 (`NEXT_PUBLIC_VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY`, push PWA),
@@ -555,9 +557,10 @@ emails, `NEXT_PUBLIC_URL` default, plantillas Supabase) y `next.config.js`
 4. ✅ **Supabase → Authentication → URL Configuration**: Site URL y Redirect
    URLs con el `.online` (plantillas ya actualizadas en
    `supabase-email-templates/`).
-5. **Correo (opcional, sigue abierto)**: cajas soporte@/noreply@ en el
-   proveedor si se van a usar; `EMAIL_FROM`/`CONTACTO_EMAIL` ya usan `.online`
-   por defecto en el código.
+5. ✅ **Correo**: `soporte@camperocasion.online` verificado y activo, y es el
+   único buzón de atención (formulario de contacto, FAQ, pie de todos los
+   emails transaccionales y mensajes de error). `privacidad@` y `legal@` se
+   mantienen por obligación propia; `noreply@` es solo remitente.
 6. **Verificación en producción** — ✅ hecha (2026-09-16/17): home y
    `/catalogo` renderizan (estados vacíos, **sin** el error 401 «Invalid API
    key»), `robots.txt` y `sitemap.xml` con el dominio nuevo, y el guard de

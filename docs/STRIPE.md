@@ -27,6 +27,10 @@ Los packs profesionales (Starter/Plus/Unlimited) se cobran como **suscripción**
 - **Cambio de pack**: `POST /api/planes/checkout` actualiza la suscripción
   existente con prorrateo; el webhook `customer.subscription.updated` aplica el
   nuevo plan y `plan_hasta`.
+- **Un cliente por vendedor**: la compra de créditos (`POST /api/stripe/checkout`)
+  reutiliza `perfiles.stripe_customer_id` igual que la suscripción, y lo guarda
+  si Stripe crea uno al vuelo. Así el portal enseña facturas de packs y de
+  créditos en la misma ficha.
 - **Portal de cliente**: `POST /api/planes/portal`. Activarlo no es suficiente:
   hay que configurar la **configuración por defecto** en Stripe →
   Settings → Billing → Customer portal:
@@ -55,7 +59,7 @@ Los packs profesionales (Starter/Plus/Unlimited) se cobran como **suscripción**
 |---|---|
 | `invoice.paid` | Renueva `plan_hasta` con `current_period_end`, limpia `pago_pendiente_desde` y republica los anuncios pausados por cupo. |
 | `invoice.payment_failed` | Marca `pago_pendiente_desde` (solo el primer fallo del ciclo), manda el email de tarjeta y **no corta el acceso**. El cron `/api/cron/planes` recuerda a los 3 y 7 días. |
-| `customer.subscription.deleted` | Baja a `gratis`, limpia el dunning. El cron pausa al día siguiente los anuncios que exceden el cupo (no borra). |
+| `customer.subscription.deleted` | Baja a `gratis`, limpia el dunning y deja `baja:YYYY-MM-DD` en `plan_avisos` para el win-back. El cron pausa al día siguiente los anuncios que exceden el cupo (no borra). |
 | `customer.subscription.updated` | Aplica el plan del metadata o, si falta, del `lookup_key`; en `past_due` no toca el plan. |
 
 `invoice.*` se resuelve recuperando la suscripción y su `current_period_end`:

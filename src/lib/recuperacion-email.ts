@@ -99,7 +99,7 @@ export async function enviarRecuperacion(
     return {
       ok: false,
       mensaje:
-        'No se pudo enviar el correo. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.online',
+        'No se pudo enviar el correo. Inténtalo de nuevo en unos minutos o escríbenos a soporte@camperocasion.online',
     }
   }
   return { ok: true }

@@ -410,3 +410,50 @@ export async function enviarEmailAnunciosPausados(
     emailLayout('Anuncios pausados por cupo', cuerpo),
   )
 }
+
+/**
+ * Win-back: una semana después de que se acabe la gracia de la prueba o de que
+ * se confirme la baja del pack.
+ *
+ * No promete nada que no sea cierto: el cupo vuelve al contratar, los anuncios
+ * siguen guardados y no hay permanencia. Si `WINBACK_CUPON` está configurado,
+ * se muestra el código para canjearlo en la página de packs (así la oferta se
+ * cambia sin tocar código ni desplegar).
+ */
+export async function enviarEmailWinback(
+  email: string,
+  nombre: string,
+  opts: { plan?: string; fechaFin?: string | null; anunciosPausados?: number },
+) {
+  const plan = opts.plan || 'profesional'
+  const cupon = (process.env.WINBACK_CUPON || '').trim()
+  const pausados = Number(opts.anunciosPausados) || 0
+  const cuerpo = `
+    <p style="margin:0 0 14px;font-size:16px;color:${COLORS.dark}">Hola ${htmlText(nombre)},</p>
+    <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      Hace una semana que terminó tu pack <strong style="color:${COLORS.dark}">${htmlText(plan)}</strong>${opts.fechaFin ? ` (${htmlText(fechaLarga(opts.fechaFin))})` : ''}.
+      Tu cuenta sigue funcionando y <strong style="color:${COLORS.dark}">no se ha borrado ningún anuncio</strong>.
+    </p>
+    <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      Lo que cambia es el cupo: sin pack, la cuenta vuelve a 1 anuncio activo y los que sobran quedan pausados.
+      ${pausados > 0 ? `Ahora mismo tienes <strong style="color:${COLORS.dark}">${pausados} pausado${pausados === 1 ? '' : 's'}</strong>; al activar un pack vuelven a publicarse solos.` : 'Al activar un pack vuelven a publicarse solos.'}
+    </p>
+    <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      Puedes volver con el pack que necesites desde <strong style="color:${COLORS.dark}">9 €/mes</strong> (5 anuncios),
+      sin permanencia y cancelando en dos clics. Si tu stock es pequeño, Starter suele ser suficiente.
+    </p>
+    ${cupon ? `<p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">Si vuelves esta semana, usa el código <strong style="color:${COLORS.dark}">${htmlText(cupon)}</strong> al contratar.</p>` : ''}
+    ${boton('Recuperar mi cupo', `${SITE_URL}/para-profesionales`)}
+    <p style="margin:18px 0 0;font-size:13px;color:${COLORS.gray}">
+      Si ya has vuelto a activar un pack, ignora este mensaje.
+      ¿Tienes dudas? Escríbenos a <a href="mailto:soporte@camperocasion.online" style="color:${COLORS.accent}">soporte@camperocasion.online</a>.
+    </p>
+    <p style="margin:22px 0 0;font-size:13px;color:${COLORS.gray}">CamperOcasión — Publica más, vende más</p>
+  `
+  return enviar(
+    'CamperOcasión',
+    email,
+    `Tu pack ${plan} terminó: tus anuncios siguen aquí`,
+    emailLayout('Vuelve cuando quieras', cuerpo),
+  )
+}

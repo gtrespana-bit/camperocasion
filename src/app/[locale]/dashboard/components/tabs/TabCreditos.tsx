@@ -88,7 +88,7 @@ export default function TabCreditos({ creditos, refreshCreditos }: { creditos: n
 
       {/* Paquetes */}
       <h3 className="text-xl font-bold text-gray-800 text-center">Elige tu paquete</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {PAQUETES_CREDITO.map((pkg) => {
           const porCredito = pkg.precio / pkg.creditos
           return (

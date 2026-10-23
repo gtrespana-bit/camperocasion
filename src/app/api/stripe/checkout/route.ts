@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSessionUser } from '@/lib/require-auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { getPaqueteByCreditos, isValidPaquete } from '@/lib/creditos'
+import { sbAdmin } from '@/lib/planes-servidor'
 import { getStripe, getSiteUrl, stripeConfigurado } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
@@ -47,6 +48,17 @@ export async function POST(req: NextRequest) {
   }
   const paquete = getPaqueteByCreditos(creditos)!
 
+  // El mismo `stripe_customer_id` que usan las suscripciones. Si existe, el
+  // cobro va contra ese cliente: el portal de Stripe enseña juntas las
+  // facturas de packs y de créditos, y no se crea un cliente nuevo por compra.
+  const sb = sbAdmin()
+  const { data: perfil } = await sb
+    .from('perfiles')
+    .select('stripe_customer_id')
+    .eq('id', user.id)
+    .maybeSingle()
+  const customerId = perfil?.stripe_customer_id as string | null | undefined
+
   const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
   const rl = await checkRateLimit('creditos:comprar', user.id, { ip })
   if (!rl.ok) {
@@ -66,7 +78,9 @@ export async function POST(req: NextRequest) {
       // fallar, así que no hace falta condicionarlo.
       payment_method_types: ['card', 'bizum'],
       client_reference_id: user.id,
-      customer_email: user.email || undefined,
+      ...(customerId
+        ? { customer: customerId }
+        : { customer_email: user.email || undefined }),
       locale: 'es',
       // Esta web cobra solo en euros. Adaptive Pricing de Stripe convierte a la
       // divisa por defecto de la CUENTA (si las claves son de otro proyecto,
@@ -107,6 +121,23 @@ export async function POST(req: NextRequest) {
 
     if (!session.url) {
       return NextResponse.json({ ok: false, error: 'Stripe no devolvió URL de pago' }, { status: 502 })
+    }
+
+    // Si Stripe ha creado un cliente al vuelo (no le pasamos uno), se guarda
+    // para la próxima compra. Un fallo aquí no debe tumbar el cobro: el
+    // webhook volverá a intentarlo al acreditar.
+    const nuevoCliente =
+      typeof session.customer === 'string' ? session.customer : session.customer?.id
+    if (nuevoCliente && !customerId) {
+      try {
+        await sb
+          .from('perfiles')
+          .update({ stripe_customer_id: nuevoCliente })
+          .eq('id', user.id)
+          .is('stripe_customer_id', null)
+      } catch {
+        /* best-effort */
+      }
     }
 
     return NextResponse.json({ ok: true, url: session.url, sessionId: session.id })

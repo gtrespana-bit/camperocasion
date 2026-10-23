@@ -459,16 +459,29 @@ Principios de UI que ya están aplicados:
     devuelve `403 codigo:'CUPO'` si no cabe. Sin esto, la pausa por cupo se
     saltaba en dos clics.
 
-### Siguiente (P1)
+### Fase 3 — implementada el 2026-10-22
 
-11. **Unificar cliente Stripe en créditos**: usar `stripe_customer_id` también
-    en `mode=payment`.
-12. **Retirar el pack de 2 créditos/1 €** o subirlo a 2 €.
-13. **Win-back al cancelar**: pausa 1 mes al 50 % o bajar de pack en el portal.
+11. ✅ **Cliente Stripe único en créditos**: `POST /api/stripe/checkout` reutiliza
+    `stripe_customer_id` (y lo guarda si Stripe crea uno al vuelo, también desde
+    el webhook). Las compras de créditos y la suscripción salen en la misma
+    ficha del portal, sin clientes duplicados.
+12. ✅ **Pack de 2 créditos / 1 € retirado**: el catálogo es 15/5 €, 40/10 € y
+    100/20 €. El primero es ahora el «más popular».
+13. ✅ **Win-back**: una semana después de perder el cupo (fin de la gracia de la
+    prueba o baja confirmada en Stripe) se manda email + push con el estado real
+    —anuncios guardados, cupo recuperable, sin permanencia— y un CTA a packs.
+    Idempotente (`winback:<fecha>` en `plan_avisos`) y con ventana de 30 días
+    para no enviar correos masivos la primera vez. Si `WINBACK_CUPON` está
+    configurado, el email muestra el código.
+14. ✅ **Resumen de plan en `/publicar`**: quien publica ve su pack, los días que
+    quedan, la fecha de fin de la prueba y de la gracia, y qué pasa después, en
+    el mismo formulario donde topa con el cupo.
+15. ✅ **Email de soporte único**: `soporte@camperocasion.online` en el
+    formulario, la FAQ, el pie de todos los emails y los mensajes de error.
 
 ### 1–2 meses (P2)
 
-14. **Diferenciación real de packs** (lo que justifica subir de Starter a
+16. **Diferenciación real de packs** (lo que justifica subir de Starter a
     Plus/Flota y aún no existe):
     - importación CSV/XML de stock y sincronización con DMS;
     - varios usuarios por cuenta (comerciales);
@@ -476,12 +489,13 @@ Principios de UI que ya están aplicados:
       mercado;
     - publicación automática en Instagram/Facebook;
     - generador de ficha con IA a partir de fotos.
-15. **Cambio de plan desde el portal** (configurar planes en Stripe) o
+17. **Cambio de plan desde el portal** (configurar planes en Stripe) o
     mantener el cambio actual con prorrateo.
-16. **Stripe Tax** si se factura a empresas fuera de España.
-17. **A/B tests**: precio Starter 9 vs 12; anual por defecto vs mensual;
+18. **Stripe Tax** si se factura a empresas fuera de España.
+19. **A/B tests**: precio Starter 9 vs 12; anual por defecto vs mensual;
     copy «sin comisión» vs «publica todo tu stock».
-18. **Win-back**: pausa 1 mes al 50 %, downgrade en vez de baja.
+20. **Win-back con oferta**: pausa 1 mes al 50 % o downgrade guiado en el
+    portal, conectado a `WINBACK_CUPON`.
 
 ---
 

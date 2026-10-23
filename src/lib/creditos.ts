@@ -4,8 +4,12 @@
  */
 
 // Paquetes en EUR. El precio se muestra como "X €" en toda la web.
+//
+// El pack de 2 créditos por 1 € se retiró en la fase 3: con el pack de prueba
+// y los destacados que ya incluye el plan, nadie compraba 2 créditos sueltos y
+// el importe mínimo dejaba la pasarela por debajo del ticket rentable. El
+// primero es ahora 15 créditos por 5 €.
 export const PAQUETES_CREDITO = [
-  { creditos: 2, precio: 1, descripcion: 'Para empezar', popular: false },
   { creditos: 15, precio: 5, descripcion: '¡El más elegido!', popular: true },
   { creditos: 40, precio: 10, descripcion: 'Para vendedores activos', popular: false },
   { creditos: 100, precio: 20, descripcion: 'Máximo ahorro', popular: false },

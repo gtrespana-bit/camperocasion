@@ -25,7 +25,9 @@ import { createClient } from '@supabase/supabase-js'
 import { notifyUser } from '@/lib/push-notify'
 import { etiquetaPlan } from '@/lib/planes-anuncios'
 import {
+  DIAS_ESPERA_WINBACK,
   DIAS_GRACIA_TRIAL,
+  DIAS_VENTANA_WINBACK,
   avisosPlanPendientes,
   estadoTrial,
   mensajeAvisoPlan,
@@ -36,6 +38,7 @@ import {
   enviarEmailPagoFallido,
   enviarEmailTrialGracia,
   enviarEmailTrialTermina,
+  enviarEmailWinback,
 } from '@/email/server-email'
 
 export const dynamic = 'force-dynamic'
@@ -131,6 +134,11 @@ function textoEmail(
         graciaHasta: trial.graciaHasta ? trial.graciaHasta.toISOString() : '',
         graciaDias: DIAS_GRACIA_TRIAL,
       })
+    case 'winback':
+      return enviarEmailWinback(perfil.email, perfil.nombre || '', {
+        plan: etiquetaPlan(perfil.trial_plan || perfil.plan_anuncios || 'plus'),
+        fechaFin: trial.hasta ? trial.hasta.toISOString() : null,
+      })
     default:
       return enviarEmailPagoFallido(perfil.email, perfil.nombre || '', {
         plan: perfil.plan_anuncios && perfil.plan_anuncios !== 'gratis'
@@ -196,11 +204,20 @@ export async function GET(request: NextRequest) {
       ahora,
     })
 
+    // Fin de la gracia = momento en que se pierde el cupo del pack de prueba.
+    // Quien ya tuvo suscripción no pasa por aquí: su baja se registra en
+    // `plan_avisos` y se avisa desde la sección 3.
+    const graciaFin = trial.hasta
+      ? new Date(trial.hasta.getTime() + DIAS_GRACIA_TRIAL * 86400000)
+      : null
+    const winbackDesde = !perfil.stripe_subscription_id ? graciaFin : null
+
     const pendientes = avisosPlanPendientes({
       ahora,
       trial,
       pagoPendienteDesde: perfil.stripe_subscription_id ? perfil.pago_pendiente_desde : null,
       planPagoVigente,
+      winbackDesde,
       avisados: avisadas.get(perfil.id) || [],
     })
     if (pendientes.length === 0) continue
@@ -344,6 +361,101 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // ── 3. Win-back de bajas de suscripción ─────────────────────────────────
+  // El webhook deja `baja:YYYY-MM-DD` en `plan_avisos` cuando Stripe confirma
+  // la baja. Aquí se busca una semana después, con la misma ventana que la
+  // prueba: ni se olvida si el cron falla un día, ni se avisa a bajas viejas.
+  let winbacks = 0
+  const desdeVentana = new Date(
+    ahora.getTime() - (DIAS_ESPERA_WINBACK + DIAS_VENTANA_WINBACK + 5) * 86400000,
+  ).toISOString()
+
+  const { data: bajas } = await admin
+    .from('plan_avisos')
+    .select('user_id, clave, tipo')
+    .like('clave', 'baja:%')
+    .gte('enviado_en', desdeVentana)
+    .limit(1000)
+
+  if (bajas?.length) {
+    const ids = [...new Set(bajas.map((b: any) => b.user_id as string))]
+    const yaAvisados = await clavesAvisadas(admin, ids)
+    const emailsBaja = await emailsDeUsuarios(admin, new Set(ids))
+    const { data: perfilesBaja } = await admin
+      .from('perfiles')
+      .select('id, nombre, plan_anuncios, plan_hasta')
+      .in('id', ids)
+    const porId = new Map<string, any>((perfilesBaja || []).map((p: any) => [p.id, p]))
+
+    for (const baja of bajas as any[]) {
+      const fecha = String(baja.clave).slice('baja:'.length)
+      const perdida = new Date(`${fecha}T00:00:00Z`)
+      if (Number.isNaN(perdida.getTime())) continue
+
+      const dias = Math.floor((ahora.getTime() - perdida.getTime()) / 86400000)
+      if (dias < DIAS_ESPERA_WINBACK || dias > DIAS_ESPERA_WINBACK + DIAS_VENTANA_WINBACK) continue
+
+      const perfil = porId.get(baja.user_id)
+      if (!perfil) continue
+      const planVigente =
+        (perfil.plan_anuncios === 'starter' ||
+          perfil.plan_anuncios === 'plus' ||
+          perfil.plan_anuncios === 'unlimited') &&
+        (!perfil.plan_hasta || new Date(perfil.plan_hasta).getTime() >= ahora.getTime())
+      if (planVigente) continue
+
+      const clave = `winback:${fecha}`
+      if (yaAvisados.get(baja.user_id)?.has(clave)) continue
+
+      const email = emailsBaja.get(baja.user_id)
+      let canal = 'ninguno'
+      if (email) {
+        try {
+          const r = await enviarEmailWinback(email, perfil.nombre || '', {
+            plan: baja.tipo && baja.tipo !== 'baja' ? etiquetaPlan(baja.tipo) : 'profesional',
+            fechaFin: fecha,
+          })
+          if (r) {
+            emailsEnviados++
+            canal = 'email'
+          }
+        } catch (e: any) {
+          fallos.push(`${baja.user_id}:winback`)
+          console.error('[cron/planes] email winback:', e?.message || e)
+        }
+      }
+
+      const mensaje = mensajeAvisoPlan('winback')
+      try {
+        await notifyUser(admin, baja.user_id, {
+          title: mensaje.titulo,
+          body: mensaje.cuerpo,
+          tag: `plan-${clave}`,
+          icon: '/icon-192.png',
+          click_url: mensaje.url,
+        })
+        pushEnviados++
+        if (canal === 'ninguno') canal = 'push'
+      } catch {
+        /* sin suscripciones push: no es un error */
+      }
+
+      try {
+        await admin.from('plan_avisos').insert({
+          user_id: baja.user_id,
+          clave,
+          tipo: 'winback',
+          canal,
+        })
+      } catch {
+        /* migración pendiente */
+      }
+
+      avisos++
+      winbacks++
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     candidatos: lista.length,
@@ -352,6 +464,7 @@ export async function GET(request: NextRequest) {
     push: pushEnviados,
     pausados,
     usuariosPausados,
+    winbacks,
     fallos: fallos.slice(0, 10),
   })
 }

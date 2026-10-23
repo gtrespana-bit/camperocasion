@@ -92,7 +92,26 @@ export async function POST(req: NextRequest) {
     const userId = userIdDesdeStripe(sub)
     if (!userId) return NextResponse.json({ recibido: true, ignorado: 'sub sin user' })
     if (evento.type === 'customer.subscription.deleted' || sub.status === 'canceled' || sub.status === 'unpaid') {
+      const planAnterior = planDesdeSuscripcion(sub)
       await aplicarPlanPerfil(userId, { plan: 'gratis', hasta: null, stripeSubscriptionId: sub.id })
+
+      // Fecha de baja para el win-back del cron (una semana después). Solo se
+      // registra con `deleted`, que llega una vez por suscripción: `updated` en
+      // `unpaid` puede repetirse durante los reintentos y duplicaría el aviso.
+      if (evento.type === 'customer.subscription.deleted') {
+        try {
+          await sbAdmin().from('plan_avisos').insert({
+            user_id: userId,
+            clave: `baja:${new Date().toISOString().slice(0, 10)}`,
+            // El plan va en `tipo` para que el email pueda nombrarlo.
+            tipo: planAnterior || 'baja',
+            canal: 'sistema',
+          })
+        } catch {
+          /* migración pendiente: sin fila no hay win-back, pero la baja se aplica */
+        }
+      }
+
       return NextResponse.json({ recibido: true, plan: 'gratis' })
     }
     // El metadata manda; si falta (cambio desde el portal), se deduce del
@@ -287,6 +306,22 @@ export async function POST(req: NextRequest) {
   if (data && data.ok === false) {
     console.error('[stripe/webhook] RPC rechazó el abono:', data.error, session.id)
     return NextResponse.json({ error: data.error }, { status: 500 })
+  }
+
+  // El cliente de Stripe se guarda la primera vez para reutilizarlo en las
+  // suscripciones y en el portal: una sola ficha por vendedor.
+  const customerId =
+    typeof session.customer === 'string' ? session.customer : session.customer?.id
+  if (customerId) {
+    try {
+      await sb
+        .from('perfiles')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', userId)
+        .is('stripe_customer_id', null)
+    } catch {
+      /* best-effort: el pago ya está acreditado */
+    }
   }
 
   // Aviso al admin, si Telegram está configurado.
