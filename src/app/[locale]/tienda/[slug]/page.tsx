@@ -11,6 +11,7 @@ import {
   getCiudadByMunicipioYEstado,
 } from '@/lib/ubicaciones-seo'
 import TiendaClient from './TiendaClient'
+import { alternatesSeo, descripcionSeo, tituloSeo } from '@/lib/seo'
 
 /**
  * Escaparate público de un camperizador o profesional: /tienda/[slug].
@@ -99,9 +100,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (perfil.verificado) partes.push('vendedor verificado')
   if (totalResenas > 0) partes.push(`${promedio}★ (${totalResenas})`)
 
-  const description =
-    (perfil.descripcion || '').trim().slice(0, 150) ||
-    `Stock de furgonetas camper y autocaravanas de ${nombre}${ubicacion ? ` en ${ubicacion}` : ''}. ${partes.join(' · ')}.`
+  const description = descripcionSeo(
+    (perfil.descripcion || '').trim() ||
+      `Stock de furgonetas camper y autocaravanas de ${nombre}${ubicacion ? ` en ${ubicacion}` : ''}. ${partes.join(' · ')}.`,
+  )
 
   const url = `${SITIO}/tienda/${perfil.slug}`
   const images = perfil.portada_url
@@ -111,12 +113,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : [{ url: `https://camperocasion.online/api/og/catalog?categoria=camper`, width: 1200, height: 630, alt: title }]
 
   return {
-    title,
+    title: tituloSeo(title),
     description,
-    alternates: {
-      canonical: url,
-      languages: { 'es-ES': url, 'x-default': url },
-    },
+    alternates: alternatesSeo(`/tienda/${perfil.slug}`),
     openGraph: { title, description, url, siteName: 'CamperOcasión', type: 'profile', locale: 'es_ES', images },
     twitter: { card: 'summary_large_image', title, description, images: images.map(i => (i as any).url || i) as any },
   }

@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { setRequestLocale } from 'next-intl/server'
 import { MARCAS_MODELOS, agruparPorFabricante, etiquetaModelo } from '@/lib/marcas'
 import ValorarClient from './ValorarClient'
+import { descripcionSeo, tituloSeo } from '@/lib/seo'
 
 /**
  * «¿Cuánto vale mi camper?» — el lead-magnet del vendedor.
@@ -17,12 +18,13 @@ const SITIO = 'https://camperocasion.online'
 
 export async function generateMetadata(): Promise<Metadata> {
   const title = '¿Cuánto vale mi camper? Tasación gratis online'
-  const description =
-    'Calcula gratis el precio de tu furgoneta camper o autocaravana con los precios reales de los anuncios publicados en España. Sin registro y en menos de un minuto.'
+  const description = descripcionSeo(
+    'Calcula gratis el precio de tu furgoneta camper o autocaravana con anuncios reales de España. Sin registro y en menos de un minuto.',
+  )
   const url = `${SITIO}/cuanto-vale-mi-camper`
 
   return {
-    title,
+    title: tituloSeo(title),
     description,
     alternates: { canonical: url, languages: { 'es-ES': url, 'x-default': url } },
     openGraph: { title, description, url, siteName: 'CamperOcasión', locale: 'es_ES', type: 'website', images: [{ url: SITIO + '/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: title }] },

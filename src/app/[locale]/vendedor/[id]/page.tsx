@@ -1,5 +1,6 @@
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
+import { alternatesSeo, descripcionSeo, tituloSeo } from '@/lib/seo'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/lib/supabase-server-client'
 import VendedorClient from './VendedorClient'
@@ -102,22 +103,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (productos.length > 0) parts.push(`${productos.length} productos en venta`)
   if (ubicacion) parts.push(ubicacion)
 
-  const description = `Perfil de ${nombre} en CamperOcasión España. ${
+  const description = descripcionSeo(`Perfil de ${nombre} en CamperOcasión España. ${
     parts.length > 0 ? parts.join(' · ') + '. ' : ''
-  }Compra y vende de forma segura en el marketplace de clasificados de España.`
+  }Compra y vende de forma segura en el marketplace de clasificados de España.`)
 
   const images = perfil.foto_perfil_url ? [{ url: perfil.foto_perfil_url }] : undefined
 
   return {
-    title,
+    title: tituloSeo(title),
     description,
-    alternates: {
-      canonical: `https://camperocasion.online/vendedor/${id}`,
-      languages: {
-        'es-ES': `https://camperocasion.online/vendedor/${id}`,
-        'x-default': `https://camperocasion.online/vendedor/${id}`,
-      },
-    },
+    alternates: alternatesSeo(`/vendedor/${id}`),
     openGraph: {
       title,
       description,

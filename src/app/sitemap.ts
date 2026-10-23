@@ -7,6 +7,7 @@ import path from 'path'
 import { CIUDADES_SEO, CATEGORIAS_POPULARES } from '@/lib/ubicaciones-seo'
 import { CATEGORIAS_SEO_LIST, SUBCATEGORIAS_SEO } from '@/lib/categorias-seo'
 import { TIPOS_ITP } from '@/lib/itp'
+import { limpiarComillas } from '@/lib/seo'
 
 const BASE_URL = 'https://camperocasion.online'
 const PAGE_SIZE = 1000
@@ -29,7 +30,7 @@ function getBlogSlugs(): { slug: string; lastModified?: Date }[] {
         const raw = fs.readFileSync(path.join(dir, file), 'utf-8')
         const match = raw.match(/^date:\s*(.+)$/m)
         if (match) {
-          const date = new Date(match[1].trim())
+          const date = new Date(limpiarComillas(match[1]))
           if (!Number.isNaN(date.getTime())) return { slug, lastModified: date }
         }
       } catch {

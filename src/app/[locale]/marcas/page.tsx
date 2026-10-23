@@ -16,9 +16,9 @@ import {
 const SITIO = 'https://camperocasion.online'
 
 export const metadata: Metadata = {
-  title: 'Marcas y modelos de campers y autocaravanas | CamperOcasión',
+  title: 'Marcas de campers y autocaravanas',
   description:
-    'Todas las marcas y modelos de furgonetas camper, autocaravanas y 4x4 organizadas por fabricante: Fiat, Volkswagen, Mercedes-Benz, Benimar, Hymer, Adria y más. Descubre cuáles son aptos para cada tipo de vehículo vivienda.',
+    'Marcas y modelos de furgonetas camper y autocaravanas: Fiat, Volkswagen, Mercedes, Benimar, Hymer y Adria. Encuentra tu camper de ocasión.',
   keywords: [
     'marcas de campers',
     'marcas de autocaravanas',

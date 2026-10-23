@@ -458,19 +458,19 @@
   "vendedorLanding": {
     "particular": {
       "title": "Furgonetas camper de particulares",
-      "metaTitle": "Comprar camper a particulares | CamperOcasión",
+      "metaTitle": "Comprar camper a particulares",
       "metaDescription": "Compra furgonetas camper y autocaravanas directamente a sus dueños. Sin intermediarios: trato entre particulares en toda España.",
       "intro": "Compra directamente a los dueños: sin intermediarios, historial real y trato de persona a persona. Cada anuncio lleva el sello \"Particular\" para que sepas siempre con quién hablas."
     },
     "camperizador": {
       "title": "Campers de camperizadores",
-      "metaTitle": "Comprar camper a camperizadores | CamperOcasión",
+      "metaTitle": "Comprar camper a camperizadores",
       "metaDescription": "Camperizaciones artesanales y proyectos a medida de quienes viven el mundo camper. Directamente del taller de su creador a ti.",
       "intro": "Proyectos montados por gente que vive la furgoneta: camperizaciones artesanales, soluciones probadas en ruta y vendedores que conocen cada detalle de su montaje."
     },
     "profesional": {
       "title": "Campers y autocaravanas de profesionales",
-      "metaTitle": "Comprar camper a profesionales y talleres | CamperOcasión",
+      "metaTitle": "Comprar camper a profesionales y talleres",
       "metaDescription": "Talleres, camperizadores profesionales y concesionarios especializados en camper. Vehículos revisados y garantía profesional en toda España.",
       "intro": "Talleres y concesionarios especializados en camper: stock renovado, vehículos revisados antes de la venta y respaldo profesional."
     },
@@ -630,7 +630,7 @@
     "holder": "Titular"
   },
   "publicar": {
-    "title": "Publicar algo",
+    "title": "Publica tu camper gratis",
     "freeBanner": "Publicar tu camper es gratis",
     "freeBannerDesc": "Sin comisión por venta. Los particulares tienen un cupo de anuncios activos para que el catálogo no se llene de stock de empresa.",
     "pruebaTitulo": "Prueba del plan {plan}: {dias, plural, one {queda # día} other {quedan # días}}",

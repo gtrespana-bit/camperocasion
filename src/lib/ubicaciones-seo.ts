@@ -49,9 +49,10 @@ Object.entries(MUNICIPIOS_POR_ESTADO).forEach(([comunidad, provincias]) => {
       lat,
       lng,
       // Sin marca: el template del layout raíz (%s | CamperOcasión) la agrega
-      // una sola vez.
-      titulo: `Furgonetas camper segunda mano ${nombre} — Autocaravanas de ocasión`,
-      descripcion: `Compra furgonetas camperizadas y autocaravanas de ocasión en ${nombre}, ${comunidad}. Gran volumen, camper medianas, minicamper, perfiladas, capuchinas e integrales. Publica gratis en CamperOcasión.`,
+      // una sola vez. La provincia queda en el título para captar búsquedas
+      // locales sin superar el ancho útil de una SERP.
+      titulo: `Camper de ocasión en ${nombre}`,
+      descripcion: `Furgonetas camper y autocaravanas de segunda mano en ${nombre}, ${comunidad}. Gran volumen, minicamper, perfiladas e integrales. Publica gratis.`,
       keywords: [
         `furgonetas camper segunda mano ${provinciaMin}`,
         `camper gran volumen ${provinciaMin}`,

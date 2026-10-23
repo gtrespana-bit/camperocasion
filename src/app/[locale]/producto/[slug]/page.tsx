@@ -14,6 +14,7 @@ import { getCiudadByMunicipioYEstado } from '@/lib/ubicaciones-seo'
 import { formatPrecio } from '@/lib/precio'
 import { modeloPorValor, slugModelo } from '@/lib/marcas'
 import { TIPOS_ITP } from '@/lib/itp'
+import { alternatesSeo, descripcionSeo, tituloSeo } from '@/lib/seo'
 
 // IMPORTANTE — Ruta DINÁMICA a propósito: ver el comentario en
 // src/app/[locale]/[ciudad]/page.tsx. Con generateStaticParams + revalidate
@@ -374,16 +375,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = parts.join(' — ')
 
-  const desc = producto.descripcion
-    ? producto.descripcion.slice(0, 155).replace(/\n/g, ' ')
-    : `${producto.estado || 'Producto'} en venta ${ubicacion ? 'en ' + ubicacion : 'en España'}`
+  const desc = descripcionSeo(
+    producto.descripcion ||
+      `${producto.estado || 'Producto'} en venta ${ubicacion ? 'en ' + ubicacion : 'en España'}`,
+  )
 
   const image = producto.imagen_url
     ? [{ url: producto.imagen_url, width: 800, height: 600, alt: producto.titulo }]
     : undefined
 
   return {
-    title,
+    title: tituloSeo(title),
     description: desc,
     openGraph: {
       title,
@@ -398,13 +400,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: desc,
       images: image,
     },
-    alternates: {
-      canonical: `https://camperocasion.online/producto/${canonicalSlug}`,
-      languages: {
-        'es-ES': `https://camperocasion.online/producto/${canonicalSlug}`,
-        'x-default': `https://camperocasion.online/producto/${canonicalSlug}`,
-      },
-    },
+    alternates: alternatesSeo(`/producto/${canonicalSlug}`),
     // Vendido: la URL sigue viva (llega tráfico de WhatsApp/Google y hay
     // similares que mostrar) pero fuera del índice: contenido agotado.
     // Demostración: tampoco se indexa — no es un vehículo real en venta y no

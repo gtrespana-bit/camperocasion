@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { alternatesSeo } from '@/lib/seo'
 import { setRequestLocale } from 'next-intl/server'
 import DocumentoLegal from '@/components/DocumentoLegal'
 import BotonPreferenciasCookies from '@/components/BotonPreferenciasCookies'
@@ -7,7 +8,7 @@ import { POLITICA_COOKIES, type IdiomaLegal } from '@/lib/textos-legales'
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params
   const idioma: IdiomaLegal = locale === 'en' ? 'en' : 'es'
-  return { title: POLITICA_COOKIES[idioma].titulo }
+  return { title: POLITICA_COOKIES[idioma].titulo, alternates: alternatesSeo('/politica-de-cookies') }
 }
 
 export default async function PoliticaCookiesPage({ params }: { params: Promise<{ locale: string }> }) {

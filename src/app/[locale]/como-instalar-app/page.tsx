@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
+import { alternatesSeo } from '@/lib/seo'
 import LocalLink from '@/components/LocalLink'
 import { ArrowLeft, Smartphone, Share, Download, PlusCircle, ArrowDownToLine, CheckCircle2, Apple, MonitorDown } from 'lucide-react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 export const metadata: Metadata = {
-  title: 'Instala la App',
-  description: 'Aprende cómo instalar CamperOcasión como app en tu teléfono. Guía paso a paso para Android e iPhone.',
+  title: 'Instala nuestra app',
+  description: 'Instala CamperOcasión en tu móvil como una app: guía paso a paso para Android y iPhone, sin descargas desde una tienda de aplicaciones.',
+  alternates: alternatesSeo('/como-instalar-app'),
 }
 
 export default async function ComoInstalarAppPage({ params }: { params: Promise<{ locale: string }> }) {

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { alternatesSeo } from '@/lib/seo'
 import { setRequestLocale } from 'next-intl/server'
 import DocumentoLegal from '@/components/DocumentoLegal'
 import { AVISO_LEGAL, type IdiomaLegal } from '@/lib/textos-legales'
@@ -19,6 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const idioma: IdiomaLegal = locale === 'en' ? 'en' : 'es'
   return {
     title: AVISO_LEGAL[idioma].titulo,
+    alternates: alternatesSeo('/aviso-legal'),
     // Sin los datos del titular, esta página no debe aparecer en Google.
     robots: hayDatosTitular() ? { index: true, follow: true } : { index: false, follow: true },
   }

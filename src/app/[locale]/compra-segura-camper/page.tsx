@@ -8,9 +8,9 @@ import { CHECKLIST_CAMPER, CHECKLIST_COMPRA_SEGURA, TASA_DGT } from '@/lib/itp'
 const CANONICAL = 'https://camperocasion.online/compra-segura-camper'
 
 export const metadata: Metadata = {
-  title: 'Checklist de compra segura de una camper de segunda mano',
+  title: 'Compra segura de una camper de ocasión',
   description:
-    'Qué documentos y comprobaciones hay que revisar antes de comprar una furgoneta camper o autocaravana de ocasión entre particulares: ficha técnica, ITV, reformas legalizadas, cargas en la DGT, contrato e ITP.',
+    'Checklist para comprar una camper de ocasión: ficha técnica, ITV, reformas legalizadas, cargas en la DGT, contrato e ITP.',
   keywords: [
     'comprar camper de segunda mano entre particulares',
     'checklist compra camper',

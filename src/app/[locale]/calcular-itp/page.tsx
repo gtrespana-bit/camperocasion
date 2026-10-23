@@ -10,9 +10,9 @@ import { TIPOS_ITP, REVISADO_EN } from '@/lib/itp'
 const CANONICAL = 'https://camperocasion.online/calcular-itp'
 
 export const metadata: Metadata = {
-  title: 'Calculadora de ITP para comprar una camper de segunda mano',
+  title: 'Calculadora de ITP para campers',
   description:
-    'Calcula el ITP de tu camper o autocaravana de ocasión: tipo por comunidad autónoma, cuota fija para vehículos antiguos, depreciación por antigüedad y coste total del cambio de nombre. Actualizado a 2026.',
+    'Calcula el ITP de tu camper o autocaravana de ocasión por comunidad autónoma, con cuota fija, depreciación y coste del cambio de nombre.',
   keywords: [
     'calculadora ITP camper',
     'impuesto comprar autocaravana segunda mano',
@@ -26,9 +26,9 @@ export const metadata: Metadata = {
     languages: { 'es-ES': CANONICAL, 'x-default': CANONICAL },
   },
   openGraph: {
-    title: 'Calculadora de ITP para comprar una camper de segunda mano',
+    title: 'Calculadora de ITP para campers',
     description:
-      'Del 3 % de Galicia al 6 % de Cantabria, Castilla-La Mancha, Comunitat Valenciana y Extremadura: calcula lo que pagarás de ITP por tu camper y qué documentación revisar antes de firmar.',
+      'Calcula lo que pagarás de ITP por tu camper según tu comunidad autónoma y revisa la documentación antes de firmar.',
     type: 'website',
     locale: 'es_ES',
     url: CANONICAL,
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Calculadora de ITP para comprar una camper de segunda mano',
-    description: 'Calcula el ITP de tu camper o autocaravana de ocasión: tipo por comunidad autónoma, cuota fija para vehículos antiguos, depreciación por antigüedad y coste total del cambio de nombre.',
+    title: 'Calculadora de ITP para campers',
+    description: 'Calcula el ITP de tu camper por comunidad autónoma, con depreciación y coste del cambio de nombre.',
     images: ['https://camperocasion.online/api/og/catalog?categoria=camper'],
   },
 }

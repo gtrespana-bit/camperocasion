@@ -20,9 +20,9 @@ export const revalidate = 600
 const SITIO = 'https://camperocasion.online'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const title = 'Camperizadores y concesionarios de camper en España'
+  const title = 'Camperizadores y profesionales en España'
   const description =
-    'Directorio de talleres de camperización y vendedores profesionales de furgonetas camper y autocaravanas en España. Consulta su stock, su ubicación y sus valoraciones.'
+    'Directorio de talleres y profesionales de campers y autocaravanas en España. Consulta stock, ubicación y valoraciones.'
   return {
     title,
     description,

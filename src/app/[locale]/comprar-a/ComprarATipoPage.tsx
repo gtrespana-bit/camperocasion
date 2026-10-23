@@ -14,6 +14,7 @@ import {
   type ProductoCatalogo,
 } from '@/lib/catalog-consulta'
 import { ChevronRight } from 'lucide-react'
+import { descripcionSeo, tituloSeo } from '@/lib/seo'
 
 // ── Landings SEO por tipo de vendedor (Fase 3) ────────────────────────────
 // /comprar-a-particulares, /comprar-a-camperizadores, /comprar-a-profesionales
@@ -43,9 +44,10 @@ export async function metadataParaTipo(locale: string, slug: SlugTipo): Promise<
   const tipoKey = SLUG_A_TIPO[slug]
 
   const canonical = `${BASE_URL}/comprar-a-${slug}`
+  const description = descripcionSeo(t(`${tipoKey}.metaDescription`))
   return {
-    title: t(`${tipoKey}.metaTitle`),
-    description: t(`${tipoKey}.metaDescription`),
+    title: tituloSeo(t(`${tipoKey}.metaTitle`)),
+    description,
     alternates: {
       // Solo la versión ES se indexa (la /en lleva X-Robots-Tag: noindex).
       canonical,
@@ -53,7 +55,7 @@ export async function metadataParaTipo(locale: string, slug: SlugTipo): Promise<
     },
     openGraph: {
       title: t(`${tipoKey}.metaTitle`),
-      description: t(`${tipoKey}.metaDescription`),
+      description,
       locale: 'es_ES',
       url: canonical,
       type: 'website',
@@ -63,7 +65,7 @@ export async function metadataParaTipo(locale: string, slug: SlugTipo): Promise<
     twitter: {
       card: 'summary_large_image',
       title: t(`${tipoKey}.metaTitle`),
-      description: t(`${tipoKey}.metaDescription`),
+      description,
       images: [BASE_URL + '/api/og/catalog?categoria=camper'],
     },
   }

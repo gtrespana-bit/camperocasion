@@ -5,6 +5,7 @@ import fs from 'fs'
 import path from 'path'
 import { Calendar, ArrowRight, Clock, TrendingUp } from 'lucide-react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { limpiarComillas } from '@/lib/seo'
 
 interface Post {
   slug: string
@@ -36,12 +37,12 @@ function getPosts(): Post[] {
 
     return {
       slug,
-      title: titleMatch?.[1] || slug,
-      excerpt: excerptMatch?.[1] || '',
-      date: dateMatch?.[1] || '',
-      readTime: readTimeMatch?.[1] || '5 min',
+      title: limpiarComillas(titleMatch?.[1]) || slug,
+      excerpt: limpiarComillas(excerptMatch?.[1]),
+      date: limpiarComillas(dateMatch?.[1]),
+      readTime: limpiarComillas(readTimeMatch?.[1]) || '5 min',
       tags: tagsMatch ? tagsMatch[1].split(',').map(t => t.trim()) : [],
-      category: categoryMatch?.[1] || 'General',
+      category: limpiarComillas(categoryMatch?.[1]) || 'General',
       featured: featuredMatch?.[1] === 'true',
     }
   }).sort((a, b) => {
@@ -52,8 +53,8 @@ function getPosts(): Post[] {
 }
 
 export const metadata: Metadata = {
-  title: 'Blog de CamperOcasión — Guías para comprar camper y autocaravana',
-  description: 'Guías de compra de furgonetas camper y autocaravanas de ocasión: presupuestos de camperización, homologación de vehículo vivienda, cómo elegir entre gran volumen, mediana, perfilada, capuchina o integral, y precios del mercado español.',
+  title: 'Guías para comprar camper y autocaravana',
+  description: 'Guías para comprar camper y autocaravana de ocasión: precios, camperización, homologación y consejos para elegir en España.',
   alternates: {
     canonical: 'https://camperocasion.online/blog',
     languages: {
@@ -65,8 +66,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'Blog de CamperOcasión — Guías para comprar camper y autocaravana',
-    description: 'Guías de compra de furgonetas camper y autocaravanas de ocasión: presupuestos, homologación y cómo elegir tu camper.',
+    title: 'Guías para comprar camper y autocaravana',
+    description: 'Guías de compra de campers y autocaravanas: precios, homologación y consejos para elegir.',
     url: 'https://camperocasion.online/blog',
     siteName: 'CamperOcasión',
     type: 'website',

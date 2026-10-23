@@ -12,6 +12,7 @@ import {
 } from '@/lib/catalog-consulta'
 import CatalogoClient from './CatalogoPage'
 import { Suspense } from 'react'
+import { alternatesSeo, descripcionSeo, tituloSeo } from '@/lib/seo'
 
 type PageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -38,10 +39,10 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   // (contenido ya listado en pagina 1 + ItemList). Productos individuales
   // se indexan por su propia URL /producto/*.
   return {
-    title: hasPagination
-      ? `Catálogo de campers — página ${paginaNum} | CamperOcasión`
-      : 'Catálogo de furgonetas camper y autocaravanas de ocasión',
-    description: 'Explora el catálogo de CamperOcasión: furgonetas camper, autocaravanas de ocasión, gran volumen, camper medianas, minicamper, perfiladas, capuchinas, integrales y 4x4 overland en toda España.',
+    title: tituloSeo(hasPagination
+      ? `Catálogo de campers — página ${paginaNum}`
+      : 'Catálogo de campers y autocaravanas'),
+    description: descripcionSeo('Explora furgonetas camper y autocaravanas de ocasión en toda España: gran volumen, minicamper, perfiladas, capuchinas, integrales y 4x4.'),
     openGraph: {
       title: hasPagination
         ? `Catálogo de campers — página ${paginaNum}`
@@ -50,13 +51,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
       images: [{ url: ogImageUrl, width: 1200, height: 630, alt: 'Catálogo - CamperOcasión' }],
       locale: 'es_ES',
     },
-    alternates: {
-      canonical: 'https://camperocasion.online/catalogo',
-      languages: {
-        'es-ES': 'https://camperocasion.online/catalogo',
-        'x-default': 'https://camperocasion.online/catalogo',
-      },
-    },
+    alternates: alternatesSeo('/catalogo'),
     robots: hasPagination
       ? { index: false, follow: true }
       : { index: true, follow: true },

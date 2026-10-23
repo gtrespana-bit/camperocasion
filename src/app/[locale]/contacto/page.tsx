@@ -1,17 +1,15 @@
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
+import { alternatesSeo } from '@/lib/seo'
 import ContactForm from './ContactForm'
 
 export const metadata: Metadata = {
   title: 'Contacto',
-  description: '¿Tienes dudas o sugerencias? Contáctanos',
-  alternates: {
-    canonical: 'https://camperocasion.online/contacto',
-    languages: { 'es-ES': 'https://camperocasion.online/contacto', 'x-default': 'https://camperocasion.online/contacto' },
-  },
+  description: 'Contacta con CamperOcasión: soporte para comprar, vender o publicar tu camper y autocaravana en España.',
+  alternates: alternatesSeo('/contacto'),
   openGraph: {
     title: 'Contacto — CamperOcasión',
-    description: '¿Tienes dudas o sugerencias? Contáctanos',
+    description: 'Contacta con CamperOcasión: soporte para comprar, vender o publicar tu camper y autocaravana en España.',
     url: 'https://camperocasion.online/contacto',
     siteName: 'CamperOcasión',
     type: 'website',
@@ -35,7 +33,7 @@ export default function ContactPage() {
         '@type': 'ContactPage',
         '@id': SITIO + '/contacto#contact',
         name: 'Contacto — CamperOcasión',
-        description: '¿Tienes dudas o sugerencias? Contáctanos',
+        description: 'Contacta con CamperOcasión: soporte para comprar, vender o publicar tu camper y autocaravana en España.',
         url: SITIO + '/contacto',
         isPartOf: { '@id': SITIO + '/#website' },
       },

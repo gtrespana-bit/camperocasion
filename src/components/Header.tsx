@@ -10,6 +10,7 @@ import BrandLogo from '@/components/BrandLogo'
 import Avatar from '@/components/Avatar'
 import { useTranslations } from 'next-intl'
 import { categoriasData, FAMILIAS } from '@/lib/categorias'
+import { enlaceCambioIdioma } from '@/lib/locale-path'
 
 export function Header() {
   const { user } = useAuth()
@@ -22,10 +23,8 @@ export function Header() {
 
   // Locale detection from Next.js pathname (reactive to client-side navigation)
   const pathname = usePathname()
-  const isEn = pathname.startsWith('/en')
-  const altLocaleHref = isEn
-    ? (pathname.replace(/^\/en(?=\/|$)/, '') || '/')
-    : `/en${pathname === '/' ? '' : pathname}`
+  const isEn = pathname === '/en' || pathname.startsWith('/en/')
+  const altLocaleHref = enlaceCambioIdioma(pathname)
 
   // Subcategorías camper (mercado vertical 100% camper)
   // Navegación del vertical camper: familias (Campers / Autocaravanas /

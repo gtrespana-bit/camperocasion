@@ -458,19 +458,19 @@
   "vendedorLanding": {
     "particular": {
       "title": "Campervans from private sellers",
-      "metaTitle": "Buy a camper from private sellers | CamperOcasión",
+      "metaTitle": "Buy a camper from private sellers",
       "metaDescription": "Buy campervans and motorhomes directly from their owners. No middlemen: person-to-person deals across Spain.",
       "intro": "Buy directly from the owners: no middlemen, real history and person-to-person deals. Every listing carries the \"Private seller\" badge so you always know who you are talking to."
     },
     "camperizador": {
       "title": "Campers from builders",
-      "metaTitle": "Buy a camper from builders | CamperOcasión",
+      "metaTitle": "Buy a camper from builders",
       "metaDescription": "Hand-built conversions and custom projects from people who live the camper life. Straight from the builder's workshop to you.",
       "intro": "Projects built by people who live on the road: hand-built conversions, solutions tested on real trips and sellers who know every detail of their build."
     },
     "profesional": {
       "title": "Campers and motorhomes from pros",
-      "metaTitle": "Buy a camper from professionals | CamperOcasión",
+      "metaTitle": "Buy a camper from professionals",
       "metaDescription": "Workshops, professional converters and dealers specialised in campers. Inspected vehicles and professional backing across Spain.",
       "intro": "Workshops and dealers specialised in campers: fresh stock, vehicles inspected before sale and professional backing."
     },
@@ -630,7 +630,7 @@
     "holder": "Account holder"
   },
   "publicar": {
-    "title": "Post something",
+    "title": "List your camper for free",
     "freeBanner": "Listing your camper is free",
     "freeBannerDesc": "No sale commission. Private sellers have an active-listing cap so company stock cannot hide behind a personal account.",
     "pruebaTitulo": "Trial of the {plan} plan: {dias, plural, one {1 day left} other {# days left}}",

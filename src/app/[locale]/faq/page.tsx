@@ -1,10 +1,12 @@
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
+import { alternatesSeo } from '@/lib/seo'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 export const metadata: Metadata = {
-  title: 'Preguntas Frecuentes',
-  description: 'Resuelve tus dudas sobre CamperOcasión: cómo publicar, seguridad, créditos, métodos de pago y más.',
+  title: 'Preguntas frecuentes sobre campers',
+  description: 'Resuelve tus dudas sobre CamperOcasión: publicar anuncios, seguridad, créditos, métodos de pago y compra de campers en España.',
+  alternates: alternatesSeo('/faq'),
 }
 
 export default async function FAQPage({ params }: { params: Promise<{ locale: string }> }) {

@@ -1,11 +1,13 @@
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
+import { alternatesSeo } from '@/lib/seo'
 import LocalLink from '@/components/LocalLink'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 export const metadata: Metadata = {
-  title: 'Sobre Nosotros',
-  description: 'Conoce CamperOcasión: el marketplace gratuito para comprar y vender en España. Sin comisiones, sin intermediarios, contacto directo entre compradores y vendedores.',
+  title: 'Quiénes somos',
+  description: 'Conoce CamperOcasión, el marketplace especializado en furgonetas camper y autocaravanas de ocasión en España, con contacto directo y sin comisiones.',
+  alternates: alternatesSeo('/sobre-nosotros'),
 }
 
 export default async function SobreNosotrosPage({ params }: { params: Promise<{ locale: string }> }) {
