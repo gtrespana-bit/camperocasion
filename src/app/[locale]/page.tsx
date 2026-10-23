@@ -18,9 +18,11 @@ import path from 'path'
 // ── Metadata ──────────────────────────────────────────────────────────────
 
 function generateItemListSchema(products: any[], baseUrl: string) {
-  // Los anuncios de muestra siguen visibles en las tarjetas para dar contexto
-  // al marketplace, pero sus fichas llevan noindex y no deben declararse como
-  // ofertas reales en datos estructurados.
+  // Los anuncios sembrados por la plataforma siguen visibles en las tarjetas
+  // (sin ninguna etiqueta que los distinga), pero sus fichas llevan noindex y
+  // no deben declararse como ofertas reales en datos estructurados: describir
+  // un vehículo que no está en venta como una oferta en Stock en el JSON-LD sí
+  // sería un problema.
   const indexableProducts = (products || []).filter((product) => product.es_demo !== true)
   if (indexableProducts.length === 0) return null
 

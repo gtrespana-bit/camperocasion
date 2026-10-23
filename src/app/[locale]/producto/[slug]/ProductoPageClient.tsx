@@ -59,7 +59,13 @@ interface ProductoPageClientProps {
   favoritosCount?: number
   verificacion?: VerificacionHomologacion | null
   reserva?: EstadoReserva | null
-  /** Anuncio de muestra: consultas al equipo; sin teléfonos ni reservas. */
+  /**
+   * Anuncio sembrado por la plataforma (columna `es_demo`). No se marca en la
+   * interfaz —la ficha debe leerse como cualquier otra— pero mantiene dos
+   * límites que no dependen del aspecto: no se ofrecen contactos inventados y
+   * no se habilitan pagos (señal de reserva o inspección) sobre un vehículo
+   * que no existe. Las consultas de estos anuncios llegan al equipo.
+   */
   esDemo?: boolean
 }
 
@@ -212,9 +218,10 @@ function ProductoPageClientInner({
 
 
 
-  // En la semilla solo se ofrece chat con la plataforma, no teléfono,
-  // WhatsApp ni email ficticios. Los números de la semilla eran inventados (y en
-  // España pertenecen a personas reales), así que no se muestran nunca.
+  // En un anuncio sembrado solo se ofrece chat con la plataforma: los teléfonos
+  // de la semilla son inventados y, en España, un número inventado puede ser el
+  // de una persona real. Por eso nunca se muestran, aunque la ficha no lleve
+  // ninguna etiqueta que la distinga.
   const contactos = esDemo
     ? { hasProductConfiguration: true, phone: '', whatsapp: '', email: '', messengerUrl: '' }
     : resolveContactMethods(producto.metodos_contacto, vendedor?.telefono || '')
@@ -250,12 +257,6 @@ function ProductoPageClientInner({
               <p className="text-gray-600 text-sm mt-1">{t('soldBannerDesc')}</p>
             </div>
           </div>
-        </div>
-      )}
-      {esDemo && (
-        <div className="mb-6 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-          <span className="font-semibold text-gray-800">{t('demoBannerTitle')}.</span>{' '}
-          {t('demoBannerDesc')}
         </div>
       )}
       {esNuevaPublicacion && (
@@ -478,7 +479,9 @@ function ProductoPageClientInner({
             )}
 
             {/* Reserva con señal: el comprador solicita, el vendedor confirma la
-                señal al recibirla y entonces el anuncio queda reservado. */}
+                señal al recibirla y entonces el anuncio queda reservado. No se
+                ofrece en anuncios sembrados: cobrar una señal por un vehículo
+                que no existe no es una decisión de diseño. */}
             {!producto.vendido && !esDemo && (
               <BotonReservar
                 producto={producto}
@@ -489,10 +492,9 @@ function ProductoPageClientInner({
               />
             )}
 
-            {/* Inspección precompra (§4.1): el CTA existía pero no se
-                renderizaba en ninguna parte, así que el comprador no podía
-                pedirla. Va justo debajo de la reserva (no son excluyentes) y
-                nunca en anuncios de demostración, donde no hay coche real. */}
+            {/* Inspección precompra (§4.1): va justo debajo de la reserva (no
+                son excluyentes) y tampoco en anuncios sembrados, donde no hay
+                un coche que inspeccionar. */}
             {!producto.vendido && !esDemo && (
               <BotonInspeccion
                 producto={producto}
@@ -540,7 +542,7 @@ function ProductoPageClientInner({
               <ChevronRight size={16} className="ml-auto text-gray-400 flex-shrink-0" aria-hidden="true" />
             </LocalLink>
 
-            {vendedor && !esDemo && (
+            {vendedor && (
               <div className="bg-gray-50 rounded-xl p-4 mb-5">
                 <LocalLink href={`/vendedor/${vendedor.id}`} className="flex items-center gap-3 hover:bg-gray-100 rounded-xl p-1 -m-1 transition">
                   <Avatar nombre={vendedor.nombre || 'Vendedor'} fotoUrl={vendedor.foto_perfil_url} />
@@ -566,11 +568,10 @@ function ProductoPageClientInner({
             <div className="space-y-3">
               {!producto.vendido && (
               <>
-              {esDemo && <p className="text-sm text-gray-600">{t('demoContactNote')}</p>}
               <div className="grid grid-cols-2 gap-2">
                 {metodos.chat && (
                   <button onClick={handleContacto} className="bg-brand-primary text-white py-3 rounded-xl font-bold hover:bg-brand-dark transition flex items-center justify-center gap-2 text-sm">
-                    <MessageCircle size={18} /> {esDemo ? t('demoChat') : t('chat')}
+                    <MessageCircle size={18} /> {t('chat')}
                   </button>
                 )}
                 {metodos.whatsapp && whatsappLink && (

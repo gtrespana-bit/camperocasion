@@ -441,8 +441,7 @@
     "homologacionPendiente": "Verification in progress",
     "homologacionRechazada": "Documents rejected",
     "homologacionSinExpediente": "No documents yet",
-    "reserved": "Reserved",
-    "demo": "Sample"
+    "reserved": "Reserved"
   },
   "tiposVendedor": {
     "particular": "Private seller",
@@ -576,11 +575,7 @@
     "reservarCta": "Reserve with a deposit",
     "reservadoBadge": "Reserved",
     "contratoCtaTitulo": "Sale contract",
-    "contratoCtaDesc": "Print-ready template prefilled with this van’s details",
-    "demoChat": "Enquire",
-    "demoContactNote": "Tell the CamperOcasión team what you are looking for.",
-    "demoBannerTitle": "Sample listing",
-    "demoBannerDesc": "Fictional vehicle, not available to buy. Enquiries handled by CamperOcasión."
+    "contratoCtaDesc": "Print-ready template prefilled with this van’s details"
   },
   "creditos": {
     "title1": "Buy credits and",

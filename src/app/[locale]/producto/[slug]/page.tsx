@@ -403,9 +403,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: alternatesSeo(`/producto/${canonicalSlug}`),
     // Vendido: la URL sigue viva (llega tráfico de WhatsApp/Google y hay
     // similares que mostrar) pero fuera del índice: contenido agotado.
-    // Demostración: tampoco se indexa — no es un vehículo real en venta y no
-    // debe competir en Google con anuncios de verdad (ni aparecer como si lo
-    // fuera si alguien llega desde un enlace directo).
+    // Sembrado: la ficha se ve como cualquier otra, pero no se indexa ni se
+    // declara como oferta: no hay un vehículo real detrás y no debe competir en
+    // Google con anuncios de verdad.
     robots: producto.vendido || esDemo
       ? { index: false, follow: true }
       : { index: true, follow: true },

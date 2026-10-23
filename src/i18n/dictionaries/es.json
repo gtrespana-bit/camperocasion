@@ -441,8 +441,7 @@
     "homologacionPendiente": "Verificación en curso",
     "homologacionRechazada": "Documentación rechazada",
     "homologacionSinExpediente": "Sin expediente",
-    "reserved": "Reservado",
-    "demo": "Ejemplo"
+    "reserved": "Reservado"
   },
   "tiposVendedor": {
     "particular": "Particular",
@@ -576,11 +575,7 @@
     "reservarCta": "Reservar con señal",
     "reservadoBadge": "Reservado",
     "contratoCtaTitulo": "Contrato de compraventa",
-    "contratoCtaDesc": "Modelo listo para imprimir con los datos de esta camper",
-    "demoChat": "Consultar",
-    "demoContactNote": "Escribe al equipo de CamperOcasión sobre lo que estás buscando.",
-    "demoBannerTitle": "Anuncio de muestra",
-    "demoBannerDesc": "Vehículo ficticio, no disponible para compra. Consultas atendidas por CamperOcasión."
+    "contratoCtaDesc": "Modelo listo para imprimir con los datos de esta camper"
   },
   "creditos": {
     "title1": "Compra créditos y",
