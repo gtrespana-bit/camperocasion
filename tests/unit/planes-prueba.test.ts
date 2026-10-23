@@ -246,3 +246,71 @@ describe('avisos de prueba y dunning', () => {
     expect(mensajeAvisoPlan('gracia_ultimo_dia').titulo).toContain('Mañana')
   })
 })
+
+describe('win-back', () => {
+  // Fin de prueba 2026-11-01 → gracia hasta 2026-11-08 → aviso el 11-15.
+  const FIN_PRUEBA = new Date('2026-11-01T10:00:00Z')
+  const FIN_GRACIA = new Date(FIN_PRUEBA.getTime() + 7 * 86400000)
+
+  test('se envía una semana después de perder el cupo', () => {
+    const avisos = avisosPlanPendientes({
+      ahora: new Date('2026-11-15T10:00:00Z'),
+      winbackDesde: FIN_GRACIA,
+    })
+    expect(avisos.map((a) => a.tipo)).toEqual(['winback'])
+    expect(avisos[0].clave).toBe('winback:2026-11-08')
+  })
+
+  test('no se envía antes de la semana', () => {
+    const avisos = avisosPlanPendientes({
+      ahora: new Date('2026-11-14T10:00:00Z'),
+      winbackDesde: FIN_GRACIA,
+    })
+    expect(avisos).toEqual([])
+  })
+
+  test('no se envía a quien tiene pack pagado, prueba o gracia', () => {
+    const ahora = new Date('2026-11-15T10:00:00Z')
+    expect(
+      avisosPlanPendientes({ ahora, winbackDesde: FIN_GRACIA, planPagoVigente: true }),
+    ).toEqual([])
+
+    const enGracia = estadoTrial({
+      ...PERFIL,
+      ahora: new Date('2026-11-05T10:00:00Z'),
+      mesGratisActivo: true,
+    })
+    expect(enGracia.enGracia).toBe(true)
+    const duranteGracia = avisosPlanPendientes({
+      ahora: new Date('2026-11-05T10:00:00Z'),
+      trial: enGracia,
+      winbackDesde: FIN_GRACIA,
+    })
+    // Puede tocar el aviso de gracia, pero nunca el de win-back.
+    expect(duranteGracia.map((a) => a.tipo)).not.toContain('winback')
+  })
+
+  test('no se avisa dos veces de la misma baja', () => {
+    const avisos = avisosPlanPendientes({
+      ahora: new Date('2026-11-15T10:00:00Z'),
+      winbackDesde: FIN_GRACIA,
+      avisados: ['winback:2026-11-08'],
+    })
+    expect(avisos).toEqual([])
+  })
+
+  test('la ventana evita correos masivos tras un despliegue', () => {
+    // Una prueba perdida hace meses no genera aviso.
+    const avisos = avisosPlanPendientes({
+      ahora: new Date('2027-02-01T10:00:00Z'),
+      winbackDesde: FIN_GRACIA,
+    })
+    expect(avisos).toEqual([])
+  })
+
+  test('el push lleva a la página de packs', () => {
+    const mensaje = mensajeAvisoPlan('winback')
+    expect(mensaje.url).toBe('/para-profesionales')
+    expect(mensaje.titulo).toContain('pack')
+  })
+})

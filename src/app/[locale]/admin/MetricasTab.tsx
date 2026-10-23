@@ -113,7 +113,7 @@ export default function MetricasTab() {
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {cards.map((card, i) => (
           <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
             <div className={`w-10 h-10 rounded-lg ${card.bg} flex items-center justify-center mb-3`}>
@@ -196,11 +196,7 @@ export default function MetricasTab() {
             <DollarSign size={24} className="text-green-600" />
             <h3 className="font-bold text-gray-900 text-lg">Estimación de ingresos</h3>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm text-gray-500">Si 20% compran el paquete 1 €</p>
-              <p className="text-2xl font-black text-green-600">${(stats.totalTransactions * 0.2 * 1).toFixed(2)}</p>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <p className="text-sm text-gray-500">Si 20% compran el paquete 5 €</p>
               <p className="text-2xl font-black text-green-600">${(stats.totalTransactions * 0.2 * 5).toFixed(2)}</p>

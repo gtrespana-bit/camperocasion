@@ -32,9 +32,10 @@ export function datosTitular(): DatosTitular {
     nombre: env(process.env.NEXT_PUBLIC_TITULAR_NOMBRE),
     nif: env(process.env.NEXT_PUBLIC_TITULAR_NIF),
     domicilio: env(process.env.NEXT_PUBLIC_TITULAR_DOMICILIO),
-    // El email es obligatorio en la LSSI; si no hay uno específico se usa el
-    // buzón de privacidad, que ya existe y se anuncia en la web.
-    email: env(process.env.NEXT_PUBLIC_TITULAR_EMAIL) || env(process.env.NEXT_PUBLIC_EMAIL_CONTACTO) || 'privacidad@camperocasion.online',
+    // El email es obligatorio en la LSSI. Por defecto, el buzón de atención
+    // (`soporte@`), que es el que se revisa a diario; los derechos de
+    // privacidad siguen teniendo su propio canal en `privacidad@`.
+    email: env(process.env.NEXT_PUBLIC_TITULAR_EMAIL) || env(process.env.NEXT_PUBLIC_EMAIL_CONTACTO) || 'soporte@camperocasion.online',
     registro: env(process.env.NEXT_PUBLIC_TITULAR_REGISTRO),
   }
 }

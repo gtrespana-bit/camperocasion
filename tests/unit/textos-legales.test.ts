@@ -126,9 +126,9 @@ describe('datos del titular', () => {
     expect(hayDatosTitular()).toBe(true)
   })
 
-  it('sin email propio se usa el buzón de privacidad (la LSSI lo exige)', () => {
+  it('sin email propio se usa el buzón de soporte (la LSSI lo exige)', () => {
     delete process.env.NEXT_PUBLIC_TITULAR_EMAIL
     delete process.env.NEXT_PUBLIC_EMAIL_CONTACTO
-    expect(datosTitular().email).toBe('privacidad@camperocasion.online')
+    expect(datosTitular().email).toBe('soporte@camperocasion.online')
   })
 })

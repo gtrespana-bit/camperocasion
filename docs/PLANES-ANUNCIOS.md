@@ -46,6 +46,13 @@
   hay un botón «Reactivar los que quepan» en la pestaña Mi plan
   (`POST /api/productos/reactivar-pausados`). Reactivar a mano comprueba el
   cupo en el servidor.
+- **Win-back (fase 3)**: una semana después de perder el cupo —fin de la gracia
+  o baja confirmada en Stripe— el cron manda un email y un push que explican
+  que los anuncios siguen guardados y que al volver se reactivan. Clave
+  `winback:<fecha>` en `plan_avisos`; solo se envía si la pérdida ocurrió en
+  los últimos 30 días, para no disparar correos masivos la primera vez. El
+  webhook deja la fecha de baja como `baja:YYYY-MM-DD` en `plan_avisos`.
+  Si defines `WINBACK_CUPON`, el email incluye ese código.
 
 ### Antes de aplicar la migración: vista previa
 

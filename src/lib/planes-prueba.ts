@@ -24,6 +24,17 @@ export { DIAS_GRACIA_TRIAL }
 
 const DIA_MS = 24 * 60 * 60 * 1000
 
+/**
+ * Win-back: cuánto se espera desde que se pierde el cupo (fin de la gracia o
+ * baja del pack) y cuánto dura la ventana para enviarlo.
+ *
+ * Sin ventana, la primera ejecución del cron tras un despliegue mandaría un
+ * correo a todas las cuentas que alguna vez hicieron la prueba. Con 30 días,
+ * solo alcanza a quien acaba de perder el plan.
+ */
+export const DIAS_ESPERA_WINBACK = 7
+export const DIAS_VENTANA_WINBACK = 30
+
 function aFecha(valor?: Date | string | null): Date | null {
   if (!valor) return null
   const fecha = valor instanceof Date ? valor : new Date(valor)
@@ -152,6 +163,7 @@ export type AvisoPlanTipo =
   | 'pago_fallido_1d'
   | 'pago_fallido_3d'
   | 'pago_fallido_7d'
+  | 'winback'
 
 export interface AvisoPlanPendiente {
   tipo: AvisoPlanTipo
@@ -179,6 +191,11 @@ export function avisosPlanPendientes(opts: {
   trial?: EstadoTrial
   pagoPendienteDesde?: Date | string | null
   planPagoVigente?: boolean
+  /**
+   * Fecha en la que perdió el cupo: fin de la gracia de la prueba o baja del
+   * pack. Si no se pasa, no se plantea win-back.
+   */
+  winbackDesde?: Date | string | null
   /** Claves ya enviadas (`plan_avisos.clave`). */
   avisados?: Iterable<string>
 }): AvisoPlanPendiente[] {
@@ -204,6 +221,18 @@ export function avisosPlanPendientes(opts: {
           : { tipo: 'trial_gracia', clave: claveFecha('trial_gracia', trial.hasta) }
     }
     if (aviso && !yaEnviados.has(aviso.clave)) pendientes.push(aviso)
+  }
+
+  // Win-back: una semana después de perder el cupo, y solo una vez por pérdida
+  // (la clave lleva la fecha). No se envía a quien sigue en prueba, en gracia
+  // o con pack pagado.
+  const perdida = aFecha(opts.winbackDesde)
+  if (perdida && !opts.planPagoVigente && !trial?.enPrueba && !trial?.enGracia) {
+    const dias = Math.floor((ahora.getTime() - perdida.getTime()) / DIA_MS)
+    if (dias >= DIAS_ESPERA_WINBACK && dias <= DIAS_ESPERA_WINBACK + DIAS_VENTANA_WINBACK) {
+      const clave = claveFecha('winback', perdida)
+      if (!yaEnviados.has(clave)) pendientes.push({ tipo: 'winback', clave })
+    }
   }
 
   // Dunning: un aviso por tramo y ciclo de impago. `invoice.paid` limpia la
@@ -278,6 +307,12 @@ export function mensajeAvisoPlan(
         titulo: 'Último aviso: no hemos podido cobrar tu pack',
         cuerpo: 'Si no se resuelve el pago, tu cuenta volverá al plan gratuito y se pausarán los anuncios que sobran.',
         url: '/dashboard?tab=plan',
+      }
+    case 'winback':
+      return {
+        titulo: 'Tu pack terminó hace unos días',
+        cuerpo: 'Tus anuncios siguen ahí. Vuelve desde 9 €/mes y recupera el cupo cuando quieras.',
+        url: '/para-profesionales',
       }
   }
 }

@@ -175,7 +175,7 @@ export async function enviarConfirmacion(
   return {
     ok: false,
     codigo: 'smtp',
-    mensaje: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.online',
+    mensaje: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en unos minutos o escríbenos a soporte@camperocasion.online',
     detalle,
   }
 }
@@ -232,7 +232,7 @@ export async function reenviarConfirmacion(email: string): Promise<
   return {
     ok: false,
     codigo: 'smtp',
-    mensaje: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en unos minutos o escríbenos a contacto@camperocasion.online',
+    mensaje: 'No se pudo enviar el correo de confirmación. Inténtalo de nuevo en unos minutos o escríbenos a soporte@camperocasion.online',
     detalle,
   }
 }

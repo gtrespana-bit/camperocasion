@@ -8,13 +8,12 @@ import {
 } from '@/lib/creditos'
 
 describe('creditos - paquetes servidor (Fase 3 D)', () => {
-  test('paquetes permitidos son 2, 15, 40, 100', () => {
+  test('paquetes permitidos son 15, 40, 100', () => {
     const creditos = PAQUETES_CREDITO.map(p => p.creditos).sort((a, b) => a - b)
-    expect(creditos).toEqual([2, 15, 40, 100])
+    expect(creditos).toEqual([15, 40, 100])
   })
 
   test('precios coherentes', () => {
-    expect(getPrecioByCreditos(2)).toBe(1)
     expect(getPrecioByCreditos(15)).toBe(5)
     expect(getPrecioByCreditos(40)).toBe(10)
     expect(getPrecioByCreditos(100)).toBe(20)
@@ -26,7 +25,8 @@ describe('creditos - paquetes servidor (Fase 3 D)', () => {
   })
 
   test('isValidPaquete rechaza inventados', () => {
-    expect(isValidPaquete(2)).toBe(true)
+    expect(isValidPaquete(15)).toBe(true)
+    expect(isValidPaquete(2)).toBe(false) // pack de 1 € retirado en la fase 3
     expect(isValidPaquete(999999)).toBe(false)
     expect(isValidPaquete(0)).toBe(false)
     expect(isValidPaquete(3)).toBe(false)
@@ -80,7 +80,7 @@ describe('creditos - paquetes servidor (Fase 3 D)', () => {
 describe('creditos - API validation logic', () => {
   test('rechaza creditos arbitrarios', () => {
     // La API debe usar isValidPaquete
-    const casosFraude = [1, 3, 999, 999999, -5, 0, 2.5]
+    const casosFraude = [1, 2, 3, 999, 999999, -5, 0, 2.5]
     casosFraude.forEach(c => {
       expect(isValidPaquete(c)).toBe(false)
     })
