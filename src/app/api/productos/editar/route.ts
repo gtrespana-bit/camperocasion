@@ -4,6 +4,7 @@ import { requireUser } from '@/lib/require-auth'
 import { isValidUUID, isValidLength, sanitizeString } from '@/lib/validation'
 import { verificarContenido } from '@/lib/moderacion'
 import { revalidarListadosPublicos, revalidarFichaProducto } from '@/lib/revalidar'
+import { cupoDeUsuario } from '@/lib/planes-servidor'
 import {
   isAllowedImageUrl,
   normalizeContactMethods,
@@ -120,20 +121,53 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Un producto rechazado requiere revisión administrativa' }, { status: 409 })
     }
 
+    // Reactivar consume cupo: si el plan bajó, no se puede repoblar el
+    // catálogo saltándose el límite desde el panel.
+    if (body.activo === true && current.activo !== true) {
+      const { resumen } = await cupoDeUsuario(auth.user.id)
+      if (!resumen.puedePublicar) {
+        return NextResponse.json(
+          {
+            error: resumen.max == null
+              ? 'No se pudo reactivar el anuncio.'
+              : `Tu plan permite ${resumen.max} anuncio${resumen.max === 1 ? '' : 's'} activo${resumen.max === 1 ? '' : 's'}. Pausa otro o amplía el pack para reactivar este.`,
+            codigo: 'CUPO',
+            cupo: { max: resumen.max, usados: resumen.usados },
+          },
+          { status: 403 },
+        )
+      }
+    }
+
     const { data, error } = await sb
       .from('productos')
-      .update({ activo: body.activo })
+      .update({ activo: body.activo, pausado_por_plan: false, pausado_en: null })
       .eq('id', body.productId)
       .eq('user_id', auth.user.id)
       .select('id, slug, titulo, activo, vendido, estado_moderacion')
       .maybeSingle()
 
-    if (error || !data) {
+    // Compatibilidad si la migración de la fase 2 aún no está aplicada.
+    let dataFinal = data
+    let errorFinal = error
+    if (error) {
+      const retry = await sb
+        .from('productos')
+        .update({ activo: body.activo })
+        .eq('id', body.productId)
+        .eq('user_id', auth.user.id)
+        .select('id, slug, titulo, activo, vendido, estado_moderacion')
+        .maybeSingle()
+      dataFinal = retry.data
+      errorFinal = retry.error
+    }
+
+    if (errorFinal || !dataFinal) {
       return NextResponse.json({ error: 'No se pudo actualizar el estado del producto' }, { status: 500 })
     }
 
     revalidarListadosPublicos()
-    return NextResponse.json({ ok: true, product: data })
+    return NextResponse.json({ ok: true, product: dataFinal })
   }
 
   const candidate: any = {
@@ -244,6 +278,23 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Un producto rechazado requiere revisión administrativa' }, { status: 409 })
   }
 
+  // Republicar desde la edición completa también consume cupo.
+  if (requestedActive && current.activo !== true) {
+    const { resumen } = await cupoDeUsuario(auth.user.id)
+    if (!resumen.puedePublicar) {
+      return NextResponse.json(
+        {
+          error: resumen.max == null
+            ? 'No se pudo reactivar el anuncio.'
+            : `Tu plan permite ${resumen.max} anuncio${resumen.max === 1 ? '' : 's'} activo${resumen.max === 1 ? '' : 's'}. Pausa otro o amplía el pack para reactivar este.`,
+          codigo: 'CUPO',
+          cupo: { max: resumen.max, usados: resumen.usados },
+        },
+        { status: 403 },
+      )
+    }
+  }
+
   const updateData: Record<string, unknown> = {
     titulo,
     descripcion,
@@ -280,6 +331,15 @@ export async function PATCH(request: NextRequest) {
   }
   if (!data) {
     return NextResponse.json({ error: 'No se pudo guardar el producto' }, { status: 409 })
+  }
+
+  // Si se ha reactivado, deja de ser un anuncio pausado por cupo.
+  if (requestedActive && current.activo !== true) {
+    await sb
+      .from('productos')
+      .update({ pausado_por_plan: false, pausado_en: null })
+      .eq('id', body.productId)
+      .eq('user_id', auth.user.id)
   }
 
   // Ciudad/subcategoría de la fila actualizada: un cambio de

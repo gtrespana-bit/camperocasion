@@ -10,6 +10,7 @@ import { routing } from '@/i18n/routing'
 
 import DashboardHeader from './components/DashboardHeader'
 import DashboardNav, { normalizarTab, type DashboardTab } from './components/DashboardNav'
+import PlanBar from './components/PlanBar'
 import TabResumen from './components/TabResumen'
 import TabMensajes from './components/tabs/TabMensajes'
 import TabCreditos from './components/tabs/TabCreditos'
@@ -21,6 +22,7 @@ const TabProductos = lazy(() => import('./components/tabs/TabProductos'))
 const TabTienda = lazy(() => import('./components/tabs/TabTienda'))
 const TabTratos = lazy(() => import('./components/tabs/TabTratos'))
 const TabCuenta = lazy(() => import('./components/tabs/TabCuenta'))
+const TabPlan = lazy(() => import('./components/tabs/TabPlan'))
 
 // Hooks
 import { useDashboard } from './hooks/useDashboard'
@@ -176,7 +178,7 @@ export default function DashboardPage() {
     } else {
       data.setCreditos(result.balance)
       data.setToast(t('boostApplied'))
-      const { data: prods } = await supabase.from('productos').select('id, slug, titulo, precio_usd, estado, categoria_id, subcategoria, marca, ubicacion_ciudad, activo, visitas, creado_en, imagen_url, destacado, destacado_hasta, boosteado_en, estado_moderacion, vendido, vendido_en, comprador_id').eq('user_id', user!.id).order('creado_en', { ascending: false })
+      const { data: prods } = await supabase.from('productos').select('id, slug, titulo, precio_usd, estado, categoria_id, subcategoria, marca, ubicacion_ciudad, activo, visitas, creado_en, imagen_url, destacado, destacado_hasta, boosteado_en, estado_moderacion, vendido, vendido_en, comprador_id, pausado_por_plan').eq('user_id', user!.id).order('creado_en', { ascending: false })
       data.setProductos(prods || [])
     }
     setBoostTarget(null)
@@ -198,7 +200,7 @@ export default function DashboardPage() {
     } else {
       data.setCreditos(result.balance)
       data.setToast(t('featuredActivated', { hours: horas }))
-      const { data: prods } = await supabase.from('productos').select('id, slug, titulo, precio_usd, estado, categoria_id, subcategoria, marca, ubicacion_ciudad, activo, visitas, creado_en, imagen_url, destacado, destacado_hasta, boosteado_en, estado_moderacion, vendido, vendido_en, comprador_id').eq('user_id', user!.id).order('creado_en', { ascending: false })
+      const { data: prods } = await supabase.from('productos').select('id, slug, titulo, precio_usd, estado, categoria_id, subcategoria, marca, ubicacion_ciudad, activo, visitas, creado_en, imagen_url, destacado, destacado_hasta, boosteado_en, estado_moderacion, vendido, vendido_en, comprador_id, pausado_por_plan').eq('user_id', user!.id).order('creado_en', { ascending: false })
       data.setProductos(prods || [])
     }
     setDestacadoTarget(null)
@@ -280,6 +282,9 @@ export default function DashboardPage() {
         onFotoChange={handleFoto}
       />
 
+      {/* Estado del plan: visible en todas las pestañas, no solo al quedarse sin cupo. */}
+      <PlanBar onAbrirPlan={setActiveTab} />
+
       {/* Resumen */}
       <div className="bg-gradient-to-r from-brand-primary to-blue-800 rounded-xl p-5 text-white mb-6">
         <h3 className="font-bold text-lg mb-3 flex items-center gap-2">{t('performance')}</h3>
@@ -354,6 +359,11 @@ export default function DashboardPage() {
             </Suspense>
           )}
           {activeTab === 'favoritos' && <TabFavoritos favoritos={data.favoritos} />}
+          {activeTab === 'plan' && (
+            <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando tu plan…</div>}>
+              <TabPlan onRefresh={data.refreshAll} />
+            </Suspense>
+          )}
           {activeTab === 'cuenta' && (
             <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando…</div>}>
               <TabCuenta

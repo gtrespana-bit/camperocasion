@@ -9,6 +9,7 @@ import {
   Handshake,
   Store,
   ShieldCheck,
+  Sparkles,
   LogOut,
   type LucideIcon,
 } from 'lucide-react'
@@ -21,6 +22,7 @@ export type DashboardTab =
   | 'tratos'
   | 'tienda'
   | 'favoritos'
+  | 'plan'
   | 'cuenta'
 
 const GRUPOS: { titulo: string; items: { id: DashboardTab; label: string; icon: LucideIcon }[] }[] = [
@@ -46,7 +48,10 @@ const GRUPOS: { titulo: string; items: { id: DashboardTab; label: string; icon: 
   },
   {
     titulo: 'Cuenta',
-    items: [{ id: 'cuenta', label: 'Confianza y perfil', icon: ShieldCheck }],
+    items: [
+      { id: 'plan', label: 'Mi plan', icon: Sparkles },
+      { id: 'cuenta', label: 'Confianza y perfil', icon: ShieldCheck },
+    ],
   },
 ]
 

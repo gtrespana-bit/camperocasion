@@ -461,15 +461,13 @@ export default function PublicarPage() {
           </p>
           {!cupo.puedePublicar && (
             <p className="text-xs mt-2">
-              {cupo.profesional ? (
-                <LocalLink href="/para-profesionales" className="underline font-semibold">
-                  {t('verPlanes')}
-                </LocalLink>
-              ) : (
-                <LocalLink href="/dashboard" className="underline font-semibold">
-                  {t('cambiarAPro')}
-                </LocalLink>
-              )}
+              <LocalLink href="/para-profesionales" className="underline font-semibold">
+                {t('verPlanes')}
+              </LocalLink>
+              <span className="mx-1 text-amber-700/60">·</span>
+              <LocalLink href="/dashboard?tab=productos" className="underline font-semibold">
+                {t('pausarUno')}
+              </LocalLink>
             </p>
           )}
         </div>

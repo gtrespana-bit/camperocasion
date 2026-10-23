@@ -10,12 +10,30 @@ import Image from 'next/image'
 
 type Filtro = 'activos' | 'pausados' | 'vendidos' | 'todos'
 
-function BadgeEstado({ vendido, activo }: { vendido: boolean; activo: boolean }) {
+function BadgeEstado({
+  vendido,
+  activo,
+  pausadoPorPlan,
+}: {
+  vendido: boolean
+  activo: boolean
+  pausadoPorPlan?: boolean
+}) {
   if (vendido) {
     return <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 text-[11px] font-semibold">Vendido</span>
   }
   if (activo) {
     return <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 text-[11px] font-semibold">Activo</span>
+  }
+  if (pausadoPorPlan) {
+    return (
+      <span
+        className="inline-flex items-center rounded-full bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 text-[11px] font-semibold"
+        title="Lo pausó el sistema al bajar el cupo. No se ha borrado."
+      >
+        Pausado por cupo
+      </span>
+    )
   }
   return <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 text-[11px] font-semibold">Pausado</span>
 }
@@ -391,7 +409,7 @@ export default function TabProductos({
                         </LocalLink>
                         <p className="text-sm font-semibold text-slate-800 mt-0.5">{formatPrecio(p.precio_usd || 0)}</p>
                       </div>
-                      <BadgeEstado vendido={isVendido} activo={!!p.activo} />
+                      <BadgeEstado vendido={isVendido} activo={!!p.activo} pausadoPorPlan={!!p.pausado_por_plan} />
                     </div>
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                       <span className="inline-flex items-center gap-1"><Eye size={12} aria-hidden="true" /> {p.visitas || 0}</span>

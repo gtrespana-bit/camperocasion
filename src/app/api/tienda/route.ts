@@ -22,6 +22,7 @@ import {
   slugify,
   validarTienda,
 } from '@/lib/tiendas'
+import { cupoDeUsuario } from '@/lib/planes-servidor'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,11 +56,21 @@ export async function GET(req: NextRequest) {
   }
 
   const tienda = (data || null) as Record<string, any> | null
+  const puedePorTipo = puedeTenerTienda(tienda?.tipo_vendedor)
+
+  // El escaparate es la razón principal para contratar un pack. Se comprueba
+  // el plan efectivo (incluye el mes de prueba), no solo la columna.
+  let requierePlan = false
+  if (puedePorTipo && !tienda?.tienda_activa) {
+    const { resumen } = await cupoDeUsuario(user.id)
+    requierePlan = resumen.plan === 'gratis'
+  }
 
   return NextResponse.json({
     ok: true,
     tienda,
-    puedeAbrir: puedeTenerTienda(tienda?.tipo_vendedor),
+    puedeAbrir: puedePorTipo,
+    requierePlan,
   })
 }
 
@@ -88,7 +99,7 @@ export async function PUT(req: NextRequest) {
 
   const { data: perfil } = await sb
     .from('perfiles')
-    .select('id, tipo_vendedor, slug')
+    .select('id, tipo_vendedor, slug, tienda_activa')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -104,6 +115,24 @@ export async function PUT(req: NextRequest) {
       },
       { status: 403 }
     )
+  }
+
+  // Abrir una tienda nueva exige un pack activo (o el mes de prueba). Una
+  // tienda que ya estaba publicada se mantiene y se puede seguir editando:
+  // no se retira nada a quien ya la tenía.
+  if (quiereActiva && !perfil.tienda_activa) {
+    const { resumen } = await cupoDeUsuario(user.id)
+    if (resumen.plan === 'gratis') {
+      return NextResponse.json(
+        {
+          ok: false,
+          codigo: 'PLAN',
+          error:
+            'El escaparate está incluido en los packs Starter, Plus y Flota. Elige un pack para abrir tu tienda; tus anuncios siguen publicados mientras tanto.',
+        },
+        { status: 403 }
+      )
+    }
   }
 
   const errores = validarTienda({

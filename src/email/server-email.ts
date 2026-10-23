@@ -1,6 +1,7 @@
 'use server'
 import { enviarEmailSMTP } from '@/lib/server-email'
 import { escapeHtml } from '@/lib/html-escape'
+import { emailLayout, COLORS } from '@/lib/email-layout'
 
 const htmlText = (value: unknown) => escapeHtml(String(value ?? ''))
 
@@ -224,4 +225,188 @@ export async function enviarDigestVendedor(
       <p style="color:#6b7280;font-size:12px;margin-top:28px">CamperOcasión — Publica más, vende más</p>
     </div>
   `)
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// AVISOS DE PLAN (fase 2): prueba, gracia, cobro fallido y anuncios pausados
+//
+// Son transaccionales, no marketing: van a quien tiene una suscripción o una
+// prueba en curso, y siempre incluyen una salida (activar, actualizar tarjeta
+// o pausar). Se envían desde el cron `/api/cron/planes` y desde el webhook,
+// nunca en bucle por cada visita.
+// ────────────────────────────────────────────────────────────────────────────
+
+const SITE_URL = process.env.NEXT_PUBLIC_URL || 'https://camperocasion.online'
+
+function fechaLarga(iso?: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function boton(texto: string, url: string): string {
+  return `<a href="${htmlText(url)}" style="display:inline-block;background:${COLORS.accent};color:#fff;padding:13px 30px;text-decoration:none;border-radius:10px;font-weight:700;margin-top:8px">${htmlText(texto)}</a>`
+}
+
+/**
+ * La prueba termina en N días (o hoy). Se manda a 10, 3 y 0 días.
+ */
+export async function enviarEmailTrialTermina(
+  email: string,
+  nombre: string,
+  opts: { dias: number; fechaFin: string; plan: string },
+) {
+  const plan = opts.plan || 'Plus'
+  const cuando =
+    opts.dias <= 0
+      ? 'hoy'
+      : `en ${opts.dias} día${opts.dias === 1 ? '' : 's'}`
+  const subject =
+    opts.dias <= 0
+      ? `Hoy es el último día de tu prueba ${plan}`
+      : `Tu prueba ${plan} termina ${cuando}`
+
+  const cuerpo = `
+    <p style="margin:0 0 14px;font-size:16px;color:${COLORS.dark}">Hola ${htmlText(nombre)},</p>
+    <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      Tu prueba del pack <strong style="color:${COLORS.dark}">${htmlText(plan)}</strong> termina ${htmlText(cuando)}${opts.fechaFin ? ` (${htmlText(fechaLarga(opts.fechaFin))})` : ''}.
+    </p>
+    <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      <strong style="color:${COLORS.dark}">No se borra ninguno de tus anuncios.</strong> Si no activas un pack,
+      tu cuenta volverá al plan gratuito y se pausarán los que excedan el cupo; podrás reactivarlos cuando quieras.
+    </p>
+    <p style="margin:0 0 18px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      Si quieres mantener el cupo, el escaparate y los destacados incluidos, elige el pack que encaje con tu stock.
+      Sin permanencia y se cancela en dos clics.
+    </p>
+    ${boton('Ver packs y activar', `${SITE_URL}/dashboard?tab=plan`)}
+    <p style="margin:18px 0 0;font-size:13px;color:${COLORS.gray}">
+      Si ya has activado un pack, ignora este mensaje.
+    </p>
+    <p style="margin:22px 0 0;font-size:13px;color:${COLORS.gray}">CamperOcasión — Publica más, vende más</p>
+  `
+  return enviar(
+    'CamperOcasión',
+    email,
+    subject,
+    emailLayout(`Tu prueba ${plan} está por terminar`, cuerpo),
+  )
+}
+
+/**
+ * La prueba ya terminó y empieza la gracia. Explica qué pasa y cuándo.
+ */
+export async function enviarEmailTrialGracia(
+  email: string,
+  nombre: string,
+  opts: { graciaHasta: string; graciaDias: number; pausados?: number },
+) {
+  const pausados = Math.max(0, Number(opts.pausados) || 0)
+  const cuerpo = `
+    <p style="margin:0 0 14px;font-size:16px;color:${COLORS.dark}">Hola ${htmlText(nombre)},</p>
+    <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      Tu prueba ha terminado. Te damos <strong style="color:${COLORS.dark}">${htmlText(opts.graciaDias)} días de gracia</strong>
+      (hasta el ${htmlText(fechaLarga(opts.graciaHasta))}) para decidir con calma.
+    </p>
+    <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      Durante la gracia todo sigue como está: tus anuncios publicados, tu escaparate y tus estadísticas.
+      Después, si no activas un pack, se pausarán los anuncios que excedan el cupo del plan gratuito.
+      <strong style="color:${COLORS.dark}">No se borra nada.</strong>
+    </p>
+    ${pausados > 0 ? `<p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray}">Ahora mismo tienes <strong>${pausados}</strong> anuncio${pausados === 1 ? '' : 's'} más de los que permite el plan gratuito.</p>` : ''}
+    ${boton('Activar mi pack', `${SITE_URL}/dashboard?tab=plan`)}
+    <p style="margin:18px 0 0;font-size:13px;color:${COLORS.gray}">
+      ¿Prefieres otra cosa? Desde tu panel puedes pausar anuncios y seguir gratis.
+    </p>
+    <p style="margin:22px 0 0;font-size:13px;color:${COLORS.gray}">CamperOcasión</p>
+  `
+  return enviar(
+    'CamperOcasión',
+    email,
+    `Tu prueba terminó: ${opts.graciaDias} días de gracia`,
+    emailLayout('Tu prueba ha terminado', cuerpo),
+  )
+}
+
+/**
+ * Dunning: no se ha podido cobrar el pack. Nunca se corta el acceso en este
+ * email; se pide actualizar la tarjeta y se recuerda hasta cuándo hay servicio.
+ */
+export async function enviarEmailPagoFallido(
+  email: string,
+  nombre: string,
+  opts: { plan: string; fechaFin?: string | null; diasGracia?: number },
+) {
+  const plan = opts.plan || 'tu pack'
+  const cuerpo = `
+    <p style="margin:0 0 14px;font-size:16px;color:${COLORS.dark}">Hola ${htmlText(nombre)},</p>
+    <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      No hemos podido cobrar <strong style="color:${COLORS.dark}">${htmlText(plan)}</strong> en la tarjeta que tenemos guardada.
+      Suele ser una tarjeta caducada o un límite del banco: se arregla en un minuto.
+    </p>
+    <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      <strong style="color:${COLORS.dark}">Tu plan sigue activo${opts.fechaFin ? ` hasta el ${htmlText(fechaLarga(opts.fechaFin))}` : ''}.</strong>
+      No hemos pausado ningún anuncio. Actualiza el método de pago y no tendrás que hacer nada más.
+    </p>
+    ${boton('Actualizar mi tarjeta', `${SITE_URL}/dashboard?tab=plan`)}
+    <p style="margin:18px 0 0;font-size:13px;color:${COLORS.gray}">
+      Si el cobro sigue fallando, Stripe reintentará automáticamente. Puedes ver las facturas y cambiar la tarjeta
+      desde el portal de cliente, sin escribirnos.
+    </p>
+    <p style="margin:22px 0 0;font-size:13px;color:${COLORS.gray}">CamperOcasión</p>
+  `
+  return enviar(
+    'CamperOcasión',
+    email,
+    'No hemos podido cobrar tu pack: actualiza la tarjeta',
+    emailLayout('Problema con el pago de tu pack', cuerpo),
+  )
+}
+
+/**
+ * Se han pausado anuncios por cupo. Se listan por título para que no parezca
+ * que han desaparecido, y se da una salida en un clic.
+ */
+export async function enviarEmailAnunciosPausados(
+  email: string,
+  nombre: string,
+  opts: { titulos: string[]; cupo: number },
+) {
+  const titulos = opts.titulos.filter(Boolean)
+  const n = titulos.length
+  const lista = titulos
+    .slice(0, 8)
+    .map(
+      (t) =>
+        `<li style="margin:0 0 6px;color:${COLORS.gray};font-size:14px">${htmlText(t)}</li>`,
+    )
+    .join('')
+  const resto = n > 8 ? `<p style="margin:6px 0 0;font-size:13px;color:${COLORS.gray}">y ${n - 8} más</p>` : ''
+
+  const cuerpo = `
+    <p style="margin:0 0 14px;font-size:16px;color:${COLORS.dark}">Hola ${htmlText(nombre)},</p>
+    <p style="margin:0 0 14px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      Tu plan permite <strong style="color:${COLORS.dark}">${htmlText(opts.cupo)} anuncio${opts.cupo === 1 ? '' : 's'} activo${opts.cupo === 1 ? '' : 's'}</strong>
+      y hemos tenido que pausar ${n} que excedían el cupo.
+    </p>
+    <p style="margin:0 0 10px;font-size:15px;color:${COLORS.dark}"><strong>No se ha borrado ninguno:</strong></p>
+    <ul style="margin:0 0 16px;padding-left:20px">${lista}</ul>
+    ${resto}
+    <p style="margin:0 0 16px;font-size:15px;color:${COLORS.gray};line-height:1.6">
+      Puedes reactivarlos en un clic si amplías el pack, o pausar otro para dejar sitio. También puedes dejarlos
+      pausados sin coste: siguen guardados y se republican cuando quieras.
+    </p>
+    ${boton('Ver mis anuncios', `${SITE_URL}/dashboard?tab=productos`)}
+    <p style="margin:18px 0 0;font-size:13px;color:${COLORS.gray}">
+      Si quieres recuperar todos a la vez: <a href="${htmlText(`${SITE_URL}/dashboard?tab=plan`)}" style="color:${COLORS.accent}">ampliar el pack</a>.
+    </p>
+    <p style="margin:22px 0 0;font-size:13px;color:${COLORS.gray}">CamperOcasión</p>
+  `
+  return enviar(
+    'CamperOcasión',
+    email,
+    `Hemos pausado ${n} anuncio${n === 1 ? '' : 's'} (no se ha borrado nada)`,
+    emailLayout('Anuncios pausados por cupo', cuerpo),
+  )
 }

@@ -77,8 +77,10 @@ export async function POST(req: NextRequest) {
           quantity: 1,
           price_data: {
             currency: 'eur',
-            // Importe en céntimos y calculado en el servidor.
+            // Importe en céntimos y calculado en el servidor. Los packs se
+            // venden con IVA incluido (igual que los de suscripción).
             unit_amount: Math.round(paquete.precio * 100),
+            tax_behavior: 'inclusive',
             product_data: {
               name: `${paquete.creditos} créditos CamperOcasión`,
               description:

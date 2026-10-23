@@ -214,6 +214,7 @@ export default function RegisterPage() {
                   </button>
                 ))}
               </div>
+              <p className="text-[11px] text-gray-500 mt-1.5">{t('register.sellerTypeHint')}</p>
             </div>
 
             <button

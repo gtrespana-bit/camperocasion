@@ -203,17 +203,19 @@ export default function AdminCupones({ notify }: { notify: (msg: string) => void
         <div>
           <h2 className="text-xl font-black text-gray-900">Planes, regalos y cupones</h2>
           <p className="text-sm text-gray-500">
-            Packs de pago, mes de prueba global, cupones y regalos directos de tiempo gratis a un usuario.
+            Packs de pago, prueba gratuita, cupones y regalos directos de tiempo gratis a un usuario.
           </p>
         </div>
         <RefreshButton onClick={refrescarTodo} loading={refreshing} />
       </div>
 
       <Card>
-        <h3 className="font-bold text-gray-900 mb-1">Mes gratis al registrarse</h3>
+        <h3 className="font-bold text-gray-900 mb-1">Prueba gratuita (nuevas altas)</h3>
         <p className="text-sm text-gray-500 mb-4">
           Si está activo, cada profesional/camperizador nuevo tiene {diasGratis} días con el pack Plus
-          desde la fecha de alta. Apágalo cuando quieras cortar la promo (afecta también a quien aún estuviera en prueba).
+          desde el alta (o desde que un particular se pasa a profesional). Apagarlo deja de conceder
+          pruebas nuevas, pero <strong>no corta</strong> las que ya están en curso: sus fechas están
+          guardadas en el perfil. Al terminar hay 7 días de gracia.
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex items-center gap-2 text-sm font-medium">

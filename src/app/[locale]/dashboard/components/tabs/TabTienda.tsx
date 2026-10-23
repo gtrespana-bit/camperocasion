@@ -20,6 +20,7 @@ export default function TabTienda() {
   const [guardando, setGuardando] = useState(false)
   const [noDisponible, setNoDisponible] = useState(false)
   const [puedeAbrir, setPuedeAbrir] = useState(false)
+  const [requierePlan, setRequierePlan] = useState(false)
   const [copiado, setCopiado] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const [errores, setErrores] = useState<Record<string, string>>({})
@@ -44,6 +45,7 @@ export default function TabTienda() {
         }
         const t = body.tienda || {}
         setPuedeAbrir(Boolean(body.puedeAbrir))
+        setRequierePlan(Boolean(body.requierePlan))
         setForm({
           nombre: t.nombre || '',
           slug: t.slug || '',
@@ -138,6 +140,37 @@ export default function TabTienda() {
         >
           Ir a mi perfil
         </LocalLink>
+      </div>
+    )
+  }
+
+  if (requierePlan) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
+        <Store size={36} className="mx-auto text-gray-300 mb-3" />
+        <h3 className="font-bold text-gray-900 mb-1">Tu escaparate, con un pack</h3>
+        <p className="text-sm text-gray-600 max-w-md mx-auto mb-4">
+          El escaparate con URL propia (<strong>/tienda/tu-taller</strong>) está incluido en
+          Starter, Plus y Flota. Tus anuncios ya publicados siguen visibles: solo falta la
+          página de tienda.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          <LocalLink
+            href="/para-profesionales"
+            className="inline-block bg-brand-accent text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-brand-accent-dark transition"
+          >
+            Ver packs desde 9 €/mes
+          </LocalLink>
+          <LocalLink
+            href="/dashboard?tab=plan"
+            className="inline-block border border-slate-300 text-slate-700 px-5 py-2.5 rounded-xl font-semibold hover:bg-slate-50 transition"
+          >
+            Ver mi plan
+          </LocalLink>
+        </div>
+        <p className="text-xs text-slate-400 mt-4">
+          Si ya tenías una tienda publicada antes de este cambio, se mantiene sin coste.
+        </p>
       </div>
     )
   }
