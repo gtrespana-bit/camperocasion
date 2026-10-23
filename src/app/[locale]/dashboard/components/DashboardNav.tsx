@@ -10,6 +10,8 @@ import {
   Store,
   ShieldCheck,
   Sparkles,
+  TrendingUp,
+  FileSpreadsheet,
   LogOut,
   type LucideIcon,
 } from 'lucide-react'
@@ -17,6 +19,8 @@ import {
 export type DashboardTab =
   | 'resumen'
   | 'productos'
+  | 'rendimiento'
+  | 'importar'
   | 'mensajes'
   | 'creditos'
   | 'tratos'
@@ -34,6 +38,8 @@ const GRUPOS: { titulo: string; items: { id: DashboardTab; label: string; icon: 
     titulo: 'Venta',
     items: [
       { id: 'productos', label: 'Anuncios', icon: Package },
+      { id: 'rendimiento', label: 'Rendimiento', icon: TrendingUp },
+      { id: 'importar', label: 'Importar stock', icon: FileSpreadsheet },
       { id: 'tienda', label: 'Mi tienda', icon: Store },
       { id: 'creditos', label: 'Créditos', icon: CreditCard },
     ],

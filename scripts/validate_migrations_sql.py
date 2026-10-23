@@ -47,7 +47,13 @@ import validate_setup_sql as v
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
-GLOB_PATRON = os.path.join(RAIZ, 'supabase', 'migrations', '202609*.sql')
+# 202609* ya está dentro de setup-camperocasion.sql: se REaplican para probar
+# que son idempotentes. 202610* son nuevas (no están en el setup), así que
+# aquí se aplican por primera vez: es la única cobertura real que tienen.
+GLOB_PATRONES = [
+    os.path.join(RAIZ, 'supabase', 'migrations', '202609*.sql'),
+    os.path.join(RAIZ, 'supabase', 'migrations', '202610*.sql'),
+]
 
 
 def solo_comentarios(stmt: str) -> bool:
@@ -63,9 +69,11 @@ def main():
     conn.autocommit = True
     cur = conn.cursor()
 
-    archivos = sorted(glob.glob(GLOB_PATRON))
+    archivos = []
+    for patron in GLOB_PATRONES:
+        archivos.extend(sorted(glob.glob(patron)))
     if not archivos:
-        print('FALLO: no hay migraciones que coincidan con supabase/migrations/202609*.sql')
+        print('FALLO: no hay migraciones que coincidan con supabase/migrations/2026*.sql')
         sys.exit(1)
 
     total = 0
@@ -121,14 +129,14 @@ def main():
     print('OK semántica de rangos: comparación numérica indexada, no texto')
 
     conn.close()
-    print(f'\nOK: {len(archivos)} migraciones 202609* reaplicadas ({total} statements) '
+    print(f'\nOK: {len(archivos)} migraciones 2026* aplicadas ({total} statements) '
           'sin error sobre el setup completo.')
 
     # ── Garantías propias de esta era de migraciones ────────────────────────
     # Cada verificador vive como script independiente (y el workflow los llama
     # uno a uno). Este se lanza también desde aquí para que un verificador
     # nuevo quede cubierto en cada push sin depender de editar `.github/`.
-    extras = ['verify_analitica_sql.py']
+    extras = ['verify_analitica_sql.py', 'verify_rendimiento_sql.py']
     for extra in extras:
         ruta = os.path.join(AQUI, extra)
         if not os.path.exists(ruta):

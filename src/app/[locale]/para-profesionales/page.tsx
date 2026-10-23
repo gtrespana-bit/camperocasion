@@ -6,11 +6,13 @@ import {
   Check,
   CreditCard,
   FileCheck2,
+  FileSpreadsheet,
   Minus,
   ShieldCheck,
   Sparkles,
   Star,
   Store,
+  TrendingUp,
   Users,
 } from 'lucide-react'
 import { setRequestLocale } from 'next-intl/server'
@@ -59,6 +61,16 @@ const extras = [
     desc: 'Tu expediente se revisa antes. El sello de homologación verificada tarda menos.',
   },
   {
+    icon: FileSpreadsheet,
+    title: 'Importa todo tu stock de una vez',
+    desc: 'Sube el CSV de tu Excel o del DMS y publica hasta 100 anuncios con vista previa. Incluido en Plus y Flota.',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Sabes qué anuncio funciona',
+    desc: 'Visitas, favoritos y contactos por anuncio, comparados con el mercado de tu categoría. Plus añade la serie diaria y 90 días de histórico.',
+  },
+  {
     icon: BadgeEuro,
     title: 'Tarifa plana, no comisión',
     desc: 'Vendas una o diez, pagas lo mismo. No te quedas con un % de la operación.',
@@ -82,6 +94,8 @@ const filasComparativa: {
   { label: 'Destacados incluidos al mes', gratis: '—', starter: '3', plus: '5', unlimited: '15' },
   { label: 'Escaparate /tienda/tu-taller', gratis: '—', starter: 'Sí', plus: 'Sí', unlimited: 'Sí' },
   { label: 'Prioridad en homologación', gratis: 'Normal', starter: 'Alta', plus: 'Muy alta', unlimited: 'Máxima' },
+  { label: 'Estadísticas del vendedor', gratis: 'Totales', starter: 'Por anuncio', plus: 'Con mercado', unlimited: 'Con exportación' },
+  { label: 'Importar stock desde CSV', gratis: '—', starter: '—', plus: 'Hasta 100 filas', unlimited: 'Hasta 100 filas' },
   { label: 'Créditos extra', gratis: 'Se compran', starter: 'Se compran', plus: 'Se compran', unlimited: 'Se compran' },
   { label: 'Comisión por venta', gratis: '0 %', starter: '0 %', plus: '0 %', unlimited: '0 %' },
 ]

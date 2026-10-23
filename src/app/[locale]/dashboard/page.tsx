@@ -14,6 +14,8 @@ import PlanBar from './components/PlanBar'
 import TabResumen from './components/TabResumen'
 import TabMensajes from './components/tabs/TabMensajes'
 import TabCreditos from './components/tabs/TabCreditos'
+import TabRendimiento from './components/tabs/TabRendimiento'
+import TabImportar from './components/tabs/TabImportar'
 import TabFavoritos from './components/tabs/TabFavoritos'
 import BoostModal from './components/modals/BoostModal'
 import DestacadoModal from './components/modals/DestacadoModal'
@@ -342,6 +344,16 @@ export default function DashboardPage() {
                 onDestacar={setDestacadoTarget}
                 userId={user?.id ?? ''}
               />
+            </Suspense>
+          )}
+          {activeTab === 'rendimiento' && (
+            <Suspense fallback={<div className="p-12 text-center text-gray-500">Calculando tus métricas…</div>}>
+              <TabRendimiento />
+            </Suspense>
+          )}
+          {activeTab === 'importar' && (
+            <Suspense fallback={<div className="p-12 text-center text-gray-500">Cargando…</div>}>
+              <TabImportar />
             </Suspense>
           )}
           {activeTab === 'mensajes' && <TabMensajes />}
