@@ -53,7 +53,7 @@ cero).
 | Repo | Ruta | Estado |
 |---|---|---|
 | `gtrespana-bit/camperocasion` | `/home/user/camperocasion` | Producción. Aquí vive el generador de clones |
-| `gtrespana-bit/maquinaria-ocasion` | `/home/user/maquinaria-ocasion` | **Creado en GitHub pero VACÍO.** El código está en local, sin subir |
+| `gtrespana-bit/maquinaria-ocasion` | `/home/user/maquinaria-ocasion` | **Creado en GitHub pero VACÍO.** El código está en local; copia transportable en la rama `transbordo/maquinaria-ocasion` de este repo (Opción B, §4) |
 
 ### El clon, listo en local
 
@@ -93,21 +93,27 @@ existe y la instalación de la app se amplió a "all repositories", **el token n
 se refresca solo**: sigue dando `Resource not accessible by integration` al
 escribir en `maquinaria-ocasion`.
 
-Comprobado de nuevo el **2026-10-24** (sigue igual):
+Comprobado de nuevo el **2026-10-24** (sigue igual). Diagnóstico exhaustivo de
+todas las vías de escritura, todas cerradas para el repo nuevo:
 
-- `gh api repos/gtrespana-bit/maquinaria-ocasion` → lectura OK; el objeto
-  `permissions` muestra `push: true` y la instalación (`arena-ai-coding-agent`)
-  ya tiene `repository_selection: "all"`.
-- Pero una escritura real devuelve 403:
-  `POST /git/blobs` → `Resource not accessible by integration`.
-- `git push -u origin main` (con el credential helper de `gh`) → 403
-  `Permission to gtrespana-bit/maquinaria-ocasion.git denied`.
-- El token es *fine-grained* (cliente `Iv23li…`): los permisos se fijan al
-  acuñarse, así que ampliar la instalación no mejora el token ya emitido.
-- En `camperocasion` el mismo token conserva `admin/push: true` (la rama de la
-  sesión sigue publicable).
+| Vía probada | Resultado |
+|---|---|
+| `GET /repos/.../maquinaria-ocasion` (lectura) | OK; `permissions.push: true`, instalación con `repository_selection: "all"` |
+| `git push` HTTPS (credential helper de `gh`) | 403 `Permission ... denied` |
+| `POST /git/blobs` | 403 `Resource not accessible by integration` |
+| `PUT /contents/...` (Contents API) | 403 `Resource not accessible by integration` |
+| `GET /user/keys` (clave SSH de cuenta, vía alternativa) | 403 (ni siquiera lee) |
+| `GET /repos/.../keys` (deploy keys) | 403 |
 
-### Opción A — Reconectar GitHub en Arena (recomendado)
+Causa: el token es de una GitHub App (`arena-ai-coding-agent`, cliente
+`Iv23li…`) y sus permisos se fijan al acuñarse, cuando la instalación solo
+cubría `camperocasion`. Ampliar la instalación a "all repositories" no mejora el
+token ya emitido: hay que reconectar para acuñar otro. En `camperocasion` el
+mismo token sí escribe (esta rama de sesión se publica), aunque **sin permiso
+`workflows`** (no puede crear/modificar `.github/workflows/*`) y el sandbox no
+puede subir assets de releases (`uploads.github.com` fuera del allowlist → EOF).
+
+### Opción A — Reconectar GitHub en Arena (la más simple)
 
 1. Desconectar y volver a conectar GitHub en Arena.
 2. Esto acuña un token nuevo con el alcance actualizado.
@@ -121,25 +127,41 @@ Comprobar después:
 
 ```bash
 gh repo view gtrespana-bit/maquinaria-ocasion --json isEmpty,pushedAt
-git ls-remote origin main        # debe devolver el SHA 209a0c9...
+git ls-remote origin main        # debe devolver el SHA abb704d...
 ```
 
-### Opción B — Subirlo desde tu máquina
+### Opción B — Descargar el bundle y subirlo desde tu máquina (funciona hoy)
+
+El bundle ya está alojado en GitHub, en la rama-transbordador
+**`transbordo/maquinaria-ocasion`** de este repo (subida verificada el
+2026-10-24; prueba de restauración end-to-end correcta). No necesita acceso al
+sandbox:
+
+- ZIP de la rama (botón *Code → Download ZIP*):
+  `https://github.com/gtrespana-bit/camperocasion/archive/refs/heads/transbordo/maquinaria-ocasion.zip`
+- O clonando la rama:
 
 ```bash
+git clone --branch transbordo/maquinaria-ocasion \
+  https://github.com/gtrespana-bit/camperocasion.git transbordo
+cd transbordo
 git clone maquinaria-ocasion.bundle maquinaria-ocasion
 cd maquinaria-ocasion
 git remote set-url origin https://github.com/gtrespana-bit/maquinaria-ocasion.git
 git push -u origin main
 ```
 
-El bundle ya trae el commit completo y el remoto configurado.
+El bundle trae el historial completo (commit `abb704d`, 675 ficheros, incluido
+`.github/workflows/ci.yml`) y el remoto ya configurado. Instrucciones también en
+el `TRANSBORDO.md` de esa rama. Tras el trasvase, la rama se borra con
+`git push origin --delete transbordo/maquinaria-ocasion`.
 
-### Opción C — Crear una rama en el repo de camperocasion
+### Opción C — Rama compartida en camperocasion (desestimada)
 
-Técnicamente posible y funciona hoy mismo (el token sí escribe ahí), pero **no
-recomendado**: mezcla dos productos en un repo, comparte CI y despliegue, y hay
-que separarlo después. Solo como último recurso.
+La rama-transbordador de la Opción B existe solo como **transporte temporal de
+un bundle**, no como código vivo del segundo producto. No fusionarla a `main`:
+mezclar dos productos en un repo compartiría CI y despliegue y obligaría a
+separarlo después.
 
 ### Antes de hacer el push
 
@@ -321,18 +343,24 @@ git bundle create /home/user/camperocasion/maquinaria-ocasion.bundle --all
 
 # Si el clon desaparece del sandbox, se restaura desde el bundle
 git clone /home/user/camperocasion/maquinaria-ocasion.bundle maquinaria-ocasion
+
+# Rama-transbordador pública (Opción B, §4): actualizar su bundle
+git clone --branch transbordo/maquinaria-ocasion \
+  https://github.com/gtrespana-bit/camperocasion.git /tmp/transbordo
+# (sustituir el bundle, commit y push de esa rama)
 ```
 
 ---
 
 ## 10. Siguiente acción concreta
 
-1. **Reconectar GitHub en Arena** (§4, Opción A) para acuñar un token con el
-   alcance actual; es lo único que impide cerrar la Fase 1. El clon ya está
-   regenerado, verificado (tipos, lint, 776 tests, build y smoke HTTP) y con
-   respaldo en bundle.
-2. Ejecutar `git push -u origin main` en `/home/user/maquinaria-ocasion` y
-   verificar que el CI del repo nuevo pasa en verde (jobs `calidad` y `sql`).
+1. **Cerrar el trasvase**, por cualquiera de las dos vías que ya están listas:
+   Opción A (reconectar GitHub en Arena y pedir el push; yo lo ejecuto) o
+   Opción B (descargar el bundle de la rama `transbordo/maquinaria-ocasion` y
+   hacer push desde tu máquina; verificado de extremo a extremo). El clon ya
+   está regenerado, verificado (tipos, lint, 776 tests, build y smoke HTTP) y
+   con respaldo en bundle.
+2. Verificar que el CI del repo nuevo pasa en verde (jobs `calidad` y `sql`).
 3. Empezar la **Fase 3** (taxonomía y filtros) o la **Fase 2** (limpieza), en
    ese orden si hay prisa por ver la web con contenido real: la taxonomía
    define cómo se publica, y la limpieza se puede hacer después sin bloquear.
