@@ -57,20 +57,31 @@ cero).
 
 ### El clon, listo en local
 
+> El clon se regeneró el **2026-10-24** con el generador (el sandbox anterior
+> no conservaba `/home/user/maquinaria-ocasion`). El resultado es equivalente y
+> vuelve a estar verificado por completo.
+
 ```
 /home/user/maquinaria-ocasion
-  commit 209a0c9  "Esqueleto de MaquinariaOcasión"
-  660 ficheros · árbol limpio · remoto origin ya configurado
+  commit abb704d  "Esqueleto de MaquinariaOcasión"
+  675 ficheros versionados · árbol limpio · remoto origin ya configurado
 ```
 
-Verificado en este entorno: `tsc --noEmit` OK · `eslint .` OK · `next build` OK
-(384 páginas) · portada servida con HTTP 200 y la marca nueva.
+Verificado en este entorno (Node 22, con `--ignore-scripts --engine-strict=false`):
+`tsc --noEmit` OK · `eslint .` OK · **69 suites / 776 tests unitarios OK** ·
+`next build` OK · `next start` con portada, `/catalogo`, `/publicar`, `/buscar`,
+`/marcas` y `/admin` en HTTP 200 y la marca nueva (0 restos de *camperocasion*).
 
 ### Copia de seguridad
 
 ```
-/home/user/maquinaria-ocasion.bundle   1,9 MB   historial completo verificado
+maquinaria-ocasion.bundle   2,0 MB   historial completo verificado
 ```
+
+Vive **dentro de este repo** (raíz de `camperocasion`, excluido en
+`.git/info/exclude` para no ensuciar el árbol): los ficheros fuera del workspace
+no sobreviven a los reinicios del sandbox. Restauración:
+`git clone maquinaria-ocasion.bundle maquinaria-ocasion`.
 
 ---
 
@@ -82,8 +93,19 @@ existe y la instalación de la app se amplió a "all repositories", **el token n
 se refresca solo**: sigue dando `Resource not accessible by integration` al
 escribir en `maquinaria-ocasion`.
 
-Comprobado: leer metadatos del repo nuevo funciona, escribir un fichero no. En
-`camperocasion` sí escribe (la rama de la sesión está publicada).
+Comprobado de nuevo el **2026-10-24** (sigue igual):
+
+- `gh api repos/gtrespana-bit/maquinaria-ocasion` → lectura OK; el objeto
+  `permissions` muestra `push: true` y la instalación (`arena-ai-coding-agent`)
+  ya tiene `repository_selection: "all"`.
+- Pero una escritura real devuelve 403:
+  `POST /git/blobs` → `Resource not accessible by integration`.
+- `git push -u origin main` (con el credential helper de `gh`) → 403
+  `Permission to gtrespana-bit/maquinaria-ocasion.git denied`.
+- El token es *fine-grained* (cliente `Iv23li…`): los permisos se fijan al
+  acuñarse, así que ampliar la instalación no mejora el token ya emitido.
+- En `camperocasion` el mismo token conserva `admin/push: true` (la rama de la
+  sesión sigue publicable).
 
 ### Opción A — Reconectar GitHub en Arena (recomendado)
 
@@ -282,28 +304,35 @@ clon a mano en lo que respecta a identidad.**
 ```bash
 # Este repo (camperocasion)
 cd /home/user/camperocasion
-git log --oneline -3        # 0dac0be generador · 46059b2 plan
+git log --oneline -1        # 6493f39 docs: documento de traspaso
 
 # El clon
 cd /home/user/maquinaria-ocasion
-git log --oneline -1        # 209a0c9 Esqueleto de MaquinariaOcasión
+git log --oneline -1        # abb704d Esqueleto de MaquinariaOcasión
 npm ci --ignore-scripts --engine-strict=false
-npx tsc --noEmit && npx eslint . && npx next build
+npx tsc --noEmit && npx eslint . && npm test -- --ci && npx next build
 npx next start -H 0.0.0.0 -p 3000     # preview en http://localhost:3000
 
 # Publicar el clon (cuando el token lo permita)
 git push -u origin main
 
-# Regenerar el bundle de respaldo
-git bundle create /home/user/maquinaria-ocasion.bundle --all
+# Regenerar el bundle de respaldo (dentro del workspace, persiste)
+git bundle create /home/user/camperocasion/maquinaria-ocasion.bundle --all
+
+# Si el clon desaparece del sandbox, se restaura desde el bundle
+git clone /home/user/camperocasion/maquinaria-ocasion.bundle maquinaria-ocasion
 ```
 
 ---
 
 ## 10. Siguiente acción concreta
 
-1. **Desbloquear el push** (§4). Es lo único que impide cerrar la Fase 1.
-2. Verificar que el CI del repo nuevo pasa en verde.
+1. **Reconectar GitHub en Arena** (§4, Opción A) para acuñar un token con el
+   alcance actual; es lo único que impide cerrar la Fase 1. El clon ya está
+   regenerado, verificado (tipos, lint, 776 tests, build y smoke HTTP) y con
+   respaldo en bundle.
+2. Ejecutar `git push -u origin main` en `/home/user/maquinaria-ocasion` y
+   verificar que el CI del repo nuevo pasa en verde (jobs `calidad` y `sql`).
 3. Empezar la **Fase 3** (taxonomía y filtros) o la **Fase 2** (limpieza), en
    ese orden si hay prisa por ver la web con contenido real: la taxonomía
    define cómo se publica, y la limpieza se puede hacer después sin bloquear.
