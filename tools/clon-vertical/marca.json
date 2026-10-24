@@ -1,0 +1,53 @@
+{
+  "$esquema": "Configuración de la vertical que se quiere generar a partir de CamperOcasión. Cambia estos valores y vuelve a ejecutar `node tools/clon-vertical/preparar-clon.mjs`.",
+  "nombre": "MaquinariaOcasión",
+  "nombreSinAcento": "MaquinariaOcasion",
+  "partes": {
+    "base": "Maquinaria",
+    "acento": "Ocasión"
+  },
+  "token": "maquinariaocasion",
+  "slug": "maquinaria-ocasion",
+  "paquete": "maquinaria-ocasion",
+  "dominio": "maquinariaocasion.online",
+  "url": "https://maquinariaocasion.online",
+  "dominiosRedirigidos": ["www.maquinariaocasion.online"],
+  "emailSoporte": "soporte@maquinariaocasion.online",
+  "emailPrivacidad": "privacidad@maquinariaocasion.online",
+  "logo": "logo-maquinariaocasion.png",
+  "cacheSW": "maquinariaocasion-offline",
+  "colores": {
+    "primary": "#0F172A",
+    "dark": "#1E293B",
+    "accent": "#F59E0B",
+    "accentDark": "#B45309",
+    "accentLight": "#FCD34D",
+    "orange": "#EA580C",
+    "orangeDark": "#C2410C",
+    "gray": "#F5F5F5",
+    "darkNav": "#0B1120"
+  },
+  "vertical": {
+    "clave": "maquinaria",
+    "etiqueta": "Maquinaria agrícola, de obra y herramientas de ocasión"
+  },
+  "seo": {
+    "titulo": "Maquinaria agrícola, de obra y herramientas de ocasión | MaquinariaOcasión",
+    "plantilla": "%s | MaquinariaOcasión",
+    "descripcion": "Marketplace especializado en maquinaria agrícola, maquinaria de obra y herramientas de segunda mano en España. Anuncios con precio, fotos y ficha técnica. Publica gratis.",
+    "tituloCorto": "Maquinaria agrícola, de obra y herramientas de ocasión",
+    "descripcionCorta": "Marketplace especializado en maquinaria agrícola, de obra y herramientas de segunda mano en España. Publica gratis.",
+    "keywords": [
+      "maquinaria agrícola segunda mano",
+      "maquinaria de obra de ocasión",
+      "tractores de segunda mano",
+      "miniexcavadora usada",
+      "herramientas de segunda mano",
+      "maquinaria usada España",
+      "aperos agrícolas ocasión",
+      "maquinaria de construcción usada"
+    ],
+    "twitter": "@maquinariaocasion",
+    "ogAlt": "MaquinariaOcasión — Maquinaria agrícola, de obra y herramientas de ocasión en España"
+  }
+}

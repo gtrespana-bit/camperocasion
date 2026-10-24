@@ -274,3 +274,71 @@ con 1.653 menciones a camper y páginas de dominio mezcladas. Duplicar te deja
 Eso sí: si en la Fase 2 centralizas marca, taxonomía y campos en ficheros de
 configuración (que es lo que este plan propone), un tercer vertical pasaría de
 3-5 semanas a 1-2.
+
+---
+
+## 9. Fase 1 ejecutada (2026-10-24)
+
+Se ha construido un **generador de clones** en vez de duplicar a mano, porque el
+barrido de marca hay que repetirlo en cada vertical que se abra:
+
+```
+tools/clon-vertical/
+├── marca.json            # nombre, dominio, correos, paleta, SEO y vertical
+├── preparar-clon.mjs     # genera el repo nuevo (sin dependencias externas)
+└── plantillas/           # logo, iconos, OG, hero y placeholder neutros
+```
+
+Uso:
+
+```bash
+node tools/clon-vertical/preparar-clon.mjs            # → ../maquinaria-ocasion
+node tools/clon-vertical/preparar-clon.mjs --destino ../otra-vertical --forzar
+```
+
+Qué hace: copia solo el árbol versionado (`git ls-files`), renombra la marca en
+código, nombres de fichero y carpetas, centraliza la identidad en
+`src/lib/marca.ts`, reescribe `next.config.js` (301 propios), `.env.example`,
+`package.json`, manifest PWA, metadata raíz y de portada, README, `PROJECT.md` y
+la paleta de Tailwind, y sustituye logo/iconos/OG/hero/placeholder. Deja fuera
+las fotos semilla, el hero camper, los `assetlinks` de la TWA y los exports de
+Search Console.
+
+### Resultado verificado
+
+Clon generado en `../maquinaria-ocasion` (657 ficheros, 73 excluidos,
+12 reescritos) y comprobado en este entorno:
+
+| Comprobación | Resultado |
+|---|---|
+| Referencias a `camperocasion` en `src/`, `public/` y configuración | **0** |
+| `tsc --noEmit` | OK |
+| `eslint .` | OK |
+| `next build` | OK (384 páginas generadas) |
+| Portada servida en producción | HTTP 200, marca, logo, hero y manifest nuevos |
+
+```
+<title>Maquinaria agrícola, de obra y herramientas de ocasión | MaquinariaOcasión</title>
+```
+
+Queda pendiente (y así está marcado en `docs/ESTADO-CLON.md` del clon) el
+**copy visible** de la portada — hero, navegación, categorías y secciones — que
+sigue siendo el de camper: es la Fase 4. La marca, el dominio y la
+infraestructura ya son los nuevos.
+
+### Dos fallos que el generador corrige y que se repetirían a mano
+
+1. **El service worker se borraba a sí mismo.** Al renombrar la marca, la lista
+   de cachés retiradas (`PREFIJOS_CACHE_RETIRADOS`) pasaba a contener el prefijo
+   de su propia caché, así que `activate` la eliminaba. En un dominio nuevo la
+   lista nace vacía.
+2. **La metadata de la portada no venía del layout raíz.** `app/[locale]/page.tsx`
+   define su propio `generateMetadata`, así que cambiar solo el layout dejaba el
+   `<title>` con el copy de camper. El generador reescribe ambos.
+
+### Pendiente heredado que conviene saber
+
+`package.json` mantiene `engines.node: ">=24.22.1 <25"` y `.npmrc` con
+`engine-strict=true`. En este entorno (Node 22) la instalación y el build se
+hicieron con `npm ci --ignore-scripts --engine-strict=false`; en Vercel y en
+local con `.nvmrc` no hace falta ese escape.
