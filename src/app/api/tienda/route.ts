@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSessionUser } from '@/lib/require-auth'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import {
   LIMITES_TIENDA,
   normalizarWeb,
@@ -78,7 +78,7 @@ export async function PUT(req: NextRequest) {
   const user = await getSessionUser(req)
   if (!user) return NextResponse.json({ ok: false, error: 'No autorizado' }, { status: 401 })
 
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const ip = getClientIp(req)
   const rl = await checkRateLimit('perfil:actualizar', user.id, { ip })
   if (!rl.ok) {
     return NextResponse.json(

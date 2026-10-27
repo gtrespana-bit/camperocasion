@@ -14,7 +14,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { getSessionUser } from '@/lib/require-auth'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { getPaqueteByCreditos, isValidPaquete } from '@/lib/creditos'
 import { sbAdmin } from '@/lib/planes-servidor'
 import { getStripe, getSiteUrl, stripeConfigurado } from '@/lib/stripe'
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
   const customerId = perfil?.stripe_customer_id as string | null | undefined
 
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const ip = getClientIp(req)
   const rl = await checkRateLimit('creditos:comprar', user.id, { ip })
   if (!rl.ok) {
     return NextResponse.json(

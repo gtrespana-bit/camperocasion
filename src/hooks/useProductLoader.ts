@@ -91,12 +91,14 @@ export const useProductLoader = (): UseProductLoaderResult => {
 
     try {
       let result = await ejecutar(filters);
+      let filtrosAplicados: FiltrosCatalogo = filters;
 
       // Plan B: si la base de datos todavía no tiene las columnas generadas de
       // rangos (migración 202609170003 sin aplicar), la query con rangos falla.
       // Reintentamos SIN rangos: el resto de filtros sigue funcionando.
       if (result.error && esErrorColumnasRango(result.error) && tieneRangosNumericos(filters)) {
-        result = await ejecutar(quitarRangos(filters) as FiltrosCatalogo);
+        filtrosAplicados = quitarRangos(filters) as FiltrosCatalogo;
+        result = await ejecutar(filtrosAplicados);
       }
 
       const { data, count, error: fetchError } = result;
@@ -111,8 +113,16 @@ export const useProductLoader = (): UseProductLoaderResult => {
       setProductos(sorted);
       setTotalCount(count ?? 0);
 
-      // Save to cache
-      clientCache.set(cacheKey, {
+      // Save to cache bajo la clave de los filtros que REALMENTE se aplicaron.
+      // Si el plan B quitó los rangos, guardar los resultados bajo la clave
+      // original (que sí los incluye) envenenaría la caché: la próxima visita
+      // creería que esos resultados cumplen kmMax/anioMin. Mejor no cachear
+      // esa clave y sí la de la consulta degradada (es la misma que una
+      // búsqueda legítima sin rangos).
+      const cacheKeyResultados = filtrosAplicados === filters
+        ? cacheKey
+        : clientCache.generateKey({ ...filtrosAplicados, pagina: page, limite: pageSize });
+      clientCache.set(cacheKeyResultados, {
         productos: sorted,
         totalCount: count ?? 0
       });

@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(5_000),
       body: JSON.stringify(payload),
     })
     const data = await res.json()

@@ -19,8 +19,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser } from '@/lib/require-auth'
-import { checkRateLimit } from '@/lib/rate-limit'
-import { verificarContenido } from '@/lib/moderacion'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { verificarContenidoCampos } from '@/lib/moderacion'
 import { revalidarListadosPublicos } from '@/lib/revalidar'
 import { cupoDeUsuario, estadoPlanUsuario, sbAdmin } from '@/lib/planes-servidor'
 import { parseCsv, validarImportacion, MAX_FILAS } from '@/lib/importar-csv'
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Fase 2: importar ─────────────────────────────────────────────────────
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const ip = getClientIp(req)
   const rl = await checkRateLimit('producto:importar', userId, { ip })
   if (!rl.ok) {
     return NextResponse.json(
@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
     const lote = importables.slice(i, i + TAMANO_LOTE)
 
     const filas = lote.map((f) => {
-      const moderacion = verificarContenido(`${f.titulo} ${f.descripcion || ''}`)
+      const moderacion = verificarContenidoCampos(f.titulo, f.descripcion || '')
       return {
         linea: f.linea,
         registro: {

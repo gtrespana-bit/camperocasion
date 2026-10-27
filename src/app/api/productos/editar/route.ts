@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireUser } from '@/lib/require-auth'
 import { isValidUUID, isValidLength, sanitizeString } from '@/lib/validation'
-import { verificarContenido } from '@/lib/moderacion'
+import { verificarContenidoCampos } from '@/lib/moderacion'
 import { revalidarListadosPublicos, revalidarFichaProducto } from '@/lib/revalidar'
 import { cupoDeUsuario } from '@/lib/planes-servidor'
 import {
@@ -260,7 +260,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Un producto rechazado requiere revisión administrativa' }, { status: 409 })
     }
 
-    const moderacion = verificarContenido(`${titulo} ${descripcion}`)
+    const moderacion = verificarContenidoCampos(titulo, descripcion)
     if (moderacion.nivel === 'prohibido') {
       return NextResponse.json({ error: 'La publicación contiene contenido que viola nuestras normas.' }, { status: 400 })
     }

@@ -12,7 +12,7 @@ import { ESTADOS, getMunicipiosNombres } from '@/lib/ubicaciones'
 import { formatPrecio } from '@/lib/precio'
 import { etiquetaPlan } from '@/lib/planes-anuncios'
 import { Camera, X, UploadCloud, AlertCircle, Phone, Mail, MapPin, MessageSquare } from 'lucide-react'
-import { verificarContenido, formatearAlertaModeracion } from '@/lib/moderacion'
+import { verificarContenidoCampos, formatearAlertaModeracion } from '@/lib/moderacion'
 import BadgeTipoVendedor from '@/components/BadgeTipoVendedor'
 import { emailProductoPublicado } from '@/lib/server-email'
 import { compressImages } from '@/lib/compress-image'
@@ -273,8 +273,9 @@ export default function PublicarPage() {
     }
 
     // MODERACIÓN: verificar contenido antes de publicar
-    const textoCompleto = `${titulo} ${descripcion}`
-    const resultado = verificarContenido(textoCompleto)
+    // El servidor vuelve a moderar con la misma función: esto es solo feedback
+    // inmediato para el vendedor, no una barrera de seguridad.
+    const resultado = verificarContenidoCampos(titulo, descripcion)
     setModeracionResultado(resultado)
 
     if (resultado.nivel === 'prohibido') {
