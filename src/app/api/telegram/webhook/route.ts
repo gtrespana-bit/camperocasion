@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
   if (!BOT_TOKEN) return NextResponse.json({ ok: false, error: 'Config missing' }, { status: 503 })
 
   try {
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo`)
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo`, { signal: AbortSignal.timeout(5_000) })
     return NextResponse.json(await res.json(), { status: res.ok ? 200 : 502 })
   } catch {
     return NextResponse.json({ ok: false, error: 'Telegram unavailable' }, { status: 502 })
@@ -104,6 +104,7 @@ function tgFetch(token: string, method: string, body: object) {
   return fetch(`https://api.telegram.org/bot${token}${method}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(5_000),
     body: JSON.stringify(body),
   })
 }

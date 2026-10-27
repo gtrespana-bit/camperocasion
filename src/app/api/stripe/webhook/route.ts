@@ -332,6 +332,7 @@ export async function POST(req: NextRequest) {
       await fetch(`https://api.telegram.org/bot${BOT}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5_000),
         body: JSON.stringify({
           chat_id: CHAT,
           text:

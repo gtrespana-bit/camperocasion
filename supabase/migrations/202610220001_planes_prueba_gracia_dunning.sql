@@ -258,7 +258,14 @@ begin
   from pausados p;
 end $$;
 
-revoke all on function public.aplicar_cupo_planes(timestamptz) from public;
+-- PostgreSQL da EXECUTE a PUBLIC por defecto, PERO Supabase además concede
+-- privilegios por defecto explícitos a anon/authenticated/service_role sobre
+-- las funciones del esquema public. Un `revoke ... from public` NO retira esos
+-- grants explícitos: hay que nombrar los tres roles (convención usada en
+-- 202608010006, 202609220001, 202609290001 y 202610230001).
+-- Ver también 202610270001_permisos_aplicar_cupo_planes.sql (parche para las
+-- bases donde esta migración ya estaba aplicada).
+revoke all on function public.aplicar_cupo_planes(timestamptz) from public, anon, authenticated;
 grant execute on function public.aplicar_cupo_planes(timestamptz) to service_role;
 
 -- ────────────────────────────────────────────────────────────────────────────

@@ -11,7 +11,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser } from '@/lib/require-auth'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { iniciarTrialPerfil } from '@/lib/planes-servidor'
 
 export const dynamic = 'force-dynamic'
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const auth = await requireUser(req)
   if ('response' in auth) return auth.response
 
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const ip = getClientIp(req)
   const rl = await checkRateLimit('planes:prueba', auth.user.id, { ip })
   if (!rl.ok) {
     return NextResponse.json(

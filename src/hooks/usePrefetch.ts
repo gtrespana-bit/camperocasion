@@ -76,10 +76,12 @@ export const usePrefetch = () => {
 
     try {
       let result = await ejecutar(filters);
+      let filtrosAplicados: FiltrosCatalogo = filters;
 
       // Misma red de seguridad que el loader ante migración de rangos ausente.
       if (result.error && esErrorColumnasRango(result.error) && tieneRangosNumericos(filters)) {
-        result = await ejecutar(quitarRangos(filters) as FiltrosCatalogo);
+        filtrosAplicados = quitarRangos(filters) as FiltrosCatalogo;
+        result = await ejecutar(filtrosAplicados);
       }
 
       const { data, count, error } = result;
@@ -92,7 +94,17 @@ export const usePrefetch = () => {
       // Guardar en caché ya ordenado: un acierto de caché no vuelve a ordenar.
       const ordenados = ordenarProductosCatalogo((data || []) as ProductoCatalogo[]);
 
-      clientCache.set(cacheKey, {
+      // La clave tiene que describir la consulta REAL: si se reintentó sin
+      // rangos, cachear bajo `cacheKey` devolvería datos sin filtrar a quien
+      // pidió kmMax/anioMin (mismo criterio que useProductLoader).
+      const cacheKeyResultados = filtrosAplicados === filters
+        ? cacheKey
+        : clientCache.generateKey({
+          ...filtrosAplicados,
+          pagina: page,
+          limite: itemsPerPage
+        });
+      clientCache.set(cacheKeyResultados, {
         productos: ordenados,
         totalCount: count ?? 0
       });

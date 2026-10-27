@@ -142,6 +142,25 @@ with checks(nombre, ok) as (
          (select count(*) from pg_indexes
            where indexname in ('productos_espec_km_idx', 'productos_espec_anio_idx',
                                'productos_espec_placa_w_idx', 'productos_espec_inversor_w_idx')) = 4
+
+  -- Auditoría 2026-10-27 — migraciones 202610270001 / 202610270002.
+  -- `CASE` evita llamar a has_function_privilege si la función aún no existe.
+  union all
+  select 'Planes · función aplicar_cupo_planes(timestamptz)',
+         to_regprocedure('public.aplicar_cupo_planes(timestamptz)') is not null
+  union all
+  select 'Planes · aplicar_cupo_planes solo service_role',
+         case when to_regprocedure('public.aplicar_cupo_planes(timestamptz)') is null then false
+              else not coalesce(has_function_privilege('anon', 'public.aplicar_cupo_planes(timestamptz)', 'EXECUTE'), false)
+               and not coalesce(has_function_privilege('authenticated', 'public.aplicar_cupo_planes(timestamptz)', 'EXECUTE'), false)
+               and coalesce(has_function_privilege('service_role', 'public.aplicar_cupo_planes(timestamptz)', 'EXECUTE'), false)
+         end
+  union all
+  select 'Rate limit · check_rate_limit_dual solo service_role',
+         case when to_regprocedure('public.check_rate_limit_dual(text, text, text, integer, bigint, integer)') is null then false
+              else not coalesce(has_function_privilege('authenticated', 'public.check_rate_limit_dual(text, text, text, integer, bigint, integer)', 'EXECUTE'), false)
+               and coalesce(has_function_privilege('service_role', 'public.check_rate_limit_dual(text, text, text, integer, bigint, integer)', 'EXECUTE'), false)
+         end
 )
 select case when ok then '✅ OK' else '❌ FALTA' end as estado, nombre
 from checks

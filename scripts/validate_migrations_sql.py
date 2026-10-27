@@ -136,7 +136,13 @@ def main():
     # Cada verificador vive como script independiente (y el workflow los llama
     # uno a uno). Este se lanza también desde aquí para que un verificador
     # nuevo quede cubierto en cada push sin depender de editar `.github/`.
-    extras = ['verify_analitica_sql.py', 'verify_rendimiento_sql.py']
+    extras = [
+        'verify_analitica_sql.py',
+        'verify_rendimiento_sql.py',
+        # Permisos de aplicar_cupo_planes(), idempotencia del dunning y rate
+        # limit compuesto usuario+IP (auditoría 2026-10-27).
+        'verify_cupo_planes_sql.py',
+    ]
     for extra in extras:
         ruta = os.path.join(AQUI, extra)
         if not os.path.exists(ruta):

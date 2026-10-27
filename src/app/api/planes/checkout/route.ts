@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSessionUser } from '@/lib/require-auth'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import {
   esPlanPago,
   getPlanDef,
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   const periodicidad: Periodicidad = body?.periodicidad === 'anual' ? 'anual' : 'mensual'
 
   const def = getPlanDef(plan)!
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const ip = getClientIp(req)
   const rl = await checkRateLimit('planes:checkout', user.id, { ip })
   if (!rl.ok) {
     return NextResponse.json({ ok: false, error: 'Demasiados intentos. Espera un momento.' }, { status: 429 })

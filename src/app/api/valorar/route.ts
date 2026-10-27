@@ -11,7 +11,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { modeloPorValor } from '@/lib/marcas'
 import { calcularEstadisticas, type Estadisticas } from '@/lib/precios-mercado'
 import { valorar, validarEntrada, type EstadoVehiculo } from '@/lib/valoracion'
@@ -20,7 +20,7 @@ import { getPrecioEur, COLUMNAS_PRECIO } from '@/lib/precio'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const ip = getClientIp(req)
   const rl = await checkRateLimit('valorar', ip, { ip })
   if (!rl.ok) {
     return NextResponse.json(

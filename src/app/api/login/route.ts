@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { validateLoginData } from '@/lib/validation'
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json()
-    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+    const ip = getClientIp(req)
 
     // Validar datos de login
     const validation = validateLoginData({ email, password })

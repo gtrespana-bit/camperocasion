@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { sanitizeString, isValidEmail, isValidLength } from '@/lib/validation'
 import { escapeHtml } from '@/lib/html-escape'
 import { enviarEmailDetallado, emailConfigurado } from '@/lib/server-email'
@@ -27,6 +27,7 @@ async function sendTelegramAlert(asunto: string, nombre: string, email: string, 
     await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(5_000),
       body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text }),
     })
   } catch {
@@ -35,7 +36,7 @@ async function sendTelegramAlert(asunto: string, nombre: string, email: string, 
 }
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const ip = getClientIp(req)
 
   if (!(await checkContactRateLimit(ip))) {
     return NextResponse.json({ error: 'Demasiados intentos. Espera un momento.' }, { status: 429 })

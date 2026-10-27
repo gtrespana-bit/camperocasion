@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { getSessionUser } from '@/lib/require-auth'
 import {
   getPaqueteByCreditos,
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Rate limiting: max 12/hora por usuario (Fase 2) ──
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const ip = getClientIp(req)
   const rl = await checkRateLimit('creditos:comprar', userId, { ip })
   if (!rl.ok) {
     return NextResponse.json(
@@ -121,6 +121,7 @@ export async function POST(req: NextRequest) {
       await fetch(`https://api.telegram.org/bot${BOT}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5_000),
         body: JSON.stringify({
           chat_id: CHAT,
           text: `🛒 Nueva compra de créditos\n\n📦 ${paquete.creditos} créditos — ${precioUsdServer} € (validado servidor)\n💳 ${metodoPago}\n👤 ${userId} (${sessionUser.email || 'sin email'})\n\nRevisa comprobante y aprueba:`,
