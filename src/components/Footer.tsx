@@ -47,22 +47,17 @@ export function Footer() {
   const a = 'text-[14.5px] text-sand-50/75 transition-colors duration-300 hover:text-white'
 
   return (
-    <footer className="relative mt-auto overflow-hidden bg-ink pb-24 text-sand-50 md:pb-0">
+    <footer className="relative mt-auto overflow-hidden bg-night pb-24 text-sand-50 md:pb-0">
       <div className="mx-auto w-full max-w-[1360px] px-5 pt-20 sm:px-8 lg:pt-28">
         {/* Remate */}
         <div className="grid gap-10 border-b border-white/12 pb-16 lg:grid-cols-12 lg:items-end">
-          <h2 className="font-display text-[clamp(2.6rem,6vw,5.6rem)] leading-[0.98] lg:col-span-8">
+          <h2 className="t-mega text-[clamp(3rem,8vw,8rem)] lg:col-span-8">
             {t('footer.tagline')}
           </h2>
           <div className="lg:col-span-4 lg:text-right">
-            <LocalLink
-              href="/publicar"
-              className="group inline-flex items-center gap-3 rounded-full bg-ember py-4 pl-8 pr-5 text-[15px] font-semibold text-white transition-colors duration-500 hover:bg-white hover:text-ink"
-            >
+            <LocalLink href="/publicar" className="btn btn-light">
               {t('landing.cta.publish')}
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 transition-all duration-500 group-hover:bg-ink group-hover:text-white">
-                <ArrowUpRight size={16} className="transition-transform duration-500 group-hover:rotate-45" aria-hidden="true" />
-              </span>
+              <ArrowUpRight size={18} className="btn-ico" aria-hidden="true" />
             </LocalLink>
           </div>
         </div>
@@ -78,7 +73,7 @@ export function Footer() {
             <div className="mt-5 space-y-6">
               {FAMILIAS_FOOTER.map((f) => (
                 <div key={f.key}>
-                  <p className="font-display text-[20px] leading-none text-sand-50">{t(`familias.${f.key}.label`)}</p>
+                  <p className="t-wide text-[15px] leading-none text-sand-50">{t(`familias.${f.key}.label`)}</p>
                   <ul className="mt-3 space-y-2">
                     {f.tipos.map((c) => (
                       <li key={c.label}><LocalLink href={c.href} className={a}>{c.label}</LocalLink></li>
@@ -128,8 +123,8 @@ export function Footer() {
 
       {/* Marca monumental, recortada por el borde inferior */}
       <div className="pointer-events-none select-none overflow-hidden" aria-hidden="true">
-        <p className="font-display whitespace-nowrap px-4 text-center text-[17.5vw] leading-[0.78] tracking-[-0.03em] text-white/[0.07]">
-          Camper<em className="italic">Ocasión</em>
+        <p className="t-mega whitespace-nowrap px-4 text-center text-[14vw] leading-[0.8] text-white/[0.06]">
+          CamperOcasión
         </p>
       </div>
     </footer>

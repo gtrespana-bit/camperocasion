@@ -28,6 +28,15 @@ const geistMono = localFont({
   preload: false,
 })
 
+// Grotesca de anchura variable (eje wdth 62–125): titulares monumentales de la
+// portada. La anchura de cada letra responde al puntero.
+const grotesk = localFont({
+  src: [{ path: './fonts/archivo-latin-standard-normal.woff2', weight: '100 900', style: 'normal' }],
+  variable: '--font-grotesk',
+  display: 'swap',
+  preload: true,
+})
+
 // Tipografía display de la portada y de los titulares editoriales.
 const display = localFont({
   src: [
@@ -140,7 +149,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={`${geist.variable} ${geistMono.variable} ${display.variable}`} suppressHydrationWarning>
+    <html lang="es" className={`${geist.variable} ${geistMono.variable} ${grotesk.variable} ${display.variable}`} suppressHydrationWarning>
       <head>
         <GoogleAnalyticsScript />
         <link rel="preconnect" href={SUPABASE_ORIGIN} />

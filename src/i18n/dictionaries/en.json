@@ -1197,14 +1197,18 @@
     "errorGenerico": "The request could not be sent. Please try again."
   },
   "landing": {
+    "pre": {
+      "label": "Camper marketplace"
+    },
     "hero": {
       "eyebrow": "Camper marketplace · All of Spain",
-      "live": "{count} active listings across Spain",
-      "line1": "Your home on wheels,",
-      "line2": "no surprises.",
+      "live": "{count} active listings",
+      "line1": "Your home",
+      "line2": "on wheels",
       "sub": "Used camper vans and motorhomes in Spain with full technical specs, reviewed homologation and zero commission.",
       "ctaBuy": "Browse campers for sale",
       "ctaSell": "Sell for free",
+      "scroll": "Scroll",
       "search": {
         "query": "What are you after",
         "queryPlaceholder": "Ducato, California, Adria…",
@@ -1222,38 +1226,38 @@
       "label": "Makes and models"
     },
     "statement": {
-      "eyebrow": "Manifesto",
-      "text": "A *camper* is not a car. It is the place where you will *wake* up, *cook* and come back *home* every night. That is why here you buy with full technical specs, a *verified* file and zero commission.",
+      "eyebrow": "Spain's camper marketplace",
+      "l1": "You are not buying a car.",
+      "l2": "You are buying the place where",
+      "l3": "you will wake up.",
+      "text": "That is why every listing comes with full technical specs, a verified file and zero commission. No fine print, no middlemen.",
       "listings": "active listings",
       "territories": "provinces, Ceuta and Melilla",
       "commission": "commission to list and sell",
       "filters": "real technical filters"
     },
     "families": {
-      "eyebrow": "Choose how you travel",
-      "title1": "Three ways to",
-      "title2": "live the road",
+      "eyebrow": "Choose your route",
+      "kicker": "Three ways to travel",
       "all": "View the full catalogue",
       "explore": "Explore"
     },
     "listings": {
       "eyebrow": "On the market now",
-      "title1": "Just",
-      "title2": "arrived",
-      "all": "All",
-      "granVolumen": "Large vans",
-      "medianas": "Mid-size and compact",
-      "autocaravanas": "Motorhomes",
-      "viewAll": "View all",
-      "empty": "No campers in this section yet",
+      "l1": "Just",
+      "l2": "arrived",
+      "all": "View the full catalogue",
+      "see": "View",
+      "progress": "Scroll to explore",
+      "empty": "No campers listed yet",
       "emptyCta": "List the first one",
       "featured": "Featured",
-      "isNew": "New",
-      "open": "Open listing"
+      "isNew": "New"
     },
     "journey": {
       "eyebrow": "Buy with confidence",
-      "title": "From the first search to keys in hand.",
+      "l1": "From the search",
+      "l2": "to the keys.",
       "s1": {
         "title": "Search by what matters",
         "desc": "DGT label, seats, homologation, autonomy, mechanics… up to 16 technical filters to find the exact camper.",
@@ -1276,6 +1280,14 @@
         "desc": "With everything in order, all that is left is choosing the first destination. Your home on wheels awaits.",
         "l1": "Browse campers for sale"
       },
+      "sheet": {
+        "title": "File",
+        "example": "Illustrative example",
+        "sheet": "Technical sheet",
+        "itv": "ITV valid",
+        "homologation": "Homologation",
+        "ok": "Reviewed"
+      },
       "alt1": "Camper interior with wooden kitchen and bed at sunset",
       "alt2": "Folder with vehicle documents, keys and a stamp on a walnut table",
       "alt3": "Camper key handover on a white Andalusian street",
@@ -1283,30 +1295,32 @@
     },
     "sell": {
       "eyebrow": "For sellers",
-      "zero": "commission.",
-      "title": "Sell your camper with no middlemen.",
-      "text": "List it in five minutes, talk directly with buyers and keep 100% of the price.",
+      "m1": "0 % commission",
+      "m2": "100 % yours",
+      "m3": "No middlemen",
+      "m4": "List for free",
+      "title": "Sell your camper. Keep it all.",
+      "text": "List it in five minutes, talk directly with buyers and collect 100% of the price.",
       "ctaPublish": "List for free",
       "ctaValue": "How much is my camper worth?",
       "audiencesTitle": "A market open to everyone living the camper world"
     },
     "guides": {
       "eyebrow": "Guides",
-      "title1": "Before you buy,",
-      "title2": "read this",
+      "l1": "Before you buy,",
+      "l2": "read this",
       "min": "min"
     },
     "provinces": {
       "eyebrow": "Close to you",
-      "title1": "Campers in every",
-      "title2": "corner of Spain",
-      "label": "Campers in",
-      "all": "All provinces"
+      "l1": "Campers in every",
+      "l2": "corner of Spain",
+      "label": "Campers in"
     },
     "cta": {
-      "title1": "Selling a camper?",
-      "title2": "Someone is looking for it.",
-      "sub": "Private seller, converter or professional: list for free in under five minutes and reach buyers across Spain.",
+      "l1": "Selling",
+      "l2": "a camper?",
+      "sub": "Someone is looking for it. Private seller, converter or professional: list for free in under five minutes and reach buyers across Spain.",
       "publish": "List for free",
       "value": "Value my camper"
     }

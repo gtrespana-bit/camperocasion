@@ -1197,14 +1197,18 @@
     "errorGenerico": "No se pudo enviar la solicitud. Inténtalo de nuevo."
   },
   "landing": {
+    "pre": {
+      "label": "Marketplace camper"
+    },
     "hero": {
       "eyebrow": "Marketplace camper · Toda España",
-      "live": "{count} anuncios activos en toda España",
-      "line1": "Tu casa sobre ruedas,",
-      "line2": "sin sorpresas.",
+      "live": "{count} anuncios activos",
+      "line1": "Tu casa",
+      "line2": "sobre ruedas",
       "sub": "Furgonetas camper y autocaravanas de ocasión con ficha técnica completa, homologación revisada y cero comisiones.",
       "ctaBuy": "Ver campers en venta",
       "ctaSell": "Vender gratis",
+      "scroll": "Desliza",
       "search": {
         "query": "Qué buscas",
         "queryPlaceholder": "Ducato, California, Adria…",
@@ -1222,38 +1226,38 @@
       "label": "Fabricantes y modelos"
     },
     "statement": {
-      "eyebrow": "Manifiesto",
-      "text": "Una *camper* no es un coche. Es el sitio donde vas a *despertar*, *cocinar* y volver a *casa* cada noche. Por eso aquí se compra con ficha técnica completa, expediente *verificado* y cero comisiones.",
+      "eyebrow": "El marketplace camper de España",
+      "l1": "No compras un coche.",
+      "l2": "Compras el lugar donde",
+      "l3": "vas a despertar.",
+      "text": "Por eso cada anuncio llega con ficha técnica completa, expediente verificado y cero comisiones. Sin letra pequeña y sin intermediarios.",
       "listings": "anuncios activos",
       "territories": "provincias, Ceuta y Melilla",
       "commission": "de comisión por publicar y vender",
       "filters": "filtros técnicos reales"
     },
     "families": {
-      "eyebrow": "Elige tu forma de viajar",
-      "title1": "Tres maneras de",
-      "title2": "vivir el camino",
+      "eyebrow": "Elige tu ruta",
+      "kicker": "Tres formas de viajar",
       "all": "Ver todo el catálogo",
       "explore": "Explorar"
     },
     "listings": {
       "eyebrow": "En el mercado ahora",
-      "title1": "Recién",
-      "title2": "llegadas",
-      "all": "Todas",
-      "granVolumen": "Gran volumen",
-      "medianas": "Medianas y compactas",
-      "autocaravanas": "Autocaravanas",
-      "viewAll": "Ver todas",
-      "empty": "Aún no hay campers en esta sección",
+      "l1": "Recién",
+      "l2": "llegadas",
+      "all": "Ver todo el catálogo",
+      "see": "Ver",
+      "progress": "Desliza para explorar",
+      "empty": "Aún no hay campers publicadas",
       "emptyCta": "Publica la primera",
       "featured": "Destacado",
-      "isNew": "Nuevo",
-      "open": "Abrir anuncio"
+      "isNew": "Nuevo"
     },
     "journey": {
       "eyebrow": "Compra con garantías",
-      "title": "De la primera búsqueda a las llaves en la mano.",
+      "l1": "De la búsqueda",
+      "l2": "a las llaves.",
       "s1": {
         "title": "Busca por lo que importa",
         "desc": "Distintivo DGT, plazas, homologación, autonomía, mecánica… hasta 16 filtros técnicos para dar con la camper exacta.",
@@ -1276,6 +1280,14 @@
         "desc": "Con todo en regla, solo queda elegir el primer destino. Tu casa sobre ruedas te espera.",
         "l1": "Ver campers en venta"
       },
+      "sheet": {
+        "title": "Expediente",
+        "example": "Ejemplo ilustrativo",
+        "sheet": "Ficha técnica",
+        "itv": "ITV en vigor",
+        "homologation": "Homologación",
+        "ok": "Revisado"
+      },
       "alt1": "Interior de una camper con cocina de madera y cama al atardecer",
       "alt2": "Carpeta con la documentación del vehículo, llaves y sello sobre una mesa de nogal",
       "alt3": "Entrega de llaves de una camper en una calle blanca andaluza",
@@ -1283,30 +1295,32 @@
     },
     "sell": {
       "eyebrow": "Para vendedores",
-      "zero": "de comisión.",
-      "title": "Vende tu camper sin intermediarios.",
-      "text": "Publica en cinco minutos, habla directamente con los compradores y quédate con el 100 % del precio.",
+      "m1": "0 % comisión",
+      "m2": "100 % para ti",
+      "m3": "Sin intermediarios",
+      "m4": "Publica gratis",
+      "title": "Vende tu camper. Quédate con todo.",
+      "text": "Publica en cinco minutos, habla directamente con los compradores y cobra el 100 % del precio.",
       "ctaPublish": "Publicar gratis",
       "ctaValue": "¿Cuánto vale mi camper?",
       "audiencesTitle": "Un mercado abierto a todos los que viven el mundo camper"
     },
     "guides": {
       "eyebrow": "Guías",
-      "title1": "Antes de comprar,",
-      "title2": "léelo",
+      "l1": "Antes de comprar,",
+      "l2": "léelo",
       "min": "min"
     },
     "provinces": {
       "eyebrow": "Cerca de ti",
-      "title1": "Camper en cada",
-      "title2": "rincón de España",
-      "label": "Camper en",
-      "all": "Todas las provincias"
+      "l1": "Camper en cada",
+      "l2": "rincón de España",
+      "label": "Camper en"
     },
     "cta": {
-      "title1": "¿Vendes una camper?",
-      "title2": "Alguien la está buscando.",
-      "sub": "Particular, camperizador o profesional: publica gratis en menos de cinco minutos y llega a compradores de toda España.",
+      "l1": "¿Vendes",
+      "l2": "una camper?",
+      "sub": "Alguien la está buscando. Particular, camperizador o profesional: publica gratis en menos de cinco minutos y llega a compradores de toda España.",
       "publish": "Publicar gratis",
       "value": "Valorar mi camper"
     }

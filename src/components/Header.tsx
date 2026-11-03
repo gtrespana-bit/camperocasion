@@ -34,6 +34,8 @@ export function Header() {
   // solidifica al hacer scroll; en el resto de páginas es siempre sólida.
   const isHome = pathname === '/' || pathname === '/en'
   const overlay = isHome && !scrolled && !mobileOpen && !megaOpen && !searchOpen
+  // La portada es nocturna: la cabecera es oscura también tras hacer scroll.
+  const homeDark = isHome && !mobileOpen && !megaOpen && !searchOpen
 
   // Subcategorías camper (mercado vertical 100% camper)
   // Navegación del vertical camper: familias (Campers / Autocaravanas /
@@ -184,13 +186,15 @@ export function Header() {
     megaTimer.current = setTimeout(() => setMegaOpen(false), 140)
   }
 
-  const onDark = overlay || mobileOpen
+  const onDark = overlay || mobileOpen || homeDark
   const linkTone = onDark
     ? 'text-white/85 hover:text-white'
     : 'text-ink/70 hover:text-ink'
   const navLink = `relative px-3.5 py-2 text-[14.5px] font-medium transition-colors duration-300 ${linkTone}`
   const iconBtn = `flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300 ${onDark ? 'text-white hover:bg-white/15' : 'text-ink hover:bg-ink/8'}`
-  const pill = `inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold transition-colors duration-500 ${onDark ? 'bg-white text-ink hover:bg-ember hover:text-white' : 'bg-ink text-white hover:bg-ember'}`
+  const pill = isHome
+    ? 'inline-flex h-10 items-center gap-2 bg-[#EDEBE4] px-5 text-[12px] font-semibold uppercase tracking-[0.12em] text-night transition-colors duration-500 hover:bg-flare'
+    : `inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold transition-colors duration-500 ${onDark ? 'bg-white text-ink hover:bg-ember hover:text-white' : 'bg-ink text-white hover:bg-ember'}`
 
   const mobileLinks = [
     { href: '/catalogo', label: t('header.megaAll') },
@@ -211,7 +215,9 @@ export function Header() {
           mobileOpen
             ? 'bg-transparent text-white'
             : overlay
-            ? 'bg-gradient-to-b from-ink/45 to-transparent text-white'
+            ? 'bg-gradient-to-b from-night/55 to-transparent text-white'
+            : homeDark
+            ? 'bg-night/70 text-white shadow-[0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl'
             : 'bg-sand-50/85 text-ink shadow-[0_1px_0_rgba(11,20,16,0.08)] backdrop-blur-xl'
         }`}
         onMouseLeave={closeMega}
@@ -255,7 +261,7 @@ export function Header() {
             <a
               href={altLocaleHref}
               onClick={(e) => { e.preventDefault(); window.location.href = altLocaleHref }}
-              className={`hidden h-10 items-center rounded-full px-2.5 text-[12px] font-semibold tracking-[0.12em] transition-colors md:flex ${overlay ? 'text-white/80 hover:text-white' : 'text-ink/60 hover:text-ink'}`}
+              className={`hidden h-10 items-center rounded-full px-2.5 text-[12px] font-semibold tracking-[0.12em] transition-colors md:flex ${onDark ? 'text-white/80 hover:text-white' : 'text-ink/60 hover:text-ink'}`}
               title={isEn ? 'Español' : 'English'}
               aria-label={isEn ? 'Cambiar a Español' : 'Switch to English'}
             >
@@ -265,7 +271,7 @@ export function Header() {
             {user && (
               <LocalLink
                 href="/creditos"
-                className={`relative hidden h-10 items-center gap-1.5 rounded-full px-3 text-[13.5px] font-medium transition-colors md:flex ${overlay ? 'text-white hover:bg-white/15' : 'text-ink hover:bg-ink/8'}`}
+                className={`relative hidden h-10 items-center gap-1.5 rounded-full px-3 text-[13.5px] font-medium transition-colors md:flex ${onDark ? 'text-white hover:bg-white/15' : 'text-ink hover:bg-ink/8'}`}
                 title={t('header.creditsTitle')}
               >
                 <Zap size={15} className="text-ember" />
@@ -419,7 +425,7 @@ export function Header() {
       {/* ============ MENÚ MÓVIL ============ */}
       {!isPWA && (
         <div
-          className={`fixed inset-0 z-[60] overflow-y-auto bg-ink text-sand-50 transition-all duration-500 ease-out lg:hidden ${mobileOpen ? 'visible opacity-100' : 'invisible opacity-0'}`}
+          data-lenis-prevent className={`fixed inset-0 z-[60] overflow-y-auto bg-ink text-sand-50 transition-all duration-500 ease-out lg:hidden ${mobileOpen ? 'visible opacity-100' : 'invisible opacity-0'}`}
           aria-hidden={!mobileOpen}
         >
           <div className="px-5 pb-16 pt-[96px]">

@@ -14,14 +14,20 @@ import { FILTROS_TECNICOS } from '@/lib/filtros-tecnicos'
 import { CIUDADES_SEO } from '@/lib/ubicaciones-seo'
 import { aplicarOrdenCatalogo, ordenarProductosCatalogo } from '@/lib/catalog-consulta'
 import Reveal from '@/components/home/Reveal'
-import CountUp from '@/components/home/CountUp'
 import HeroSearch from '@/components/home/HeroSearch'
 import SmoothScroll from '@/components/home/SmoothScroll'
-import HeroFx from '@/components/home/HeroFx'
-import ScrollWords, { type Word } from '@/components/home/ScrollWords'
-import FamilyPanels, { type FamilyPanel } from '@/components/home/FamilyPanels'
-import Showroom, { type RailItem, type RailTab } from '@/components/home/Showroom'
-import Journey, { type JourneyStep } from '@/components/home/Journey'
+import Cursor from '@/components/home/Cursor'
+import Preloader from '@/components/home/Preloader'
+import HeroGL from '@/components/home/HeroGL'
+import KineticTitle from '@/components/home/KineticTitle'
+import TextReveal from '@/components/home/TextReveal'
+import Magnetic from '@/components/home/Magnetic'
+import Odometer from '@/components/home/Odometer'
+import RoutePanels, { type RoutePanel } from '@/components/home/RoutePanels'
+import Gallery, { type GalleryItem } from '@/components/home/Gallery'
+import RoadJourney, { type RoadStep } from '@/components/home/RoadJourney'
+import BigMarquee from '@/components/home/BigMarquee'
+import ProvinceList, { type Province } from '@/components/home/ProvinceList'
 import fs from 'fs'
 import path from 'path'
 
@@ -213,42 +219,21 @@ function relativeTime(iso?: string | null, t?: any): string | null {
 
 const CONTAINER = 'mx-auto w-full max-w-[1360px] px-5 sm:px-8'
 
-/** Etiqueta de sección tipo ficha técnica: «02 / Familias». */
-function Eyebrow({ n, children, tone = 'dark' }: { n: string; children: React.ReactNode; tone?: 'dark' | 'light' }) {
+/** Etiqueta de sección: filete + texto en versalitas. */
+function Eyebrow({ children, tone = 'light' }: { children: React.ReactNode; tone?: 'light' | 'dark' }) {
   return (
-    <p className={`font-mono text-[11.5px] uppercase tracking-[0.16em] ${tone === 'light' ? 'text-white/60' : 'text-ink/55'}`}>
-      <span className={tone === 'light' ? 'text-ember-300' : 'text-ember'}>{n}</span>
-      <span className="mx-2 opacity-40">/</span>
+    <p className={`micro flex items-center gap-4 ${tone === 'light' ? 'text-white/60' : 'text-night/65'}`}>
+      <span className={`h-px w-10 ${tone === 'light' ? 'bg-white/40' : 'bg-night/40'}`} aria-hidden="true" />
       {children}
     </p>
   )
 }
 
-/** Titular editorial. Las partes en cursiva comparten color con el resto. */
-function Title({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <h2 className={`font-display text-[clamp(2.8rem,6.4vw,6.4rem)] leading-[0.95] tracking-[-0.015em] text-balance ${className}`}>
-      {children}
-    </h2>
-  )
+function Arrow() {
+  return <ArrowUpRight size={18} className="btn-ico" aria-hidden="true" />
 }
 
-function CtaPill({ href, children, tone }: { href: string; children: React.ReactNode; tone: 'white' | 'ink' }) {
-  const cls = tone === 'white'
-    ? 'bg-white text-ink hover:bg-ember hover:text-white'
-    : 'bg-ink text-white hover:bg-ember'
-  const dot = tone === 'white' ? 'bg-ink text-white' : 'bg-white/15'
-  return (
-    <LocalLink href={href} className={`group inline-flex items-center gap-4 rounded-full py-2.5 pl-7 pr-2.5 text-[15px] font-semibold transition-colors duration-500 ${cls}`}>
-      {children}
-      <span className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-500 ${dot} group-hover:bg-white/20`}>
-        <ArrowUpRight size={17} className="transition-transform duration-500 group-hover:rotate-45" />
-      </span>
-    </LocalLink>
-  )
-}
-
-function toRailItem(p: any, t: any): RailItem {
+function toGalleryItem(p: any, t: any): GalleryItem {
   const days = p.creado_en ? (Date.now() - new Date(p.creado_en).getTime()) / 86400000 : 99
   const featured = p.destacado === true && (!p.destacado_hasta || new Date(p.destacado_hasta).getTime() > Date.now())
   return {
@@ -264,19 +249,27 @@ function toRailItem(p: any, t: any): RailItem {
   }
 }
 
-/** «Una *camper* no es…» → palabras, con las marcadas en cursiva. */
-function parseWords(text: string): Word[] {
-  return text.split(/\s+/).filter(Boolean).map((tok) => {
-    const em = /\*[^*]+\*/.test(tok)
-    return { t: tok.replace(/\*/g, ''), em }
-  })
-}
-
 const FAMILIA_FOTO: Record<string, { src: string; alt: string }> = {
   campers: { src: '/home/campers.webp', alt: 'Furgoneta camper en un camino de pinos al atardecer' },
   autocaravanas: { src: '/home/autocaravanas.webp', alt: 'Autocaravana blanca junto al Mediterráneo al anochecer' },
   overland: { src: '/home/overland.webp', alt: 'Vehículo overland 4x4 en el desierto de Almería al amanecer' },
 }
+
+const COORDS: Record<string, string> = {
+  madrid: '40.42° N · 3.70° W',
+  barcelona: '41.39° N · 2.17° E',
+  valencia: '39.47° N · 0.38° W',
+  sevilla: '37.39° N · 5.98° W',
+  malaga: '36.72° N · 4.42° W',
+  alicante: '38.35° N · 0.48° W',
+  murcia: '37.98° N · 1.13° W',
+  asturias: '43.36° N · 5.85° W',
+  baleares: '39.57° N · 2.65° E',
+  'las-palmas': '28.12° N · 15.44° W',
+  'santa-cruz-de-tenerife': '28.47° N · 16.25° W',
+  zaragoza: '41.65° N · 0.89° W',
+}
+const PROVINCE_IMAGES = ['/home/campers.webp', '/home/autocaravanas.webp', '/home/overland.webp', '/home/j3.webp', '/home/j4.webp', '/home/j1.webp']
 
 // ── Página ────────────────────────────────────────────────────────────────
 
@@ -285,13 +278,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   setRequestLocale(locale)
   const t = await getTranslations()
 
-  const [recientes, granVolumen, medianas, autocaravanas, totalActivos] = await Promise.all([
-    getProductos(10),
-    getProductos(10, ['Gran Volumen']),
-    getProductos(10, ['Camper Mediana / Compacta']),
-    getProductos(10, ['Autocaravana Perfilada', 'Autocaravana Capuchina', 'Autocaravana Integral']),
-    getTotalActivos(),
-  ])
+  const [recientes, totalActivos] = await Promise.all([getProductos(10), getTotalActivos()])
 
   const provincias = getProvinciasPopulares()
   const todasProvincias = [...CIUDADES_SEO].map((c) => c.nombre).sort((a, b) => a.localeCompare(b, 'es'))
@@ -303,7 +290,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const fabricantes = [
     ...PRIORIDAD.filter((f) => todosFabricantes.includes(f)),
     ...todosFabricantes.filter((f) => !PRIORIDAD.includes(f)),
-  ].slice(0, 28)
+  ].slice(0, 24)
   const jsonLd = generateItemListSchema(recientes, 'https://camperocasion.online')
 
   const grupos = FAMILIAS.map((f) => ({
@@ -314,13 +301,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       .map((s) => ({ value: s.label, label: s.label })),
   }))
 
-  const tabs: RailTab[] = [
-    { key: 'todas', label: t('landing.listings.all'), href: '/catalogo', items: recientes.map((p: any) => toRailItem(p, t)) },
-    { key: 'gran', label: t('landing.listings.granVolumen'), href: '/catalogo?subcategoria=Gran%20Volumen', items: granVolumen.map((p: any) => toRailItem(p, t)) },
-    { key: 'media', label: t('landing.listings.medianas'), href: '/catalogo?subcategoria=Camper%20Mediana%20%2F%20Compacta', items: medianas.map((p: any) => toRailItem(p, t)) },
-    { key: 'auto', label: t('landing.listings.autocaravanas'), href: '/catalogo?subcategoria=Autocaravana%20Integral', items: autocaravanas.map((p: any) => toRailItem(p, t)) },
-  ]
-
   const stats = [
     totalActivos > 0 ? { value: totalActivos, label: t('landing.statement.listings'), suffix: '' } : null,
     { value: 52, label: t('landing.statement.territories'), suffix: '' },
@@ -328,7 +308,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     { value: FILTROS_TECNICOS.length, label: t('landing.statement.filters'), suffix: '' },
   ].filter((x): x is { value: number; label: string; suffix: string } => x !== null)
 
-  const familias: FamilyPanel[] = FAMILIAS.map((f) => {
+  const rutas: RoutePanel[] = FAMILIAS.map((f) => {
     const tipos = f.subs
       .map((slug) => subs.find((x) => x.slug === slug))
       .filter((s): s is NonNullable<typeof s> => Boolean(s))
@@ -340,15 +320,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       image: foto.src,
       alt: foto.alt,
       href: `/catalogo?subcategoria=${encodeURIComponent(tipos[0].label)}`,
-      tipos: tipos.map((s) => ({
-        label: s.label,
-        href: `/catalogo?subcategoria=${encodeURIComponent(s.label)}`,
-        hint: resumenFabricantes(s.marcas, 4),
-      })),
+      tipos: tipos.map((s) => ({ label: s.label, href: `/catalogo?subcategoria=${encodeURIComponent(s.label)}` })),
     }
   })
 
-  const pasos: JourneyStep[] = [
+  const pasos: RoadStep[] = [
     { key: 's1', image: '/home/j1.webp', links: [{ label: t('landing.journey.s1.l1'), href: '/catalogo' }] },
     { key: 's2', image: '/home/j2.webp', links: [{ label: t('landing.journey.s2.l1'), href: '/compra-segura-camper' }] },
     { key: 's3', image: '/home/j3.webp', links: [
@@ -364,6 +340,17 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     image: s.image,
     alt: t(`landing.journey.alt${i + 1}`),
     links: s.links,
+    sheet: i === 1
+      ? {
+          title: t('landing.journey.sheet.title'),
+          example: t('landing.journey.sheet.example'),
+          rows: [
+            { label: t('landing.journey.sheet.sheet'), state: t('landing.journey.sheet.ok') },
+            { label: t('landing.journey.sheet.itv'), state: t('landing.journey.sheet.ok') },
+            { label: t('landing.journey.sheet.homologation'), state: t('landing.journey.sheet.ok') },
+          ],
+        }
+      : undefined,
   }))
 
   const audiencias = [
@@ -372,94 +359,110 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     { key: 'pro', vendedor: 'profesional', plural: 'profesionales' },
   ]
 
+  const listaProvincias: Province[] = provincias.map((p, i) => ({
+    slug: p.slug,
+    name: p.nombre,
+    coord: COORDS[p.slug] || '',
+    image: PROVINCE_IMAGES[i % PROVINCE_IMAGES.length],
+  }))
+
   return (
-    <div className="bg-sand-50 text-ink">
+    <div className="bg-night text-white">
+      <Preloader label={t('landing.pre.label')} />
       <SmoothScroll />
+      <Cursor />
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       )}
 
       {/* ═══════════ HERO ═══════════ */}
-      <HeroFx className="relative isolate bg-sand-50 text-white">
-        <div className="hero-frame absolute inset-0 -z-10 overflow-hidden bg-ink">
-          <div className="hero-media absolute inset-0">
-            <div className="hero-photo grain absolute inset-0">
-              <Image
-                src="/home/hero.webp"
-                alt={t('home.hero.heroImageAlt')}
-                fill
-                priority
-                quality={90}
-                fetchPriority="high"
-                sizes="100vw"
-                className="object-cover object-[94%_50%] lg:object-[100%_50%]"
-              />
-            </div>
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-ink/55 via-ink/15 to-transparent lg:from-ink/80 lg:via-ink/20" aria-hidden="true" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-transparent to-ink/60" aria-hidden="true" />
+      <section className="relative isolate flex h-[100svh] min-h-[700px] flex-col overflow-hidden bg-night">
+        <Image
+          src="/home/hero.webp"
+          alt={t('home.hero.heroImageAlt')}
+          fill
+          priority
+          quality={90}
+          fetchPriority="high"
+          sizes="100vw"
+          className="-z-20 object-cover object-[92%_50%]"
+        />
+        <div className="absolute inset-0 -z-10">
+          <HeroGL src="/home/hero.webp" focus={[0.92, 0.5]} />
         </div>
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-night via-night/35 to-night/55" aria-hidden="true" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-night/70 via-transparent to-transparent" aria-hidden="true" />
+        <div className="grain absolute inset-0 -z-10" aria-hidden="true" />
 
-        <div className={`${CONTAINER} relative flex min-h-[100svh] flex-col justify-between pt-28 lg:min-h-[calc(100svh-96px)] lg:justify-end lg:pt-32`}>
-          <div className="hero-copy max-w-[1100px] lg:pb-24">
-            <p className="fade-up flex items-center gap-3 font-mono text-[11.5px] uppercase tracking-[0.18em] text-white/75" style={{ '--d': '0.15s' } as React.CSSProperties}>
+        <div className={`${CONTAINER} relative flex h-full flex-col justify-between pb-6 pt-28 lg:pb-8`}>
+          <div className="fade-up flex items-center justify-between" style={{ '--d': '0.1s' } as React.CSSProperties}>
+            <p className="micro flex items-center gap-3 text-white/80">
               <span className="relative flex h-2 w-2" aria-hidden="true">
-                <span className="absolute inset-0 animate-ping rounded-full bg-ember-300/70" />
-                <span className="relative h-2 w-2 rounded-full bg-ember-300" />
+                <span className="absolute inset-0 animate-ping rounded-full bg-flare/70" />
+                <span className="relative h-2 w-2 rounded-full bg-flare" />
               </span>
               {totalActivos > 0 ? t('landing.hero.live', { count: totalActivos }) : t('landing.hero.eyebrow')}
             </p>
-            <h1 className="font-display mt-6 text-[clamp(3.2rem,9.6vw,9.4rem)] leading-[0.9] tracking-[-0.025em]">
-              <span className="mask-line"><span style={{ '--d': '0.25s' } as React.CSSProperties}>{t('landing.hero.line1')}</span></span>
-              <span className="mask-line"><span className="italic" style={{ '--d': '0.4s' } as React.CSSProperties}>{t('landing.hero.line2')}</span></span>
-            </h1>
-            <p className="fade-up mt-7 max-w-[520px] text-[16.5px] leading-relaxed text-white/80 sm:text-[18px]" style={{ '--d': '0.7s' } as React.CSSProperties}>
-              {t('landing.hero.sub')}
-            </p>
-            <div className="fade-up mt-9 flex flex-wrap items-center gap-x-8 gap-y-4" style={{ '--d': '0.85s' } as React.CSSProperties}>
-              <CtaPill href="/catalogo" tone="white">{t('landing.hero.ctaBuy')}</CtaPill>
-              <LocalLink href="/publicar" className="inline-flex items-center gap-2 text-[15px] font-semibold text-white">
-                <span className="link-draw pb-1">{t('landing.hero.ctaSell')}</span>
-                <ArrowRight size={16} aria-hidden="true" />
-              </LocalLink>
+            <p className="micro hidden text-white/55 md:block">{t('landing.hero.eyebrow')}</p>
+          </div>
+
+          <div className="mt-5 flex flex-1 flex-col justify-between lg:mt-8">
+            <KineticTitle
+              lines={[t('landing.hero.line1'), t('landing.hero.line2')]}
+              className="t-mega text-[clamp(2.4rem,min(15.2vw,25svh),16rem)]"
+            />
+            <div>
+              <div className="grid gap-6 lg:grid-cols-12 lg:items-end">
+                <div className="lg:col-span-6">
+                  <p className="fade-up max-w-[430px] text-[16px] leading-relaxed text-white/85" style={{ '--d': '0.8s' } as React.CSSProperties}>
+                    {t('landing.hero.sub')}
+                  </p>
+                  <div className="fade-up mt-6 flex flex-wrap items-center gap-3" style={{ '--d': '0.95s' } as React.CSSProperties}>
+                    <Magnetic>
+                      <LocalLink href="/catalogo" data-cursor={t('landing.hero.ctaBuy').split(' ')[0]} className="btn btn-light">
+                        {t('landing.hero.ctaBuy')} <Arrow />
+                      </LocalLink>
+                    </Magnetic>
+                    <LocalLink href="/publicar" className="btn btn-ghost">
+                      {t('landing.hero.ctaSell')} <Arrow />
+                    </LocalLink>
+                  </div>
+                </div>
+              </div>
+              <div className="fade-up mt-6" style={{ '--d': '1.1s' } as React.CSSProperties}>
+                <HeroSearch
+                  groups={grupos}
+                  provinces={todasProvincias}
+                  labels={{
+                    query: t('landing.hero.search.query'),
+                    queryPlaceholder: t('landing.hero.search.queryPlaceholder'),
+                    type: t('landing.hero.search.type'),
+                    allTypes: t('landing.hero.search.allTypes'),
+                    province: t('landing.hero.search.province'),
+                    allProvinces: t('landing.hero.search.allProvinces'),
+                    budget: t('landing.hero.search.budget'),
+                    anyBudget: t('landing.hero.search.anyBudget'),
+                    upTo: t('landing.hero.search.upTo'),
+                    submit: t('landing.hero.search.submit'),
+                  }}
+                />
+              </div>
             </div>
           </div>
-
-          {/* Buscador: cabalga entre el hero y la siguiente sección */}
-          <div className="relative z-20 mt-10 translate-y-full lg:mt-0 lg:translate-y-1/2">
-          <div className="hero-bar fade-up" style={{ '--d': '1s' } as React.CSSProperties}>
-            <HeroSearch
-              groups={grupos}
-              provinces={todasProvincias}
-              labels={{
-                query: t('landing.hero.search.query'),
-                queryPlaceholder: t('landing.hero.search.queryPlaceholder'),
-                type: t('landing.hero.search.type'),
-                allTypes: t('landing.hero.search.allTypes'),
-                province: t('landing.hero.search.province'),
-                allProvinces: t('landing.hero.search.allProvinces'),
-                budget: t('landing.hero.search.budget'),
-                anyBudget: t('landing.hero.search.anyBudget'),
-                upTo: t('landing.hero.search.upTo'),
-                submit: t('landing.hero.search.submit'),
-              }}
-            />
-          </div>
-          </div>
         </div>
-      </HeroFx>
+      </section>
 
-      {/* ═══════════ MARQUEE DE FABRICANTES ═══════════ */}
-      <section aria-label={t('landing.marquee.label')} className="mt-[470px] overflow-hidden py-6 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)] lg:mt-28">
+      {/* ═══════════ FABRICANTES ═══════════ */}
+      <section aria-label={t('landing.marquee.label')} className="overflow-hidden border-b border-white/10 py-5 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
         <div className="marquee">
           {[0, 1].map((dup) => (
             <ul key={dup} className="flex shrink-0 items-center" aria-hidden={dup === 1}>
               {fabricantes.map((f) => (
                 <li key={f} className="flex items-center">
-                  <LocalLink href="/marcas" tabIndex={dup === 1 ? -1 : undefined} className="font-display whitespace-nowrap px-8 text-[clamp(1.8rem,3vw,2.8rem)] leading-none text-ink/35 transition-colors duration-300 hover:text-ink">
+                  <LocalLink href="/marcas" tabIndex={dup === 1 ? -1 : undefined} className="t-wide whitespace-nowrap px-7 text-[15px] tracking-[0.04em] text-white/45 transition-colors duration-300 hover:text-white">
                     {f}
                   </LocalLink>
-                  <span className="h-1 w-1 rounded-full bg-ink/25" aria-hidden="true" />
+                  <span className="h-1.5 w-1.5 rotate-45 bg-flare" aria-hidden="true" />
                 </li>
               ))}
             </ul>
@@ -467,112 +470,117 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
 
-      {/* ═══════════ MANIFIESTO + CIFRAS ═══════════ */}
-      <section className={`${CONTAINER} pb-24 pt-24 lg:pb-36 lg:pt-36`}>
-        <Eyebrow n="01">{t('landing.statement.eyebrow')}</Eyebrow>
-        <ScrollWords
-          words={parseWords(t('landing.statement.text'))}
-          className="font-display mt-10 max-w-[1180px] text-[clamp(2.1rem,5.2vw,5.4rem)] leading-[1.04] tracking-[-0.015em]"
+      {/* ═══════════ MANIFIESTO ═══════════ */}
+      <section className={`${CONTAINER} py-28 lg:py-44`}>
+        <Eyebrow>{t('landing.statement.eyebrow')}</Eyebrow>
+        <TextReveal
+          className="t-mega mt-10 text-[clamp(2.8rem,8vw,8.6rem)]"
+          lines={[{ t: t('landing.statement.l1') }, { t: t('landing.statement.l2') }, { t: t('landing.statement.l3'), outline: true }]}
         />
-        <dl className={`mt-20 grid grid-cols-2 gap-y-12 border-t border-ink/15 pt-10 lg:mt-28 ${stats.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
-          {stats.map((s, i) => (
-            <div key={s.label} className={`flex flex-col ${i % 2 === 1 ? 'border-l border-ink/12 pl-6 lg:pl-8' : ''} ${i > 0 ? 'lg:border-l lg:border-ink/12 lg:pl-8' : ''}`}>
-              <dd className="font-display order-1 text-[clamp(3.4rem,6.4vw,6rem)] leading-none">
-                <CountUp value={s.value} suffix={s.suffix} />
-              </dd>
-              <dt className="order-2 mt-4 max-w-[210px] font-mono text-[11px] uppercase leading-snug tracking-[0.1em] text-ink/55">{s.label}</dt>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* ═══════════ FAMILIAS ═══════════ */}
-      <section className={`${CONTAINER} pb-24 lg:pb-40`}>
-        <Reveal className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <Eyebrow n="02">{t('landing.families.eyebrow')}</Eyebrow>
-            <Title className="mt-6">
-              {t('landing.families.title1')} <em className="italic">{t('landing.families.title2')}</em>
-            </Title>
-          </div>
-          <LocalLink href="/catalogo" className="inline-flex items-center gap-2 text-[15px] font-semibold">
-            <span className="link-draw pb-1">{t('landing.families.all')}</span> <ArrowRight size={16} aria-hidden="true" />
-          </LocalLink>
-        </Reveal>
-        <div className="mt-14 lg:mt-20">
-          <FamilyPanels families={familias} explore={t('landing.families.explore')} />
+        <div className="mt-20 grid gap-14 border-t border-white/15 pt-12 lg:mt-28 lg:grid-cols-12">
+          <Reveal className="lg:col-span-4">
+            <p className="max-w-sm text-[18px] leading-relaxed text-white/65">{t('landing.statement.text')}</p>
+          </Reveal>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-12 lg:col-span-8 lg:grid-cols-4">
+            {stats.map((s) => (
+              <div key={s.label} className="flex flex-col">
+                <dd className="t-num order-1 text-[clamp(3.6rem,6.4vw,6.6rem)] leading-none">
+                  <Odometer value={s.value} suffix={s.suffix} />
+                </dd>
+                <dt className="micro order-2 mt-4 max-w-[190px] !text-[10.5px] !leading-[1.5] text-white/45">{s.label}</dt>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
+
+      {/* ═══════════ RUTAS (familias) ═══════════ */}
+      <RoutePanels panels={rutas} explore={t('landing.families.explore')} kicker={t('landing.families.kicker')} />
 
       {/* ═══════════ EN EL MERCADO AHORA ═══════════ */}
-      <section className="bg-white py-24 lg:py-36">
+      <div className="relative z-10">
+        <Gallery
+          items={recientes.map((p: any) => toGalleryItem(p, t))}
+          labels={{
+            featured: t('landing.listings.featured'),
+            isNew: t('landing.listings.isNew'),
+            see: t('landing.listings.see'),
+            empty: t('landing.listings.empty'),
+            emptyCta: t('landing.listings.emptyCta'),
+            progress: t('landing.listings.progress'),
+          }}
+          header={
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <Eyebrow tone="dark">{t('landing.listings.eyebrow')}</Eyebrow>
+                <TextReveal
+                  inline
+                  className="t-mega mt-6 block text-[clamp(3.6rem,8.4vw,8.6rem)]"
+                  lines={[{ t: t('landing.listings.l1') }, { t: t('landing.listings.l2'), outline: true }]}
+                />
+              </div>
+              <Magnetic>
+                <LocalLink href="/catalogo" className="btn btn-ink">
+                  {t('landing.listings.all')} <Arrow />
+                </LocalLink>
+              </Magnetic>
+            </div>
+          }
+        />
+      </div>
+
+      {/* ═══════════ RECORRIDO DE COMPRA ═══════════ */}
+      <section className="relative overflow-hidden bg-night py-28 lg:py-40">
         <div className={CONTAINER}>
-          <Reveal className="mb-14 flex flex-col gap-6">
-            <Eyebrow n="03">{t('landing.listings.eyebrow')}</Eyebrow>
-            <Title>
-              {t('landing.listings.title1')} <em className="italic">{t('landing.listings.title2')}</em>
-            </Title>
-          </Reveal>
-          <Showroom
-            tabs={tabs}
-            labels={{
-              viewAll: t('landing.listings.viewAll'),
-              empty: t('landing.listings.empty'),
-              emptyCta: t('landing.listings.emptyCta'),
-              featured: t('landing.listings.featured'),
-              isNew: t('landing.listings.isNew'),
-              open: t('landing.listings.open'),
-            }}
+          <Eyebrow>{t('landing.journey.eyebrow')}</Eyebrow>
+          <TextReveal
+            className="t-mega mt-8 text-[clamp(3.6rem,11vw,11.5rem)]"
+            lines={[{ t: t('landing.journey.l1') }, { t: t('landing.journey.l2'), outline: true }]}
           />
+        </div>
+        <div className="mt-16 lg:mt-28">
+          <RoadJourney steps={pasos} />
         </div>
       </section>
 
-      {/* ═══════════ RECORRIDO DE COMPRA (fijado al scroll) ═══════════ */}
-      <Journey steps={pasos} index="04" eyebrow={t('landing.journey.eyebrow')} title={t('landing.journey.title')} />
-
       {/* ═══════════ VENDE ═══════════ */}
-      <section className="relative overflow-hidden bg-ink py-24 text-sand-50 lg:py-40">
-        <div className={CONTAINER}>
-          <Eyebrow n="05" tone="light">{t('landing.sell.eyebrow')}</Eyebrow>
-          <div className="mt-10 grid items-end gap-10 lg:grid-cols-12 lg:gap-8">
-            <p
-              role="img"
-              aria-label="0 %"
-              className="font-display select-none bg-[url('/home/j4.webp')] bg-cover bg-[position:50%_30%] bg-clip-text text-[clamp(13rem,42vw,40rem)] leading-[0.8] tracking-[-0.04em] text-transparent lg:col-span-7"
-            >
-              0<span className="text-[0.5em] tracking-normal"> %</span>
-            </p>
-            <Reveal className="pb-3 lg:col-span-5">
-              <h2 className="font-display text-[clamp(2rem,3.6vw,3.5rem)] leading-[1.02]">
-                {t('landing.sell.zero')} <em className="italic">{t('landing.sell.title')}</em>
-              </h2>
-              <p className="mt-5 max-w-md text-[16.5px] leading-relaxed text-sand-50/65">{t('landing.sell.text')}</p>
-              <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
-                <CtaPill href="/publicar" tone="white">{t('landing.sell.ctaPublish')}</CtaPill>
-                <LocalLink href="/cuanto-vale-mi-camper" className="inline-flex items-center gap-2 text-[15px] font-semibold">
-                  <span className="link-draw pb-1">{t('landing.sell.ctaValue')}</span> <ArrowRight size={16} aria-hidden="true" />
+      <section className="relative overflow-hidden bg-flare py-20 text-night [--stroke:#0A0B0A] lg:py-32">
+        <BigMarquee words={[t('landing.sell.m1'), t('landing.sell.m2'), t('landing.sell.m3'), t('landing.sell.m4')]} />
+        <div className={`${CONTAINER} mt-20 lg:mt-32`}>
+          <div className="grid gap-12 lg:grid-cols-12">
+            <div className="lg:col-span-7">
+              <Eyebrow tone="dark">{t('landing.sell.eyebrow')}</Eyebrow>
+              <TextReveal
+                className="t-wide mt-8 text-[clamp(2.6rem,5.6vw,5.8rem)] leading-[0.92]"
+                lines={[{ t: t('landing.sell.title') }]}
+              />
+            </div>
+            <Reveal className="lg:col-span-4 lg:col-start-9 lg:pt-14">
+              <p className="max-w-md text-[17px] leading-relaxed text-night/75">{t('landing.sell.text')}</p>
+              <div className="mt-9 flex flex-wrap items-center gap-3">
+                <Magnetic>
+                  <LocalLink href="/publicar" className="btn btn-ink">{t('landing.sell.ctaPublish')} <Arrow /></LocalLink>
+                </Magnetic>
+                <LocalLink href="/cuanto-vale-mi-camper" className="inline-flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.1em]">
+                  <span className="link-draw pb-1">{t('landing.sell.ctaValue')}</span>
                 </LocalLink>
               </div>
             </Reveal>
           </div>
 
-          <div className="mt-24 grid border-t border-white/15 lg:mt-32 lg:grid-cols-3">
+          <div className="mt-20 grid border-t border-night/30 lg:mt-28 lg:grid-cols-3">
             {audiencias.map((a, i) => (
-              <Reveal key={a.key} delay={i * 0.08} className={`group py-9 lg:py-10 ${i > 0 ? 'border-t border-white/15 lg:border-l lg:border-t-0 lg:pl-9' : ''} ${i < 2 ? 'lg:pr-9' : ''}`}>
-                <p className="font-mono text-[11px] tracking-[0.14em] text-white/45">0{i + 1}</p>
-                <h3 className="font-display mt-4 text-[clamp(1.9rem,2.6vw,2.5rem)] leading-[1.02]">{t(`home.audiences.${a.key}.title`)}</h3>
-                <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-sand-50/60">{t(`home.audiences.${a.key}.desc`)}</p>
-                <div className="mt-6 flex flex-col items-start gap-2 text-[14px] font-medium">
-                  <LocalLink href="/publicar" className="inline-flex items-center gap-1.5 text-white">
-                    <span className="link-draw pb-0.5">{t('home.audiences.cta')}</span> <ArrowRight size={14} aria-hidden="true" />
-                  </LocalLink>
-                  <LocalLink href={`/catalogo?vendedor=${a.vendedor}`} className="text-white/55 transition-colors hover:text-white">
+              <Reveal key={a.key} delay={i * 0.08} className={`py-9 ${i > 0 ? 'border-t border-night/30 lg:border-l lg:border-t-0 lg:pl-9' : ''} ${i < 2 ? 'lg:pr-9' : ''}`}>
+                <p className="t-num text-[13px] text-night/60">0{i + 1}</p>
+                <h3 className="t-wide mt-4 text-[clamp(1.5rem,2.3vw,2.1rem)] leading-[0.98]">{t(`home.audiences.${a.key}.title`)}</h3>
+                <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-night/70">{t(`home.audiences.${a.key}.desc`)}</p>
+                <div className="mt-6 flex flex-col items-start gap-2 text-[13px] font-semibold uppercase tracking-[0.08em]">
+                  <LocalLink href="/publicar" className="inline-flex items-center gap-1.5"><span className="link-draw pb-0.5">{t('home.audiences.cta')}</span> <ArrowRight size={14} aria-hidden="true" /></LocalLink>
+                  <LocalLink href={`/catalogo?vendedor=${a.vendedor}`} className="text-night/60 transition-colors hover:text-night">
                     {t('home.audiences.buyCta', { tipo: t(`tiposVendedor.${a.plural}`) })}
                   </LocalLink>
                   {a.key !== 'private' && (
-                    <LocalLink href="/para-profesionales" className="text-white/55 transition-colors hover:text-white">
-                      {t('home.audiences.plansCta')}
-                    </LocalLink>
+                    <LocalLink href="/para-profesionales" className="text-night/60 transition-colors hover:text-night">{t('home.audiences.plansCta')}</LocalLink>
                   )}
                 </div>
               </Reveal>
@@ -583,29 +591,28 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       {/* ═══════════ GUÍAS ═══════════ */}
       {guias.length > 0 && (
-        <section className={`${CONTAINER} py-24 lg:py-40`}>
-          <div className="grid gap-12 lg:grid-cols-12 lg:gap-14">
-            <Reveal className="lg:col-span-5">
-              <Eyebrow n="06">{t('landing.guides.eyebrow')}</Eyebrow>
-              <Title className="mt-6">
-                {t('landing.guides.title1')} <em className="italic">{t('landing.guides.title2')}</em>
-              </Title>
-              <LocalLink href="/blog" className="mt-8 inline-flex items-center gap-2 text-[15px] font-semibold">
-                <span className="link-draw pb-1">{t('home.guides.viewAll')}</span> <ArrowRight size={16} aria-hidden="true" />
-              </LocalLink>
-            </Reveal>
+        <section className={`${CONTAINER} py-28 lg:py-40`}>
+          <div className="grid gap-14 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <Eyebrow>{t('landing.guides.eyebrow')}</Eyebrow>
+              <TextReveal
+                className="t-mega mt-8 text-[clamp(3.2rem,7vw,7.4rem)]"
+                lines={[{ t: t('landing.guides.l1') }, { t: t('landing.guides.l2'), outline: true }]}
+              />
+              <Magnetic className="mt-10">
+                <LocalLink href="/blog" className="btn btn-ghost">{t('home.guides.viewAll')} <Arrow /></LocalLink>
+              </Magnetic>
+            </div>
             <div className="lg:col-span-7">
               {guias.map((g, i) => (
-                <Reveal key={g.slug} delay={i * 0.08} className="border-t border-ink/15 last:border-b">
-                  <LocalLink href={`/blog/${g.slug}`} className="group grid gap-3 py-8 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-8">
+                <Reveal key={g.slug} delay={i * 0.08} className="border-t border-white/15 last:border-b">
+                  <LocalLink href={`/blog/${g.slug}`} data-cursor={t('landing.listings.see')} className="group grid gap-3 py-8 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-8">
                     <div>
-                      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink/45">{String(i + 1).padStart(2, '0')} · {g.readTime}</p>
-                      <h3 className="font-display mt-3 text-[clamp(1.8rem,2.7vw,2.5rem)] leading-[1.06] transition-transform duration-500 group-hover:translate-x-2">{g.title}</h3>
-                      <p className="mt-3 line-clamp-2 max-w-2xl text-[15px] leading-relaxed text-ink/60">{g.excerpt}</p>
+                      <p className="t-num text-[13px] text-white/45">{String(i + 1).padStart(2, '0')} · {g.readTime}</p>
+                      <h3 className="t-wide mt-3 text-[clamp(1.5rem,2.5vw,2.4rem)] leading-[0.98] transition-transform duration-500 group-hover:translate-x-3">{g.title}</h3>
+                      <p className="mt-3 line-clamp-2 max-w-2xl text-[15px] leading-relaxed text-white/55">{g.excerpt}</p>
                     </div>
-                    <span className="hidden h-12 w-12 items-center justify-center rounded-full border border-ink/20 transition-all duration-500 group-hover:rotate-45 group-hover:border-ink group-hover:bg-ink group-hover:text-white sm:flex" aria-hidden="true">
-                      <ArrowUpRight size={19} />
-                    </span>
+                    <ArrowUpRight size={30} className="hidden shrink-0 text-white/40 transition-all duration-500 group-hover:rotate-45 group-hover:text-flare sm:block" aria-hidden="true" />
                   </LocalLink>
                 </Reveal>
               ))}
@@ -615,50 +622,36 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       )}
 
       {/* ═══════════ PROVINCIAS ═══════════ */}
-      <section className={`${CONTAINER} pb-24 lg:pb-40 ${guias.length === 0 ? 'pt-24 lg:pt-40' : ''}`}>
-        <Reveal className="max-w-4xl">
-          <Eyebrow n="07">{t('landing.provinces.eyebrow')}</Eyebrow>
-          <Title className="mt-6">
-            {t('landing.provinces.title1')} <em className="italic">{t('landing.provinces.title2')}</em>
-          </Title>
-        </Reveal>
-        <ul className="group/list mt-14 grid gap-x-10 sm:grid-cols-2 lg:mt-20 lg:grid-cols-3">
-          {provincias.map((p, i) => (
-            <li key={p.slug} className="border-t border-ink/15">
-              <LocalLink
-                href={`/${p.slug}`}
-                aria-label={`${t('landing.provinces.label')} ${p.nombre}`}
-                className="group flex items-baseline justify-between gap-4 py-5 transition-opacity duration-500 group-hover/list:opacity-30 hover:!opacity-100 focus-visible:!opacity-100 lg:py-6"
-              >
-                <span className="flex items-baseline gap-4">
-                  <span className="font-mono text-[11px] tracking-[0.1em] text-ink/40">{String(i + 1).padStart(2, '0')}</span>
-                  <span className="font-display text-[clamp(2rem,3vw,3rem)] leading-none transition-transform duration-500 group-hover:translate-x-2">{p.nombre}</span>
-                </span>
-                <ArrowUpRight size={20} className="shrink-0 -translate-x-2 translate-y-1 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100" aria-hidden="true" />
-              </LocalLink>
-            </li>
-          ))}
-        </ul>
+      <section className={`${CONTAINER} pb-28 lg:pb-44 ${guias.length === 0 ? 'pt-28 lg:pt-40' : ''}`}>
+        <Eyebrow>{t('landing.provinces.eyebrow')}</Eyebrow>
+        <TextReveal
+          className="t-mega mt-8 text-[clamp(3.2rem,8vw,8.4rem)]"
+          lines={[{ t: t('landing.provinces.l1') }, { t: t('landing.provinces.l2'), outline: true }]}
+        />
+        <div className="mt-16 lg:mt-24">
+          <ProvinceList items={listaProvincias} label={t('landing.provinces.label')} />
+        </div>
       </section>
 
       {/* ═══════════ CTA FINAL ═══════════ */}
-      <section className="relative isolate overflow-hidden bg-ink text-white">
+      <section className="relative isolate flex min-h-[100svh] items-end overflow-hidden bg-night">
         <Image src="/home/cta.webp" alt="" fill sizes="100vw" className="-z-10 object-cover" quality={80} />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink/85 via-ink/30 to-ink/15" aria-hidden="true" />
-        <div className="absolute inset-0 -z-10 grain" aria-hidden="true" />
-        <div className={`${CONTAINER} flex min-h-[86vh] flex-col items-start justify-end py-20 lg:py-28`}>
-          <Reveal>
-            <h2 className="font-display max-w-5xl text-[clamp(3rem,8vw,8rem)] leading-[0.92] tracking-[-0.02em] text-balance">
-              {t('landing.cta.title1')} <em className="italic">{t('landing.cta.title2')}</em>
-            </h2>
-            <p className="mt-7 max-w-xl text-[17px] leading-relaxed text-white/75">{t('landing.cta.sub')}</p>
-            <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
-              <CtaPill href="/publicar" tone="white">{t('landing.cta.publish')}</CtaPill>
-              <LocalLink href="/cuanto-vale-mi-camper" className="inline-flex items-center gap-2 text-[15px] font-semibold">
-                <span className="link-draw pb-1">{t('landing.cta.value')}</span> <ArrowRight size={16} aria-hidden="true" />
-              </LocalLink>
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-night/90 via-night/30 to-night/40" aria-hidden="true" />
+        <div className="grain absolute inset-0 -z-10" aria-hidden="true" />
+        <div className={`${CONTAINER} pb-14 pt-32 lg:pb-20`}>
+          <TextReveal
+            className="t-mega text-[clamp(5rem,19vw,20rem)]"
+            lines={[{ t: t('landing.cta.l1') }, { t: t('landing.cta.l2'), outline: true }]}
+          />
+          <div className="mt-10 grid gap-8 lg:grid-cols-12 lg:items-end">
+            <p className="max-w-xl text-[17px] leading-relaxed text-white/75 lg:col-span-6">{t('landing.cta.sub')}</p>
+            <div className="flex flex-wrap items-center gap-3 lg:col-span-6 lg:justify-end">
+              <Magnetic>
+                <LocalLink href="/publicar" className="btn btn-light">{t('landing.cta.publish')} <Arrow /></LocalLink>
+              </Magnetic>
+              <LocalLink href="/cuanto-vale-mi-camper" className="btn btn-ghost">{t('landing.cta.value')} <Arrow /></LocalLink>
             </div>
-          </Reveal>
+          </div>
         </div>
       </section>
     </div>
