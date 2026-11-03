@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
+import { planIncludedEn } from '@/app/[locale]/para-profesionales/contenido-en'
 import {
   ArrowRight,
   BadgeCheck,
@@ -54,18 +56,12 @@ type Estado = {
   }
 }
 
-const NOMBRE_TIPO: Record<string, string> = {
-  particular: 'Particular',
-  camperizador: 'Camperizador',
-  profesional: 'Profesional',
-}
-
-function fecha(iso: string | null | undefined): string {
+function fecha(iso: string | null | undefined, locale: string): string {
   if (!iso) return ''
   const d = new Date(iso)
   return Number.isNaN(d.getTime())
     ? ''
-    : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
+    : d.toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
 function Barra({ valor, max, tono = 'verde' }: { valor: number; max: number | null; tono?: 'verde' | 'ambar' }) {
@@ -81,6 +77,11 @@ function Barra({ valor, max, tono = 'verde' }: { valor: number; max: number | nu
 }
 
 export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
+  const t = useTranslations('planTab')
+  const locale = useLocale()
+  const date = (iso: string | null | undefined) => fecha(iso, locale)
+  const typeName = (tipo: string) => ({ particular: t('sellerPrivate'), camperizador: t('sellerConverter'), profesional: t('sellerProfessional') } as Record<string, string>)[tipo] || tipo
+  const planName = (plan: string) => ({ gratis: t('planFree'), plus: t('planProfessional'), starter: t('planLegacyStarter'), unlimited: t('planLegacyUnlimited') } as Record<string, string>)[plan] || etiquetaPlan(plan)
   const [estado, setEstado] = useState<Estado | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -89,26 +90,26 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
   const [prueba, setPrueba] = useState(false)
   const [reactivando, setReactivando] = useState(false)
 
-  async function cargar() {
+  const cargar = useCallback(async () => {
     try {
       const res = await fetch('/api/planes/estado', { cache: 'no-store' })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data?.ok) {
-        setError(data?.error || 'No se pudo cargar tu plan.')
+        setError(locale === 'en' ? t('loadError') : (data?.error || t('loadError')))
         return
       }
       setEstado(data)
       setError('')
     } catch {
-      setError('No se pudo cargar tu plan.')
+      setError(t('loadError'))
     } finally {
       setLoading(false)
     }
-  }
+  }, [locale, t])
 
   useEffect(() => {
-    cargar()
-  }, [])
+    void cargar()
+  }, [cargar])
 
   async function empezarPrueba() {
     setError('')
@@ -118,19 +119,19 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
       const res = await fetch('/api/planes/prueba', { method: 'POST' })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.ok) {
-        setError(data.error || 'No se pudo empezar la prueba.')
+        setError(locale === 'en' ? t('trialError') : (data.error || t('trialError')))
         return
       }
       setAviso(
         data.reactivados > 0
-          ? `Prueba activada. Hemos vuelto a publicar ${data.reactivados} anuncio${data.reactivados === 1 ? '' : 's'} que estaban pausados por cupo.`
-          : `Prueba activada hasta el ${fecha(data.hasta)}. No se cobra nada automáticamente.`,
+          ? t('trialReactivated', { count: data.reactivados })
+          : t('trialActivated', { date: date(data.hasta) }),
       )
       await cargar()
       onRefresh?.()
       window.dispatchEvent(new Event('plan-actualizado'))
     } catch {
-      setError('No se pudo conectar. Inténtalo de nuevo.')
+      setError(t('connectionError'))
     } finally {
       setPrueba(false)
     }
@@ -144,19 +145,19 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
       const res = await fetch('/api/productos/reactivar-pausados', { method: 'POST' })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.ok) {
-        setError(data.error || 'No se pudieron reactivar los anuncios.')
+        setError(locale === 'en' ? t('reactivateError') : (data.error || t('reactivateError')))
         return
       }
       setAviso(
         data.reactivados > 0
-          ? `Hemos vuelto a publicar ${data.reactivados} anuncio${data.reactivados === 1 ? '' : 's'}.${data.restantes > 0 ? ` Te quedan ${data.restantes} pausados: pasa a Profesional para recuperarlos.` : ''}`
-          : 'No cabe ningún anuncio más con tu plan actual. Pausa otro o pasa a Profesional.',
+          ? t('reactivated', { count: data.reactivados, rest: data.restantes > 0 ? t('stillPaused', { count: data.restantes }) : '' })
+          : t('noRoom'),
       )
       await cargar()
       onRefresh?.()
       window.dispatchEvent(new Event('plan-actualizado'))
     } catch {
-      setError('No se pudo conectar. Inténtalo de nuevo.')
+      setError(t('connectionError'))
     } finally {
       setReactivando(false)
     }
@@ -166,15 +167,15 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
     setError('')
     setPortal(true)
     try {
-      const res = await fetch('/api/planes/portal', { method: 'POST' })
+      const res = await fetch('/api/planes/portal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locale }) })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.url) {
-        setError(data.error || 'No se pudo abrir la gestión de la suscripción.')
+        setError(locale === 'en' ? t('portalError') : (data.error || t('portalError')))
         return
       }
       window.location.assign(data.url)
     } catch {
-      setError('No se pudo conectar con Stripe.')
+      setError(t('stripeError'))
     } finally {
       setPortal(false)
     }
@@ -183,7 +184,7 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
   if (loading) {
     return (
       <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
-        <Loader2 size={18} className="animate-spin" /> Cargando tu plan…
+        <Loader2 size={18} className="animate-spin" /> {t('loading')}
       </div>
     )
   }
@@ -191,12 +192,12 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
   if (!estado) {
     return (
       <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-        {error || 'No se pudo cargar tu plan.'}
+        {error || t('loadError')}
       </div>
     )
   }
 
-  const planNombre = etiquetaPlan(estado.planPagoVigente ? estado.planContratado : estado.plan)
+  const planNombre = planName(estado.planPagoVigente ? estado.planContratado : estado.plan)
   const esGratis = !estado.planPagoVigente && !estado.trial && !estado.trialGracia
   const pctRestante =
     estado.diasTrialTotal > 0
@@ -208,8 +209,8 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
   const siguiente = estado.planPagoVigente ? null : PLANES_PRO[0]
   const tituloSiguiente = siguiente
     ? estado.trial || estado.trialGracia
-      ? 'Activa Profesional y conserva tus 15 anuncios'
-      : 'Hazte Profesional y publica hasta 15 a la vez'
+      ? t('trialActivateTitle')
+      : t('upgradeTitle')
     : ''
 
   return (
@@ -219,45 +220,45 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
         <div className="p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/60">Tu plan</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/60">{t('yourPlan')}</p>
               <h2 className="mt-1 flex flex-wrap items-center gap-2 text-2xl font-black">
-                {estado.trial ? 'Prueba Profesional' : estado.trialGracia ? 'Prueba Profesional · gracia' : planNombre}
+                {estado.trial ? t('professionalTrial') : estado.trialGracia ? t('trialGrace') : planNombre}
                 {estado.trial ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-2.5 py-1 text-xs font-bold text-amber-200">
-                    <Sparkles size={12} /> {estado.diasTrial} días
+                    <Sparkles size={12} /> {t('days', { count: estado.diasTrial })}
                   </span>
                 ) : estado.trialGracia ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-2.5 py-1 text-xs font-bold text-amber-200">
-                    <Sparkles size={12} /> {estado.diasGracia} días de gracia
+                    <Sparkles size={12} /> {t('graceDays', { count: estado.diasGracia ?? 0 })}
                   </span>
                 ) : estado.pagoFallido ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-red-400/20 px-2.5 py-1 text-xs font-bold text-red-200">
-                    <CreditCard size={12} /> Cobro pendiente
+                    <CreditCard size={12} /> {t('paymentPending')}
                   </span>
                 ) : estado.planPagoVigente ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2.5 py-1 text-xs font-bold text-emerald-200">
-                    <BadgeCheck size={12} /> Activo
+                    <BadgeCheck size={12} /> {t('active')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold text-white/80">
-                    Sin coste
+                    {t('free')}
                   </span>
                 )}
               </h2>
               <p className="mt-2 max-w-lg text-sm text-white/75">
                 {estado.trial
-                  ? `Tienes el plan Profesional de prueba hasta el ${fecha(estado.trialHasta)}. No se cobra nada automáticamente; al terminar tendrás 7 días de gracia.`
+                  ? t('trialDetail', { date: date(estado.trialHasta) })
                   : estado.trialGracia
-                    ? `La prueba terminó el ${fecha(estado.trialHasta)}. Tienes hasta el ${fecha(estado.graciaHasta)} antes de que se pausen los anuncios que excedan el plan gratuito. No se borra nada.`
+                    ? t('graceDetail', { end: date(estado.trialHasta), grace: date(estado.graciaHasta) })
                     : estado.pagoFallido
-                      ? `No hemos podido cobrar tu plan${estado.planHasta ? `, pero mantienes el acceso hasta el ${fecha(estado.planHasta)}` : ''}. Actualiza la tarjeta para no perder el cupo.`
+                      ? t('failedPaymentDetail', { until: estado.planHasta ? t('failedUntil', { date: date(estado.planHasta) }) : '' })
                       : estado.planPagoVigente
                     ? estado.planHasta
                       ? estado.suscripcionStripe
-                        ? `Se renueva el ${fecha(estado.planHasta)}. Puedes cancelar cuando quieras y mantenerlo hasta esa fecha.`
-                        : `Plan activo hasta el ${fecha(estado.planHasta)} (regalo o cupón).`
-                      : 'Plan activo. Sin permanencia.'
-                    : 'Publicas 1 anuncio activo y tienes 10 fotos por anuncio. Sin comisión por venta.'}
+                        ? t('renewalDetail', { date: date(estado.planHasta) })
+                        : t('giftDetail', { date: date(estado.planHasta) })
+                      : t('activeDetail')
+                    : t('freeDetail', { listings: PLAN_GRATIS.cupo ?? 1, photos: PLAN_GRATIS.fotos })}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -269,14 +270,14 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
                   className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-3.5 py-2 text-sm font-semibold text-white hover:bg-white/20 disabled:opacity-60"
                 >
                   {portal ? <Loader2 size={14} className="animate-spin" /> : <CreditCard size={14} />}
-                  Gestionar suscripción
+                  {t('manageSubscription')}
                 </button>
               )}
               <LocalLink
                 href="/para-profesionales"
                 className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-3.5 py-2 text-sm font-bold text-white hover:bg-brand-accent-dark"
               >
-                {estado.trial || estado.trialGracia ? 'Activar Profesional' : esGratis ? 'Hacerme Profesional' : 'Ver Profesional'}
+                {t(estado.trial || estado.trialGracia ? 'activateProfessional' : esGratis ? 'beProfessional' : 'viewProfessional')}
                 <ArrowRight size={14} />
               </LocalLink>
             </div>
@@ -285,9 +286,9 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
           {estado.trial && (
             <div className="mt-5">
               <div className="mb-1.5 flex items-center justify-between text-xs text-white/70">
-                <span>Prueba gratuita</span>
+                <span>{t('freeTrial')}</span>
                 <span>
-                  {estado.diasTrial} de {estado.diasTrialTotal} días restantes
+                  {t('trialRemaining', { days: estado.diasTrial, total: estado.diasTrialTotal })}
                 </span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-white/15">
@@ -298,8 +299,8 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
           {estado.trialGracia && (
             <div className="mt-5">
               <div className="mb-1.5 flex items-center justify-between text-xs text-white/70">
-                <span>Periodo de gracia</span>
-                <span>{estado.diasGracia} días restantes</span>
+                <span>{t('gracePeriod')}</span>
+                <span>{t('daysRemaining', { days: estado.diasGracia ?? 0 })}</span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-white/15">
                 <div className="h-full rounded-full bg-amber-400" style={{ width: `${Math.min(100, Math.max(0, ((estado.diasGracia || 0) / 7) * 100))}%` }} />
@@ -318,11 +319,9 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
 
       {estado.pagoFallido && (
         <section className="rounded-2xl border-2 border-red-200 bg-red-50 p-5">
-          <h3 className="text-base font-black text-red-900">No hemos podido cobrar tu plan</h3>
+          <h3 className="text-base font-black text-red-900">{t('failedTitle')}</h3>
           <p className="mt-1 text-sm text-red-800">
-            Tu tarjeta ha fallado{estado.pagoPendienteDesde ? ` desde el ${fecha(estado.pagoPendienteDesde)}` : ''}.
-            Mantenemos tu plan y tus anuncios activos, pero actualiza el método de pago para que no se pause nada.
-            {estado.planHasta ? ` El acceso está garantizado hasta el ${fecha(estado.planHasta)}.` : ''}
+            {t('failedDesc', { since: estado.pagoPendienteDesde ? t('failedSince', { date: date(estado.pagoPendienteDesde) }) : '', until: estado.planHasta ? t('accessUntil', { date: date(estado.planHasta) }) : '' })}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {estado.gestionable && (
@@ -333,14 +332,14 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
                 className="inline-flex items-center gap-1.5 rounded-xl bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800 disabled:opacity-60"
               >
                 {portal ? <Loader2 size={14} className="animate-spin" /> : <CreditCard size={14} />}
-                Actualizar tarjeta
+                {t('updateCard')}
               </button>
             )}
             <LocalLink
               href="/para-profesionales"
               className="inline-flex items-center gap-1.5 rounded-xl border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-800 hover:bg-red-100"
             >
-              Ver Profesional
+              {t('viewProfessional')}
             </LocalLink>
           </div>
         </section>
@@ -349,31 +348,28 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
       {estado.trialGracia && (
         <section className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-5">
           <h3 className="text-base font-black text-amber-900">
-            Tu prueba terminó: te quedan {estado.diasGracia} días de gracia
+            {t('graceTitle', { days: estado.diasGracia ?? 0 })}
           </h3>
           <p className="mt-1 text-sm text-amber-800">
-            El {fecha(estado.graciaHasta)} se pausarán los anuncios que excedan el cupo del plan gratuito.
-            No se borra ninguno: podrás reactivarlos al pasar a Profesional o pausar otro para dejar sitio.
+            {t('graceWarning', { date: date(estado.graciaHasta) })}
           </p>
           <LocalLink
             href="/para-profesionales"
             className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2 text-sm font-bold text-white hover:bg-brand-accent-dark"
           >
-            Activar Profesional <ArrowRight size={14} />
+            {t('activateProfessional')} <ArrowRight size={14} />
           </LocalLink>
         </section>
       )}
 
       {estado.trialElegible && (
         <section className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-5">
-          <h3 className="text-base font-black text-emerald-900">Prueba Profesional 30 días, gratis</h3>
+          <h3 className="text-base font-black text-emerald-900">{t('trialOfferTitle')}</h3>
           <p className="mt-1 text-sm text-emerald-800">
-            15 anuncios, 5 destacados al mes, escaparate y 20 fotos por anuncio. Sin tarjeta y sin cobro
-            automático. Al terminar tienes 7 días de gracia y no se borra ningún anuncio.
+            {t('trialOfferDesc', { listings: PLANES_PRO[0].cupo ?? 15, featured: PLANES_PRO[0].destacadosMes, photos: PLANES_PRO[0].fotos })}
             {estado.tipo === 'particular' && (
               <span className="mt-1 block text-xs text-emerald-700">
-                Al empezar, tu cuenta pasa a «profesional» (la identidad es gratis) para que recibas
-                el cupo de Profesional.
+                {t('trialSellerType')}
               </span>
             )}
           </p>
@@ -384,7 +380,7 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
             className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800 disabled:opacity-60"
           >
             {prueba ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            Empezar prueba de 30 días
+            {t('startTrial')}
           </button>
         </section>
       )}
@@ -392,11 +388,10 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
       {(estado.pausadosPorPlan || 0) > 0 && (
         <section className="rounded-2xl border border-slate-200 bg-white p-5">
           <h3 className="text-base font-black text-slate-900">
-            {estado.pausadosPorPlan} anuncio{estado.pausadosPorPlan === 1 ? '' : 's'} pausado{estado.pausadosPorPlan === 1 ? '' : 's'} por cupo
+            {t('pausedTitle', { count: estado.pausadosPorPlan ?? 0 })}
           </h3>
           <p className="mt-1 text-sm text-slate-600">
-            Los pausamos al bajar el plan, pero no los borramos. Si ahora tienes hueco, puedes volver a
-            publicarlos; si no, pasa a Profesional o pausa otro anuncio para dejar sitio.
+            {t('pausedDesc')}
           </p>
           <button
             type="button"
@@ -405,18 +400,18 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
             className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
           >
             {reactivando ? <Loader2 size={14} className="animate-spin" /> : <Package size={14} />}
-            Reactivar los que quepan
+            {t('reactivate')}
           </button>
         </section>
       )}
 
       {/* Consumo */}
       <section>
-        <h3 className="mb-3 text-lg font-bold text-slate-900">Tu capacidad ahora</h3>
+        <h3 className="mb-3 text-lg font-bold text-slate-900">{t('capacity')}</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Anuncios activos</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('activeListings')}</span>
               <Package size={16} className="text-slate-400" aria-hidden="true" />
             </div>
             <p className="mt-2 text-2xl font-black text-slate-900">
@@ -428,25 +423,25 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
             </div>
             <p className="mt-2 text-xs text-slate-500">
               {estado.cupo.max == null
-                ? 'Sin límite de anuncios activos.'
+                ? t('unlimited')
                 : estado.cupo.restantes === 0
-                  ? 'Cupo lleno. Pausa uno o pasa a Profesional.'
-                  : `Te quedan ${estado.cupo.restantes} libres.`}
+                  ? t('quotaFull')
+                  : t('slotsLeft', { count: estado.cupo.restantes ?? 0 })}
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Fotos por anuncio</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('photos')}</span>
               <Store size={16} className="text-slate-400" aria-hidden="true" />
             </div>
             <p className="mt-2 text-2xl font-black text-slate-900">{estado.cupo.fotosMax}</p>
-            <p className="mt-2 text-xs text-slate-500">La ficha se ve más completa con todas las fotos.</p>
+            <p className="mt-2 text-xs text-slate-500">{t('photosDesc')}</p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Destacados del mes</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('featured')}</span>
               <Star size={16} className="text-slate-400" aria-hidden="true" />
             </div>
             <p className="mt-2 text-2xl font-black text-slate-900">
@@ -457,19 +452,19 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
               <Barra valor={estado.cupo.destacadosUsados} max={estado.cupo.destacadosMes || 1} />
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              {estado.cupo.destacadosMes === 0 ? 'Tu plan no incluye destacados: usa créditos.' : 'Incluidos en tu plan, sin gastar créditos.'}
+              {estado.cupo.destacadosMes === 0 ? t('noFeatured') : t('featuredIncluded')}
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Créditos</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('credits')}</span>
               <TrendingUp size={16} className="text-slate-400" aria-hidden="true" />
             </div>
             <p className="mt-2 text-2xl font-black text-slate-900">{estado.creditos}</p>
-            <p className="mt-2 text-xs text-slate-500">Para subir al nº 1 o destacar fuera del plan.</p>
+            <p className="mt-2 text-xs text-slate-500">{t('creditsDesc')}</p>
             <LocalLink href="/creditos" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-brand-accent hover:underline">
-              Comprar créditos <ArrowRight size={12} />
+              {t('buyCredits')} <ArrowRight size={12} />
             </LocalLink>
           </div>
         </div>
@@ -480,21 +475,21 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
         <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Siguiente paso</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">{t('nextStep')}</p>
               <h3 className="mt-1 text-lg font-black text-slate-900">{tituloSiguiente}</h3>
               <p className="mt-1 text-sm text-slate-600">
-                {`${siguiente.cupo} anuncios activos, ${siguiente.destacadosMes} destacados al mes y ${siguiente.fotos} fotos por anuncio por ${formatPrecio(siguiente.precioMes)}/mes.`}
+                {t('upgradeDesc', { listings: siguiente.cupo ?? 15, featured: siguiente.destacadosMes, photos: siguiente.fotos, price: formatPrecio(siguiente.precioMes) })}
               </p>
             </div>
             <LocalLink
               href="/para-profesionales"
               className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-accent-dark"
             >
-              Ver Profesional <ArrowRight size={15} />
+              {t('viewProfessional')} <ArrowRight size={15} />
             </LocalLink>
           </div>
           <ul className="mt-3 grid gap-1.5 text-sm text-slate-700 sm:grid-cols-3">
-            {siguiente.incluido.slice(0, 3).map(item => (
+            {(locale === 'en' ? planIncludedEn : siguiente.incluido).slice(0, 3).map(item => (
               <li key={item} className="flex items-start gap-1.5">
                 <Check size={14} className="mt-0.5 shrink-0 text-emerald-600" aria-hidden="true" />
                 {item}
@@ -506,25 +501,23 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
 
       {/* Identidad vs plan */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h3 className="font-bold text-slate-900">Tu tipo de vendedor no es tu plan</h3>
+        <h3 className="font-bold text-slate-900">{t('typeTitle')}</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Ahora apareces como <strong>{NOMBRE_TIPO[estado.tipo] || estado.tipo}</strong>. Eso es gratis y define
-          tu sello y los filtros del catálogo. El plan solo cambia cuántos anuncios puedes tener
-          publicados a la vez y qué extras incluyes.
+          {t('sellerTypeDesc', { type: typeName(estado.tipo) })}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <LocalLink href="/dashboard?tab=cuenta" className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-            Cambiar tipo de vendedor
+            {t('changeSellerType')}
           </LocalLink>
           <LocalLink href="/para-profesionales" className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-            Ver qué incluye Profesional
+            {t('seeBenefits')}
           </LocalLink>
         </div>
       </section>
 
       {esGratis && (
         <p className="text-center text-xs text-slate-500">
-          Plan gratuito: {PLAN_GRATIS.incluido.join(' · ')}.
+          {t('freeSummary', { listings: PLAN_GRATIS.cupo ?? 1, photos: PLAN_GRATIS.fotos })}
         </p>
       )}
 
