@@ -46,7 +46,7 @@ export default function VendedorClient({
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8 lg:py-20">
       <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-gray-500 hover:text-gray-800 mb-6 text-sm"
@@ -55,12 +55,12 @@ export default function VendedorClient({
       </button>
 
       {/* Perfil del vendedor */}
-      <div className="bg-white rounded-2xl shadow-sm border p-6 mb-6">
+      <div className="public-card p-6 sm:p-8 mb-8">
         <div className="flex flex-col sm:flex-row items-start gap-6">
           <Avatar nombre={vendedor.nombre || t('seller')} fotoUrl={vendedor.foto_perfil_url} size="xl" />
 
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="font-grotesk text-[clamp(2rem,3.2vw,3.25rem)] font-bold leading-[1.08] text-night">
               {vendedor.nombre || t('seller')}
               {vendedor.verificado && <BadgeVerificado size="md" />}
             </h1>

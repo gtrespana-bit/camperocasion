@@ -13,7 +13,13 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
   useSearchParams: () => mockParams,
 }))
-jest.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))
+jest.mock('next-intl', () => {
+  const translate = (key: string) => ({
+    noConversations: 'No hay conversaciones',
+    sendOfflineError: 'No hay conexión. Tu mensaje no se ha borrado; puedes reintentarlo.',
+  } as Record<string, string>)[key] || key
+  return { useLocale: () => 'es', useTranslations: () => translate }
+})
 jest.mock('@/components/AuthProvider', () => ({ useAuth: () => ({ user: mockUser, loading: false }) }))
 jest.mock('@/components/Avatar', () => ({ __esModule: true, default: () => <span /> }))
 jest.mock('@/components/LocalLink', () => ({ __esModule: true, default: ({ children, ...props }: any) => <a {...props}>{children}</a> }))
@@ -54,7 +60,7 @@ test('deep link de notificación abre el chat y marca los mensajes como leídos'
   mockConvs = [conv]
   render(<ChatPage />)
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/mensajes-leidos', expect.objectContaining({ body: JSON.stringify({ conversacion_id: CONV }) })))
-  expect(screen.queryByText('Selecciona una conversacion')).not.toBeInTheDocument()
+  expect(screen.queryByText('selectConversation')).not.toBeInTheDocument()
 })
 
 test('usa el participante devuelto por API, no el vendedor ficticio de la URL', async () => {

@@ -483,9 +483,7 @@ export default function TabPlan({ onRefresh }: { onRefresh?: () => void }) {
               <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Siguiente paso</p>
               <h3 className="mt-1 text-lg font-black text-slate-900">{tituloSiguiente}</h3>
               <p className="mt-1 text-sm text-slate-600">
-                {siguiente.cupo == null
-                  ? 'Para compraventas con rotación alta. 15 destacados al mes y 30 fotos por anuncio.'
-                  : `${siguiente.cupo} anuncios activos, ${siguiente.destacadosMes} destacados al mes y ${siguiente.fotos} fotos por anuncio por ${formatPrecio(siguiente.precioMes)}/mes.`}
+                {`${siguiente.cupo} anuncios activos, ${siguiente.destacadosMes} destacados al mes y ${siguiente.fotos} fotos por anuncio por ${formatPrecio(siguiente.precioMes)}/mes.`}
               </p>
             </div>
             <LocalLink

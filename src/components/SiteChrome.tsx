@@ -15,6 +15,7 @@ import { isAdminPath } from '@/lib/admin-path'
 export function SiteChrome({ children, lang = 'es' }: { children: React.ReactNode; lang?: string }) {
   const pathname = usePathname()
   const admin = isAdminPath(pathname)
+  const home = pathname === '/' || pathname === '/en'
 
   // El <html lang> lo fija el layout raíz (estático, `lang="es"`), así que en
   // /en el documento se anunciaba como español. El contenido sí puede declarar
@@ -34,7 +35,7 @@ export function SiteChrome({ children, lang = 'es' }: { children: React.ReactNod
   return (
     <div lang={lang}>
       <Header />
-      <main id="main-content" className="min-h-screen bg-white">
+      <main id="main-content" className={home ? 'min-h-screen bg-white' : 'site-interior min-h-screen bg-bone'}>
         {children}
       </main>
       <Footer />

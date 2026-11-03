@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import LocalLink from '@/components/LocalLink'
 import ProductCard from '@/components/ProductCard'
+import PublicHero from '@/components/editorial/PublicHero'
 import { supabase } from '@/lib/supabase-server-client'
 import {
   CATALOG_PRODUCT_COLUMNS,
@@ -158,7 +159,9 @@ export default async function ComprarATipoPage({
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(graphJsonLd) }} />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="public-page min-h-screen">
+        <PublicHero compact eyebrow="CamperOcasión" title={t(`${tipoKey}.title`)} description={t(`${tipoKey}.intro`)} />
+        <div className="public-shell py-10 lg:py-16">
       {/* Breadcrumb ligero: contexto para el visitante y para el crawler. */}
       <nav aria-label="breadcrumb" className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
         <LocalLink href="/" className="hover:text-brand-primary">{tnav('home')}</LocalLink>
@@ -168,29 +171,12 @@ export default async function ComprarATipoPage({
         <span className="text-gray-900 font-medium">{tt(TIPO_A_PLURAL_KEY[slug])}</span>
       </nav>
 
-      <div className="max-w-3xl">
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-          {t(`${tipoKey}.title`)}
-        </h1>
-        <p className="text-gray-500 leading-relaxed mb-6">{t(`${tipoKey}.intro`)}</p>
-
-        <div className="flex flex-wrap gap-3 mb-8">
-          <LocalLink
-            href={`/catalogo?vendedor=${tipoKey}`}
-            className="inline-flex items-center gap-2 bg-brand-primary text-white px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-brand-dark transition"
-          >
-            {t('catalogCta')}
-          </LocalLink>
-          <LocalLink
-            href="/publicar"
-            className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-50 transition"
-          >
-            {t('publishCta')}
-          </LocalLink>
-        </div>
+      <div className="mb-10 flex flex-wrap gap-3">
+        <LocalLink href={`/catalogo?vendedor=${tipoKey}`} className="btn btn-ink">{t('catalogCta')}</LocalLink>
+        <LocalLink href="/publicar" className="inline-flex min-h-14 items-center border border-night/30 bg-white px-6 text-[13px] font-semibold uppercase tracking-[0.1em] text-night transition-colors hover:border-night hover:bg-bone">{t('publishCta')}</LocalLink>
       </div>
 
-      <h2 className="font-bold text-gray-900 text-xl mb-4">
+      <h2 className="public-section-title text-night mb-6">
         {t('gridTitle', { tipo: tt(TIPO_A_PLURAL_KEY[slug]) })}
       </h2>
 
@@ -240,7 +226,8 @@ export default async function ComprarATipoPage({
             </LocalLink>
           ))}
       </div>
-    </div>
+        </div>
+      </div>
     </>
   )
 }

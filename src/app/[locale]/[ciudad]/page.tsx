@@ -39,8 +39,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
-  const title = ciudadSEO.titulo
-  const description = descripcionSeo(ciudadSEO.descripcion)
+  const tCity = await getTranslations({ locale, namespace: 'cityLanding' })
+  const title = locale === 'en' ? tCity('heroTitle', { city: ciudadSEO.nombre }) : ciudadSEO.titulo
+  const description = descripcionSeo(locale === 'en'
+    ? tCity('metaDesc', { city: ciudadSEO.nombre, state: ciudadSEO.estado })
+    : ciudadSEO.descripcion)
 
   // OG dinámica por ciudad (usa endpoint existente con param categoria simulando ciudad)
   // Para provincia usamos el OG genérico pero con URL canónica correcta para CTR en WhatsApp
@@ -54,8 +57,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: 'website',
-      locale: 'es_ES',
-      url: `https://camperocasion.online/${ciudad}`,
+      locale: locale === 'en' ? 'en_GB' : 'es_ES',
+      url: `https://camperocasion.online/${locale === 'en' ? 'en/' : ''}${ciudad}`,
       images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },
     twitter: {
@@ -68,7 +71,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots: {
       // Ciudad sin anuncios = página vacía: fuera del índice (pero se
       // rastrea) hasta que haya inventario. Fail-open si la DB falla.
-      index: await hayAnunciosEnCiudad(getSupabaseServerClient(), ciudadSEO.nombre, ciudadSEO.municipio),
+      index: locale === 'es' && await hayAnunciosEnCiudad(getSupabaseServerClient(), ciudadSEO.nombre, ciudadSEO.municipio),
       follow: true,
     },
   }
@@ -224,6 +227,7 @@ export default async function CiudadPage({ params }: Props) {
       )}
       <Breadcrumbs items={breadcrumbItems} />
       <LandingCiudad 
+        locale={locale}
         slug={ciudad} 
         nombre={ciudadSEO.nombre}
         municipio={ciudadSEO.municipio}

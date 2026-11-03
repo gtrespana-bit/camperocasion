@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { planIncludedEn } from './contenido-en'
 import {
   ArrowRight,
   BadgeCheck,
@@ -53,13 +55,14 @@ function nombrePlan(id: string | null): string {
   return PLANES_PRO.find(p => p.id === id)?.nombre || id
 }
 
-function fechaCorta(iso: string | null | undefined): string {
+function fechaCorta(iso: string | null | undefined, locale: string): string {
   if (!iso) return ''
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
 export default function PlanesClient() {
+  const t = useTranslations('proPlans')
   const { session, user, loading: authLoading } = useAuth()
   const pathname = usePathname()
   const [periodicidad, setPeriodicidad] = useState<Periodicidad>('mensual')
@@ -81,6 +84,9 @@ export default function PlanesClient() {
     }
     return routing.defaultLocale
   }, [pathname])
+
+  const formatDate = (iso: string | null | undefined) => fechaCorta(iso, locale)
+  const localizedPlanName = (name: string) => locale === 'en' && name === 'Profesional' ? 'Professional' : name
 
   const aLogin = () => {
     const prefix = locale === routing.defaultLocale ? '' : `/${locale}`
@@ -148,23 +154,24 @@ export default function PlanesClient() {
           plan,
           periodicidad,
           cupon: cupon.trim() ? cupon.trim() : undefined,
+          locale,
         }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || (!data.url && !data.actualizado)) {
-        setError(data.error || 'No se pudo abrir el pago.')
+        setError(locale === 'en' ? t('checkoutError') : (data.error || t('checkoutError')))
         return
       }
       if (data.url) {
         window.location.assign(data.url)
         return
       }
-      setMsg(data.mensaje || 'Pack actualizado. Stripe aplicará la diferencia en la próxima factura.')
+      setMsg(locale === 'en' ? t('packUpdated') : (data.mensaje || t('packUpdated')))
       // El webhook que escribe el nuevo plan puede tardar unos segundos.
       await cargarEstado()
       setTimeout(() => { cargarEstado() }, 2500)
     } catch {
-      setError('No se pudo conectar con la pasarela de pago.')
+      setError(t('connectionError'))
     } finally {
       setLoading(null)
     }
@@ -182,17 +189,17 @@ export default function PlanesClient() {
       const res = await fetch('/api/planes/prueba', { method: 'POST' })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.ok) {
-        setError(data.error || 'No se pudo empezar la prueba.')
+        setError(locale === 'en' ? t('trialError') : (data.error || t('trialError')))
         return
       }
       setMsg(
         data.reactivados > 0
-          ? `Prueba activada hasta el ${fechaCorta(data.hasta)}. Hemos vuelto a publicar ${data.reactivados} anuncio${data.reactivados === 1 ? '' : 's'}.`
-          : `Prueba activada hasta el ${fechaCorta(data.hasta)}. Sin tarjeta y sin cobro automático.`,
+          ? t('trialActivatedReactivated', { date: formatDate(data.hasta), count: data.reactivados })
+          : t('trialActivated', { date: formatDate(data.hasta) }),
       )
       await cargarEstado()
     } catch {
-      setError('No se pudo conectar. Inténtalo de nuevo.')
+      setError(t('retryError'))
     } finally {
       setPruebaLoading(false)
     }
@@ -202,15 +209,15 @@ export default function PlanesClient() {
     setError('')
     setPortalLoading(true)
     try {
-      const res = await fetch('/api/planes/portal', { method: 'POST' })
+      const res = await fetch('/api/planes/portal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locale }) })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.url) {
-        setError(data.error || 'No se pudo abrir la gestión de la suscripción.')
+        setError(locale === 'en' ? t('portalError') : (data.error || t('portalError')))
         return
       }
       window.location.assign(data.url)
     } catch {
-      setError('No se pudo conectar con Stripe.')
+      setError(t('portalConnectionError'))
     } finally {
       setPortalLoading(false)
     }
@@ -222,20 +229,22 @@ export default function PlanesClient() {
     <div>
       {/* Resultado del pago */}
       {pago === 'ok' && (
-        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 flex items-start gap-3">
-          <BadgeCheck className="text-emerald-600 mt-0.5 shrink-0" size={22} />
+        <div className={`mb-6 rounded-2xl border p-5 flex items-start gap-3 ${estado?.planPagoVigente ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+          {estado?.planPagoVigente
+            ? <BadgeCheck className="text-emerald-600 mt-0.5 shrink-0" size={22} />
+            : <Loader2 className="text-amber-700 mt-0.5 shrink-0 animate-spin" size={22} aria-hidden="true" />}
           <div className="flex-1">
-            <p className="font-bold text-emerald-900">¡Plan Profesional activado! Gracias por confiar en CamperOcasión.</p>
-            <p className="text-sm text-emerald-800 mt-1">
-              {planPagado ? `Ya tienes el plan ${nombrePlan(planPagado)}. ` : ''}
-              Puedes publicar tu siguiente anuncio ahora mismo. La factura llega por email desde Stripe.
+            <p className={`font-bold ${estado?.planPagoVigente ? 'text-emerald-900' : 'text-amber-900'}`}>{estado?.planPagoVigente ? t('paymentConfirmed') : t('paymentProcessing')}</p>
+            <p className={`text-sm mt-1 ${estado?.planPagoVigente ? 'text-emerald-800' : 'text-amber-900'}`}>
+              {estado?.planPagoVigente && planPagado ? `${t('planPaid', { name: localizedPlanName(nombrePlan(planPagado)) })} ` : ''}
+              {estado?.planPagoVigente ? t('paymentDoneDesc') : t('paymentPendingDesc')}
             </p>
             <div className="flex flex-wrap gap-3 mt-3">
-              <LocalLink href="/publicar" className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800">
-                Publicar un anuncio <ArrowRight size={15} />
-              </LocalLink>
+              {estado?.planPagoVigente && <LocalLink href="/publicar" className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800">
+                {t('publishListing')} <ArrowRight size={15} />
+              </LocalLink>}
               <LocalLink href="/dashboard?tab=plan" className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-100">
-                Ver mi plan
+                {t('myPlan')}
               </LocalLink>
             </div>
           </div>
@@ -243,7 +252,7 @@ export default function PlanesClient() {
       )}
       {pago === 'cancelado' && (
         <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-          No se ha cobrado nada. Tu plan sigue como estaba y puedes contratarlo cuando quieras.
+          {t('paymentCancelled')}
         </div>
       )}
 
@@ -252,18 +261,17 @@ export default function PlanesClient() {
         <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
           <div>
             <p className="font-bold text-amber-900">
-              Tu prueba terminó · te quedan {estado.diasGracia} días de gracia
+              {t('graceTitle', { days: estado.diasGracia ?? 0 })}
             </p>
             <p className="text-sm text-amber-800">
-              Hasta el {fechaCorta(estado.graciaHasta)} tus anuncios siguen publicados. Después se pausarán
-              los que excedan el cupo gratuito, sin borrar nada.
+              {t('graceDesc', { date: formatDate(estado.graciaHasta) })}
             </p>
           </div>
           <LocalLink
             href="/dashboard?tab=plan"
             className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2 text-sm font-bold text-white hover:bg-brand-accent-dark"
           >
-            Activar Profesional <ArrowRight size={14} />
+            {t('activateProfessional')} <ArrowRight size={14} />
           </LocalLink>
         </div>
       )}
@@ -271,22 +279,21 @@ export default function PlanesClient() {
         <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
           <div>
             <p className="font-bold text-amber-900">
-              Estás probando el plan Profesional{estado.diasTrial > 0 ? ` · quedan ${estado.diasTrial} días` : ''}
+              {t('trialTitle', { remaining: estado.diasTrial > 0 ? t('trialDays', { days: estado.diasTrial }) : '' })}
             </p>
             <p className="text-sm text-amber-800">
-              Aprovecha para publicar todo tu stock. Al terminar hay 7 días de gracia y después se pausan
-              los anuncios que sobren, sin borrarlos. Activa Profesional cuando quieras.
+              {t('trialDesc')}
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900">
-              <Sparkles size={14} /> Prueba activa
+              <Sparkles size={14} /> {t('trialActive')}
             </span>
             <LocalLink
               href="/dashboard?tab=plan"
               className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-accent-dark"
             >
-              Activar Plus <ArrowRight size={13} />
+              {t('activateProfessional')} <ArrowRight size={13} />
             </LocalLink>
           </div>
         </div>
@@ -296,13 +303,12 @@ export default function PlanesClient() {
       {session && estado?.trialElegible && (
         <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
           <div>
-            <p className="font-bold text-emerald-900">Puedes probar Profesional 30 días, gratis</p>
+            <p className="font-bold text-emerald-900">{t('trialOfferTitle')}</p>
             <p className="text-sm text-emerald-800">
-              15 anuncios, 5 destacados al mes y escaparate. Sin tarjeta y sin cobro automático.
-              Al terminar, 7 días de gracia y no se borra ningún anuncio.
+              {t('trialOfferDesc')}
               {estado?.tipo === 'particular' && (
                 <span className="mt-1 block text-xs text-emerald-700">
-                  Al empezar, tu cuenta pasa a «profesional» (gratis) para recibir el cupo de Profesional.
+                  {t('particularPromote')}
                 </span>
               )}
             </p>
@@ -314,7 +320,7 @@ export default function PlanesClient() {
             className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800 disabled:opacity-60"
           >
             {pruebaLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            Empezar prueba
+            {t('startTrial')}
           </button>
         </div>
       )}
@@ -323,16 +329,16 @@ export default function PlanesClient() {
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
           <div>
-            <p className="text-sm font-bold text-slate-900">Un único plan, sin escalones</p>
+            <p className="text-sm font-bold text-slate-900">{t('onePlan')}</p>
             <p className="text-xs text-slate-500 mt-0.5">
-              Todo lo que necesita un profesional, con 15 anuncios activos. Si algún día necesitas más, se habla.
+              {t('onePlanDesc')}
             </p>
           </div>
 
           <div className="lg:text-right">
-            <p className="text-sm font-bold text-slate-900">Pago</p>
-            <p className="text-xs text-slate-500 mt-0.5">El anual sale como 10 mensualidades: 2 meses gratis.</p>
-            <div className="mt-3 inline-flex rounded-xl bg-slate-100 p-1" role="group" aria-label="Periodicidad">
+            <p className="text-sm font-bold text-slate-900">{t('payment')}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{t('annualSavings')}</p>
+            <div className="mt-3 inline-flex rounded-xl bg-slate-100 p-1" role="group" aria-label={t('periodicity')}>
               <button
                 type="button"
                 onClick={() => setPeriodicidad('mensual')}
@@ -341,7 +347,7 @@ export default function PlanesClient() {
                   periodicidad === 'mensual' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Mensual
+                {t('monthly')}
               </button>
               <button
                 type="button"
@@ -351,7 +357,7 @@ export default function PlanesClient() {
                   periodicidad === 'anual' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Anual <span className="text-emerald-700">−17 %</span>
+                {t('annually')} <span className="text-emerald-700">−17 %</span>
               </button>
             </div>
           </div>
@@ -374,44 +380,44 @@ export default function PlanesClient() {
             >
               <div className="flex items-start justify-between gap-2 min-h-[24px]">
                 <span className="inline-flex items-center gap-1 rounded-full bg-brand-accent px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-white">
-                  <Sparkles size={12} /> Único plan
+                  <Sparkles size={12} /> {t('uniquePlan')}
                 </span>
                 {esActual && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-bold text-white">
-                    <Check size={12} /> Tu plan
+                    <Check size={12} /> {t('currentPlan')}
                   </span>
                 )}
                 {!esActual && estado?.trial && estado.plan === p.id && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-900">
-                    En prueba
+                    {t('inTrial')}
                   </span>
                 )}
               </div>
 
-              <h2 className="text-xl font-black text-slate-900 mt-3">{p.nombre}</h2>
-              <p className="text-xs text-slate-500 mt-0.5">{p.paraQuien}</p>
+              <h2 className="text-xl font-black text-slate-900 mt-3">{localizedPlanName(p.nombre)}</h2>
+              <p className="text-xs text-slate-500 mt-0.5">{locale === 'en' ? t('audience') : p.paraQuien}</p>
 
               <div className="mt-4">
                 <p className="text-4xl font-black text-slate-900">
                   {formatPrecio(periodicidad === 'anual' ? precioMensualEquivalente(p.id) : precio)}
-                  <span className="text-sm font-semibold text-slate-500">/mes</span>
+                  <span className="text-sm font-semibold text-slate-500">{t('perMonth')}</span>
                 </p>
                 {periodicidad === 'anual' ? (
                   <p className="text-xs text-slate-500 mt-1">
-                    {formatPrecio(precio)} al año · ahorras {ahorro} %
+                    {t('yearlyPrice', { price: formatPrecio(precio), percent: ahorro })}
                   </p>
                 ) : (
-                  <p className="text-xs text-slate-500 mt-1">Facturado mes a mes · sin permanencia</p>
+                  <p className="text-xs text-slate-500 mt-1">{t('monthlyBilling')}</p>
                 )}
                 {porAnuncio != null && (
                   <p className="text-xs text-emerald-700 font-semibold mt-1">
-                    {formatPrecio(porAnuncio)} por anuncio al mes
+                    {t('perListing', { price: formatPrecio(porAnuncio) })}
                   </p>
                 )}
               </div>
 
               <ul className="mt-5 space-y-2 text-sm text-slate-700 flex-1">
-                {p.incluido.map(item => (
+                {(locale === 'en' ? planIncludedEn : p.incluido).map(item => (
                   <li key={item} className="flex gap-2">
                     <Check size={16} className="mt-0.5 shrink-0 text-emerald-600" aria-hidden="true" />
                     <span>{item}</span>
@@ -431,23 +437,23 @@ export default function PlanesClient() {
               >
                 {loading === p.id ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" /> Abriendo pago…
+                    <Loader2 size={16} className="animate-spin" /> {t('openingCheckout')}
                   </>
                 ) : esActual ? (
                   <>
-                    <Check size={16} /> Plan actual
+                    <Check size={16} /> {t('planCurrent')}
                   </>
                 ) : !session ? (
                   <>
-                    Empezar con {p.nombre} <ArrowRight size={16} />
+                    {t('startWith', { name: localizedPlanName(p.nombre) })} <ArrowRight size={16} />
                   </>
                 ) : estado?.trial && estado.plan === p.id ? (
                   <>
-                    Activar {p.nombre} ahora <ArrowRight size={16} />
+                    {t('activateNow', { name: localizedPlanName(p.nombre) })} <ArrowRight size={16} />
                   </>
                 ) : (
                   <>
-                    Elegir {p.nombre} <ArrowRight size={16} />
+                    {t('choose', { name: localizedPlanName(p.nombre) })} <ArrowRight size={16} />
                   </>
                 )}
               </button>
@@ -460,7 +466,7 @@ export default function PlanesClient() {
                   className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-900 hover:bg-emerald-100 disabled:opacity-60"
                 >
                   {pruebaLoading ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-                  Probar 30 días gratis
+                  {t('tryFree')}
                 </button>
               )}
             </div>
@@ -473,22 +479,22 @@ export default function PlanesClient() {
         <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-white p-3">
           <ShieldCheck size={18} className="text-emerald-600 mt-0.5 shrink-0" />
           <div>
-            <p className="font-semibold text-slate-900">Sin permanencia</p>
-            <p className="text-xs text-slate-500">Cancela cuando quieras desde tu panel.</p>
+            <p className="font-semibold text-slate-900">{t('noContract')}</p>
+            <p className="text-xs text-slate-500">{t('noContractDesc')}</p>
           </div>
         </div>
         <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-white p-3">
           <CreditCard size={18} className="text-emerald-600 mt-0.5 shrink-0" />
           <div>
-            <p className="font-semibold text-slate-900">Factura con IVA</p>
-            <p className="text-xs text-slate-500">Añade tu NIF/CIF en el pago. Tarjeta, Apple Pay y Google Pay.</p>
+            <p className="font-semibold text-slate-900">{t('invoice')}</p>
+            <p className="text-xs text-slate-500">{t('invoiceDesc')}</p>
           </div>
         </div>
         <div className="flex items-start gap-2 rounded-xl border border-slate-200 bg-white p-3">
           <Lock size={18} className="text-emerald-600 mt-0.5 shrink-0" />
           <div>
-            <p className="font-semibold text-slate-900">Pago seguro con Stripe</p>
-            <p className="text-xs text-slate-500">No vemos ni guardamos los datos de tu tarjeta.</p>
+            <p className="font-semibold text-slate-900">{t('secure')}</p>
+            <p className="text-xs text-slate-500">{t('secureDesc')}</p>
           </div>
         </div>
       </div>
@@ -496,10 +502,10 @@ export default function PlanesClient() {
       {estado?.suscripcionStripe && (
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4">
           <div>
-            <p className="text-sm font-bold text-slate-900">Gestionar mi suscripción</p>
+            <p className="text-sm font-bold text-slate-900">{t('manage')}</p>
             <p className="text-xs text-slate-500">
-              Cambia la tarjeta, descarga facturas o date de baja.
-              {estado.planHasta ? ` Próxima renovación: ${fechaCorta(estado.planHasta)}.` : ''}
+              {t('manageDesc')}
+              {estado.planHasta ? t('nextRenewal', { date: formatDate(estado.planHasta) }) : ''}
             </p>
           </div>
           <button
@@ -509,7 +515,7 @@ export default function PlanesClient() {
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
           >
             {portalLoading ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
-            Abrir gestión
+            {t('openManage')}
           </button>
         </div>
       )}
@@ -523,18 +529,18 @@ export default function PlanesClient() {
           aria-expanded={mostrarCupon}
         >
           <span>
-            <span className="block text-sm font-bold text-slate-900">¿Tienes un cupón?</span>
-            <span className="block text-xs text-slate-500">Descuento en la cuota o días de regalo.</span>
+            <span className="block text-sm font-bold text-slate-900">{t('couponTitle')}</span>
+            <span className="block text-xs text-slate-500">{t('couponDesc')}</span>
           </span>
-          <span className="text-xs font-semibold text-slate-500">{mostrarCupon ? 'Ocultar' : 'Añadir'}</span>
+          <span className="text-xs font-semibold text-slate-500">{t(mostrarCupon ? 'hide' : 'add')}</span>
         </button>
         {mostrarCupon && (
           <div className="mt-4 flex flex-col sm:flex-row gap-2">
             <input
               value={cupon}
               onChange={e => setCupon(e.target.value.toUpperCase())}
-              placeholder="CÓDIGO"
-              aria-label="Código de cupón"
+              placeholder={t('couponPlaceholder')}
+              aria-label={t('couponLabel')}
               className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-accent"
             />
             <button
@@ -552,21 +558,21 @@ export default function PlanesClient() {
                 const data = await res.json().catch(() => ({}))
                 setLoading(null)
                 if (!res.ok) {
-                  setError(data.error || 'No se pudo canjear el cupón.')
+                  setError(locale === 'en' ? t('couponError') : (data.error || t('couponError')))
                   return
                 }
-                setMsg(`Cupón canjeado: plan ${data.plan} activo hasta ${fechaCorta(data.hasta)}.`)
+                setMsg(t('couponRedeemed', { name: localizedPlanName(nombrePlan(data.plan)), date: formatDate(data.hasta) }))
                 await cargarEstado()
               }}
               disabled={loading === 'cupon'}
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-900 hover:bg-slate-50 disabled:opacity-60"
             >
-              {loading === 'cupon' ? 'Canjeando…' : 'Canjear regalo'}
+              {t(loading === 'cupon' ? 'redeeming' : 'redeem')}
             </button>
           </div>
         )}
         <p className="mt-3 text-xs text-slate-500">
-          El descuento se aplica al pulsar «Elegir Profesional». Los cupones de días se canjean aquí sin pasar por el pago.
+          {t('couponHint')}
         </p>
       </div>
 
@@ -584,24 +590,23 @@ export default function PlanesClient() {
 
       {!authLoading && !session && (
         <p className="mt-4 text-center text-sm text-slate-500">
-          ¿Todavía no tienes cuenta?{' '}
+          {t('createQuestion')}{' '}
           <LocalLink href="/register" className="font-semibold underline">
-            Créala gratis
+            {t('createFree')}
           </LocalLink>{' '}
-          y publica tu primera camper sin pagar nada.
+          {t('createDesc')}
         </p>
       )}
 
       {session && estado?.tipo === 'particular' && (
         <p className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-          Al contratar Profesional, tu perfil pasa a <strong>profesional</strong> automáticamente (es gratis). Así
-          recibes el cupo que pagas en lugar de quedarte en el límite de 1 anuncio.
+          {t('promoteDesc')}
         </p>
       )}
 
       {user?.email && !estado && !authLoading && (
         <p className="mt-4 text-center text-xs text-slate-400">
-          Sesión iniciada como {user.email}
+          {t('signedIn', { email: user.email })}
         </p>
       )}
     </div>

@@ -51,7 +51,7 @@ export default function ProvinceList({ items, label }: { items: Province[]; labe
             >
               <span className="flex items-baseline gap-5 sm:gap-8">
                 <span className="t-num w-6 text-[13px] text-white/40">{String(i + 1).padStart(2, '0')}</span>
-                <span className="t-mega text-[clamp(2.4rem,4.6vw,4.9rem)] transition-[transform,color] duration-700 ease-out group-hover:translate-x-3 group-hover:text-leaf-300">{p.name}</span>
+                <span className="t-mega home-province-name min-w-0 transition-[transform,color] duration-700 ease-out group-hover:translate-x-3 group-hover:text-leaf-300">{p.name}</span>
               </span>
               <span className="flex items-center gap-5">
                 <span className="micro hidden text-white/45 xl:block">{p.coord}</span>

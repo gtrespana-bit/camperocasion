@@ -163,7 +163,7 @@ export default function RoadJourney({ steps }: { steps: RoadStep[] }) {
 
             <div data-rtext className={`lg:col-span-5 ${imgLeft ? 'lg:col-start-8' : 'lg:col-start-1 lg:row-start-1'}`}>
               <p className="t-mega text-[clamp(4.5rem,9vw,8.5rem)] text-transparent [-webkit-text-stroke:1.5px_rgba(74,222,128,0.7)]">0{i + 1}</p>
-              <h3 className="t-wide mt-6 text-[clamp(2rem,3.8vw,3.6rem)] leading-[0.98]">{s.title}</h3>
+              <h3 className="t-wide home-title-step mt-6">{s.title}</h3>
               <p className="mt-5 max-w-md text-[17px] leading-relaxed text-white/70">{s.desc}</p>
               <div className="mt-7 flex flex-wrap gap-2.5">
                 {s.links.map((l) => (

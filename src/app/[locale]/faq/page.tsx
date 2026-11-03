@@ -1,6 +1,7 @@
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { alternatesSeo } from '@/lib/seo'
+import PublicHero from '@/components/editorial/PublicHero'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 export const metadata: Metadata = {
@@ -55,27 +56,29 @@ export default async function FAQPage({ params }: { params: Promise<{ locale: st
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
-      <div className="max-w-3xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-black text-gray-800 mb-2 text-center">{t('title')}</h1>
-        <p className="text-center text-gray-500 mb-10">{t('subtitle')}</p>
+      <div className="public-page min-h-screen">
+        <PublicHero eyebrow="CamperOcasión" title={t('title')} description={t('subtitle')} compact />
+        <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8 lg:py-24">
 
         <div className="space-y-4">
           {faqData.map((faq, i) => (
-            <details key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 group">
-              <summary className="font-bold text-gray-800 text-lg px-6 pt-5 pb-2 cursor-pointer list-none hover:text-brand-primary transition-colors marker:content-['▶']">
-                {faq.question}
+            <details key={i} className="public-card group">
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-6 px-6 py-5 text-[17px] font-semibold text-night transition-colors hover:text-leaf-600 [&::-webkit-details-marker]:hidden">
+                <span><span className="t-num mr-4 text-[13px] text-leaf-600">{String(i + 1).padStart(2, '0')}</span>{faq.question}</span>
+                <span className="text-leaf-600 transition-transform group-open:rotate-45" aria-hidden="true">+</span>
               </summary>
-              <p className="text-gray-600 px-6 pb-5 leading-relaxed">{faq.answer}</p>
+              <p className="text-slate-700 px-6 pb-6 pl-14 leading-[1.75]">{faq.answer}</p>
             </details>
           ))}
         </div>
 
-        <div className="bg-brand-accent rounded-xl p-6 mt-8 text-center">
-          <h3 className="font-bold text-brand-primary text-lg">{t('noAnswer')}</h3>
-          <p className="text-brand-primary/80 mt-1">{t('noAnswerDesc')}</p>
-          <a href="mailto:soporte@camperocasion.online" className="inline-block mt-3 bg-brand-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-brand-dark transition">
+        <div className="bg-night p-8 sm:p-10 mt-12 text-center text-white">
+          <h3 className="public-section-title">{t('noAnswer')}</h3>
+          <p className="text-white/75 mt-3">{t('noAnswerDesc')}</p>
+          <a href="mailto:soporte@camperocasion.online" className="btn btn-green mt-7">
             soporte@camperocasion.online
           </a>
+        </div>
         </div>
       </div>
     </>

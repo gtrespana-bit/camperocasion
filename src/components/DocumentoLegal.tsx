@@ -1,3 +1,4 @@
+import PublicHero from '@/components/editorial/PublicHero'
 import type { ReactNode } from 'react'
 import type { DocumentoLegal as Doc } from '@/lib/textos-legales'
 
@@ -21,17 +22,17 @@ export default function DocumentoLegal({
   bloqueInicial?: ReactNode
 }) {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-black text-gray-800 mb-2">{documento.titulo}</h1>
-      <p className="text-gray-500 mb-6">{documento.actualizado}</p>
-      <p className="text-gray-600 mb-8 leading-relaxed">{documento.entradilla}</p>
+    <div className="public-page min-h-screen">
+      <PublicHero compact eyebrow="CamperOcasión · Legal" title={documento.titulo} description={documento.entradilla} />
+      <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8 lg:py-20">
+      <p className="mb-8 text-sm font-medium text-slate-600">{documento.actualizado}</p>
 
       {bloqueInicial}
 
-      <div className="space-y-8 text-gray-600">
+      <div className="space-y-12 text-slate-700 leading-[1.75]">
         {documento.secciones.map((seccion) => (
           <section key={seccion.titulo}>
-            <h2 className="text-xl font-bold text-gray-800 mb-3">{seccion.titulo}</h2>
+            <h2 className="public-section-title mb-4">{seccion.titulo}</h2>
             {seccion.parrafos?.map((parrafo) => (
               <p key={parrafo.slice(0, 40)} className="mb-3 leading-relaxed">
                 {parrafo}
@@ -51,6 +52,7 @@ export default function DocumentoLegal({
       </div>
 
       {children}
+      </div>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import LocalLink from '@/components/LocalLink'
+import PublicHero from '@/components/editorial/PublicHero'
 import Image from 'next/image'
 import { Search, ChevronRight, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -388,7 +389,14 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbSchema) }}
       />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="public-page min-h-screen">
+        <PublicHero
+          compact
+          eyebrow={t('catalog.title')}
+          title={tituloMostrar}
+          description={loading ? t('common.loading') : t('catalog.results', { count: totalCountToUse || 0 })}
+        />
+        <div className="public-shell py-8 lg:py-12">
         {/* Breadcrumbs visuales */}
         <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap" aria-label="Breadcrumb">
           {breadcrumbs.map((item, index) => (
@@ -426,17 +434,14 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
         </aside>
 
         <div className="flex-1">
-          <div className="bg-white rounded-xl p-4 mb-4 shadow-sm">
+          <div className="public-card p-4 sm:p-5 mb-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{tituloMostrar}</h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  {loading ? t('common.loading') : t('catalog.results', { count: totalCountToUse || 0 })}
-                </p>
+                <p className="text-sm font-semibold uppercase tracking-[0.1em] text-slate-700">{t('catalog.search')}</p>
               </div>
               <form action="/buscar" method="GET" className="flex gap-2 w-full sm:w-auto">
-                <input name="q" defaultValue={q} placeholder={`${t('common.search')}...`} className="w-full sm:w-60 border rounded-lg px-4 py-2 text-sm" />
-                <button type="submit" className="bg-brand-primary text-white px-4 rounded-lg font-bold text-sm hover:bg-brand-dark transition">{t('common.search')}</button>
+                <input name="q" defaultValue={q} placeholder={`${t('common.search')}...`} className="w-full sm:w-60 min-h-11 border border-slate-300 bg-white px-4 py-2 text-sm" />
+                <button type="submit" className="bg-night text-white px-5 min-h-11 font-semibold text-sm hover:bg-leaf hover:text-night transition-colors">{t('common.search')}</button>
               </form>
             </div>
           </div>
@@ -481,11 +486,11 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
           {loading ? (
             <LoadingIndicator count={6} />
           ) : !error && productosToShow.length === 0 ? (
-            <div className="bg-white rounded-xl p-16 text-center shadow-sm border">
+            <div className="public-card p-10 sm:p-16 text-center">
               <Search size={48} className="text-gray-500 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-800 mb-2">{t('catalog.empty')}</h3>
               <p className="text-gray-500 mb-4">{t('catalog.emptyCta')}</p>
-              <LocalLink href="/publicar" className="inline-block bg-brand-accent text-white px-6 py-3 rounded-lg font-bold hover:bg-accent/90 transition">
+              <LocalLink href="/publicar" className="btn btn-green">
                 {t('catalog.publishFree')}
               </LocalLink>
             </div>
@@ -507,7 +512,8 @@ export default function CatalogoClient({ initialProducts = [], initialCount = 0 
         itemsPerPage={itemsPerPage}
         totalItems={totalCountToUse} 
       />
-    </div>
+        </div>
+      </div>
     </>
   )
 }

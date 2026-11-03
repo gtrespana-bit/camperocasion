@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import LocalLink from '@/components/LocalLink'
+import PublicHero from '@/components/editorial/PublicHero'
 import { formatPrecio } from '@/lib/precio'
 import { ESTADOS_VEHICULO, validarEntrada, type EstadoVehiculo } from '@/lib/valoracion'
 import {
@@ -88,19 +89,12 @@ export default function ValorarClient({
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      <div className="text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-          ¿Cuánto vale <span className="text-brand-accent">mi camper</span>?
-        </h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Calcúlalo gratis con los precios reales de los anuncios publicados en España.
-          Sin registro y en menos de un minuto.
-        </p>
-      </div>
+    <div className="public-page min-h-screen">
+      <PublicHero compact eyebrow="CamperOcasión · Herramientas" title="¿Cuánto vale mi camper?" description="Calcúlalo gratis a partir de los precios de anuncios publicados en España. Sin registro y en menos de un minuto." />
+      <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8 lg:py-16">
 
       {!resultado && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 mb-8">
+        <div className="public-card p-6 md:p-8 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="md:col-span-2">
               <label htmlFor="modelo" className="block text-sm font-semibold text-gray-800 mb-1.5">
@@ -335,6 +329,7 @@ export default function ValorarClient({
           ))}
         </div>
       </section>
+      </div>
     </div>
   )
 }

@@ -35,13 +35,13 @@ export default function RegisterPage() {
     // Validación de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      setError('Ingresa un email válido')
+      setError(t('register.invalidEmail'))
       return
     }
 
     // Validación de nombre
     if (!nombre || nombre.trim().length < 2) {
-      setError('El nombre debe tener al menos 2 caracteres')
+      setError(t('register.shortName'))
       return
     }
 
@@ -49,7 +49,7 @@ export default function RegisterPage() {
     // de composición obligatoria (las reglas de mayúscula/número generan
     // contraseñas que se olvidan y usuarios que no vuelven).
     if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres')
+      setError(t('register.shortPassword'))
       return
     }
 
@@ -79,7 +79,7 @@ export default function RegisterPage() {
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
-        setError(data.error || 'Error al crear la cuenta. Inténtalo de nuevo.')
+        setError(data.error || t('register.createError'))
         setLoading(false)
         return
       }
@@ -97,32 +97,32 @@ export default function RegisterPage() {
       const confirmPath = locale === routing.defaultLocale ? '/confirmacion' : `/${locale}/confirmacion`
       router.push(confirmPath)
     } catch {
-      setError('Error de conexión. Intenta de nuevo.')
+      setError(t('register.connectionError'))
     }
     setLoading(false)
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-[80vh] flex items-center justify-center px-5 py-12 bg-bone">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <BrandLogo href="/" size="lg" className="justify-center" priority />
-          <h1 className="text-2xl font-bold text-gray-800 mt-4">{t('register.title')}</h1>
-          <p className="text-gray-500 mt-1">{t('register.subtitle')}</p>
+          <h1 className="work-title work-title--account mt-6">{t('register.title')}</h1>
+          <p className="work-description mx-auto mt-2">{t('register.subtitle')}</p>
 
           {/* Banner: credito gratis */}
           <div className="mt-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 flex items-center gap-3 animate-fadeIn">
             <span className="text-3xl">🎁</span>
             <div>
-              <p className="font-bold text-green-800 text-sm">1 crédito GRATIS al registrarte</p>
-              <p className="text-green-600 text-xs">Publica 10 anuncios y recibe 5 créditos más. ¡Así de simple!</p>
+              <p className="font-bold text-green-800 text-sm">{t('register.bonusTitle')}</p>
+              <p className="text-green-600 text-xs">{t('register.bonusDesc')}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+        <div className="account-card p-6 sm:p-8">
           {error && (
-            <div className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">
+            <div role="alert" className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">
               <AlertCircle size={18} />
               {error}
             </div>
@@ -130,8 +130,9 @@ export default function RegisterPage() {
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.name')}</label>
+              <label htmlFor="register-name" className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.name')}</label>
               <input
+                id="register-name"
                 type="text"
                 name="name"
                 autoComplete="name"
@@ -144,8 +145,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.email')}</label>
+              <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.email')}</label>
               <input
+                id="register-email"
                 type="email"
                 name="email"
                 autoComplete="email"
@@ -159,8 +161,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.password')}</label>
+              <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.password')}</label>
               <input
+                id="register-password"
                 type="password"
                 name="new-password"
                 autoComplete="new-password"
@@ -173,8 +176,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.repeat_password')}</label>
+              <label htmlFor="register-confirm-password" className="block text-sm font-medium text-gray-700 mb-1.5">{t('register.repeat_password')}</label>
               <input
+                id="register-confirm-password"
                 type="password"
                 name="confirm-password"
                 autoComplete="new-password"
@@ -220,7 +224,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-brand-primary text-white py-3 rounded-lg font-bold hover:bg-brand-dark transition disabled:opacity-50"
+              className="w-full min-h-12 bg-night text-white px-5 py-3 font-semibold hover:bg-leaf hover:text-night transition-colors disabled:opacity-50"
             >
               {loading ? t('register.creating') : t('register.submit')}
             </button>

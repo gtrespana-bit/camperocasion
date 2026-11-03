@@ -92,15 +92,15 @@ export default function AprobacionPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="admin-workspace max-w-4xl mx-auto px-5 py-8 md:py-12">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="bg-brand-accent p-2 rounded-xl">
-            <Shield size={20} className="text-brand-primary" />
+          <div className="bg-leaf p-2 rounded-md">
+            <Shield size={20} className="text-night" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-gray-800">Aprobación rápida</h1>
+            <h1 className="work-title work-title--sm">Aprobación rápida</h1>
             <p className="text-gray-500 text-sm">Revisa comprobantes y aprueba pagos</p>
           </div>
         </div>

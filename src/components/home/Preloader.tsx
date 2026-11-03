@@ -9,7 +9,7 @@ const useIso = typeof window === 'undefined' ? () => {} : useLayoutEffect
  * servidor la pinta (sin parpadeo) y todo el movimiento es CSS puro; el script
  * en línea decide, antes del primer pintado, si debe mostrarse.
  */
-export default function Preloader({ label }: { label: string }) {
+export default function Preloader({ label, locale }: { label: string; locale: string }) {
   useIso(() => {
     const root = document.documentElement
     // Navegación interna de vuelta a la portada: nunca repetir la cortina.
@@ -20,7 +20,7 @@ export default function Preloader({ label }: { label: string }) {
     const id = window.setTimeout(() => {
       root.dataset.preDone = '1'
       root.dataset.pre = '0'
-    }, 2900)
+    }, 1700)
     return () => window.clearTimeout(id)
   }, [])
 
@@ -35,7 +35,7 @@ export default function Preloader({ label }: { label: string }) {
       <div id="co-pre" aria-hidden="true">
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-5 pt-7 sm:px-8">
           <span className="micro text-white/70">{label}</span>
-          <span className="micro text-white/40">ES · 2026</span>
+          <span className="micro text-white/40">{locale.toUpperCase()} · 2026</span>
         </div>
         <div className="absolute inset-x-0 bottom-0 px-5 pb-8 sm:px-8">
           <p className="t-mega flex items-end text-[clamp(8rem,30vw,28rem)] leading-[0.76]">

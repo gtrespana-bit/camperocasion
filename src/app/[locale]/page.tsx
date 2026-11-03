@@ -7,7 +7,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { productUrl } from '@/lib/product-url'
 import { formatPrecio } from '@/lib/precio'
-import { alternatesSeo } from '@/lib/seo'
+import { alternatesSeo, urlSeo } from '@/lib/seo'
 import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import { resumenFabricantes, agruparPorFabricante, MARCAS_MODELOS } from '@/lib/marcas'
 import { FILTROS_TECNICOS } from '@/lib/filtros-tecnicos'
@@ -72,11 +72,15 @@ function generateItemListSchema(products: any[], baseUrl: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params
+  const english = locale === 'en'
+  const title = english ? 'Used campervans and motorhomes in Spain' : 'Furgonetas camper y autocaravanas de ocasión'
+  const description = english
+    ? 'Explore used campervans and motorhomes across Spain. Compare prices, photos and vehicle details, or list your camper for free.'
+    : 'Marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Gran volumen, medianas, minicamper, perfiladas y 4x4. Publica gratis.'
 
   return {
-    title: 'Furgonetas camper y autocaravanas de ocasión',
-    description:
-      'Marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Gran volumen, medianas, minicamper, perfiladas y 4x4. Publica gratis.',
+    title,
+    description,
     keywords: [
       'furgonetas camper segunda mano',
       'autocaravanas de ocasión',
@@ -90,19 +94,22 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     authors: [{ name: 'CamperOcasión' }],
     creator: 'CamperOcasión',
     publisher: 'CamperOcasión',
-    alternates: alternatesSeo('/'),
+    alternates: english
+      ? { canonical: urlSeo('/en'), languages: { 'es-ES': urlSeo('/'), 'x-default': urlSeo('/') } }
+      : alternatesSeo('/'),
     openGraph: {
-      title: 'Furgonetas camper y autocaravanas de ocasión',
-      description:
-        'Marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Publica gratis y encuentra tu próxima camper.',
-      url: 'https://camperocasion.online',
+      title,
+      description: english
+        ? description
+        : 'Marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Publica gratis y encuentra tu próxima camper.',
+      url: english ? urlSeo('/en') : urlSeo('/'),
       siteName: 'CamperOcasión',
       images: [
         {
           url: 'https://camperocasion.online/og-image.webp',
           width: 1200,
           height: 630,
-          alt: 'CamperOcasión - Furgonetas camper y autocaravanas de ocasión en España',
+          alt: english ? 'CamperOcasión — used campervans in Spain' : 'CamperOcasión - Furgonetas camper y autocaravanas de ocasión en España',
         },
       ],
       locale: locale === 'en' ? 'en_US' : 'es_ES',
@@ -110,13 +117,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'Furgonetas camper y autocaravanas de ocasión',
-      description:
-        'Marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Publica gratis.',
+      title,
+      description: english ? description : 'Marketplace especializado en furgonetas camper y autocaravanas de ocasión en España. Publica gratis.',
       images: ['https://camperocasion.online/og-image.webp'],
     },
     robots: {
-      index: true,
+      index: !english,
       follow: true,
     },
   }
@@ -222,7 +228,7 @@ const CONTAINER = 'mx-auto w-full max-w-[1360px] px-5 sm:px-8'
 /** Etiqueta de sección: filete + texto en versalitas. */
 function Eyebrow({ children, tone = 'light', n, nClass }: { children: React.ReactNode; tone?: 'light' | 'dark'; n?: string; nClass?: string }) {
   return (
-    <p className={`micro flex items-center gap-4 ${tone === 'light' ? 'text-white/65' : 'text-night/70'}`}>
+    <p className={`micro flex items-center gap-4 ${tone === 'light' ? 'text-white/65' : 'text-night/80'}`}>
       {n && <span className={`t-num text-[13px] tracking-normal ${nClass || (tone === 'light' ? 'text-leaf-300' : 'text-leaf-600')}`}>{n}</span>}
       <span className={`h-px w-10 ${tone === 'light' ? 'bg-white/40' : 'bg-night/40'}`} aria-hidden="true" />
       {children}
@@ -303,11 +309,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   }))
 
   const stats = [
-    totalActivos > 0 ? { value: totalActivos, label: t('landing.statement.listings'), suffix: '' } : null,
-    { value: 52, label: t('landing.statement.territories'), suffix: '' },
+    { value: totalActivos, label: t('landing.statement.listings'), suffix: '' },
+    { value: CIUDADES_SEO.length, label: t('landing.statement.territories'), suffix: '' },
     { value: 0, label: t('landing.statement.commission'), suffix: ' %' },
     { value: FILTROS_TECNICOS.length, label: t('landing.statement.filters'), suffix: '' },
-  ].filter((x): x is { value: number; label: string; suffix: string } => x !== null)
+  ]
 
   const rutas: RoutePanel[] = FAMILIAS.map((f) => {
     const tipos = f.subs
@@ -387,8 +393,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   )
 
   return (
-    <div className="bg-night text-white">
-      <Preloader label={t('landing.pre.label')} />
+    <div className="landing-home bg-night text-white">
+      <Preloader label={t('landing.pre.label')} locale={locale} />
       <SmoothScroll />
       <Cursor />
       {jsonLd && (
@@ -396,7 +402,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       )}
 
       {/* ═══════════ HERO ═══════════ */}
-      <section className="relative isolate flex h-[100svh] min-h-[700px] flex-col overflow-hidden bg-night">
+      <section className="relative isolate flex min-h-[700px] flex-col overflow-hidden lg:min-h-[100svh] bg-night">
         <Image
           src="/home/hero.webp"
           alt={t('home.hero.heroImageAlt')}
@@ -414,7 +420,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-night/65 via-night/10 to-transparent" aria-hidden="true" />
         <div className="grain absolute inset-0 -z-10" aria-hidden="true" />
 
-        <div className={`${CONTAINER} relative flex h-full flex-col justify-between pb-24 pt-28 lg:pb-8`}>
+        <div className={`${CONTAINER} relative flex flex-1 flex-col justify-between pb-16 pt-28 lg:pb-8`}>
           <div className="fade-up flex items-center justify-between" style={{ '--d': '0.1s' } as React.CSSProperties}>
             <p className="micro flex items-center gap-3 text-white/80">
               <span className="relative flex h-2 w-2" aria-hidden="true">
@@ -429,12 +435,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <div className="mt-5 flex flex-1 flex-col justify-between gap-8 lg:mt-8">
             <KineticTitle
               lines={[t('landing.hero.line1'), t('landing.hero.line2')]}
-              className="t-mega text-[clamp(2.4rem,min(15.2vw,25svh),16rem)]"
+              className="t-mega home-title-hero"
             />
             <div>
               <div className="grid gap-6 lg:grid-cols-12 lg:items-end">
                 <div className="lg:col-span-6">
-                  <p className="fade-up hidden max-w-[430px] text-[16px] leading-relaxed text-white/85 sm:block" style={{ '--d': '0.8s' } as React.CSSProperties}>
+                  <p className="fade-up max-w-[430px] text-[16px] leading-relaxed text-white/85" style={{ '--d': '0.8s' } as React.CSSProperties}>
                     {t('landing.hero.sub')}
                   </p>
                   <div className="fade-up mt-6 flex flex-wrap items-center gap-3" style={{ '--d': '0.95s' } as React.CSSProperties}>
@@ -449,18 +455,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   </div>
                 </div>
               </div>
-              <div className="fade-up mt-6 hidden lg:block" style={{ '--d': '1.1s' } as React.CSSProperties}>
-                {searchEl}
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="bg-night px-5 pb-8 pt-5 sm:px-8 lg:hidden">{searchEl}</div>
+      {/* Buscador en flujo normal: nunca invade el carrusel de fabricantes. */}
+      <div className="relative border-b border-white/15 bg-night">
+        <div className={`${CONTAINER} py-8 lg:py-10`}>{searchEl}</div>
+      </div>
 
       {/* ═══════════ FABRICANTES ═══════════ */}
-      <section aria-label={t('landing.marquee.label')} className="overflow-hidden border-b border-white/10 py-5 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+      <section aria-label={t('landing.marquee.label')} className="overflow-hidden border-b border-white/10 bg-night-800 py-6 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
         <div className="marquee">
           {[0, 1].map((dup) => (
             <ul key={dup} className="flex shrink-0 items-center" aria-hidden={dup === 1}>
@@ -487,7 +493,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="lg:col-span-8">
               <Eyebrow n="01">{t('landing.statement.eyebrow')}</Eyebrow>
               <TextReveal
-                className="t-mega mt-10 text-[clamp(2.6rem,5.5vw,6.2rem)]"
+                className="t-mega home-title-section mt-10"
                 lines={[{ t: t('landing.statement.l1') }, { t: t('landing.statement.l2') }, { t: t('landing.statement.l3'), outline: true }]}
               />
               <Reveal>
@@ -513,7 +519,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 <dd className="t-num order-1 text-[clamp(3.4rem,6vw,6.2rem)] leading-none">
                   <Odometer value={s.value} suffix={s.suffix} />
                 </dd>
-                <dt className="micro order-2 mt-4 max-w-[190px] !text-[10.5px] !leading-[1.5] text-white/55">{s.label}</dt>
+                <dt className="micro order-2 mt-4 max-w-[190px] !text-[12px] !leading-[1.5] text-white/70">{s.label}</dt>
               </div>
             ))}
           </dl>
@@ -541,7 +547,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 <Eyebrow tone="dark" n="03">{t('landing.listings.eyebrow')}</Eyebrow>
                 <TextReveal
                   inline
-                  className="t-mega mt-6 block text-[clamp(3.6rem,8.4vw,8.6rem)]"
+                  className="t-mega home-title-section mt-6 block"
                   lines={[{ t: t('landing.listings.l1') }, { t: t('landing.listings.l2'), outline: true }]}
                 />
               </div>
@@ -560,7 +566,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className={CONTAINER}>
           <Eyebrow n="04">{t('landing.journey.eyebrow')}</Eyebrow>
           <TextReveal
-            className="t-mega mt-8 text-[clamp(3.6rem,11vw,11.5rem)]"
+            className="t-mega home-title-section mt-8"
             lines={[{ t: t('landing.journey.l1') }, { t: t('landing.journey.l2'), outline: true }]}
           />
         </div>
@@ -577,8 +583,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="lg:col-span-7">
               <Eyebrow tone="dark" n="05" nClass="text-night">{t('landing.sell.eyebrow')}</Eyebrow>
               <TextReveal
-                className="t-wide mt-8 text-[clamp(2.6rem,5.6vw,5.8rem)] leading-[0.92]"
-                lines={[{ t: t('landing.sell.title') }]}
+                className="t-wide home-title-column mt-8"
+                lines={[{ t: t('landing.sell.l1') }, { t: t('landing.sell.l2') }]}
               />
             </div>
             <Reveal className="lg:col-span-4 lg:col-start-9 lg:pt-14">
@@ -594,19 +600,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </Reveal>
           </div>
 
-          <div className="mt-20 grid border-t border-night/30 lg:mt-28 lg:grid-cols-3">
+          <h3 className="t-wide home-title-subsection mt-20 max-w-3xl lg:mt-28">{t('landing.sell.audiencesTitle')}</h3>
+          <div className="mt-8 grid border-t border-night/30 lg:grid-cols-3">
             {audiencias.map((a, i) => (
               <Reveal key={a.key} delay={i * 0.08} className={`py-9 ${i > 0 ? 'border-t border-night/30 lg:border-l lg:border-t-0 lg:pl-9' : ''} ${i < 2 ? 'lg:pr-9' : ''}`}>
                 <p className="t-num text-[13px] text-night/75">0{i + 1}</p>
-                <h3 className="t-wide mt-4 text-[clamp(1.5rem,2.3vw,2.1rem)] leading-[0.98]">{t(`home.audiences.${a.key}.title`)}</h3>
+                <h4 className="t-wide home-title-card mt-4">{t(`home.audiences.${a.key}.title`)}</h4>
                 <p className="mt-3 max-w-sm text-[15.5px] leading-relaxed text-night/85">{t(`home.audiences.${a.key}.desc`)}</p>
                 <div className="mt-6 flex flex-col items-start gap-2.5 text-[13px] font-semibold uppercase tracking-[0.08em]">
                   <LocalLink href="/publicar" className="inline-flex items-center gap-1.5"><span className="link-draw pb-0.5">{t('home.audiences.cta')}</span> <ArrowRight size={14} aria-hidden="true" /></LocalLink>
-                  <LocalLink href={`/catalogo?vendedor=${a.vendedor}`} className="text-night/75 transition-colors hover:text-night">
+                  <LocalLink href={`/catalogo?vendedor=${a.vendedor}`} className="text-night/85 transition-colors hover:text-night">
                     {t('home.audiences.buyCta', { tipo: t(`tiposVendedor.${a.plural}`) })}
                   </LocalLink>
                   {a.key !== 'private' && (
-                    <LocalLink href="/para-profesionales" className="text-night/75 transition-colors hover:text-night">{t('home.audiences.plansCta')}</LocalLink>
+                    <LocalLink href="/para-profesionales" className="text-night/85 transition-colors hover:text-night">{t('home.audiences.plansCta')}</LocalLink>
                   )}
                 </div>
               </Reveal>
@@ -622,7 +629,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="lg:col-span-5">
               <Eyebrow n="06">{t('landing.guides.eyebrow')}</Eyebrow>
               <TextReveal
-                className="t-mega mt-8 text-[clamp(3.2rem,7vw,7.4rem)]"
+                className="t-mega home-title-column mt-8"
                 lines={[{ t: t('landing.guides.l1') }, { t: t('landing.guides.l2'), outline: true }]}
               />
               <Magnetic className="mt-10">
@@ -634,11 +641,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 <Reveal key={g.slug} delay={i * 0.08} className="border-t border-white/15 last:border-b">
                   <LocalLink href={`/blog/${g.slug}`} data-cursor={t('landing.listings.see')} className="group grid gap-3 py-8 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-8">
                     <div>
-                      <p className="t-num text-[13px] text-white/45">{String(i + 1).padStart(2, '0')} · {g.readTime}</p>
-                      <h3 className="t-wide mt-3 text-[clamp(1.5rem,2.5vw,2.4rem)] leading-[0.98] transition-transform duration-500 group-hover:translate-x-3">{g.title}</h3>
-                      <p className="mt-3 line-clamp-2 max-w-2xl text-[15px] leading-relaxed text-white/55">{g.excerpt}</p>
+                      <p className="t-num text-[13px] text-white/70">{String(i + 1).padStart(2, '0')} · {g.readTime}</p>
+                      <h3 className="t-wide home-title-card mt-3 transition-transform duration-500 group-hover:translate-x-3">{g.title}</h3>
+                      <p className="mt-3 line-clamp-2 max-w-2xl text-[15px] leading-relaxed text-white/70">{g.excerpt}</p>
                     </div>
-                    <ArrowUpRight size={30} className="hidden shrink-0 text-white/40 transition-all duration-500 group-hover:rotate-45 group-hover:text-leaf-300 sm:block" aria-hidden="true" />
+                    <ArrowUpRight size={30} className="hidden shrink-0 text-white/70 transition-all duration-500 group-hover:rotate-45 group-hover:text-leaf-300 sm:block" aria-hidden="true" />
                   </LocalLink>
                 </Reveal>
               ))}
@@ -651,7 +658,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <section className="relative overflow-hidden bg-night"><div className={`${CONTAINER} pb-24 pt-24 lg:pb-40 lg:pt-36`}>
         <Eyebrow n="07">{t('landing.provinces.eyebrow')}</Eyebrow>
         <TextReveal
-          className="t-mega mt-8 text-[clamp(3.2rem,8vw,8.4rem)]"
+          className="t-mega home-title-section mt-8"
           lines={[{ t: t('landing.provinces.l1') }, { t: t('landing.provinces.l2'), outline: true }]}
         />
         <div className="mt-16 lg:mt-24">
@@ -666,7 +673,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="grain absolute inset-0 -z-10" aria-hidden="true" />
         <div className={`${CONTAINER} pb-14 pt-32 lg:pb-20`}>
           <TextReveal
-            className="t-mega text-[clamp(3.6rem,13.5vw,15rem)]"
+            className="t-mega home-title-cta"
             lines={[{ t: t('landing.cta.l1') }, { t: t('landing.cta.l2'), cls: 'text-leaf-300' }]}
           />
           <div className="mt-10 grid gap-8 lg:grid-cols-12 lg:items-end">

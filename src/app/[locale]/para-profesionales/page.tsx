@@ -19,8 +19,9 @@ import { setRequestLocale } from 'next-intl/server'
 import LocalLink from '@/components/LocalLink'
 import { PLANES_PRO } from '@/lib/planes-anuncios'
 import PlanesClient from './PlanesClient'
+import { comparisonEn, extrasEn, faqsEn } from './contenido-en'
 
-export const metadata: Metadata = {
+const metadataEs: Metadata = {
   title: 'Planes para profesionales y camperizadores',
   description:
     'Publica todo tu stock sin comisión por venta. 19 €/mes, o 190 €/año con 2 meses gratis. 15 anuncios, escaparate, estadísticas y destacados.',
@@ -39,6 +40,22 @@ export const metadata: Metadata = {
   },
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  if (locale !== 'en') return metadataEs
+  const title = 'Professional camper seller plans'
+  const description = 'List up to 15 campervans with 20 photos each, five featured spots a month and a branded shopfront. €19/month or €190/year, with no sales commission.'
+  const canonicalEs = 'https://camperocasion.online/para-profesionales'
+  const canonical = 'https://camperocasion.online/en/para-profesionales'
+  return {
+    title, description,
+    robots: { index: false, follow: true },
+    alternates: { canonical, languages: { 'es-ES': canonicalEs, 'x-default': canonicalEs } },
+    openGraph: { title, description, url: canonical, locale: 'en_US', type: 'website', siteName: 'CamperOcasión',
+      images: [{ url: 'https://camperocasion.online/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: title }] },
+  }
+}
+
 const extras = [
   {
     icon: Store,
@@ -48,7 +65,7 @@ const extras = [
   {
     icon: Camera,
     title: 'Más fotos, mejor anuncio',
-    desc: 'Hasta 30 fotos por vehículo. Una ficha completa responde antes las dudas del comprador.',
+    desc: `Hasta ${PLANES_PRO[0].fotos} fotos por vehículo. Una ficha completa responde antes las dudas del comprador.`,
   },
   {
     icon: Star,
@@ -113,7 +130,7 @@ const faqs = [
   },
   {
     q: '¿Qué pasa si me paso del cupo?',
-    a: 'No se borra nada. Los anuncios ya publicados siguen visibles; lo que no podrás hacer es publicar nuevos hasta pasar a Profesional, pausar o marcar alguno como vendido.',
+    a: 'No se borra nada. Si termina el plan o baja tu cupo, los anuncios que excedan el límite pueden pausarse. Podrás reactivarlos al recuperar cupo, o pausar o marcar otros como vendidos.',
   },
   {
     q: '¿Los créditos caducan?',
@@ -136,6 +153,55 @@ const faqs = [
 export default async function ParaProfesionalesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   setRequestLocale(locale)
+  const english = locale === 'en'
+  const extrasLocalized = english ? extras.map((item, index) => ({ ...item, ...extrasEn[index] })) : extras
+  const comparisonLocalized = english ? comparisonEn : filasComparativa
+  const faqsLocalized = english ? faqsEn : faqs
+  const copy = english ? {
+    breadcrumb: 'For professionals', planTitle: 'Professional camper seller plans',
+    planDesc: 'One plan: €19/month or €190/year. 15 listings, your own shopfront and analytics, with no sales commission or minimum term.',
+    eyebrow: 'Workshops, converters and dealers', heroTitle: 'List your inventory. No sales commission.',
+    heroDescription: 'One Professional plan at €19/month, billed monthly or annually, with no minimum term. 15 listings, your own shopfront, analytics and featured spots. If you are only selling your own camper, the free plan is enough.',
+    chips: ['No sales commission', 'Cancel from your dashboard', 'Two months free with annual billing', 'Invoice with tax ID'],
+    modelTitle: 'Three different things, not three account types',
+    modelDesc: 'CamperOcasión distinguishes who you are, how many vehicles you can list and how much extra visibility you want.',
+    sellerTitle: 'Seller type', sellerPrice: 'Always free', sellerDesc: 'Private seller, converter or professional. This sets your profile badge and catalog filters. Change it in your profile at no cost.',
+    planPrice: '€19/month, all included', planDescShort: '15 active listings, 20 photos each, five featured spots per month, a shopfront and analytics. No sales commission or minimum term.',
+    creditsTitle: 'Credits', creditsPrice: 'Pay as you go, no expiry', creditsDesc: 'Optional visibility: boost or feature a specific listing. Credits are purchased separately and do not expire.',
+    pricingTitle: 'Free or Professional', pricingDesc: 'Prices are in euros. Annual billing costs the same as ten monthly payments: pay for ten months and use twelve.',
+    comparisonTitle: 'Quick comparison', comparisonCaption: 'CamperOcasión plan comparison', included: 'What is included', free: 'Free', professional: 'Professional',
+    yes: 'Yes', includedLabel: 'Included', notIncluded: 'Not included',
+    comparisonNote: 'Your shopfront opens with the Professional plan. Existing active shops from before this change remain available.',
+    benefitsTitle: 'What you get with Professional',
+    trust1: 'No hidden terms', trust1Desc: 'No minimum term or sales commission. You can cancel from your dashboard and keep your plan through the paid period.',
+    trust2: 'Secure Stripe checkout', trust2Desc: 'Pay by card or supported wallet. Add your tax ID for an invoice. We do not store card details.',
+    trust3: 'Built for the camper market', trust3Desc: 'Reach camper buyers with relevant vehicle filters: maximum authorised mass, berths, range and homologation.',
+    faqTitle: 'Frequently asked questions', ctaTitle: 'Start free. Go Professional when selling becomes regular.',
+    ctaDesc: 'List your first camper without paying. If you run a workshop or dealership, Professional gives you more capacity, a shopfront and analytics without sales commission.',
+    publish: 'List for free', create: 'Create an account',
+  } : {
+    breadcrumb: 'Para profesionales', planTitle: 'Planes para profesionales y camperizadores',
+    planDesc: 'Un solo plan: 19 €/mes o 190 €/año. 15 anuncios, escaparate y estadísticas. Sin comisión por venta ni permanencia.',
+    eyebrow: 'Talleres, camperizadores y compraventas', heroTitle: 'Publica todo tu stock. Sin comisión por venta.',
+    heroDescription: 'Un solo plan: Profesional, 19 €/mes, mensual o anual y sin permanencia. 15 anuncios, escaparate, estadísticas y destacados. Si solo vendes tu camper, el plan gratuito es todo lo que necesitas.',
+    chips: ['Sin comisión por venta', 'Cancela en 2 clics', '2 meses gratis en el anual', 'Factura con NIF/CIF'],
+    modelTitle: 'Tres cosas distintas (y ninguna es «el tipo de cuenta»)',
+    modelDesc: 'En CamperOcasión separamos quién eres, cuánto puedes publicar y cuánta visibilidad quieres comprar.',
+    sellerTitle: 'Tipo de vendedor', sellerPrice: 'Gratis, siempre', sellerDesc: 'Particular, camperizador o profesional. Define tu sello y los filtros del catálogo. Se cambia en tu perfil y no cuesta nada.',
+    planPrice: '19 €/mes, todo incluido', planDescShort: '15 anuncios activos, 20 fotos, 5 destacados al mes, escaparate y estadísticas. Sin comisión por venta y sin permanencia.',
+    creditsTitle: 'Créditos', creditsPrice: 'Pago por uso, sin caducidad', creditsDesc: 'Visibilidad puntual: subir al nº 1 o destacar un anuncio concreto. Se compran aparte y no caducan.',
+    pricingTitle: 'Gratis o Profesional', pricingDesc: 'Los precios son en euros. El plan anual equivale a 10 mensualidades: pagas 10 y usas 12.',
+    comparisonTitle: 'Comparativa rápida', comparisonCaption: 'Comparación de planes de CamperOcasión', included: 'Qué incluye', free: 'Gratis', professional: 'Profesional',
+    yes: 'Sí', includedLabel: 'Incluido', notIncluded: 'No incluido',
+    comparisonNote: 'El escaparate se abre con el plan Profesional. Si ya tenías una tienda activa antes de este cambio, se mantiene.',
+    benefitsTitle: 'Qué consigues con Profesional',
+    trust1: 'Sin letra pequeña', trust1Desc: 'Sin permanencia, sin comisión por venta y sin renovación sorpresa: avisamos antes de cada cobro y puedes cancelar desde el panel.',
+    trust2: 'Pago con Stripe', trust2Desc: 'Tarjeta, Apple Pay y Google Pay. Factura automática con tu NIF/CIF. No almacenamos datos de tarjeta.',
+    trust3: 'Hecho para el sector camper', trust3Desc: 'Compradores que buscan camper, no coches. Filtros técnicos de verdad: MMA, plazas, autonomía, homologación.',
+    faqTitle: 'Preguntas frecuentes', ctaTitle: 'Empieza gratis. Hazte Profesional cuando vendas de forma habitual.',
+    ctaDesc: 'Publica tu primera camper sin pagar nada. Si eres taller o compraventa, 19 €/mes te dan capacidad, escaparate y estadísticas sin comisiones por venta.',
+    publish: 'Publicar gratis', create: 'Crear cuenta',
+  }
 
   const SITIO = 'https://camperocasion.online'
   const jsonLd = {
@@ -144,28 +210,28 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
-          { '@type': 'ListItem', position: 2, name: 'Para profesionales', item: SITIO + '/para-profesionales' },
+          { '@type': 'ListItem', position: 1, name: english ? 'Home' : 'Inicio', item: SITIO + (english ? '/en' : '/') },
+          { '@type': 'ListItem', position: 2, name: copy.breadcrumb, item: SITIO + (english ? '/en' : '') + '/para-profesionales' },
         ],
       },
       {
         '@type': 'Product',
-        '@id': SITIO + '/para-profesionales#plans',
-        name: 'Planes para profesionales y camperizadores',
-        description: 'Un solo plan: 19 €/mes o 190 €/año. 15 anuncios, escaparate y estadísticas. Sin comisión por venta ni permanencia.',
+        '@id': SITIO + (english ? '/en' : '') + '/para-profesionales#plans',
+        name: copy.planTitle,
+        description: copy.planDesc,
         brand: { '@type': 'Brand', name: 'CamperOcasión' },
         offers: PLANES_PRO.map(p => ({
           '@type': 'Offer',
-          name: p.nombre,
+          name: english ? 'Professional' : p.nombre,
           price: String(p.precioMes),
           priceCurrency: 'EUR',
           availability: 'https://schema.org/InStock',
-          url: SITIO + '/para-profesionales',
+          url: SITIO + (english ? '/en' : '') + '/para-profesionales',
         })),
       },
       {
         '@type': 'FAQPage',
-        mainEntity: faqs.map(f => ({
+        mainEntity: faqsLocalized.map(f => ({
           '@type': 'Question',
           name: f.q,
           acceptedAnswer: { '@type': 'Answer', text: f.a },
@@ -178,80 +244,70 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
 
-      <div className="bg-gradient-to-b from-slate-50 to-white border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 pt-12 pb-10">
-          <p className="text-sm font-semibold text-brand-accent uppercase tracking-wide mb-2">
-            Talleres, camperizadores y compraventas
+      <div className="public-hero">
+        <div className="public-shell relative z-10">
+          <p className="public-eyebrow">
+            {copy.eyebrow}
           </p>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 mb-4 max-w-3xl">
-            Publica todo tu stock. Sin comisión por venta.
+          <h1 className="public-hero-title t-mega">
+            {copy.heroTitle}
           </h1>
-          <p className="text-lg text-slate-600 max-w-2xl">
-            Un solo plan: Profesional, 19 €/mes, mensual o anual y sin permanencia. 15 anuncios,
-            escaparate, estadísticas y destacados. Si solo vendes tu camper, el plan gratuito es
-            todo lo que necesitas.
+          <p className="public-hero-description">
+            {copy.heroDescription}
           </p>
-          <div className="mt-6 flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
-            {[
-              'Sin comisión por venta',
-              'Cancela en 2 clics',
-              '2 meses gratis en el anual',
-              'Factura con NIF/CIF',
-            ].map(chip => (
-              <span key={chip} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                <Check size={13} className="text-emerald-600" aria-hidden="true" /> {chip}
+          <div className="mt-8 flex flex-wrap gap-2 text-xs font-semibold text-white">
+            {copy.chips.map(chip => (
+              <span key={chip} className="inline-flex items-center gap-1.5 border border-white/30 bg-white/10 px-3 py-1.5">
+                <Check size={13} className="text-leaf-300" aria-hidden="true" /> {chip}
               </span>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-10">
+      <div className="public-shell py-12 lg:py-20">
         {/* Modelo mental: tres cosas distintas que no hay que confundir */}
         <section aria-labelledby="modelo" className="mb-10">
           <h2 id="modelo" className="text-xl font-black text-slate-900 mb-1">
-            Tres cosas distintas (y ninguna es «el tipo de cuenta»)
+            {copy.modelTitle}
           </h2>
           <p className="text-sm text-slate-600 mb-4">
-            En CamperOcasión separamos quién eres, cuánto puedes publicar y cuánta visibilidad quieres comprar.
+            {copy.modelDesc}
           </p>
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex items-center gap-2 text-slate-900 font-bold">
-                <Users size={18} className="text-brand-accent" aria-hidden="true" /> Tipo de vendedor
+                <Users size={18} className="text-brand-accent" aria-hidden="true" /> {copy.sellerTitle}
               </div>
-              <p className="text-xs font-semibold text-emerald-700 mt-1">Gratis, siempre</p>
+              <p className="text-xs font-semibold text-emerald-700 mt-1">{copy.sellerPrice}</p>
               <p className="text-sm text-slate-600 mt-2">
-                Particular, camperizador o profesional. Define tu sello y los filtros del catálogo.
-                Se cambia en tu perfil y no cuesta nada.
+                {copy.sellerDesc}
               </p>
             </div>
             <div className="rounded-2xl border border-brand-accent bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2 text-slate-900 font-bold">
                 <Sparkles size={18} className="text-brand-accent" aria-hidden="true" /> Plan
               </div>
-              <p className="text-xs font-semibold text-emerald-700 mt-1">19 €/mes, todo incluido</p>
+              <p className="text-xs font-semibold text-emerald-700 mt-1">{copy.planPrice}</p>
               <p className="text-sm text-slate-600 mt-2">
-                15 anuncios activos, 20 fotos, 5 destacados al mes, escaparate y estadísticas.
-                Sin comisión por venta y sin permanencia.
+                {copy.planDescShort}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex items-center gap-2 text-slate-900 font-bold">
-                <CreditCard size={18} className="text-brand-accent" aria-hidden="true" /> Créditos
+                <CreditCard size={18} className="text-brand-accent" aria-hidden="true" /> {copy.creditsTitle}
               </div>
-              <p className="text-xs font-semibold text-emerald-700 mt-1">Pago por uso, sin caducidad</p>
+              <p className="text-xs font-semibold text-emerald-700 mt-1">{copy.creditsPrice}</p>
               <p className="text-sm text-slate-600 mt-2">
-                Visibilidad puntual: subir al nº 1 o destacar un anuncio concreto.
-                Se compran aparte y no caducan.
+                {copy.creditsDesc}
               </p>
             </div>
           </div>
         </section>
 
-        <h2 className="text-2xl font-black text-slate-900 mb-1">Gratis o Profesional</h2>
+        <h2 className="text-2xl font-black text-slate-900 mb-1">{copy.pricingTitle}</h2>
         <p className="text-sm text-slate-600 mb-5">
-          Los precios son en euros. El plan anual equivale a 10 mensualidades: pagas 10 y usas 12.
+          {copy.pricingDesc}
         </p>
 
         <PlanesClient />
@@ -259,28 +315,28 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
         {/* Comparativa */}
         <section aria-labelledby="comparativa" className="mt-14">
           <h2 id="comparativa" className="text-2xl font-black text-slate-900 mb-4">
-            Comparativa rápida
+            {copy.comparisonTitle}
           </h2>
           <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
             <table className="w-full min-w-[640px] text-sm">
-              <caption className="sr-only">Comparación de planes de CamperOcasión</caption>
+              <caption className="sr-only">{copy.comparisonCaption}</caption>
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-left">
-                  <th scope="col" className="px-4 py-3 font-bold text-slate-900">Qué incluye</th>
-                  <th scope="col" className="px-4 py-3 text-center font-bold text-slate-700">Gratis</th>
-                  <th scope="col" className="px-4 py-3 text-center font-bold text-brand-accent">Profesional<br /><span className="text-xs font-normal">19 €/mes</span></th>
+                  <th scope="col" className="px-4 py-3 font-bold text-slate-900">{copy.included}</th>
+                  <th scope="col" className="px-4 py-3 text-center font-bold text-slate-700">{copy.free}</th>
+                  <th scope="col" className="px-4 py-3 text-center font-bold text-brand-accent">{copy.professional}<br /><span className="text-xs font-normal">19 €/mes</span></th>
                 </tr>
               </thead>
               <tbody>
-                {filasComparativa.map((fila, i) => (
+                {comparisonLocalized.map((fila, i) => (
                   <tr key={fila.label} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}>
                     <th scope="row" className="px-4 py-3 text-left font-medium text-slate-700">{fila.label}</th>
                     {[fila.gratis, fila.profesional].map((valor, j) => (
                       <td key={j} className={`px-4 py-3 text-center ${j === 1 ? 'bg-emerald-50/60 font-semibold text-emerald-900' : 'text-slate-700'}`}>
-                        {valor === 'Sí' ? (
-                          <Check size={16} className="mx-auto text-emerald-600" aria-label="Incluido" />
+                        {valor === copy.yes ? (
+                          <Check size={16} className="mx-auto text-emerald-600" aria-label={copy.includedLabel} />
                         ) : valor === '—' ? (
-                          <Minus size={16} className="mx-auto text-slate-300" aria-label="No incluido" />
+                          <Minus size={16} className="mx-auto text-slate-300" aria-label={copy.notIncluded} />
                         ) : (
                           valor
                         )}
@@ -292,15 +348,15 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
             </table>
           </div>
           <p className="text-xs text-slate-500 mt-3">
-            El escaparate se abre con el plan Profesional. Si ya tenías una tienda activa antes de este cambio, se mantiene.
+            {copy.comparisonNote}
           </p>
         </section>
 
         {/* Qué resuelve */}
         <section className="mt-14">
-          <h2 className="text-2xl font-black text-slate-900 mb-4">Qué consigues con Profesional</h2>
+          <h2 className="text-2xl font-black text-slate-900 mb-4">{copy.benefitsTitle}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {extras.map(e => (
+            {extrasLocalized.map(e => (
               <div key={e.title} className="rounded-2xl border border-slate-200 bg-white p-4">
                 <e.icon size={22} className="text-brand-accent mb-2" aria-hidden="true" />
                 <h3 className="font-bold text-slate-900">{e.title}</h3>
@@ -314,23 +370,23 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
         <section className="mt-14 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl bg-slate-900 p-5 text-white">
             <ShieldCheck size={22} className="text-brand-accent-light mb-2" aria-hidden="true" />
-            <h3 className="font-bold">Sin letra pequeña</h3>
+            <h3 className="font-bold">{copy.trust1}</h3>
             <p className="text-sm text-slate-300 mt-1">
-              Sin permanencia, sin comisión por venta y sin renovación sorpresa: avisamos antes de cada cobro y puedes cancelar desde el panel.
+              {copy.trust1Desc}
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <CreditCard size={22} className="text-brand-accent mb-2" aria-hidden="true" />
-            <h3 className="font-bold text-slate-900">Pago con Stripe</h3>
+            <h3 className="font-bold text-slate-900">{copy.trust2}</h3>
             <p className="text-sm text-slate-600 mt-1">
-              Tarjeta, Apple Pay y Google Pay. Factura automática con tu NIF/CIF. No almacenamos datos de tarjeta.
+              {copy.trust2Desc}
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <Users size={22} className="text-brand-accent mb-2" aria-hidden="true" />
-            <h3 className="font-bold text-slate-900">Hecho para el sector camper</h3>
+            <h3 className="font-bold text-slate-900">{copy.trust3}</h3>
             <p className="text-sm text-slate-600 mt-1">
-              Compradores que buscan camper, no coches. Filtros técnicos de verdad: MMA, plazas, autonomía, homologación.
+              {copy.trust3Desc}
             </p>
           </div>
         </section>
@@ -338,10 +394,10 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
         {/* FAQ */}
         <section aria-labelledby="faq" className="mt-14">
           <h2 id="faq" className="text-2xl font-black text-slate-900 mb-4">
-            Preguntas frecuentes
+            {copy.faqTitle}
           </h2>
           <div className="divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
-            {faqs.map(f => (
+            {faqsLocalized.map(f => (
               <details key={f.q} className="group p-4 sm:p-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-slate-900">
                   {f.q}
@@ -354,17 +410,16 @@ export default async function ParaProfesionalesPage({ params }: { params: Promis
         </section>
 
         <section className="mt-14 rounded-2xl bg-brand-primary p-6 sm:p-8 text-white">
-          <h2 className="text-2xl font-black">Empieza gratis. Hazte Profesional cuando vendas de forma habitual.</h2>
+          <h2 className="text-2xl font-black">{copy.ctaTitle}</h2>
           <p className="text-slate-300 mt-2 max-w-2xl">
-            Publica tu primera camper sin pagar nada. Si eres taller o compraventa, 19 €/mes te dan
-            capacidad, escaparate y estadísticas sin comisiones por venta.
+            {copy.ctaDesc}
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <LocalLink href="/publicar" className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-5 py-3 text-sm font-bold text-white hover:bg-brand-accent-dark">
-              Publicar gratis
+              {copy.publish}
             </LocalLink>
             <LocalLink href="/register" className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-5 py-3 text-sm font-bold text-white hover:bg-white/10">
-              Crear cuenta
+              {copy.create}
             </LocalLink>
           </div>
         </section>

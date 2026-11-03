@@ -162,14 +162,14 @@ export default async function CategoriaPage({ params }: Props) {
   }
 
   return (
-    <div className="bg-gray-50">
+    <div className="public-page">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
       />
 
-      <section className="bg-gradient-to-br from-brand-dark via-brand-primary to-blue-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-10 md:py-14">
+      <section className="public-hero">
+        <div className="public-shell relative z-10">
           <nav aria-label="Migas de pan" className="text-sm text-blue-100 mb-5">
             <LocalLink href="/" className="hover:text-white">Inicio</LocalLink>
             <span aria-hidden="true" className="mx-2">/</span>
@@ -180,22 +180,22 @@ export default async function CategoriaPage({ params }: Props) {
 
           <div className="max-w-4xl">
             <span className="text-5xl" aria-hidden="true">{categoria.icono}</span>
-            <h1 className="text-3xl md:text-5xl font-black mt-3 mb-4">
+            <h1 className="public-hero-title t-mega">
               {categoria.nombre} en venta en España
             </h1>
-            <p className="text-lg md:text-xl text-blue-50 leading-relaxed">
+            <p className="public-hero-description">
               {categoria.descripcion}
             </p>
             <div className="flex flex-wrap gap-3 mt-7">
               <LocalLink
                 href={`/catalogo?categoria=${categoria.slug}`}
-                className="bg-brand-accent text-brand-dark px-5 py-3 rounded-xl font-bold hover:brightness-105 transition"
+                className="btn btn-green"
               >
                 Explorar y filtrar anuncios
               </LocalLink>
               <LocalLink
                 href="/publicar"
-                className="bg-white/10 border border-white/30 text-white px-5 py-3 rounded-xl font-bold hover:bg-white/20 transition"
+                className="btn btn-ghost"
               >
                 Publicar gratis
               </LocalLink>

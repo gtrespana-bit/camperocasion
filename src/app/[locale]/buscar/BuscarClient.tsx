@@ -13,6 +13,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import UbicacionSelector from '@/components/UbicacionSelector'
 import { useTranslations } from 'next-intl'
+import WorkHeader from '@/components/editorial/WorkHeader'
 import { productUrl } from '@/lib/product-url'
 import { FiltrosTecnicosPanel } from '@/components/FiltrosTecnicosPanel'
 import {
@@ -202,6 +203,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
   const [productos, setProductos] = useState<Producto[]>([])
   const [loading, setLoading] = useState(false)
   const [resultCount, setResultCount] = useState(0)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   // ---- Búsqueda guardada ("avísame cuando aparezca") ----
   const { user } = useAuth()
@@ -370,62 +372,44 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
   }, [query, categoria, subcategoria, marca, condicion, ubicacionEstado, ubicacionCiudad, precioMin, precioMax, orden, vendedor, filtrosTecnicos, filtrosRango])
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Contenido SEO visible para motores de búsqueda */}
-      <div className="mb-6">
-        {query ? (
-          <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Resultados de búsqueda para &ldquo;{query}&rdquo; en España
-            </h1>
-            <p className="text-gray-600">
-              Furgonetas camper y autocaravanas de ocasión relacionadas con &ldquo;{query}&rdquo; en camperocasion.online.
-              Anuncios de particulares, camperizadores y profesionales de toda España.
-            </p>
-          </>
-        ) : categoria ? (
-          <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {cat?.label || categoria} de ocasión en España — camperocasion.online
-            </h1>
-            <p className="text-gray-600">
-              Explora {cat?.label || categoria.toLowerCase()} de segunda mano en toda España, con ficha técnica completa
-              (kilómetros, DGT, homologación, plazas y autonomía). Publicar tu anuncio es gratis.
-            </p>
-          </>
-        ) : ubicacionCiudad || ubicacionEstado ? (
-          <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Campers y autocaravanas de ocasión en {ubicacionCiudad || ubicacionEstado}, España
-            </h1>
-            <p className="text-gray-600">
-              Compra y vende furgonetas camper y autocaravanas en {ubicacionCiudad || ubicacionEstado}.
-              Anuncios con ficha técnica, contacto directo con el vendedor y publicación gratuita.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Buscar furgonetas camper y autocaravanas de ocasión
-            </h1>
-            <p className="text-gray-600">
-              Busca por marca, tipo o provincia entre las furgonetas camper y autocaravanas de ocasión
-              publicadas en España. El marketplace especializado en el mundo camper.
-            </p>
-          </>
-        )}
-      </div>
-
-      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap">
-        <LocalLink href="/" className="hover:text-brand-primary">Inicio</LocalLink>
-        <ChevronRight size={14} />
+    <div className="work-space max-w-7xl mx-auto px-5 py-8 md:py-12">
+      {/* El título cambia con el contexto de búsqueda y conserva el H1 semántico. */}
+      <WorkHeader
+        eyebrow={t('page.eyebrow')}
+        title={query
+          ? t('page.queryTitle', { query })
+          : categoria
+            ? t('page.categoryTitle', { category: cat?.label || categoria })
+            : ubicacionCiudad || ubicacionEstado
+              ? t('page.locationTitle', { location: ubicacionCiudad || ubicacionEstado })
+              : t('page.defaultTitle')}
+        description={query
+          ? t('page.queryDesc', { query })
+          : categoria
+            ? t('page.categoryDesc', { category: cat?.label || categoria })
+            : ubicacionCiudad || ubicacionEstado
+              ? t('page.locationDesc', { location: ubicacionCiudad || ubicacionEstado })
+              : t('page.defaultDesc')}
+      />
+      <nav aria-label={t('page.breadcrumb')} className="flex items-center gap-2 text-sm text-gray-500 mb-7 flex-wrap">
+        <LocalLink href="/" className="hover:text-brand-primary">{t('page.home')}</LocalLink>
+        <ChevronRight size={14} aria-hidden="true" />
         <span className="text-gray-800 font-medium">{t('title')}</span>
-        {query && (<><ChevronRight size={14} /><span className="text-gray-900 font-semibold">&ldquo;{query}&rdquo;</span></>)}
+        {query && (<><ChevronRight size={14} aria-hidden="true" /><span className="text-gray-900 font-semibold">&ldquo;{query}&rdquo;</span></>)}
       </nav>
 
       <div className="flex flex-col lg:flex-row gap-6">
         <aside className="w-full lg:w-72 flex-shrink-0">
-          <div className="bg-white rounded-xl p-5 shadow-sm sticky top-20">
+          <button
+            type="button"
+            aria-expanded={filtersOpen}
+            aria-controls="search-filter-panel"
+            onClick={() => setFiltersOpen(open => !open)}
+            className="lg:hidden w-full mb-3 flex items-center justify-between border border-night/15 bg-white px-5 py-3 text-night font-semibold"
+          >
+            {t('filters')} <span aria-hidden="true">{filtersOpen ? '−' : '+'}</span>
+          </button>
+          <div id="search-filter-panel" className={`${filtersOpen ? 'block' : 'hidden'} lg:block bg-white border border-night/10 rounded-md p-5 shadow-sm lg:sticky lg:top-20`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg">{t('filters')}</h3>
               {searchParams && Object.keys(searchParams).length > 0 && (
@@ -597,7 +581,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
                 />
                 <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
               </div>
-              <button type="submit" className="bg-brand-accent text-white px-6 rounded-lg font-bold hover:bg-accent/90 transition shrink-0">Buscar</button>
+              <button type="submit" className="bg-brand-accent text-white px-6 rounded-lg font-bold hover:bg-accent/90 transition shrink-0">{t('search')}</button>
             </form>
           </div>
 
@@ -637,7 +621,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
                     <h3 className="text-xl font-bold text-gray-800 mb-2">{t('noResults')}</h3>
                     <p className="text-gray-500">{t('noResultsDesc')}</p>
                     {query && (
-                      <p className="text-sm text-gray-500 mt-1">Prueba buscando: <button onClick={() => setParam('q', '')} className="text-brand-primary hover:underline">mostrar todos los productos</button></p>
+                      <p className="text-sm text-gray-500 mt-1">{t('trySearch')} <button type="button" onClick={() => setParam('q', '')} className="text-brand-primary hover:underline">{t('showAll')}</button></p>
                     )}
                   </div>
                 ) : (
@@ -650,7 +634,7 @@ export default function BuscarClient({ searchParams: searchParamsPromise }: { se
           )}
 
           {!query && !categoria && !subcategoria && !marca && !condicion && !ubicacionEstado && !ubicacionCiudad && !precioMin && !precioMax && productos.length > 0 && (
-            <p className="text-sm text-gray-500 mb-4">Mostrando todos los productos ({resultCount} resultados)</p>
+            <p className="text-sm text-gray-500 mb-4">{t('showingAll', { count: resultCount })}</p>
           )}
         </div>
       </div>

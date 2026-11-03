@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { alternatesSeo } from '@/lib/seo'
 import LocalLink from '@/components/LocalLink'
+import PublicHero from '@/components/editorial/PublicHero'
 import { ArrowLeft, Smartphone, Share, Download, PlusCircle, ArrowDownToLine, CheckCircle2, Apple, MonitorDown } from 'lucide-react'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
@@ -15,22 +16,13 @@ export default async function ComoInstalarAppPage({ params }: { params: Promise<
   setRequestLocale(locale)
   const t = await getTranslations({ locale, namespace: 'installApp' })
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="public-page min-h-screen">
+      <PublicHero compact eyebrow="CamperOcasión · App" title={t('title')} description={t('subtitle')} />
+      <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8 lg:py-20">
       {/* Botón volver */}
       <LocalLink href="/" className="inline-flex items-center gap-2 text-brand-primary font-semibold text-sm hover:underline mb-6">
         <ArrowLeft size={16} /> {t('backHome')}
       </LocalLink>
-
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="w-20 h-20 bg-brand-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-          <Smartphone size={36} className="text-brand-accent" />
-        </div>
-        <h1 className="text-3xl font-black text-gray-900 mb-2">{t('title')}</h1>
-        <p className="text-gray-600 max-w-md mx-auto">
-          {t('subtitle')}
-        </p>
-      </div>
 
       {/* Sección Android */}
       <section className="mb-10">
@@ -41,7 +33,7 @@ export default async function ComoInstalarAppPage({ params }: { params: Promise<
           <h2 className="text-2xl font-bold text-gray-900">Android</h2>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="public-card overflow-hidden">
           <div className="bg-green-50 px-5 py-4 border-b border-green-100">
             <p className="text-sm font-semibold text-green-800">{t('androidReq')}</p>
           </div>
@@ -107,7 +99,7 @@ export default async function ComoInstalarAppPage({ params }: { params: Promise<
           <h2 className="text-2xl font-bold text-gray-900">iPhone / iPad</h2>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="public-card overflow-hidden">
           <div className="bg-blue-50 px-5 py-4 border-b border-blue-100">
             <p className="text-sm font-semibold text-blue-800">{t('iosReq')}</p>
           </div>
@@ -211,6 +203,7 @@ export default async function ComoInstalarAppPage({ params }: { params: Promise<
         >
           Ir al marketplace <ArrowDownToLine size={18} />
         </LocalLink>
+      </div>
       </div>
     </div>
   )

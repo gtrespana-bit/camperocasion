@@ -120,9 +120,9 @@ export default function FormularioGestoria() {
           className={`${inputCls} bg-white ${provincia ? '' : 'text-gray-400'}`}
         >
           <option value="">¿Dónde tramitar? (comunidad)</option>
-          {COMUNIDADES_AUTONOMAS.map((c: any) => (
-            <option key={c.nombre} value={c.nombre}>
-              {c.nombre}
+          {COMUNIDADES_AUTONOMAS.map((comunidad) => (
+            <option key={comunidad} value={comunidad}>
+              {comunidad}
             </option>
           ))}
         </select>

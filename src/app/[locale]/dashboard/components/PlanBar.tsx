@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { ArrowRight, CreditCard, Sparkles } from 'lucide-react'
 import { etiquetaPlan } from '@/lib/planes-anuncios'
 import type { DashboardTab } from './DashboardNav'
@@ -27,6 +28,7 @@ type Estado = {
  * el contenido.
  */
 export default function PlanBar({ onAbrirPlan }: { onAbrirPlan: (tab: DashboardTab) => void }) {
+  const t = useTranslations('dashboard.planBar')
   const [estado, setEstado] = useState<Estado | null>(null)
 
   useEffect(() => {
@@ -53,18 +55,19 @@ export default function PlanBar({ onAbrirPlan }: { onAbrirPlan: (tab: DashboardT
   if (!estado) return null
 
   const cupo = estado.cupo
+  const plan = estado.planPagoVigente ? estado.planContratado : estado.plan
   const nombre = estado.trial
-    ? 'Prueba Profesional'
+    ? t('trial')
     : estado.trialGracia
-      ? 'Prueba terminada (gracia)'
-      : etiquetaPlan(estado.planPagoVigente ? estado.planContratado : estado.plan)
+      ? t('trialGrace')
+      : plan === 'plus' ? t('professional') : plan === 'gratis' ? t('free') : etiquetaPlan(plan)
 
-  let texto = `${nombre}`
-  if (cupo.max == null) texto += ' · anuncios ilimitados'
-  else texto += ` · ${cupo.usados}/${cupo.max} anuncios`
-  if (estado.trial && estado.diasTrial > 0) texto += ` · quedan ${estado.diasTrial} días`
-  if (estado.trialGracia) texto += ` · ${estado.diasGracia || 0} días de gracia`
-  if (estado.pausadosPorPlan) texto += ` · ${estado.pausadosPorPlan} pausado${estado.pausadosPorPlan === 1 ? '' : 's'}`
+  const detalles = [nombre]
+  detalles.push(cupo.max == null ? t('unlimited') : t('usage', { used: cupo.usados, max: cupo.max }))
+  if (estado.trial && estado.diasTrial > 0) detalles.push(t('trialDays', { count: estado.diasTrial }))
+  if (estado.trialGracia) detalles.push(t('graceDays', { count: estado.diasGracia || 0 }))
+  if (estado.pausadosPorPlan) detalles.push(t('paused', { count: estado.pausadosPorPlan }))
+  const texto = detalles.join(' · ')
 
   const fallo = Boolean(estado.pagoFallido)
   const destacar = Boolean(estado.trial || estado.trialGracia || !estado.planPagoVigente)
@@ -73,7 +76,7 @@ export default function PlanBar({ onAbrirPlan }: { onAbrirPlan: (tab: DashboardT
     <button
       type="button"
       onClick={() => onAbrirPlan('plan')}
-      className={`mb-5 flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-left text-sm transition ${
+      className={`mb-5 flex w-full flex-col items-start gap-2 rounded-md border px-4 py-3 text-left text-sm transition sm:flex-row sm:items-center sm:justify-between ${
         fallo
           ? 'border-red-300 bg-red-50 hover:bg-red-100'
           : destacar
@@ -81,25 +84,25 @@ export default function PlanBar({ onAbrirPlan }: { onAbrirPlan: (tab: DashboardT
             : 'border-slate-200 bg-white hover:bg-slate-50'
       }`}
     >
-      <span className="flex min-w-0 items-center gap-2">
+      <span className="flex min-w-0 items-start gap-2 sm:items-center">
         {fallo ? (
           <CreditCard size={16} className="shrink-0 text-red-600" aria-hidden="true" />
         ) : (
           <Sparkles size={16} className={destacar ? 'shrink-0 text-amber-600' : 'shrink-0 text-emerald-600'} aria-hidden="true" />
         )}
-        <span className={`truncate font-semibold ${fallo ? 'text-red-900' : 'text-slate-800'}`}>
-          {fallo ? 'Cobro pendiente: ' : 'Plan: '}
+        <span className={`font-semibold leading-relaxed ${fallo ? 'text-red-900' : 'text-slate-800'}`}>
+          {fallo ? t('pendingPayment') : t('planLabel')}{' '}
           {texto}
         </span>
       </span>
       <span className={`flex shrink-0 items-center gap-1 text-xs font-bold ${fallo ? 'text-red-800' : destacar ? 'text-amber-800' : 'text-slate-500'}`}>
         {fallo
-          ? 'Actualizar'
+          ? t('update')
           : estado.trial || estado.trialGracia
-            ? 'Activar'
+            ? t('activate')
             : estado.planPagoVigente
-              ? 'Gestionar'
-              : 'Ver Profesional'}
+              ? t('manage')
+              : t('seeProfessional')}
         <ArrowRight size={13} aria-hidden="true" />
       </span>
     </button>

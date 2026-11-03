@@ -23,6 +23,20 @@ import { agruparFichaTecnica, camposFichaExtras } from '@/lib/categorias'
 import { formatPrecio } from '@/lib/precio'
 import { useTranslations } from 'next-intl'
 
+function ProductErrorFallback() {
+  const t = useTranslations('errorPage')
+  const tProduct = useTranslations('productDetail')
+  return (
+    <div role="alert" className="public-shell py-20 text-center">
+      <div className="account-card mx-auto max-w-lg p-7 sm:p-10">
+        <h1 className="work-title work-title--account mb-4">{t('title')}</h1>
+        <p className="work-description mx-auto mb-7">{t('desc')}</p>
+        <LocalLink href="/" className="inline-block bg-night text-white px-6 py-3 font-semibold hover:bg-leaf hover:text-night transition-colors">{tProduct('backHome')}</LocalLink>
+      </div>
+    </div>
+  )
+}
+
 // Error boundary to catch render errors
 class ProductErrorBoundary extends Component<{children: React.ReactNode}, {hasError: boolean}> {
   state = { hasError: false }
@@ -30,13 +44,7 @@ class ProductErrorBoundary extends Component<{children: React.ReactNode}, {hasEr
   componentDidCatch(error: Error) { console.error('ProductPage error:', error) }
   render() {
     if (this.state.hasError) {
-      return (
-        <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Algo salió mal</h1>
-          <p className="text-gray-500 mb-6">Error al cargar el producto. Intenta recargar la página.</p>
-          <LocalLink href="/" className="inline-block bg-brand-primary text-white px-8 py-3 rounded-lg font-bold">Volver al inicio</LocalLink>
-        </div>
-      )
+      return <ProductErrorFallback />
     }
     return this.props.children
   }
@@ -210,9 +218,12 @@ function ProductoPageClientInner({
   )
 
   if (!producto) return (
-    <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">{t('notFound')}</h1>
-      <LocalLink href="/" className="inline-block bg-brand-primary text-white px-8 py-3 rounded-lg font-bold">{t('backHome')}</LocalLink>
+    <div className="public-shell py-20 text-center">
+      <div className="account-card mx-auto max-w-lg p-7 sm:p-10">
+        <h1 className="work-title work-title--account mb-4">{t('notFound')}</h1>
+        <p className="work-description mx-auto mb-7">{t('notFoundDesc')}</p>
+        <LocalLink href="/catalogo" className="inline-block bg-night text-white px-6 py-3 font-semibold hover:bg-leaf hover:text-night transition-colors">{t('breadcrumbCatalog')}</LocalLink>
+      </div>
     </div>
   )
 
@@ -245,7 +256,7 @@ function ProductoPageClientInner({
   const whatsappLink = enlaceWhatsApp(whatsappPhone, t('whatsappMsg', { title: producto.titulo }))
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="public-shell py-8 lg:py-12">
       {producto.vendido && (
         <div className="mb-6 bg-gray-100 border-2 border-gray-300 rounded-2xl p-5 animate-fadeIn">
           <div className="flex items-start gap-3">
@@ -332,14 +343,14 @@ function ProductoPageClientInner({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {imagenes.length > 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm border overflow-hidden"><ImageGallery images={imagenes} alt={producto.titulo} /></div>
+            <div className="public-card overflow-hidden"><ImageGallery images={imagenes} alt={producto.titulo} /></div>
           ) : (
-            <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+            <div className="public-card overflow-hidden">
               <div className="aspect-square md:aspect-[16/10] bg-gray-100 flex items-center justify-center"><Tag size={48} className="text-gray-500" /></div>
             </div>
           )}
-          <div className="bg-white rounded-2xl shadow-sm border p-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-3">{producto.titulo}</h1>
+          <div className="public-card p-6">
+            <h1 className="font-grotesk text-[clamp(2rem,3.2vw,3.25rem)] font-bold leading-[1.08] text-night mb-5">{producto.titulo}</h1>
             <div className="flex flex-wrap gap-2 mb-4">
               <span className="badge-trust">{producto.estado}</span>
               {producto.marca && <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">{producto.marca}</span>}
@@ -407,8 +418,8 @@ function ProductoPageClientInner({
         </div>
 
         <div>
-          <div className="bg-white rounded-2xl shadow-sm border p-6 sticky top-20">
-            <p className="text-4xl font-black text-brand-primary">{formatPrecio(producto.precio_usd || 0)}</p>
+          <div className="public-card p-6 sticky top-20">
+            <p className="t-num text-[clamp(2.5rem,4vw,4rem)] leading-none text-night">{formatPrecio(producto.precio_usd || 0)}</p>
             <div className="flex items-center gap-4 text-xs text-gray-500 my-4 pb-4 border-b flex-wrap">
               <span className="flex items-center gap-1"><Clock size={14} /> {t('published')}</span>
               <span className="flex items-center gap-1">

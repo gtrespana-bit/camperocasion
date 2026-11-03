@@ -9,6 +9,7 @@ import { agruparPorFabricante, etiquetaModelo } from '@/lib/marcas'
 import { ESTADOS, getMunicipiosNombres } from '@/lib/ubicaciones'
 import { Camera, X, ArrowLeft, Save, AlertCircle, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import WorkHeader from '@/components/editorial/WorkHeader'
 import Image from 'next/image'
 import { compressImages } from '@/lib/compress-image'
 import ExpedienteVehiculo from '@/components/ExpedienteVehiculo'
@@ -67,8 +68,8 @@ export default function EditarPage() {
         .eq('id', productoId)
         .maybeSingle()
 
-      if (!prod) { setError('No encontrado'); setLoading(false); return }
-      if (user && prod.user_id !== user.id) { setError('No tienes permiso'); setLoading(false); return }
+      if (!prod) { setError(t('notFound')); setLoading(false); return }
+      if (user && prod.user_id !== user.id) { setError(t('notAllowed')); setLoading(false); return }
 
       // En CamperOcasión, la categoría canónica única es 'camper'.
       setTitulo(prod.titulo || '')
@@ -122,7 +123,7 @@ export default function EditarPage() {
       setLoading(false)
     }
     load()
-  }, [productoId, user, authLoading, router])
+  }, [productoId, user, authLoading, router, t])
 
   if (!session) return null
 
@@ -325,23 +326,22 @@ export default function EditarPage() {
   const removeNewImage = (i: number) => setNewImages(prev => prev.filter((_, idx) => idx !== i))
   const removeCurrentImage = (i: number) => setCurrentImages(prev => prev.filter((_, idx) => idx !== i))
 
-  if (loading) return <div className="max-w-3xl mx-auto px-4 py-12 text-center"><p>Cargando...</p></div>
+  if (loading) return <div className="max-w-3xl mx-auto px-4 py-12 text-center"><p>{t('loading')}</p></div>
   if (error && !titulo) return <div className="max-w-3xl mx-auto px-4 py-12 text-center"><h2 className="text-2xl font-bold mb-4">{error}</h2><button onClick={() => router.push('/dashboard')} className="bg-brand-primary text-white px-6 py-2 rounded-lg">Volver</button></div>
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="work-space max-w-3xl mx-auto px-5 py-8 md:py-12">
       <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-500 hover:text-gray-800 mb-6 text-sm">
         <ArrowLeft size={16} /> {t('back')}
       </button>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('title')}</h1>
-      <p className="text-gray-500 mb-6">Modifica los campos que necesites</p>
+      <WorkHeader title={t('title')} description={t('pageDescription')} eyebrow={t('pageEyebrow')} />
 
       {/* Alerts */}
       {error && <div className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-lg mb-4 text-sm"><AlertCircle size={18} /> {error}</div>}
       {success && <div className="flex items-center gap-2 bg-green-50 text-green-700 p-3 rounded-lg mb-4 text-sm">✅ {success}</div>}
 
-      <div className="bg-white rounded-2xl shadow-sm p-6 border space-y-5">
+      <div className="account-card p-5 sm:p-7 space-y-5">
         {/* Título */}
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-1.5">{t('title2')}</label>

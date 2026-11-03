@@ -82,7 +82,7 @@ export const CatalogFilters = ({
     // En escritorio la columna de filtros es sticky: al crecer con los bloques
     // técnicos se le da scroll propio para que el pie (limpiar filtros) siga
     // siendo alcanzable sin perder la posición en el listado.
-    <div className="bg-white rounded-xl p-5 shadow-sm sticky top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+    <div className="public-card p-5 sticky top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
       <h3 className="font-bold text-lg text-gray-900 mb-4">🔍 {t('catalog.filtersTitle')}</h3>
 
       {/* Tipo de vehículo: los 7 tipos agrupados por familia (Campers /

@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { alternatesSeo } from '@/lib/seo'
 import { CheckCircle, Zap, Shield, MessageCircle, Eye, Camera, DollarSign, X } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
+import PublicHero from '@/components/editorial/PublicHero'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 export const metadata: Metadata = {
@@ -82,18 +83,13 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-gradient-to-r from-brand-primary to-brand-dark text-white py-16 px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-black mb-4">{t('heroTitle')}</h1>
-            <p className="text-xl text-white/80">{t('heroSubtitle')}</p>
-          </div>
-        </div>
+      <div className="public-page min-h-screen">
+        <PublicHero eyebrow="CamperOcasión" title={t('heroTitle')} description={t('heroSubtitle')} />
 
-        <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="max-w-5xl mx-auto px-5 sm:px-8 py-16 lg:py-20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {pasos.map((paso, i) => (
-              <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex gap-4">
+              <div key={i} className="public-card p-6 flex gap-4">
                 <div className="flex-shrink-0">
                   <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center">{paso.icon}</div>
                 </div>
@@ -106,9 +102,9 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
           </div>
         </div>
 
-        <div className="bg-white border-t border-b border-gray-100 py-10 px-4">
+        <div className="bg-bone border-y border-night/10 py-16 px-5">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl font-black text-gray-900 mb-6 text-center">{t('vsTitle')}</h2>
+            <h2 className="public-section-title text-night mb-8 text-center">{t('vsTitle')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-green-50 border border-green-200 rounded-xl p-6">
                 <h3 className="font-bold text-green-800 text-lg mb-3">✅ {t('razonTitle')}</h3>
@@ -131,10 +127,10 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
         </div>
 
         <div className="max-w-3xl mx-auto px-4 py-12">
-          <h2 className="text-2xl font-black text-gray-900 mb-8 text-center">{t('faqTitle')}</h2>
+          <h2 className="public-section-title text-night mb-8 text-center">{t('faqTitle')}</h2>
           <div className="space-y-4">
             {faqs.map((faq, i) => (
-              <details key={i} className="bg-white rounded-xl border border-gray-100 group">
+              <details key={i} className="public-card group">
                 <summary className="cursor-pointer p-5 font-semibold text-gray-900 flex justify-between items-center list-none">
                   {faq.pregunta}
                   <span className="text-brand-accent group-open:rotate-45 transition-transform text-xl">+</span>
@@ -145,12 +141,12 @@ export default async function ComoFuncionaPage({ params }: { params: Promise<{ l
           </div>
         </div>
 
-        <div className="bg-white border-t border-b border-gray-100 py-10 px-4">
+        <div className="bg-bone border-y border-night/10 py-16 px-5">
           <div className="max-w-2xl mx-auto text-center flex flex-col sm:flex-row gap-4 justify-center">
-            <LocalLink href="/publicar" className="bg-brand-accent text-white px-8 py-3 rounded-lg font-bold hover:bg-accent/90 transition inline-block">
+            <LocalLink href="/publicar" className="btn btn-green">
               {t('ctaPublish')}
             </LocalLink>
-            <LocalLink href="/catalogo" className="bg-white border-2 border-brand-primary text-brand-primary px-8 py-3 rounded-lg font-bold hover:bg-brand-primary hover:text-white transition inline-block">
+            <LocalLink href="/catalogo" className="btn btn-ink">
               {t('ctaCatalog')}
             </LocalLink>
           </div>

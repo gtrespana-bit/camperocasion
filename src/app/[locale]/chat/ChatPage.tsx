@@ -7,7 +7,7 @@ import { useAuth } from '@/components/AuthProvider'
 import Avatar from '@/components/Avatar'
 import { Send, ArrowLeft, Search, User, Trash2, ExternalLink, Star } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 type Conversacion = {
   id: string
@@ -34,23 +34,23 @@ type Mensaje = {
   creado_en: string
 }
 
-function formatTime(iso: string | null): string {
+function formatTime(iso: string | null, locale: string): string {
   if (!iso) return ''
   const d = new Date(iso)
   const now = new Date()
   const diffMs = now.getTime() - d.getTime()
   const diffMin = Math.floor(diffMs / 60000)
-  if (diffMin < 1) return 'Ahora'
+  if (diffMin < 1) return locale === 'en' ? 'Now' : 'Ahora'
   if (diffMin < 60) return `${diffMin}m`
   const diffH = Math.floor(diffMin / 60)
   if (diffH < 24) return `${diffH}h`
   const diffD = Math.floor(diffH / 24)
   if (diffD < 7) return `${diffD}d`
-  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+  return d.toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'short' })
 }
 
-function formatHora(iso: string): string {
-  return new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+function formatHora(iso: string, locale: string): string {
+  return new Date(iso).toLocaleTimeString(locale === 'en' ? 'en-GB' : 'es-ES', { hour: '2-digit', minute: '2-digit' })
 }
 
 function slugProducto(titulo: string, id: string): string {
@@ -59,6 +59,7 @@ function slugProducto(titulo: string, id: string): string {
 
 export default function ChatPageClient() {
   const t = useTranslations('chat')
+  const locale = useLocale()
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -114,8 +115,8 @@ export default function ChatPageClient() {
   // ─── Auth guard ───
   useEffect(() => {
     if (authLoading) return
-    if (!user) router.push('/login')
-  }, [user, authLoading, router])
+    if (!user) router.replace(`${locale === 'en' ? '/en' : ''}/login?redirect=${encodeURIComponent(`/chat${window.location.search}`)}`)
+  }, [user, authLoading, router, locale])
 
   // ─── Auto-scroll + focus input when conversation opens ───
   useEffect(() => {
@@ -251,7 +252,7 @@ export default function ChatPageClient() {
         })
         const result = await response.json().catch(() => ({}))
         if (!response.ok || !result?.id) {
-          setToastMsg(result.error || 'No se pudo abrir la conversación')
+          setToastMsg(result.error || t('openError'))
           openedLinkRef.current = ''
           return
         }
@@ -277,10 +278,10 @@ export default function ChatPageClient() {
         setShowMobileChat(true)
       } catch {
         openedLinkRef.current = ''
-        setToastMsg('No hay conexión. Vuelve a intentarlo.')
+        setToastMsg(t('offlineError'))
       }
     }
-  }, [productoId, vendedorId, conversationParam])
+  }, [productoId, vendedorId, conversationParam, t])
 
   useEffect(() => {
     setConversaciones([])
@@ -396,7 +397,7 @@ export default function ChatPageClient() {
     })
     if (!response.ok) {
       const result = await response.json().catch(() => ({}))
-      setToastMsg(result.error || 'No se pudo eliminar la conversación')
+      setToastMsg(result.error || t('deleteError'))
       setTimeout(() => setToastMsg(null), 4000)
       return
     }
@@ -464,7 +465,7 @@ export default function ChatPageClient() {
       const result = await response.json().catch(() => ({}))
       if (!response.ok) {
         if (result.code === 'CONVERSACION_SEMILLA_CERRADA') setReabrirChat(result.reabrir)
-        setToastMsg(result.error || 'No se pudo enviar. Inténtalo de nuevo.')
+        setToastMsg(result.error || t('sendError'))
         return
       }
       setTexto('')
@@ -472,21 +473,33 @@ export default function ChatPageClient() {
       // keep focus on input after sending
       setTimeout(() => inputRef.current?.focus(), 0)
     } catch {
-      setToastMsg('No hay conexión. Tu mensaje no se ha borrado; puedes reintentarlo.')
+      setToastMsg(t('sendOfflineError'))
     } finally {
       setEnviando(false)
     }
   }
 
-  // ─── Loading ───
+  // ─── Auth y carga ───
+  if (!authLoading && !user) {
+    return (
+      <div className="public-shell flex min-h-[60vh] items-center justify-center py-12">
+        <div className="account-card w-full max-w-md p-7 text-center sm:p-10">
+          <h1 className="work-title work-title--account mb-4">{t('signInTitle')}</h1>
+          <p className="work-description mx-auto mb-6">{t('signInDesc')}</p>
+          <LocalLink href={`/login?redirect=${encodeURIComponent('/chat')}`} className="inline-block bg-night px-6 py-3 font-semibold text-white hover:bg-leaf hover:text-night">{t('signIn')}</LocalLink>
+        </div>
+      </div>
+    )
+  }
+
   if (authLoading || !user) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-3 md:py-4 flex flex-col gap-3 md:gap-4 h-[calc(100dvh-56px-4rem)] md:h-[calc(100dvh-100px)] md:max-h-[820px]">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-800 shrink-0 tracking-tight">💬 Mensajes</h1>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex-1 min-h-0 flex items-center justify-center">
+        <h1 className="work-title text-2xl md:text-3xl shrink-0">{t('workspaceTitle')}</h1>
+        <div className="bg-white rounded-md shadow-sm border border-night/10 flex-1 min-h-0 flex items-center justify-center">
           <div className="text-center text-gray-500">
             <div className="w-12 h-12 border-4 border-brand-accent border-t-brand-primary rounded-full animate-spin mx-auto mb-3" />
-            <p>Cargando mensajes...</p>
+            <p>{t('loadingMessages')}</p>
           </div>
         </div>
       </div>
@@ -504,16 +517,16 @@ export default function ChatPageClient() {
       {toastMsg && (
         <div role="alert" className="shrink-0 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between">
           <span>{toastMsg}</span>
-          <button type="button" onClick={() => setToastMsg(null)} className="ml-3 underline font-medium shrink-0">Cerrar</button>
+          <button type="button" onClick={() => setToastMsg(null)} className="ml-3 underline font-medium shrink-0">{t('close')}</button>
         </div>
       )}
       {reabrirChat && (
         <div className="shrink-0 rounded-xl border bg-gray-50 p-3 text-sm">
-          El historial se conserva aquí. Las nuevas consultas las atiende CamperOcasión.
-          <LocalLink href={reabrirChat} className="ml-2 font-semibold underline">Abrir chat con el equipo</LocalLink>
+          {t('closedConversation')}
+          <LocalLink href={reabrirChat} className="ml-2 font-semibold underline">{t('teamChat')}</LocalLink>
         </div>
       )}
-      <h1 className="text-xl md:text-2xl font-bold text-gray-800 shrink-0 tracking-tight">💬 Mensajes</h1>
+      <h1 className="work-title text-2xl md:text-3xl shrink-0">{t('workspaceTitle')}</h1>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-1 min-h-0 flex flex-col">
         <div className="flex flex-col md:flex-row flex-1 min-h-0">
@@ -526,7 +539,7 @@ export default function ChatPageClient() {
                   type="text"
                   value={busqueda}
                   onChange={e => setBusqueda(e.target.value)}
-                  placeholder="Buscar conversacion..."
+                  placeholder={t('searchConversations')}
                   className="w-full pl-9 pr-3 py-2.5 border rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 outline-none transition"
                 />
               </div>
@@ -548,8 +561,8 @@ export default function ChatPageClient() {
               ) : filtradas.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full px-6 text-center py-12">
                   <User size={48} className="text-gray-300 mb-3" />
-                  <p className="text-gray-600 font-medium">{conversaciones.length === 0 ? 'No hay conversaciones' : 'Sin resultados'}</p>
-                  <p className="text-sm text-gray-400 mt-1">Envia un mensaje a un vendedor desde cualquier producto</p>
+                  <p className="text-gray-600 font-medium">{conversaciones.length === 0 ? t('noConversations') : t('noResults')}</p>
+                  <p className="text-sm text-gray-400 mt-1">{t('emptyHint')}</p>
                 </div>
               ) : (
                 filtradas.map(c => (
@@ -560,7 +573,8 @@ export default function ChatPageClient() {
                     <button
                       onClick={(e) => eliminarConv(c.id, e)}
                       className="absolute top-1 right-1 p-1 rounded text-gray-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 transition"
-                      title="Eliminar"
+                      title={t('deleteConversation')}
+                      aria-label={t('deleteConversation')}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -573,10 +587,10 @@ export default function ChatPageClient() {
                         <div className="flex justify-between items-center">
                           <p className="font-semibold text-gray-800 text-sm truncate">{c.otro_nombre}</p>
                           {c.ultimo_mensaje_en && (
-                            <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{formatTime(c.ultimo_mensaje_en)}</span>
+                            <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{formatTime(c.ultimo_mensaje_en, locale)}</span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 truncate mt-0.5">{c.ultimo_mensaje || 'Sin mensajes'}</p>
+                        <p className="text-sm text-gray-500 truncate mt-0.5">{c.ultimo_mensaje || t('noMessages')}</p>
                         {c.producto_titulo && c.producto_id && (
                           <a
                             href={`/producto/${c.producto_id}`}
@@ -609,14 +623,14 @@ export default function ChatPageClient() {
                     <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <p className="font-semibold text-gray-700">Selecciona una conversacion</p>
-                <p className="text-sm mt-1 text-gray-400 text-center">O escribe a un vendedor desde un producto</p>
+                <p className="font-semibold text-gray-700">{t('selectConversation')}</p>
+                <p className="text-sm mt-1 text-gray-400 text-center">{t('emptyHint')}</p>
               </div>
             ) : (
               <>
                 {/* Header */}
                 <div className="flex items-center gap-3 p-3 md:p-4 border-b bg-white shrink-0">
-                  <button onClick={() => setShowMobileChat(false)} className="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100">
+                  <button type="button" aria-label={t('back')} onClick={() => setShowMobileChat(false)} className="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100">
                     <ArrowLeft size={20} className="text-gray-600" />
                   </button>
                   {convActual && (
@@ -649,7 +663,7 @@ export default function ChatPageClient() {
                         }`}>
                           <p className="text-[14px] leading-[1.4] break-words whitespace-pre-wrap">{m.contenido}</p>
                           <p className={`text-[10px] mt-1 ${esMio ? 'text-blue-100' : 'text-gray-400'}`}>
-                            {formatHora(m.creado_en)}
+                            {formatHora(m.creado_en, locale)}
                           </p>
                         </div>
                       </div>
@@ -661,14 +675,14 @@ export default function ChatPageClient() {
                         onClick={() => setMostrarResena(true)}
                         className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-sm font-semibold px-6 py-3 rounded-xl hover:brightness-105 transition shadow-lg flex items-center gap-2"
                       >
-                        ⭐ Deja tu reseña al vendedor
+                        {t('leaveReview')}
                       </button>
                     </div>
                   )}
                   {enviando && (
                     <div className="flex justify-end">
                       <div className="bg-blue-100 text-blue-800 px-4 py-2.5 rounded-2xl rounded-br-md text-sm">
-                        Enviando...
+                        {t('sending')}
                       </div>
                     </div>
                   )}
@@ -695,7 +709,7 @@ export default function ChatPageClient() {
                     onClick={enviarMensaje}
                     disabled={!texto.trim() || enviando}
                     className="w-12 h-12 md:w-11 md:h-11 bg-brand-primary text-white rounded-full flex items-center justify-center hover:bg-brand-dark active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-md"
-                    aria-label="Enviar mensaje"
+                    aria-label={t('send')}
                   >
                     {enviando ? (
                       <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -717,12 +731,12 @@ export default function ChatPageClient() {
                     onClick={() => setMostrarResena(false)}
                   >
                     <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
-                      <h3 id="resena-titulo" className="text-lg font-bold text-gray-800 mb-1">⭐ Deja tu reseña</h3>
-                      <p className="text-sm text-gray-500 mb-4">¿Cómo fue tu experiencia con {convActual?.otro_nombre}?</p>
+                      <h3 id="resena-titulo" className="text-lg font-bold text-gray-800 mb-1">{t('reviewTitle')}</h3>
+                      <p className="text-sm text-gray-500 mb-4">{t('reviewQuestion', { name: convActual?.otro_nombre || '' })}</p>
 
                       <div className="flex justify-center gap-1 mb-4">
                         {[1,2,3,4,5].map(i => (
-                          <button key={i} type="button" onClick={() => setRatingResena(i)} className="transition hover:scale-110">
+                          <button key={i} type="button" aria-label={t('rating', { count: i })} aria-pressed={ratingResena === i} onClick={() => setRatingResena(i)} className="transition hover:scale-110">
                             <Star size={32} className={i <= ratingResena ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'} />
                           </button>
                         ))}
@@ -742,7 +756,7 @@ export default function ChatPageClient() {
                           onClick={() => setMostrarResena(false)}
                           className="flex-1 py-2.5 border rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50"
                         >
-                          Cancelar
+                          {t('cancel')}
                         </button>
                         <button
                           onClick={enviarResenaComprador}

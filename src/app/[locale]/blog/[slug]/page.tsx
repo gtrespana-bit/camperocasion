@@ -194,7 +194,7 @@ function renderMarkdown(content: string): string {
 
     // Headers
     if (lines[0].startsWith('# ')) {
-      htmlParts.push(`<h1 class="text-3xl font-black text-gray-900 mt-8 mb-6">${inlineFormat(lines[0].replace('# ', ''))}</h1>`)
+      htmlParts.push(`<h2 class="public-section-title text-night mt-8 mb-6">${inlineFormat(lines[0].replace('# ', ''))}</h2>`)
       continue
     }
     if (lines[0].startsWith('## ')) {
@@ -283,7 +283,7 @@ export default async function BlogPost(props: { params: Promise<{ locale: string
   const articleSchema = generateArticleSchema(post)
 
   return (
-    <article className="min-h-screen bg-white">
+    <article className="public-page min-h-screen">
       {/* Article Schema.org JSON-LD */}
       <script
         type="application/ld+json"
@@ -304,8 +304,8 @@ export default async function BlogPost(props: { params: Promise<{ locale: string
       </div>
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-brand-primary to-brand-dark py-12 md:py-16">
-        <div className="max-w-4xl mx-auto px-4">
+      <section className="public-hero">
+        <div className="public-shell relative z-10">
           <LocalLink href="/blog" className="inline-flex items-center gap-2 text-blue-200 hover:text-white mb-6 transition">
             <ArrowLeft size={16} /> {t('backToBlog')}
           </LocalLink>
@@ -313,8 +313,8 @@ export default async function BlogPost(props: { params: Promise<{ locale: string
             <span className="text-lg">{categoryIcons[post.category] || '📝'}</span>
             <span className="text-sm font-semibold text-brand-accent bg-brand-accent/20 px-3 py-1 rounded-full">{post.category}</span>
           </div>
-          <h1 className="text-2xl md:text-4xl font-black text-white mb-4 leading-tight">{post.title}</h1>
-          <p className="blog-excerpt text-lg text-blue-200 mb-6">{post.excerpt}</p>
+          <h1 className="public-hero-title t-mega">{post.title}</h1>
+          <p className="public-hero-description mb-6">{post.excerpt}</p>
           <div className="flex items-center gap-6 text-sm text-white/60">
             <span className="flex items-center gap-2"><Calendar size={14} /> {post.date}</span>
             <span className="flex items-center gap-2"><Clock size={14} /> {post.readTime}</span>
@@ -323,7 +323,7 @@ export default async function BlogPost(props: { params: Promise<{ locale: string
       </section>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8 lg:py-20">
         <div 
           className="prose prose-lg max-w-none"
           dangerouslySetInnerHTML={{ __html: htmlContent }}
@@ -344,18 +344,18 @@ export default async function BlogPost(props: { params: Promise<{ locale: string
       </div>
 
       {/* CTA */}
-      <section className="bg-brand-dark py-12">
+      <section className="bg-night py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-2xl font-black text-white mb-3">{t('haveSomething')}</h2>
-          <p className="text-gray-500 mb-6">{t('publishFreeDesc')}</p>
-          <LocalLink href="/publicar" className="inline-flex items-center gap-2 bg-brand-accent text-white px-8 py-3 rounded-xl font-bold text-lg hover:bg-accent/90 transition shadow-lg">
+          <h2 className="public-section-title text-white mb-4">{t('haveSomething')}</h2>
+          <p className="text-white/75 mb-8">{t('publishFreeDesc')}</p>
+          <LocalLink href="/publicar" className="btn btn-green">
             {t('publishFree')} <ArrowRight size={20} />
           </LocalLink>
         </div>
       </section>
 
       {/* More posts */}
-      <section className="max-w-4xl mx-auto px-4 py-12">
+      <section className="mx-auto max-w-4xl px-5 py-12 sm:px-8 lg:py-20">
         <h3 className="text-xl font-bold text-gray-800 mb-6">{t('moreArticles')}</h3>
         <div className="grid md:grid-cols-2 gap-6">
           {getAllSlugs()
@@ -365,7 +365,7 @@ export default async function BlogPost(props: { params: Promise<{ locale: string
               const other = getPostBySlug(s)
               if (!other) return null
               return (
-                <LocalLink key={s} href={`/blog/${s}`} className="group block bg-white rounded-xl border border-gray-100 p-5 hover:shadow-lg transition">
+                <LocalLink key={s} href={`/blog/${s}`} className="group block public-card p-6 transition hover:border-leaf hover:shadow-lg">
                   <h4 className="font-bold text-gray-800 group-hover:text-brand-primary mb-2">{other.title}</h4>
                   <p className="text-sm text-gray-600 line-clamp-2">{other.excerpt}</p>
                 </LocalLink>

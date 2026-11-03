@@ -1,7 +1,7 @@
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { setRequestLocale } from 'next-intl/server'
+import { setRequestLocale, getTranslations } from 'next-intl/server'
 import { supabase } from '@/lib/supabase-server-client'
 import { COLUMNAS_PRECIO, formatPrecio, getPrecioEur } from '@/lib/precio'
 import {
@@ -86,23 +86,28 @@ async function getDatosModelo(slug: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
+  const { slug, locale } = await params
+  const t = await getTranslations({ locale, namespace: 'modelPage' })
   const datos = await getDatosModelo(slug)
 
   if (!datos) {
-    return { title: 'Modelo no encontrado', robots: { index: false, follow: false } }
+    return { title: t('notFound'), robots: { index: false, follow: false } }
   }
 
   const { modelo, est } = datos
   const nombre = modelo.valor
   const anio = new Date().getFullYear()
 
-  const title = est
-    ? `${nombre} de ocasión: precios reales ${anio} (${est.muestra} anuncios)`
-    : `${nombre} de ocasión en España`
+  const title = locale === 'en'
+    ? t('heroTitle', { model: nombre, year: anio })
+    : est
+      ? `${nombre} de ocasión: precios reales ${anio} (${est.muestra} anuncios)`
+      : `${nombre} de ocasión en España`
 
-  const description = descripcionSeo(resumenMercado(nombre, est))
-  const url = `${SITIO}/modelo/${slug}`
+  const description = descripcionSeo(locale === 'en'
+    ? est ? t('heroWithData', { model: nombre, median: formatPrecio(est.mediana), count: est.muestra }) : t('heroNoData', { model: nombre })
+    : resumenMercado(nombre, est))
+  const url = `${SITIO}/${locale === 'en' ? 'en/' : ''}modelo/${slug}`
 
   // OG con categoria según el modelo (usa endpoint existente)
   const subCat = (modelo as any).aptoPara?.[0] || 'camper'
@@ -121,7 +126,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: tituloSeo(title),
     description,
     alternates: alternatesSeo(`/modelo/${slug}`),
-    openGraph: { title, description, url, siteName: 'CamperOcasión', locale: 'es_ES', images: [{ url: `https://camperocasion.online/api/og/catalog?categoria=${ogParam}`, width: 1200, height: 630, alt: title }] },
+    robots: { index: locale === 'es', follow: true },
+    openGraph: { title, description, url, siteName: 'CamperOcasión', locale: locale === 'en' ? 'en_GB' : 'es_ES', images: [{ url: `https://camperocasion.online/api/og/catalog?categoria=${ogParam}`, width: 1200, height: 630, alt: title }] },
     twitter: { card: 'summary_large_image', title, description, images: [`https://camperocasion.online/api/og/catalog?categoria=${ogParam}`] },
   }
 }
@@ -134,6 +140,7 @@ export default async function ModeloPage({ params }: Props) {
   if (!datos) notFound()
 
   const { modelo, anuncios, est, tramos } = datos
+  const t = await getTranslations({ locale, namespace: 'modelPage' })
 
   // Modelos hermanos del mismo fabricante, para enlazado interno: es lo que
   // reparte autoridad entre las 95 páginas en vez de dejarlas aisladas.
@@ -141,7 +148,7 @@ export default async function ModeloPage({ params }: Props) {
     m => m.fabricante === modelo.fabricante && m.valor !== modelo.valor
   ).slice(0, 8)
 
-  const pageUrl = SITIO + '/modelo/' + slug
+  const pageUrl = SITIO + '/' + (locale === 'en' ? 'en/' : '') + 'modelo/' + slug
 
   // FAQ dinámica: las dos primeras respuestas se construyen con las
   // estadísticas REALES del inventario (nunca se publica una cifra
@@ -169,6 +176,26 @@ export default async function ModeloPage({ params }: Props) {
     respuesta: `Sí, mientras la MMA (peso máximo autorizado) no supere los 3.500 kg, lo habitual en un ${nombre}. Versiones muy cargadas o con célula pueden superar ese límite y exigir B+E o C1: comprueba siempre la MMA en la ficha técnica antes de comprar.`,
   })
 
+  if (locale === 'en') {
+    faqs.length = 0
+    faqs.push({
+      pregunta: t('faqPriceQuestion', { model: nombre }),
+      respuesta: est
+        ? t('faqPriceWithData', { model: nombre, median: formatPrecio(est.mediana), count: est.muestra })
+        : t('faqPriceWithoutData', { model: nombre }),
+    })
+    faqs.push({
+      pregunta: t('faqCountQuestion', { model: nombre }),
+      respuesta: anuncios.length > 0
+        ? t('faqCountWithData', { model: nombre, count: anuncios.length })
+        : t('faqCountWithoutData', { model: nombre }),
+    })
+    faqs.push({
+      pregunta: t('faqSafetyQuestion', { model: nombre }),
+      respuesta: t('faqSafetyAnswer'),
+    })
+  }
+
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -184,8 +211,8 @@ export default async function ModeloPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
-      { '@type': 'ListItem', position: 2, name: 'Marcas', item: SITIO + '/marcas' },
+      { '@type': 'ListItem', position: 1, name: t('home'), item: SITIO + '/' },
+      { '@type': 'ListItem', position: 2, name: t('brands'), item: SITIO + '/marcas' },
       { '@type': 'ListItem', position: 3, name: modelo.fabricante, item: SITIO + '/catalogo?marca=' + encodeURIComponent(modelo.fabricante) },
       { '@type': 'ListItem', position: 4, name: etiquetaModelo(modelo), item: pageUrl },
     ],
@@ -196,10 +223,10 @@ export default async function ModeloPage({ params }: Props) {
   const productModelJsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Vehicle',
-    name: modelo.valor + ' camper de ocasión',
+    name: locale === 'en' ? t('vehicleSchema', { model: modelo.valor }) : modelo.valor + ' camper de ocasión',
     model: modelo.valor,
     brand: { '@type': 'Brand', name: modelo.fabricante },
-    ...(modelo.nota ? { description: modelo.nota } : {}),
+    ...(modelo.nota ? { description: locale === 'en' ? t('aboutDesc', { model: modelo.valor, brand: modelo.fabricante }) : modelo.nota } : {}),
     url: pageUrl,
     // Oferta agregada con datos de mercado reales
     ...(est
@@ -225,7 +252,7 @@ export default async function ModeloPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     '@id': pageUrl + '#itemlist',
-    name: 'Anuncios de ' + modelo.valor + ' de ocasión',
+    name: t('listingTitle', { model: modelo.valor }),
     numberOfItems: Math.min(anuncios.length, 20),
     itemListElement: anuncios.slice(0, 20).map((p: any, i: number) => ({
       '@type': 'ListItem',

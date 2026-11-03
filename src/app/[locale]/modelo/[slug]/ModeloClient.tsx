@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import LocalLink from '@/components/LocalLink'
+import PublicHero from '@/components/editorial/PublicHero'
+import { useLocale, useTranslations } from 'next-intl'
 import ProductCard, { type ProductCardData } from '@/components/ProductCard'
 import { formatPrecio, getPrecioEur } from '@/lib/precio'
 import type { Estadisticas, EstadisticasTramo } from '@/lib/precios-mercado'
@@ -25,6 +27,8 @@ export default function ModeloClient({
   tramos: EstadisticasTramo[]
   hermanos: { valor: string; etiqueta: string; slug: string }[]
 }) {
+  const i18n = useTranslations('modelPage')
+  const locale = useLocale()
   const [busqueda, setBusqueda] = useState('')
 
   const filtrados = useMemo(() => {
@@ -36,37 +40,15 @@ export default function ModeloClient({
   const fmt = (n: number) => formatPrecio(n)
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* Cabecera */}
-      <nav className="text-sm text-gray-500 mb-4">
-        <LocalLink href="/marcas" className="hover:underline">Marcas</LocalLink>
-        <span className="mx-1.5">/</span>
-        <span className="text-gray-700">{modelo.fabricante}</span>
-        <span className="mx-1.5">/</span>
-        <span className="text-gray-900 font-medium">{etiqueta}</span>
-      </nav>
-
-      <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-        {modelo.valor} de ocasión:{' '}
-        <span className="text-brand-accent">precios reales {ANIO}</span>
-      </h1>
-
-      <p className="text-lg text-gray-600 max-w-3xl mb-8">
-        {est ? (
-          <>
-            Una <strong>{modelo.valor}</strong> de segunda mano cuesta{' '}
-            <strong>{fmt(est.mediana)}</strong> de mediana en España. Lo calculamos con los{' '}
-            <strong>{est.muestra} anuncios</strong> publicados ahora mismo en CamperOcasión,
-            no con estimaciones.
-          </>
-        ) : (
-          <>
-            Todavía no hay anuncios suficientes de <strong>{modelo.valor}</strong> para publicar
-            precios de mercado fiables. En cuanto haya, aparecerán aquí calculados con
-            anuncios reales.
-          </>
-        )}
-      </p>
+    <div className="public-page min-h-screen">
+      <PublicHero compact eyebrow={`CamperOcasión · ${modelo.fabricante}`} title={i18n('heroTitle', { model: modelo.valor, year: ANIO })} description={est
+        ? i18n('heroWithData', { model: modelo.valor, median: fmt(est.mediana), count: est.muestra })
+        : i18n('heroNoData', { model: modelo.valor })} />
+      <div className="public-shell py-12 lg:py-20">
+        <nav className="mb-10 text-sm text-slate-600">
+          <LocalLink href="/marcas" className="hover:text-leaf-600">{i18n('brands')}</LocalLink>
+          <span className="mx-2">/</span>{modelo.fabricante}<span className="mx-2">/</span>{etiqueta}
+        </nav>
 
       {/* Estadísticas */}
       {est ? (
@@ -75,38 +57,33 @@ export default function ModeloClient({
             <Tarjeta
               destacada
               valor={fmt(est.mediana)}
-              etiqueta="Precio mediano"
-              nota="La mitad cuesta menos, la mitad más"
+              etiqueta={i18n('medianPrice')}
+              nota={i18n('medianHint')}
             />
             <Tarjeta
               valor={`${fmt(est.p25)} – ${fmt(est.p75)}`}
-              etiqueta="Rango habitual"
-              nota="Lo que se paga normalmente"
+              etiqueta={i18n('typicalRange')}
+              nota={i18n('rangeHint')}
             />
             {est.kmMediana != null && (
               <Tarjeta
-                valor={`${est.kmMediana.toLocaleString('es-ES')} km`}
-                etiqueta="Kilometraje mediano"
+                valor={`${est.kmMediana.toLocaleString(locale === 'en' ? 'en-GB' : 'es-ES')} km`}
+                etiqueta={i18n('medianMileage')}
                 icono={<Gauge size={15} />}
               />
             )}
             {est.anioMediano != null && (
               <Tarjeta
                 valor={String(est.anioMediano)}
-                etiqueta="Año mediano"
+                etiqueta={i18n('medianYear')}
                 icono={<Calendar size={15} />}
               />
             )}
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900 flex gap-2.5 mb-10">
-            <Info size={17} className="shrink-0 mt-0.5" />
-            <p>
-              Usamos la <strong>mediana</strong> y no la media porque un solo anuncio muy caro
-              distorsionaría el resultado. El <strong>rango habitual</strong> deja fuera el 25 %
-              más barato y el 25 % más caro: es lo que de verdad te vas a encontrar.
-              Datos actualizados cada hora con los anuncios activos.
-            </p>
+          <div className="work-card p-4 text-sm text-night flex gap-2.5 mb-10">
+            <Info size={17} className="shrink-0 mt-0.5 text-leaf" aria-hidden="true" />
+            <p>{i18n('methodology')}</p>
           </div>
 
           {/* Precio por antigüedad */}
@@ -114,34 +91,33 @@ export default function ModeloClient({
             <section className="mb-12">
               <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
                 <TrendingUp size={22} className="text-brand-accent" />
-                Cuánto cuesta según los años
+                {i18n('byAgeTitle')}
               </h2>
               <p className="text-gray-500 mb-4">
-                Precio de una {modelo.valor} según su antigüedad. Solo se muestran los tramos
-                con anuncios suficientes.
+                {i18n('byAgeDesc', { model: modelo.valor })}
               </p>
 
               <div className="overflow-x-auto bg-white rounded-2xl border border-gray-100">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50 text-left text-gray-600">
-                      <th className="px-4 py-3 font-semibold">Antigüedad</th>
-                      <th className="px-4 py-3 font-semibold">Precio mediano</th>
-                      <th className="px-4 py-3 font-semibold">Rango habitual</th>
-                      <th className="px-4 py-3 font-semibold">Km mediano</th>
-                      <th className="px-4 py-3 font-semibold text-right">Anuncios</th>
+                      <th className="px-4 py-3 font-semibold">{i18n('age')}</th>
+                      <th className="px-4 py-3 font-semibold">{i18n('medianPrice')}</th>
+                      <th className="px-4 py-3 font-semibold">{i18n('typicalRange')}</th>
+                      <th className="px-4 py-3 font-semibold">{i18n('medianMileageShort')}</th>
+                      <th className="px-4 py-3 font-semibold text-right">{i18n('listings')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {tramos.map(t => (
                       <tr key={t.id} className="border-t border-gray-100">
-                        <td className="px-4 py-3 font-medium text-gray-900">{t.etiqueta}</td>
+                        <td className="px-4 py-3 font-medium text-gray-900">{locale === 'en' ? t.etiqueta.replace('años', 'years').replace('año', 'year') : t.etiqueta}</td>
                         <td className="px-4 py-3 font-bold text-brand-primary">{fmt(t.mediana)}</td>
                         <td className="px-4 py-3 text-gray-600">
                           {fmt(t.p25)} – {fmt(t.p75)}
                         </td>
                         <td className="px-4 py-3 text-gray-600">
-                          {t.kmMediana != null ? `${t.kmMediana.toLocaleString('es-ES')} km` : '—'}
+                          {t.kmMediana != null ? `${t.kmMediana.toLocaleString(locale === 'en' ? 'en-GB' : 'es-ES')} km` : '—'}
                         </td>
                         <td className="px-4 py-3 text-right text-gray-500">{t.muestra}</td>
                       </tr>
@@ -156,17 +132,16 @@ export default function ModeloClient({
           <div className="bg-gradient-to-br from-brand-primary to-brand-dark text-white rounded-2xl p-6 mb-12 flex flex-col sm:flex-row sm:items-center gap-4">
             <Calculator size={32} className="shrink-0 opacity-90" />
             <div className="flex-1">
-              <h3 className="font-bold text-lg">¿Cuánto pagarás de impuestos?</h3>
+              <h3 className="font-bold text-lg">{i18n('taxTitle')}</h3>
               <p className="opacity-90 text-sm">
-                Al comprar de particular pagas el ITP, y cambia mucho según tu comunidad.
-                Calcúlalo con el precio mediano de esta {modelo.valor}.
+                {i18n('taxDesc', { model: modelo.valor })}
               </p>
             </div>
             <LocalLink
               href={`/calcular-itp?precio=${est.mediana}`}
               className="bg-white text-brand-primary px-5 py-2.5 rounded-xl font-bold hover:bg-gray-100 transition whitespace-nowrap text-center"
             >
-              Calcular ITP
+              {i18n('taxButton')}
             </LocalLink>
           </div>
         </>
@@ -174,11 +149,9 @@ export default function ModeloClient({
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 mb-10 flex gap-3">
           <Info size={20} className="text-amber-600 shrink-0 mt-0.5" />
           <div className="text-sm text-amber-900">
-            <p className="font-semibold mb-1">Sin datos de precio todavía</p>
+            <p className="font-semibold mb-1">{i18n('noDataTitle')}</p>
             <p>
-              Preferimos no enseñar un precio antes que enseñar uno que no se sostenga.
-              Necesitamos al menos 5 anuncios activos de este modelo para calcular
-              estadísticas fiables.
+              {i18n('noDataDesc')}
             </p>
           </div>
         </div>
@@ -189,8 +162,8 @@ export default function ModeloClient({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <h2 className="text-2xl font-bold text-gray-900">
             {anuncios.length > 0
-              ? `${anuncios.length} ${anuncios.length === 1 ? 'anuncio' : 'anuncios'} de ${modelo.valor}`
-              : `Anuncios de ${modelo.valor}`}
+              ? i18n('listingTitleCount', { model: modelo.valor, count: anuncios.length })
+              : i18n('listingTitle', { model: modelo.valor })}
           </h2>
           {anuncios.length > 4 && (
             <div className="relative sm:w-72">
@@ -199,8 +172,8 @@ export default function ModeloClient({
                 type="search"
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                placeholder="Filtrar por título…"
-                aria-label={`Filtrar anuncios de ${modelo.valor}`}
+                placeholder={i18n('filterPlaceholder')}
+                aria-label={i18n('filterLabel', { model: modelo.valor })}
                 className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
               />
             </div>
@@ -212,19 +185,19 @@ export default function ModeloClient({
             <Car size={36} className="mx-auto text-gray-300 mb-3" />
             <p className="text-gray-700 font-medium mb-1">
               {anuncios.length === 0
-                ? `Ahora mismo no hay ninguna ${modelo.valor} publicada.`
-                : 'Ningún anuncio coincide con tu filtro.'}
+                ? i18n('emptyModel', { model: modelo.valor })
+                : i18n('emptyFilter')}
             </p>
             <p className="text-sm text-gray-500 mb-4">
               {anuncios.length === 0
-                ? 'Guarda esta búsqueda y te avisamos en cuanto alguien publique una.'
+                ? i18n('emptyHint')
                 : ''}
             </p>
             <LocalLink
               href="/catalogo"
               className="inline-block bg-brand-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-brand-dark transition"
             >
-              Ver todo el catálogo
+              {i18n('viewCatalog')}
             </LocalLink>
           </div>
         ) : (
@@ -240,9 +213,9 @@ export default function ModeloClient({
       {modelo.nota && (
         <section className="bg-white rounded-2xl border border-gray-100 p-6 mb-10">
           <h2 className="text-xl font-bold text-gray-900 mb-2">
-            Sobre la {modelo.valor}
+            {i18n('aboutTitle', { model: modelo.valor })}
           </h2>
-          <p className="text-gray-700">{modelo.nota}</p>
+          <p className="text-gray-700">{locale === 'en' ? i18n('aboutDesc', { model: modelo.valor, brand: modelo.fabricante }) : modelo.nota}</p>
         </section>
       )}
 
@@ -250,7 +223,7 @@ export default function ModeloClient({
       {hermanos.length > 0 && (
         <section className="mb-10">
           <h2 className="text-xl font-bold text-gray-900 mb-3">
-            Otros modelos de {modelo.fabricante}
+            {i18n('otherModels', { brand: modelo.fabricante })}
           </h2>
           <div className="flex flex-wrap gap-2">
             {hermanos.map(h => (
@@ -269,27 +242,28 @@ export default function ModeloClient({
       {/* CTA vendedor */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
         <h2 className="text-xl font-bold text-gray-900 mb-1">
-          ¿Vendes una {modelo.valor}?
+          {i18n('sellTitle', { model: modelo.valor })}
         </h2>
         <p className="text-gray-600 mb-4">
           {est
-            ? `Ahora ya sabes lo que vale: la mediana está en ${fmt(est.mediana)}. Publica gratis y llega a compradores que buscan justo este modelo.`
-            : 'Publica gratis y llega a compradores que buscan justo este modelo.'}
+            ? i18n('sellWithData', { median: fmt(est.mediana) })
+            : i18n('sellNoData')}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <LocalLink
             href="/cuanto-vale-mi-camper"
             className="inline-block bg-brand-accent text-white px-6 py-3 rounded-xl font-bold hover:brightness-95 transition"
           >
-            Calcular cuánto vale la mía
+            {i18n('valueMine')}
           </LocalLink>
           <LocalLink
             href="/publicar"
             className="inline-block border border-gray-200 bg-white text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition"
           >
-            Publicar mi anuncio gratis
+            {i18n('postMine')}
           </LocalLink>
         </div>
+      </div>
       </div>
     </div>
   )

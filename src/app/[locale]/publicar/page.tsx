@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import LocalLink from '@/components/LocalLink'
+import PublicHero from '@/components/editorial/PublicHero'
 import { useRouter } from 'next/navigation'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { productUrl } from '@/lib/product-url'
@@ -469,8 +470,9 @@ export default function PublicarPage() {
   const packActivo = Boolean(cupo && !cupo.trial && !cupo.trialGracia && cupo.plan !== 'gratis')
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('title')}</h1>
+    <div className="public-page min-h-screen">
+      <PublicHero compact eyebrow="CamperOcasión" title={t('title')} description={t('stepsDesc')} />
+      <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8 lg:py-16">
 
       {/* Publicando como… (Fase 2: el comprador verá este chip en el anuncio) */}
       {tipoVendedor && (
@@ -546,7 +548,7 @@ export default function PublicarPage() {
         </div>
       )}
 
-      <p className="text-gray-500 text-sm mb-8">{t('stepsDesc')}</p>
+
 
       {/* Error banner */}
       {error && (
@@ -583,7 +585,7 @@ export default function PublicarPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+      <div className="public-card p-6">
 
         {/* PASO 2: Categoria → Subcategoria → Marca */}
         {step === 2 && (
@@ -967,6 +969,7 @@ export default function PublicarPage() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   )

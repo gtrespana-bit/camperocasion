@@ -66,7 +66,7 @@ export default function RoutePanels({ panels, explore, kicker }: { panels: Route
         <section
           key={p.key}
           data-panel
-          className="sticky top-0 h-[100svh] overflow-hidden bg-night"
+          className="sticky top-0 h-[100svh] min-h-[700px] overflow-hidden bg-night"
           style={{ zIndex: i + 1 }}
         >
           <div data-pinner className="absolute inset-0 origin-top overflow-hidden will-change-transform">
@@ -96,7 +96,7 @@ export default function RoutePanels({ panels, explore, kicker }: { panels: Route
               </div>
 
               <div>
-                <h3 className="t-mega max-w-[14ch] text-[clamp(3.6rem,12.4vw,14rem)] text-white">{p.label}</h3>
+                <h2 className="t-mega home-title-panel max-w-[14ch] text-white">{p.label}</h2>
                 <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:items-end">
                   <p className="max-w-md text-[16px] leading-relaxed text-white/75 lg:col-span-4">{p.desc}</p>
                   <ul className="flex flex-wrap gap-2 lg:col-span-5">

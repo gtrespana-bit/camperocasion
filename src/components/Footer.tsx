@@ -56,7 +56,7 @@ export function Footer() {
         {/* Remate */}
         {!isHome && (
         <div className="grid gap-10 border-b border-white/12 pb-16 pt-8 lg:grid-cols-12 lg:items-end lg:pt-12">
-          <h2 className="t-mega text-[clamp(3rem,8vw,8rem)] lg:col-span-8">
+          <h2 className="t-mega text-[clamp(2.7rem,5.3vw,5.5rem)] leading-[0.98] lg:col-span-8">
             {t('footer.tagline')}
           </h2>
           <div className="lg:col-span-4 lg:text-right">
@@ -82,7 +82,7 @@ export function Footer() {
                   <p className="t-wide text-[15px] leading-none text-sand-50">{t(`familias.${f.key}.label`)}</p>
                   <ul className="mt-3 space-y-2">
                     {f.tipos.map((c) => (
-                      <li key={c.label}><LocalLink href={c.href} className={a}>{c.label}</LocalLink></li>
+                      <li key={c.label}><LocalLink href={c.href} className={a}>{t(`catalog.subcategories.${c.label}`)}</LocalLink></li>
                     ))}
                   </ul>
                 </div>

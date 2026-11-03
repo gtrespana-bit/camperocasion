@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
 
   const auth = await requireUser(req)
   if ('response' in auth) return auth.response
+  const body = await req.json().catch(() => ({}))
+  const localePrefix = body?.locale === 'en' ? '/en' : ''
 
   const ip = getClientIp(req)
   const rl = await checkRateLimit('planes:portal', auth.user.id, { ip })
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
   try {
     const sesion = await stripe.billingPortal.sessions.create({
       customer: perfil.stripe_customer_id,
-      return_url: `${getSiteUrl()}/dashboard?tab=plan`,
+      return_url: `${getSiteUrl()}${localePrefix}/dashboard?tab=plan`,
     })
     return NextResponse.json({ ok: true, url: sesion.url })
   } catch (e: any) {

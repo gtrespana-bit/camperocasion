@@ -58,9 +58,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const cityName = ciudadSEO.nombre
   const stateName = ciudadSEO.estado
+  const tCatalog = await getTranslations({ locale, namespace: 'catalog' })
+  const categoryName = locale === 'en' && CATEGORIAS_SEO[categoria]
+    ? tCatalog(`subcategories.${cat.nombre}`)
+    : cat.nombre
   
-  const title = `${cat.nombre} de ocasión en ${cityName}`
-  const description = descripcionSeo(`${cat.nombre} de ocasión en ${cityName}, ${stateName}. ${cat.descripcion} Publica gratis tu camper en CamperOcasión.`)
+  const tCat = await getTranslations({ locale, namespace: 'catLanding' })
+  const title = locale === 'en'
+    ? tCat('title', { category: categoryName, city: cityName })
+    : `${cat.nombre} de ocasión en ${cityName}`
+  const description = descripcionSeo(locale === 'en'
+    ? tCat('metaDesc', { category: categoryName, city: cityName, state: stateName })
+    : `${cat.nombre} de ocasión en ${cityName}, ${stateName}. ${cat.descripcion} Publica gratis tu camper en CamperOcasión.`)
   
   const keywords = [
     `${cat.nombre.toLowerCase()} ${cityName.toLowerCase()}`,
@@ -80,8 +89,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: 'website',
-      locale: 'es_ES',
-      url: `https://camperocasion.online/${ciudad}/${categoria}`,
+      locale: locale === 'en' ? 'en_GB' : 'es_ES',
+      url: `https://camperocasion.online/${locale === 'en' ? 'en/' : ''}${ciudad}/${categoria}`,
       images: [{ url: `https://camperocasion.online/api/og/catalog?categoria=${ogParam}`, width: 1200, height: 630, alt: title }],
     },
     twitter: {
@@ -94,7 +103,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots: {
       // Combinación sin anuncios = página vacía: noindex hasta que haya
       // inventario (fail-open si la DB falla).
-      index: await hayAnunciosEnCiudadCategoria(
+      index: locale === 'es' && await hayAnunciosEnCiudadCategoria(
         getSupabaseServerClient(),
         ciudadSEO.nombre,
         ciudadSEO.municipio,
@@ -146,7 +155,7 @@ export default async function CategoriaPage({ params }: Props) {
   const { ciudad, categoria, locale } = await params
   const ciudadSEO = getCiudadBySlug(ciudad)
   const cat = CATEGORIAS_SEO[categoria] || { nombre: categoria, descripcion: categoria }
-  
+
   if (!ciudadSEO || !CATEGORIAS_SEO[categoria]) {
     // 404 real: ciudad desconocida o slug de categoría arbitrario
     // (antes respondía 200 con contenido thin para cualquier /ciudad/cosa)
@@ -154,11 +163,13 @@ export default async function CategoriaPage({ params }: Props) {
   }
 
   const productos = await getProductosCategoria(ciudadSEO.nombre, ciudadSEO.municipio, categoria)
+  const tCatalog = await getTranslations({ locale, namespace: 'catalog' })
+  const categoryName = locale === 'en' ? tCatalog(`subcategories.${cat.nombre}`) : cat.nombre
 
   // Breadcrumb items visual
   const breadcrumbItems = [
     { label: ciudadSEO.nombre, href: `/${ciudad}` },
-    { label: cat.nombre, href: undefined }
+    { label: categoryName, href: undefined }
   ]
 
   const SITIO = 'https://camperocasion.online'
@@ -226,6 +237,7 @@ export default async function CategoriaPage({ params }: Props) {
       )}
       <Breadcrumbs items={breadcrumbItems} />
       <LandingCategoria 
+        locale={locale}
         ciudadSlug={ciudad} 
         ciudadNombre={ciudadSEO.nombre}
         ciudadMunicipio={ciudadSEO.municipio}

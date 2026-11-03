@@ -47,6 +47,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Pack no válido' }, { status: 400 })
   }
   const plan = body.plan as PlanPago
+  // Only a validated display locale can affect Stripe UI or return URLs;
+  // user, plan and prices still come from the authenticated server state.
+  const english = body?.locale === 'en'
+  const localePrefix = english ? '/en' : ''
 
   if (body?.periodicidad && body.periodicidad !== 'mensual' && body.periodicidad !== 'anual') {
     return NextResponse.json({ ok: false, error: 'Periodicidad no válida' }, { status: 400 })
@@ -172,7 +176,7 @@ export async function POST(req: NextRequest) {
       ...(perfil?.stripe_customer_id
         ? { customer: perfil.stripe_customer_id }
         : { customer_email: user.email || undefined }),
-      locale: 'es',
+      locale: english ? 'en' : 'es',
       adaptive_pricing: { enabled: false },
       // Domicilio y NIF/CIF en la factura: lo necesita un autónomo o taller.
       tax_id_collection: { enabled: true },
@@ -183,8 +187,8 @@ export async function POST(req: NextRequest) {
         description: `CamperOcasión ${def.nombre} (${periodicidad === 'anual' ? 'anual' : 'mensual'})`,
       },
       metadata,
-      success_url: `${site}/para-profesionales?pago=ok&plan=${plan}`,
-      cancel_url: `${site}/para-profesionales?pago=cancelado`,
+      success_url: `${site}${localePrefix}/para-profesionales?pago=ok&plan=${plan}`,
+      cancel_url: `${site}${localePrefix}/para-profesionales?pago=cancelado`,
     })
     if (!session.url) {
       return NextResponse.json({ ok: false, error: 'Stripe no devolvió URL' }, { status: 502 })

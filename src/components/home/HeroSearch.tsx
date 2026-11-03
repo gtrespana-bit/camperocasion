@@ -38,8 +38,8 @@ export default function HeroSearch({
   const prefix = pathname === '/en' || pathname.startsWith('/en/') ? '/en' : ''
 
   const field = 'group/field relative flex min-w-0 flex-col justify-center px-5 py-3.5 transition-colors hover:bg-white/[0.06] focus-within:bg-white/[0.08] lg:py-4'
-  const label = 'text-[10px] font-semibold uppercase tracking-[0.2em] text-white/45'
-  const control = 'mt-1 w-full cursor-pointer appearance-none truncate bg-transparent pr-6 text-[15px] font-medium text-white placeholder:text-white/35 focus:shadow-none focus:outline-none focus-visible:outline-none [&>option]:text-night [&>optgroup]:text-night'
+  const label = 'text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70'
+  const control = 'mt-1 w-full cursor-pointer appearance-none truncate bg-transparent pr-6 text-[15px] font-medium text-white placeholder:text-white/60 focus:shadow-none focus:outline-none focus-visible:outline-none [&>option]:text-night [&>optgroup]:text-night'
   const chevron = 'pointer-events-none absolute right-5 top-1/2 mt-1 -translate-y-1/2 text-white/40'
 
   return (

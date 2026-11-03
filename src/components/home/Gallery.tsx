@@ -93,7 +93,8 @@ export default function Gallery({ items, labels, header }: { items: GalleryItem[
         </div>
       ) : (
         <>
-          <div className="mt-12 overflow-x-auto px-5 pb-4 [scrollbar-width:none] sm:px-8 lg:mt-14 lg:overflow-visible lg:pb-0 lg:pl-[max(2rem,calc((100vw-1360px)/2+2rem))] [&::-webkit-scrollbar]:hidden">
+          <p className="micro mx-auto mt-8 max-w-[1360px] px-5 text-night/75 sm:px-8 lg:hidden">{labels.progress} →</p>
+          <div className="mt-4 overflow-x-auto snap-x snap-mandatory px-5 pb-4 [scrollbar-width:none] sm:px-8 lg:mt-14 lg:overflow-visible lg:pb-0 lg:pl-[max(2rem,calc((100vw-1360px)/2+2rem))] [&::-webkit-scrollbar]:hidden">
             <div ref={track} className="flex w-max gap-4 lg:gap-6 lg:pr-[10vw]">
               {items.map((it, i) => (
                 <LocalLink
@@ -101,7 +102,7 @@ export default function Gallery({ items, labels, header }: { items: GalleryItem[
                   href={it.href}
                   data-card
                   data-cursor={labels.see}
-                  className="group flex w-[76vw] shrink-0 flex-col border border-night/10 bg-white shadow-[0_1px_0_rgba(15,23,42,0.04),0_24px_48px_-32px_rgba(15,23,42,0.35)] transition-[transform,box-shadow] duration-500 hover:-translate-y-1.5 hover:shadow-[0_1px_0_rgba(15,23,42,0.04),0_36px_60px_-28px_rgba(15,23,42,0.45)] sm:w-[46vw] lg:w-[clamp(260px,min(28vw,calc((100svh-430px)*1.25)),460px)]"
+                  className="group flex w-[76vw] shrink-0 snap-start flex-col border border-night/10 bg-white shadow-[0_1px_0_rgba(15,23,42,0.04),0_24px_48px_-32px_rgba(15,23,42,0.35)] transition-[transform,box-shadow] duration-500 hover:-translate-y-1.5 hover:shadow-[0_1px_0_rgba(15,23,42,0.04),0_36px_60px_-28px_rgba(15,23,42,0.45)] sm:w-[46vw] lg:w-[clamp(260px,min(28vw,calc((100svh-430px)*1.25)),460px)]"
                 >
                   <div className="relative aspect-[5/4] overflow-hidden bg-night/10">
                     <div data-gimg className="absolute inset-y-0 -inset-x-[10%] will-change-transform">
@@ -125,12 +126,12 @@ export default function Gallery({ items, labels, header }: { items: GalleryItem[
                   </div>
                   <div className="flex flex-1 flex-col p-4 lg:p-5">
                     <h3 className="truncate text-[16.5px] font-semibold leading-tight">{it.title}</h3>
-                    <p className="mt-2 flex items-center gap-2 truncate text-[12.5px] text-night/55">
+                    <p className="mt-2 flex items-center gap-2 truncate text-[12.5px] text-night/75">
                       {it.place && <><MapPin size={13} aria-hidden="true" className="shrink-0 text-leaf" />{it.place}</>}
                       {it.condition && <><span className="h-1 w-1 shrink-0 rounded-full bg-night/25" aria-hidden="true" />{it.condition}</>}
                       {it.ago && <><span className="h-1 w-1 shrink-0 rounded-full bg-night/25" aria-hidden="true" />{it.ago}</>}
                     </p>
-                    <div className="mt-auto flex items-end justify-between border-t border-night/10 pt-4 mt-4">
+                    <div className="mt-auto flex items-end justify-between border-t border-night/10 pt-4">
                       <p className="t-num text-[28px] leading-none">{it.price}</p>
                       <span className="flex h-9 w-9 items-center justify-center bg-night text-white transition-colors duration-500 group-hover:bg-leaf group-hover:text-[#04140A]">
                         <ArrowUpRight size={17} aria-hidden="true" />

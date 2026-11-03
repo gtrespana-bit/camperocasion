@@ -49,7 +49,7 @@ export function Header() {
       .filter((s): s is NonNullable<typeof s> => Boolean(s))
       .map(s => ({
         id: s.slug,
-        nombre: s.label,
+        nombre: t(`catalog.subcategories.${s.label}`),
         icon: s.icon,
         href: `/catalogo?subcategoria=${encodeURIComponent(s.label)}`,
       })),

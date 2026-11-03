@@ -1,3 +1,4 @@
+import PublicHero from '@/components/editorial/PublicHero'
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
@@ -126,24 +127,12 @@ export default function GestoriaCambioNombrePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <Breadcrumbs items={[{ label: 'Gestoría del cambio de nombre', href: '/gestoria-cambio-nombre' }]} />
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-3">
-          <span className="w-11 h-11 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
-            <FileSignature size={22} aria-hidden="true" />
-          </span>
-          <h1 className="text-3xl md:text-4xl font-black text-gray-900">
-            Cambio de nombre de tu camper, tramitado por gestoría
-          </h1>
-        </div>
-        <p className="text-lg text-gray-600 mb-2">
-          Compraste (o vas a comprar) una camper de segunda mano: nos ocupamos del papeleo para
-          que solo tengas que disfrutarla. ITP, tasas de la DGT, cambio de titularidad y
-          notificación de venta, todo con un único contacto.
-        </p>
-        <p className="text-sm font-semibold text-brand-primary mb-8">
+      <div className="public-page min-h-screen">
+        <PublicHero compact eyebrow="CamperOcasión · Trámites" title="Cambio de nombre de tu camper, tramitado por gestoría" description={<>Nos ocupamos del papeleo para que solo tengas que disfrutarla: ITP, tasas de la DGT, cambio de titularidad y notificación de venta, todo con un único contacto.</>} />
+        <div className="max-w-4xl mx-auto px-5 sm:px-8 py-12 lg:py-16">
+        <p className="mb-8 border-l-[3px] border-leaf bg-white px-5 py-4 text-sm font-semibold text-night">
           Gestión completa: {GESTORIA_PRECIO_MIN}–{GESTORIA_PRECIO_MAX} € (más tasas oficiales e ITP) · Presupuesto cerrado antes de empezar
         </p>
-
         <div className="grid md:grid-cols-[1fr_360px] gap-6 items-start">
           <div>
             <section className="bg-white border border-gray-100 rounded-2xl p-5 mb-4">
@@ -189,6 +178,7 @@ export default function GestoriaCambioNombrePage() {
               <FormularioGestoria />
             </Suspense>
           </div>
+        </div>
         </div>
       </div>
     </>
