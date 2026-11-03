@@ -1,7 +1,7 @@
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
-import { ArrowRight, ArrowUpRight, BadgeCheck, Check, ClipboardCheck, FileText, ShieldCheck } from 'lucide-react'
+import { ArrowRight, ArrowUpRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase-server-client'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
@@ -16,7 +16,12 @@ import { aplicarOrdenCatalogo, ordenarProductosCatalogo } from '@/lib/catalog-co
 import Reveal from '@/components/home/Reveal'
 import CountUp from '@/components/home/CountUp'
 import HeroSearch from '@/components/home/HeroSearch'
-import ListingRail, { type RailItem, type RailTab } from '@/components/home/ListingRail'
+import SmoothScroll from '@/components/home/SmoothScroll'
+import HeroFx from '@/components/home/HeroFx'
+import ScrollWords, { type Word } from '@/components/home/ScrollWords'
+import FamilyPanels, { type FamilyPanel } from '@/components/home/FamilyPanels'
+import Showroom, { type RailItem, type RailTab } from '@/components/home/Showroom'
+import Journey, { type JourneyStep } from '@/components/home/Journey'
 import fs from 'fs'
 import path from 'path'
 
@@ -208,21 +213,38 @@ function relativeTime(iso?: string | null, t?: any): string | null {
 
 const CONTAINER = 'mx-auto w-full max-w-[1360px] px-5 sm:px-8'
 
-function Eyebrow({ children, tone = 'dark' }: { children: React.ReactNode; tone?: 'dark' | 'light' }) {
+/** Etiqueta de sección tipo ficha técnica: «02 / Familias». */
+function Eyebrow({ n, children, tone = 'dark' }: { n: string; children: React.ReactNode; tone?: 'dark' | 'light' }) {
   return (
-    <p className={`flex items-center gap-3 text-[12px] font-semibold uppercase tracking-[0.18em] ${tone === 'light' ? 'text-white/60' : 'text-ink/55'}`}>
-      <span className={`h-px w-8 ${tone === 'light' ? 'bg-ember-300' : 'bg-ember'}`} aria-hidden="true" />
+    <p className={`font-mono text-[11.5px] uppercase tracking-[0.16em] ${tone === 'light' ? 'text-white/60' : 'text-ink/55'}`}>
+      <span className={tone === 'light' ? 'text-ember-300' : 'text-ember'}>{n}</span>
+      <span className="mx-2 opacity-40">/</span>
       {children}
     </p>
   )
 }
 
-/** Titular editorial: serif grande con una palabra clave en cursiva. */
+/** Titular editorial. Las partes en cursiva comparten color con el resto. */
 function Title({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <h2 className={`font-display text-[clamp(2.6rem,5.6vw,5.5rem)] leading-[0.98] text-balance ${className}`}>
+    <h2 className={`font-display text-[clamp(2.8rem,6.4vw,6.4rem)] leading-[0.95] tracking-[-0.015em] text-balance ${className}`}>
       {children}
     </h2>
+  )
+}
+
+function CtaPill({ href, children, tone }: { href: string; children: React.ReactNode; tone: 'white' | 'ink' }) {
+  const cls = tone === 'white'
+    ? 'bg-white text-ink hover:bg-ember hover:text-white'
+    : 'bg-ink text-white hover:bg-ember'
+  const dot = tone === 'white' ? 'bg-ink text-white' : 'bg-white/15'
+  return (
+    <LocalLink href={href} className={`group inline-flex items-center gap-4 rounded-full py-2.5 pl-7 pr-2.5 text-[15px] font-semibold transition-colors duration-500 ${cls}`}>
+      {children}
+      <span className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-500 ${dot} group-hover:bg-white/20`}>
+        <ArrowUpRight size={17} className="transition-transform duration-500 group-hover:rotate-45" />
+      </span>
+    </LocalLink>
   )
 }
 
@@ -242,95 +264,18 @@ function toRailItem(p: any, t: any): RailItem {
   }
 }
 
+/** «Una *camper* no es…» → palabras, con las marcadas en cursiva. */
+function parseWords(text: string): Word[] {
+  return text.split(/\s+/).filter(Boolean).map((tok) => {
+    const em = /\*[^*]+\*/.test(tok)
+    return { t: tok.replace(/\*/g, ''), em }
+  })
+}
+
 const FAMILIA_FOTO: Record<string, { src: string; alt: string }> = {
   campers: { src: '/home/campers.webp', alt: 'Furgoneta camper en un camino de pinos al atardecer' },
   autocaravanas: { src: '/home/autocaravanas.webp', alt: 'Autocaravana blanca junto al Mediterráneo al anochecer' },
   overland: { src: '/home/overland.webp', alt: 'Vehículo overland 4x4 en el desierto de Almería al amanecer' },
-}
-
-const PASOS_CONFIANZA = [
-  { key: 's1', href: '/catalogo' },
-  { key: 's2', href: '/compra-segura-camper' },
-  { key: 's3', href: '/calcular-itp' },
-  { key: 's4', href: '/contrato-compraventa' },
-] as const
-
-/** Contornos topográficos: textura sutil para las secciones oscuras. */
-function Contours({ className = '' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 800 800" fill="none" aria-hidden="true">
-      {Array.from({ length: 16 }, (_, i) => (
-        <ellipse
-          key={i}
-          cx={400 + Math.sin(i * 0.7) * 18}
-          cy={400 + Math.cos(i * 0.5) * 14}
-          rx={60 + i * 24}
-          ry={40 + i * 19}
-          transform={`rotate(${-18 + i * 1.6} 400 400)`}
-          stroke="currentColor"
-          strokeWidth="1"
-        />
-      ))}
-    </svg>
-  )
-}
-
-/** Sello circular con texto en órbita (homologación verificada). */
-function Sello({ text }: { text: string }) {
-  const ring = `${text.toUpperCase()} · ${text.toUpperCase()} · `
-  return (
-    <div className="relative h-[132px] w-[132px]" aria-hidden="true">
-      <svg viewBox="0 0 132 132" className="spin-slow absolute inset-0 h-full w-full">
-        <defs>
-          <path id="sello-circulo" d="M66,66 m-52,0 a52,52 0 1,1 104,0 a52,52 0 1,1 -104,0" />
-        </defs>
-        <text fontSize="9.2" letterSpacing="2.6" fill="currentColor" fontWeight="600">
-          <textPath href="#sello-circulo">{ring}</textPath>
-        </text>
-      </svg>
-      <div className="absolute inset-[30px] flex items-center justify-center rounded-full bg-forest text-sand-50">
-        <ShieldCheck size={30} strokeWidth={1.6} />
-      </div>
-    </div>
-  )
-}
-
-function Expediente({ t }: { t: any }) {
-  const rows = [
-    { icon: FileText, label: t('landing.trust.dossier.sheet'), state: t('landing.trust.dossier.sheetState') },
-    { icon: ClipboardCheck, label: t('landing.trust.dossier.itv'), state: t('landing.trust.dossier.itvState') },
-    { icon: BadgeCheck, label: t('landing.trust.dossier.homologation'), state: t('landing.trust.dossier.homologationState') },
-  ]
-  return (
-    <figure className="relative mt-12 max-w-[460px] rounded-[22px] bg-sand-50 p-6 text-ink shadow-[0_40px_80px_-30px_rgba(0,0,0,0.6)] sm:p-7">
-      <figcaption className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/50">
-        <span>{t('landing.trust.dossier.label')}</span>
-        <span className="rounded-full border border-ink/15 px-2.5 py-1 normal-case tracking-normal">{t('landing.trust.dossier.example')}</span>
-      </figcaption>
-      <ul className="mt-5 divide-y divide-ink/10">
-        {rows.map((r) => (
-          <li key={r.label} className="flex items-center gap-4 py-3.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest/10 text-forest">
-              <r.icon size={17} strokeWidth={1.8} />
-            </span>
-            <span className="flex-1 text-[15px] font-medium">{r.label}</span>
-            <span className="flex items-center gap-1.5 text-[13px] font-medium text-forest-500">
-              <Check size={14} strokeWidth={2.4} /> {r.state}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-5 flex items-center gap-5 rounded-2xl bg-forest p-4 pr-5 text-sand-50">
-        <div className="text-sand-50/80 [&_div>div]:bg-sand-50 [&_div>div]:text-forest">
-          <Sello text={t('landing.trust.dossier.seal')} />
-        </div>
-        <div>
-          <p className="font-display text-[26px] leading-[1.05]">{t('landing.trust.dossier.seal')}</p>
-          <p className="mt-1.5 text-[13px] leading-snug text-sand-50/65">{t('landing.trust.dossier.sealDesc')}</p>
-        </div>
-      </div>
-    </figure>
-  )
 }
 
 // ── Página ────────────────────────────────────────────────────────────────
@@ -377,11 +322,49 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   ]
 
   const stats = [
-    totalActivos > 0 ? { value: totalActivos, label: t('landing.stats.listings'), suffix: '' } : null,
-    { value: 52, label: t('landing.stats.territories'), suffix: '' },
-    { value: 0, label: t('landing.stats.commission'), suffix: ' %' },
-    { value: FILTROS_TECNICOS.length, label: t('landing.stats.filters'), suffix: '' },
+    totalActivos > 0 ? { value: totalActivos, label: t('landing.statement.listings'), suffix: '' } : null,
+    { value: 52, label: t('landing.statement.territories'), suffix: '' },
+    { value: 0, label: t('landing.statement.commission'), suffix: ' %' },
+    { value: FILTROS_TECNICOS.length, label: t('landing.statement.filters'), suffix: '' },
   ].filter((x): x is { value: number; label: string; suffix: string } => x !== null)
+
+  const familias: FamilyPanel[] = FAMILIAS.map((f) => {
+    const tipos = f.subs
+      .map((slug) => subs.find((x) => x.slug === slug))
+      .filter((s): s is NonNullable<typeof s> => Boolean(s))
+    const foto = FAMILIA_FOTO[f.key]
+    return {
+      key: f.key,
+      label: t(`familias.${f.key}.label`),
+      desc: t(`familias.${f.key}.desc`),
+      image: foto.src,
+      alt: foto.alt,
+      href: `/catalogo?subcategoria=${encodeURIComponent(tipos[0].label)}`,
+      tipos: tipos.map((s) => ({
+        label: s.label,
+        href: `/catalogo?subcategoria=${encodeURIComponent(s.label)}`,
+        hint: resumenFabricantes(s.marcas, 4),
+      })),
+    }
+  })
+
+  const pasos: JourneyStep[] = [
+    { key: 's1', image: '/home/j1.webp', links: [{ label: t('landing.journey.s1.l1'), href: '/catalogo' }] },
+    { key: 's2', image: '/home/j2.webp', links: [{ label: t('landing.journey.s2.l1'), href: '/compra-segura-camper' }] },
+    { key: 's3', image: '/home/j3.webp', links: [
+      { label: t('landing.journey.s3.l1'), href: '/calcular-itp' },
+      { label: t('landing.journey.s3.l2'), href: '/contrato-compraventa' },
+      { label: t('landing.journey.s3.l3'), href: '/gestoria-cambio-nombre' },
+    ] },
+    { key: 's4', image: '/home/j4.webp', links: [{ label: t('landing.journey.s4.l1'), href: '/catalogo' }] },
+  ].map((s, i) => ({
+    key: s.key,
+    title: t(`landing.journey.${s.key}.title`),
+    desc: t(`landing.journey.${s.key}.desc`),
+    image: s.image,
+    alt: t(`landing.journey.alt${i + 1}`),
+    links: s.links,
+  }))
 
   const audiencias = [
     { key: 'private', vendedor: 'particular', plural: 'particulares' },
@@ -391,14 +374,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <div className="bg-sand-50 text-ink">
+      <SmoothScroll />
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       )}
 
       {/* ═══════════ HERO ═══════════ */}
-      <section className="relative isolate bg-ink text-white">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="hero-parallax absolute inset-0">
+      <HeroFx className="relative isolate bg-sand-50 text-white">
+        <div className="hero-frame absolute inset-0 -z-10 overflow-hidden bg-ink">
+          <div className="hero-media absolute inset-0">
             <div className="hero-photo grain absolute inset-0">
               <Image
                 src="/home/hero.webp"
@@ -408,37 +392,32 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 quality={90}
                 fetchPriority="high"
                 sizes="100vw"
-                className="object-cover object-[87%_50%] lg:object-[100%_50%]"
+                className="object-cover object-[94%_50%] lg:object-[100%_50%]"
               />
             </div>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-ink/50 via-ink/20 to-transparent lg:from-ink/80 lg:via-ink/20" aria-hidden="true" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-transparent to-ink/60" aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-r from-ink/55 via-ink/15 to-transparent lg:from-ink/80 lg:via-ink/20" aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-transparent to-ink/60" aria-hidden="true" />
         </div>
 
-        <div className={`${CONTAINER} relative flex min-h-[90svh] flex-col justify-between pb-0 pt-28 lg:justify-end lg:pt-36 lg:min-h-[calc(100svh-48px)]`}>
-          <div className="hero-fade max-w-[1100px] lg:pb-36">
-            <p className="fade-up flex items-center gap-3 text-[12px] font-semibold uppercase tracking-[0.2em] text-white/75" style={{ '--d': '0.15s' } as React.CSSProperties}>
-              <span className="h-px w-8 bg-ember-300" aria-hidden="true" />
-              {t('landing.hero.eyebrow')}
+        <div className={`${CONTAINER} relative flex min-h-[100svh] flex-col justify-between pt-28 lg:min-h-[calc(100svh-96px)] lg:justify-end lg:pt-32`}>
+          <div className="hero-copy max-w-[1100px] lg:pb-24">
+            <p className="fade-up flex items-center gap-3 font-mono text-[11.5px] uppercase tracking-[0.18em] text-white/75" style={{ '--d': '0.15s' } as React.CSSProperties}>
+              <span className="relative flex h-2 w-2" aria-hidden="true">
+                <span className="absolute inset-0 animate-ping rounded-full bg-ember-300/70" />
+                <span className="relative h-2 w-2 rounded-full bg-ember-300" />
+              </span>
+              {totalActivos > 0 ? t('landing.hero.live', { count: totalActivos }) : t('landing.hero.eyebrow')}
             </p>
-            <h1 className="font-display mt-6 text-[clamp(3.2rem,9.4vw,9rem)] leading-[0.92] tracking-[-0.02em]">
+            <h1 className="font-display mt-6 text-[clamp(3.2rem,9.6vw,9.4rem)] leading-[0.9] tracking-[-0.025em]">
               <span className="mask-line"><span style={{ '--d': '0.25s' } as React.CSSProperties}>{t('landing.hero.line1')}</span></span>
-              <span className="mask-line"><span className="italic text-[#FFD2B0]" style={{ '--d': '0.4s' } as React.CSSProperties}>{t('landing.hero.line2')}</span></span>
+              <span className="mask-line"><span className="italic" style={{ '--d': '0.4s' } as React.CSSProperties}>{t('landing.hero.line2')}</span></span>
             </h1>
-            <p className="fade-up mt-7 max-w-[560px] text-[17px] leading-relaxed text-white/80 sm:text-[19px]" style={{ '--d': '0.7s' } as React.CSSProperties}>
+            <p className="fade-up mt-7 max-w-[520px] text-[16.5px] leading-relaxed text-white/80 sm:text-[18px]" style={{ '--d': '0.7s' } as React.CSSProperties}>
               {t('landing.hero.sub')}
             </p>
             <div className="fade-up mt-9 flex flex-wrap items-center gap-x-8 gap-y-4" style={{ '--d': '0.85s' } as React.CSSProperties}>
-              <LocalLink
-                href="/catalogo"
-                className="group inline-flex items-center gap-3 rounded-full bg-ember py-4 pl-8 pr-5 text-[15px] font-semibold text-white transition-colors duration-500 hover:bg-white hover:text-ink"
-              >
-                {t('landing.hero.ctaBuy')}
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 transition-all duration-500 group-hover:bg-ink group-hover:text-white">
-                  <ArrowUpRight size={16} className="transition-transform duration-500 group-hover:rotate-45" />
-                </span>
-              </LocalLink>
+              <CtaPill href="/catalogo" tone="white">{t('landing.hero.ctaBuy')}</CtaPill>
               <LocalLink href="/publicar" className="inline-flex items-center gap-2 text-[15px] font-semibold text-white">
                 <span className="link-draw pb-1">{t('landing.hero.ctaSell')}</span>
                 <ArrowRight size={16} aria-hidden="true" />
@@ -447,7 +426,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </div>
 
           {/* Buscador: cabalga entre el hero y la siguiente sección */}
-          <div className="fade-up relative z-20 mt-24 translate-y-[80%] lg:mt-0 lg:translate-y-1/2" style={{ '--d': '1s' } as React.CSSProperties}>
+          <div className="relative z-20 mt-10 translate-y-full lg:mt-0 lg:translate-y-1/2">
+          <div className="hero-bar fade-up" style={{ '--d': '1s' } as React.CSSProperties}>
             <HeroSearch
               groups={grupos}
               provinces={todasProvincias}
@@ -465,34 +445,21 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               }}
             />
           </div>
+          </div>
         </div>
-      </section>
-
-      {/* ═══════════ CIFRAS ═══════════ */}
-      <section className={`${CONTAINER} pb-16 pt-[315px] sm:pt-[315px] lg:pb-24 lg:pt-36`}>
-        <dl className={`grid grid-cols-2 gap-y-10 ${stats.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
-          {stats.map((s, i) => (
-            <Reveal key={s.label} delay={i * 0.08} className={`flex flex-col ${i > 0 ? 'lg:border-l lg:border-ink/12 lg:pl-8' : ''} ${i % 2 === 1 ? 'pl-5 border-l border-ink/12 lg:pl-8' : ''}`}>
-              <dt className="order-2 mt-3 max-w-[220px] text-[14px] leading-snug text-ink/60">{s.label}</dt>
-              <dd className="order-1 font-display text-[clamp(3.2rem,6vw,5.6rem)] leading-none text-ink">
-                <CountUp value={s.value} suffix={s.suffix} />
-              </dd>
-            </Reveal>
-          ))}
-        </dl>
-      </section>
+      </HeroFx>
 
       {/* ═══════════ MARQUEE DE FABRICANTES ═══════════ */}
-      <section aria-label={t('landing.marquee.label')} className="overflow-hidden border-y border-ink/12 py-7 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+      <section aria-label={t('landing.marquee.label')} className="mt-[470px] overflow-hidden py-6 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)] lg:mt-28">
         <div className="marquee">
           {[0, 1].map((dup) => (
             <ul key={dup} className="flex shrink-0 items-center" aria-hidden={dup === 1}>
               {fabricantes.map((f) => (
                 <li key={f} className="flex items-center">
-                  <LocalLink href="/marcas" tabIndex={dup === 1 ? -1 : undefined} className="font-display whitespace-nowrap px-8 text-[clamp(2rem,3.4vw,3.2rem)] leading-none text-ink/80 transition-colors duration-300 hover:text-ember">
+                  <LocalLink href="/marcas" tabIndex={dup === 1 ? -1 : undefined} className="font-display whitespace-nowrap px-8 text-[clamp(1.8rem,3vw,2.8rem)] leading-none text-ink/35 transition-colors duration-300 hover:text-ink">
                     {f}
                   </LocalLink>
-                  <span className="h-1.5 w-1.5 rounded-full bg-ember/70" aria-hidden="true" />
+                  <span className="h-1 w-1 rounded-full bg-ink/25" aria-hidden="true" />
                 </li>
               ))}
             </ul>
@@ -500,232 +467,140 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
 
+      {/* ═══════════ MANIFIESTO + CIFRAS ═══════════ */}
+      <section className={`${CONTAINER} pb-24 pt-24 lg:pb-36 lg:pt-36`}>
+        <Eyebrow n="01">{t('landing.statement.eyebrow')}</Eyebrow>
+        <ScrollWords
+          words={parseWords(t('landing.statement.text'))}
+          className="font-display mt-10 max-w-[1180px] text-[clamp(2.1rem,5.2vw,5.4rem)] leading-[1.04] tracking-[-0.015em]"
+        />
+        <dl className={`mt-20 grid grid-cols-2 gap-y-12 border-t border-ink/15 pt-10 lg:mt-28 ${stats.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+          {stats.map((s, i) => (
+            <div key={s.label} className={`flex flex-col ${i % 2 === 1 ? 'border-l border-ink/12 pl-6 lg:pl-8' : ''} ${i > 0 ? 'lg:border-l lg:border-ink/12 lg:pl-8' : ''}`}>
+              <dd className="font-display order-1 text-[clamp(3.4rem,6.4vw,6rem)] leading-none">
+                <CountUp value={s.value} suffix={s.suffix} />
+              </dd>
+              <dt className="order-2 mt-4 max-w-[210px] font-mono text-[11px] uppercase leading-snug tracking-[0.1em] text-ink/55">{s.label}</dt>
+            </div>
+          ))}
+        </dl>
+      </section>
+
       {/* ═══════════ FAMILIAS ═══════════ */}
-      <section className={`${CONTAINER} py-24 lg:py-36`}>
-        <Reveal className="grid gap-8 lg:grid-cols-12 lg:items-end">
-          <div className="lg:col-span-8">
-            <Eyebrow>{t('landing.families.eyebrow')}</Eyebrow>
+      <section className={`${CONTAINER} pb-24 lg:pb-40`}>
+        <Reveal className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <Eyebrow n="02">{t('landing.families.eyebrow')}</Eyebrow>
             <Title className="mt-6">
-              {t('landing.families.title1')} <em className="italic text-forest-500">{t('landing.families.title2')}</em>
+              {t('landing.families.title1')} <em className="italic">{t('landing.families.title2')}</em>
             </Title>
           </div>
-          <div className="lg:col-span-4">
-            <p className="text-[17px] leading-relaxed text-ink/65">{t('landing.families.intro')}</p>
-            <LocalLink href="/catalogo" className="mt-5 inline-flex items-center gap-2 text-[15px] font-semibold">
-              <span className="link-draw pb-1">{t('landing.families.all')}</span> <ArrowRight size={16} aria-hidden="true" />
-            </LocalLink>
-          </div>
+          <LocalLink href="/catalogo" className="inline-flex items-center gap-2 text-[15px] font-semibold">
+            <span className="link-draw pb-1">{t('landing.families.all')}</span> <ArrowRight size={16} aria-hidden="true" />
+          </LocalLink>
         </Reveal>
-
-        <div className="mt-16 grid gap-x-6 gap-y-14 md:grid-cols-3">
-          {FAMILIAS.map((f, i) => {
-            const tipos = f.subs
-              .map((slug) => subs.find((x) => x.slug === slug))
-              .filter((s): s is NonNullable<typeof s> => Boolean(s))
-            const foto = FAMILIA_FOTO[f.key]
-            const primero = tipos[0]
-            return (
-              <Reveal key={f.key} delay={i * 0.12} className={['', 'md:mt-12', 'md:mt-24'][i]}>
-                <article className="group">
-                  <LocalLink
-                    href={`/catalogo?subcategoria=${encodeURIComponent(primero.label)}`}
-                    aria-label={`${t('landing.families.explore')} ${t(`familias.${f.key}.label`)}`}
-                    className="relative block aspect-[4/5] overflow-hidden rounded-[24px] bg-ink"
-                  >
-                    {foto && (
-                      <Image
-                        src={foto.src}
-                        alt={foto.alt}
-                        fill
-                        sizes="(max-width: 768px) 92vw, 33vw"
-                        className="object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.07]"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/5 to-ink/25" aria-hidden="true" />
-                    <span className="absolute left-6 top-6 font-display text-[22px] italic text-white/90">0{i + 1}</span>
-                    <span className="absolute right-5 top-5 flex h-12 w-12 items-center justify-center rounded-full bg-sand-50/95 text-ink transition-all duration-500 ease-out group-hover:rotate-45 group-hover:bg-ember group-hover:text-white" aria-hidden="true">
-                      <ArrowUpRight size={20} />
-                    </span>
-                    <h3 className="font-display absolute inset-x-6 bottom-6 text-[clamp(2.2rem,3.2vw,3rem)] leading-[1] text-white">
-                      {t(`familias.${f.key}.label`)}
-                    </h3>
-                  </LocalLink>
-                  <p className="mt-5 text-[15px] leading-relaxed text-ink/65">{t(`familias.${f.key}.desc`)}</p>
-                  <ul className="mt-4 divide-y divide-ink/10 border-y border-ink/10">
-                    {tipos.map((s) => (
-                      <li key={s.slug}>
-                        <LocalLink
-                          href={`/catalogo?subcategoria=${encodeURIComponent(s.label)}`}
-                          title={resumenFabricantes(s.marcas, 4)}
-                          className="group/row flex items-center justify-between py-3 text-[15px] font-medium transition-all duration-300 hover:pl-2 hover:text-ember"
-                        >
-                          {s.label}
-                          <ArrowRight size={15} className="-translate-x-2 opacity-0 transition-all duration-300 group-hover/row:translate-x-0 group-hover/row:opacity-100" aria-hidden="true" />
-                        </LocalLink>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              </Reveal>
-            )
-          })}
+        <div className="mt-14 lg:mt-20">
+          <FamilyPanels families={familias} explore={t('landing.families.explore')} />
         </div>
       </section>
 
       {/* ═══════════ EN EL MERCADO AHORA ═══════════ */}
-      <section className="bg-white py-24 lg:py-32">
+      <section className="bg-white py-24 lg:py-36">
         <div className={CONTAINER}>
-          <Reveal className="mb-12 max-w-3xl">
-            <Eyebrow>{t('landing.listings.eyebrow')}</Eyebrow>
-            <Title className="mt-6">
-              {t('landing.listings.title1')} <em className="italic text-forest-500">{t('landing.listings.title2')}</em>
+          <Reveal className="mb-14 flex flex-col gap-6">
+            <Eyebrow n="03">{t('landing.listings.eyebrow')}</Eyebrow>
+            <Title>
+              {t('landing.listings.title1')} <em className="italic">{t('landing.listings.title2')}</em>
             </Title>
           </Reveal>
-          <Reveal delay={0.1}>
-            <ListingRail
-              tabs={tabs}
-              labels={{
-                viewAll: t('landing.listings.viewAll'),
-                empty: t('landing.listings.empty'),
-                emptyCta: t('landing.listings.emptyCta'),
-                prev: t('landing.listings.prev'),
-                next: t('landing.listings.next'),
-                featured: t('landing.listings.featured'),
-                isNew: t('landing.listings.isNew'),
-              }}
-            />
-          </Reveal>
+          <Showroom
+            tabs={tabs}
+            labels={{
+              viewAll: t('landing.listings.viewAll'),
+              empty: t('landing.listings.empty'),
+              emptyCta: t('landing.listings.emptyCta'),
+              featured: t('landing.listings.featured'),
+              isNew: t('landing.listings.isNew'),
+              open: t('landing.listings.open'),
+            }}
+          />
         </div>
       </section>
 
-      {/* ═══════════ COMPRA CON GARANTÍAS ═══════════ */}
-      <section className="relative isolate overflow-hidden bg-ink py-24 text-sand-50 lg:py-36">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(60%_50%_at_85%_10%,rgba(47,107,82,0.55),transparent_70%),radial-gradient(50%_40%_at_0%_100%,rgba(232,89,12,0.12),transparent_70%)]" aria-hidden="true" />
-        <Contours className="absolute -right-40 -top-40 -z-10 h-[900px] w-[900px] text-white/[0.06]" />
-        <div className={`${CONTAINER} grid gap-16 lg:grid-cols-12 lg:gap-12`}>
-          <div className="lg:col-span-5">
-            <div className="lg:sticky lg:top-28">
-              <Reveal>
-                <Eyebrow tone="light">{t('landing.trust.eyebrow')}</Eyebrow>
-                <Title className="mt-6">
-                  {t('landing.trust.title1')} <em className="italic text-[#FFD2B0]">{t('landing.trust.title2')}</em>
-                </Title>
-                <p className="mt-6 max-w-md text-[17px] leading-relaxed text-sand-50/65">{t('landing.trust.text')}</p>
-              </Reveal>
-              <Reveal delay={0.15}>
-                <Expediente t={t} />
-              </Reveal>
-            </div>
-          </div>
-
-          <ol className="lg:col-span-7 lg:pt-4">
-            {PASOS_CONFIANZA.map((p, i) => (
-              <Reveal as="li" key={p.key} delay={i * 0.08} className="border-t border-white/15 last:border-b">
-                <LocalLink href={p.href} className="group grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 py-9 sm:grid-cols-[88px_1fr_auto] sm:items-start sm:gap-x-8">
-                  <span className="font-display text-[44px] italic leading-none text-ember-300 transition-transform duration-500 group-hover:translate-x-1 sm:text-[56px]">0{i + 1}</span>
-                  <div>
-                    <h3 className="font-display text-[clamp(1.9rem,2.8vw,2.6rem)] leading-[1.05]">{t(`landing.trust.steps.${p.key}.title`)}</h3>
-                    <p className="mt-3 max-w-lg text-[15.5px] leading-relaxed text-sand-50/60">{t(`landing.trust.steps.${p.key}.desc`)}</p>
-                    <span className="mt-4 inline-flex items-center gap-2 text-[14px] font-semibold text-sand-50">
-                      <span className="link-draw pb-0.5">{t(`landing.trust.steps.${p.key}.cta`)}</span>
-                    </span>
-                  </div>
-                  <span className="hidden h-12 w-12 items-center justify-center rounded-full border border-white/25 transition-all duration-500 ease-out group-hover:rotate-45 group-hover:border-ember group-hover:bg-ember sm:col-start-3 sm:flex" aria-hidden="true">
-                    <ArrowUpRight size={19} />
-                  </span>
-                </LocalLink>
-              </Reveal>
-            ))}
-          </ol>
-        </div>
-      </section>
+      {/* ═══════════ RECORRIDO DE COMPRA (fijado al scroll) ═══════════ */}
+      <Journey steps={pasos} index="04" eyebrow={t('landing.journey.eyebrow')} title={t('landing.journey.title')} />
 
       {/* ═══════════ VENDE ═══════════ */}
-      <section className="bg-sand-100 py-24 lg:py-36">
-        <div className={`${CONTAINER} grid gap-16 lg:grid-cols-12 lg:gap-14`}>
-          <Reveal className="lg:col-span-5">
-            <Eyebrow>{t('landing.sell.eyebrow')}</Eyebrow>
-            <Title className="mt-6">
-              {t('landing.sell.title1')} <em className="italic text-ember">{t('landing.sell.title2')}</em>{t('landing.sell.title3')}
-            </Title>
-            <p className="mt-6 max-w-md text-[17px] leading-relaxed text-ink/65">{t('landing.sell.text')}</p>
-            <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
-              <LocalLink href="/publicar" className="group inline-flex items-center gap-3 rounded-full bg-ink py-4 pl-8 pr-5 text-[15px] font-semibold text-white transition-colors duration-500 hover:bg-ember">
-                {t('landing.sell.ctaPublish')}
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15"><ArrowUpRight size={16} className="transition-transform duration-500 group-hover:rotate-45" /></span>
-              </LocalLink>
-              <LocalLink href="/cuanto-vale-mi-camper" className="inline-flex items-center gap-2 text-[15px] font-semibold">
-                <span className="link-draw pb-1">{t('landing.sell.ctaValue')}</span> <ArrowRight size={16} aria-hidden="true" />
-              </LocalLink>
-            </div>
-
-            <ol className="mt-14 space-y-6 border-t border-ink/12 pt-8">
-              {[1, 2, 3].map((n) => (
-                <li key={n} className="flex gap-5">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/25 font-display text-[19px] italic">{n}</span>
-                  <div>
-                    <p className="text-[16px] font-semibold">{t(`home.how.step${n}Title`)}</p>
-                    <p className="mt-1 text-[14.5px] leading-relaxed text-ink/60">{t(`home.how.step${n}Desc`)}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </Reveal>
-
-          <div className="lg:col-span-7">
-            <Reveal>
-              <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-ink/50">{t('landing.sell.audiencesTitle')}</p>
+      <section className="relative overflow-hidden bg-ink py-24 text-sand-50 lg:py-40">
+        <div className={CONTAINER}>
+          <Eyebrow n="05" tone="light">{t('landing.sell.eyebrow')}</Eyebrow>
+          <div className="mt-10 grid items-end gap-10 lg:grid-cols-12 lg:gap-8">
+            <p
+              role="img"
+              aria-label="0 %"
+              className="font-display select-none bg-[url('/home/j4.webp')] bg-cover bg-[position:50%_30%] bg-clip-text text-[clamp(13rem,42vw,40rem)] leading-[0.8] tracking-[-0.04em] text-transparent lg:col-span-7"
+            >
+              0<span className="text-[0.5em] tracking-normal"> %</span>
+            </p>
+            <Reveal className="pb-3 lg:col-span-5">
+              <h2 className="font-display text-[clamp(2rem,3.6vw,3.5rem)] leading-[1.02]">
+                {t('landing.sell.zero')} <em className="italic">{t('landing.sell.title')}</em>
+              </h2>
+              <p className="mt-5 max-w-md text-[16.5px] leading-relaxed text-sand-50/65">{t('landing.sell.text')}</p>
+              <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
+                <CtaPill href="/publicar" tone="white">{t('landing.sell.ctaPublish')}</CtaPill>
+                <LocalLink href="/cuanto-vale-mi-camper" className="inline-flex items-center gap-2 text-[15px] font-semibold">
+                  <span className="link-draw pb-1">{t('landing.sell.ctaValue')}</span> <ArrowRight size={16} aria-hidden="true" />
+                </LocalLink>
+              </div>
             </Reveal>
-            <div className="mt-6">
-              {audiencias.map((a, i) => (
-                <Reveal key={a.key} delay={i * 0.08} className="border-t border-ink/15 last:border-b">
-                  <div className="group grid gap-6 py-9 sm:grid-cols-[1fr_auto] sm:items-end">
-                    <div>
-                      <h3 className="font-display text-[clamp(2rem,3.4vw,3.2rem)] leading-[1.02] transition-transform duration-500 group-hover:translate-x-2">{t(`home.audiences.${a.key}.title`)}</h3>
-                      <p className="mt-3 max-w-xl text-[15.5px] leading-relaxed text-ink/62">{t(`home.audiences.${a.key}.desc`)}</p>
-                    </div>
-                    <div className="flex flex-col gap-2 text-[14px] font-semibold sm:items-end">
-                      <LocalLink href="/publicar" className="inline-flex items-center gap-1.5 text-ember-600 hover:text-ink">
-                        {t('home.audiences.cta')} <ArrowRight size={14} aria-hidden="true" />
-                      </LocalLink>
-                      <LocalLink href={`/catalogo?vendedor=${a.vendedor}`} className="text-ink/60 hover:text-ink">
-                        {t('home.audiences.buyCta', { tipo: t(`tiposVendedor.${a.plural}`) })}
-                      </LocalLink>
-                      {a.key !== 'private' && (
-                        <LocalLink href="/para-profesionales" className="text-ink/60 hover:text-ink">
-                          {t('home.audiences.plansCta')}
-                        </LocalLink>
-                      )}
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+          </div>
+
+          <div className="mt-24 grid border-t border-white/15 lg:mt-32 lg:grid-cols-3">
+            {audiencias.map((a, i) => (
+              <Reveal key={a.key} delay={i * 0.08} className={`group py-9 lg:py-10 ${i > 0 ? 'border-t border-white/15 lg:border-l lg:border-t-0 lg:pl-9' : ''} ${i < 2 ? 'lg:pr-9' : ''}`}>
+                <p className="font-mono text-[11px] tracking-[0.14em] text-white/45">0{i + 1}</p>
+                <h3 className="font-display mt-4 text-[clamp(1.9rem,2.6vw,2.5rem)] leading-[1.02]">{t(`home.audiences.${a.key}.title`)}</h3>
+                <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-sand-50/60">{t(`home.audiences.${a.key}.desc`)}</p>
+                <div className="mt-6 flex flex-col items-start gap-2 text-[14px] font-medium">
+                  <LocalLink href="/publicar" className="inline-flex items-center gap-1.5 text-white">
+                    <span className="link-draw pb-0.5">{t('home.audiences.cta')}</span> <ArrowRight size={14} aria-hidden="true" />
+                  </LocalLink>
+                  <LocalLink href={`/catalogo?vendedor=${a.vendedor}`} className="text-white/55 transition-colors hover:text-white">
+                    {t('home.audiences.buyCta', { tipo: t(`tiposVendedor.${a.plural}`) })}
+                  </LocalLink>
+                  {a.key !== 'private' && (
+                    <LocalLink href="/para-profesionales" className="text-white/55 transition-colors hover:text-white">
+                      {t('home.audiences.plansCta')}
+                    </LocalLink>
+                  )}
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ═══════════ GUÍAS ═══════════ */}
       {guias.length > 0 && (
-        <section className="bg-white py-24 lg:py-32">
-          <div className={`${CONTAINER} grid gap-12 lg:grid-cols-12 lg:gap-14`}>
-            <Reveal className="lg:col-span-4">
-              <Eyebrow>{t('landing.guides.eyebrow')}</Eyebrow>
+        <section className={`${CONTAINER} py-24 lg:py-40`}>
+          <div className="grid gap-12 lg:grid-cols-12 lg:gap-14">
+            <Reveal className="lg:col-span-5">
+              <Eyebrow n="06">{t('landing.guides.eyebrow')}</Eyebrow>
               <Title className="mt-6">
-                {t('landing.guides.title1')} <em className="italic text-forest-500">{t('landing.guides.title2')}</em>
+                {t('landing.guides.title1')} <em className="italic">{t('landing.guides.title2')}</em>
               </Title>
-              <p className="mt-6 max-w-sm text-[16px] leading-relaxed text-ink/60">{t('home.guides.subtitle')}</p>
-              <LocalLink href="/blog" className="mt-6 inline-flex items-center gap-2 text-[15px] font-semibold">
+              <LocalLink href="/blog" className="mt-8 inline-flex items-center gap-2 text-[15px] font-semibold">
                 <span className="link-draw pb-1">{t('home.guides.viewAll')}</span> <ArrowRight size={16} aria-hidden="true" />
               </LocalLink>
             </Reveal>
-            <div className="lg:col-span-8">
+            <div className="lg:col-span-7">
               {guias.map((g, i) => (
-                <Reveal key={g.slug} delay={i * 0.08} className="border-t border-ink/12 last:border-b">
-                  <LocalLink href={`/blog/${g.slug}`} className="group grid gap-3 py-8 sm:grid-cols-[110px_1fr_auto] sm:items-start sm:gap-8">
-                    <span className="pt-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink/45">{g.readTime}</span>
+                <Reveal key={g.slug} delay={i * 0.08} className="border-t border-ink/15 last:border-b">
+                  <LocalLink href={`/blog/${g.slug}`} className="group grid gap-3 py-8 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-8">
                     <div>
-                      <h3 className="font-display text-[clamp(1.7rem,2.6vw,2.4rem)] leading-[1.1] transition-colors duration-300 group-hover:text-forest-500">{g.title}</h3>
+                      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink/45">{String(i + 1).padStart(2, '0')} · {g.readTime}</p>
+                      <h3 className="font-display mt-3 text-[clamp(1.8rem,2.7vw,2.5rem)] leading-[1.06] transition-transform duration-500 group-hover:translate-x-2">{g.title}</h3>
                       <p className="mt-3 line-clamp-2 max-w-2xl text-[15px] leading-relaxed text-ink/60">{g.excerpt}</p>
                     </div>
                     <span className="hidden h-12 w-12 items-center justify-center rounded-full border border-ink/20 transition-all duration-500 group-hover:rotate-45 group-hover:border-ink group-hover:bg-ink group-hover:text-white sm:flex" aria-hidden="true">
@@ -740,26 +615,30 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       )}
 
       {/* ═══════════ PROVINCIAS ═══════════ */}
-      <section className={`${CONTAINER} py-24 lg:py-32`}>
-        <Reveal className="max-w-3xl">
-          <Eyebrow>{t('landing.provinces.eyebrow')}</Eyebrow>
+      <section className={`${CONTAINER} pb-24 lg:pb-40 ${guias.length === 0 ? 'pt-24 lg:pt-40' : ''}`}>
+        <Reveal className="max-w-4xl">
+          <Eyebrow n="07">{t('landing.provinces.eyebrow')}</Eyebrow>
           <Title className="mt-6">
-            {t('landing.provinces.title1')} <em className="italic text-forest-500">{t('landing.provinces.title2')}</em>
+            {t('landing.provinces.title1')} <em className="italic">{t('landing.provinces.title2')}</em>
           </Title>
         </Reveal>
-        <Reveal delay={0.1} className="mt-14 overflow-hidden rounded-[22px] border border-ink/12">
-          <ul className="grid grid-cols-2 gap-px bg-ink/12 md:grid-cols-3 lg:grid-cols-4">
-            {provincias.map((p) => (
-              <li key={p.slug} className="bg-sand-50">
-                <LocalLink href={`/${p.slug}`} className="group relative flex h-[132px] flex-col justify-between p-5 transition-colors duration-500 hover:bg-ink hover:text-white sm:h-[150px] sm:p-6">
-                  <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink/45 transition-colors group-hover:text-white/55">{t('landing.provinces.label')}</span>
-                  <span className="font-display text-[clamp(1.7rem,2.4vw,2.3rem)] leading-none">{p.nombre}</span>
-                  <ArrowUpRight size={20} className="absolute right-5 top-5 -translate-x-1 translate-y-1 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100 sm:right-6 sm:top-6" aria-hidden="true" />
-                </LocalLink>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
+        <ul className="group/list mt-14 grid gap-x-10 sm:grid-cols-2 lg:mt-20 lg:grid-cols-3">
+          {provincias.map((p, i) => (
+            <li key={p.slug} className="border-t border-ink/15">
+              <LocalLink
+                href={`/${p.slug}`}
+                aria-label={`${t('landing.provinces.label')} ${p.nombre}`}
+                className="group flex items-baseline justify-between gap-4 py-5 transition-opacity duration-500 group-hover/list:opacity-30 hover:!opacity-100 focus-visible:!opacity-100 lg:py-6"
+              >
+                <span className="flex items-baseline gap-4">
+                  <span className="font-mono text-[11px] tracking-[0.1em] text-ink/40">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="font-display text-[clamp(2rem,3vw,3rem)] leading-none transition-transform duration-500 group-hover:translate-x-2">{p.nombre}</span>
+                </span>
+                <ArrowUpRight size={20} className="shrink-0 -translate-x-2 translate-y-1 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100" aria-hidden="true" />
+              </LocalLink>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* ═══════════ CTA FINAL ═══════════ */}
@@ -767,17 +646,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <Image src="/home/cta.webp" alt="" fill sizes="100vw" className="-z-10 object-cover" quality={80} />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink/85 via-ink/30 to-ink/15" aria-hidden="true" />
         <div className="absolute inset-0 -z-10 grain" aria-hidden="true" />
-        <div className={`${CONTAINER} flex min-h-[78vh] flex-col items-start justify-end py-20 lg:py-28`}>
+        <div className={`${CONTAINER} flex min-h-[86vh] flex-col items-start justify-end py-20 lg:py-28`}>
           <Reveal>
-            <h2 className="font-display max-w-4xl text-[clamp(2.8rem,7vw,7rem)] leading-[0.96] text-balance">
-              {t('landing.cta.title1')} <em className="italic text-[#FFD2B0]">{t('landing.cta.title2')}</em>
+            <h2 className="font-display max-w-5xl text-[clamp(3rem,8vw,8rem)] leading-[0.92] tracking-[-0.02em] text-balance">
+              {t('landing.cta.title1')} <em className="italic">{t('landing.cta.title2')}</em>
             </h2>
-            <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-white/75">{t('landing.cta.sub')}</p>
+            <p className="mt-7 max-w-xl text-[17px] leading-relaxed text-white/75">{t('landing.cta.sub')}</p>
             <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
-              <LocalLink href="/publicar" className="group inline-flex items-center gap-3 rounded-full bg-ember py-4 pl-8 pr-5 text-[15px] font-semibold text-white transition-colors duration-500 hover:bg-white hover:text-ink">
-                {t('landing.cta.publish')}
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 transition-all duration-500 group-hover:bg-ink group-hover:text-white"><ArrowUpRight size={16} className="transition-transform duration-500 group-hover:rotate-45" /></span>
-              </LocalLink>
+              <CtaPill href="/publicar" tone="white">{t('landing.cta.publish')}</CtaPill>
               <LocalLink href="/cuanto-vale-mi-camper" className="inline-flex items-center gap-2 text-[15px] font-semibold">
                 <span className="link-draw pb-1">{t('landing.cta.value')}</span> <ArrowRight size={16} aria-hidden="true" />
               </LocalLink>

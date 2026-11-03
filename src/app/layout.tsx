@@ -11,23 +11,21 @@ import GoogleAnalyticsScript from '@/components/GoogleAnalyticsScript'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 import CookieConsent from '@/components/CookieConsent'
 
-// Fuente Inter autohospedada (woff2 locales) en lugar de next/font/google.
-const inter = localFont({
-  src: [
-    { path: './fonts/inter-latin-400-normal.woff2', weight: '400', style: 'normal' },
-    { path: './fonts/inter-latin-400-italic.woff2', weight: '400', style: 'italic' },
-    { path: './fonts/inter-latin-500-normal.woff2', weight: '500', style: 'normal' },
-    { path: './fonts/inter-latin-500-italic.woff2', weight: '500', style: 'italic' },
-    { path: './fonts/inter-latin-600-normal.woff2', weight: '600', style: 'normal' },
-    { path: './fonts/inter-latin-600-italic.woff2', weight: '600', style: 'italic' },
-    { path: './fonts/inter-latin-700-normal.woff2', weight: '700', style: 'normal' },
-    { path: './fonts/inter-latin-700-italic.woff2', weight: '700', style: 'italic' },
-    { path: './fonts/inter-latin-900-normal.woff2', weight: '900', style: 'normal' },
-    { path: './fonts/inter-latin-900-italic.woff2', weight: '900', style: 'italic' },
-  ],
-  variable: '--font-inter',
+// Tipografía de interfaz: Geist (variable, autohospedada). Las fuentes Inter
+// siguen en /fonts solo porque las usa la generación de imágenes OG.
+const geist = localFont({
+  src: [{ path: './fonts/geist-latin-wght-normal.woff2', weight: '100 900', style: 'normal' }],
+  variable: '--font-geist',
   display: 'swap',
   preload: true,
+})
+
+// Monoespaciada para etiquetas técnicas, cifras y metadatos (aire de ficha).
+const geistMono = localFont({
+  src: [{ path: './fonts/geist-mono-latin-wght-normal.woff2', weight: '100 900', style: 'normal' }],
+  variable: '--font-geist-mono',
+  display: 'swap',
+  preload: false,
 })
 
 // Tipografía display de la portada y de los titulares editoriales.
@@ -142,7 +140,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={`${inter.variable} ${display.variable}`} suppressHydrationWarning>
+    <html lang="es" className={`${geist.variable} ${geistMono.variable} ${display.variable}`} suppressHydrationWarning>
       <head>
         <GoogleAnalyticsScript />
         <link rel="preconnect" href={SUPABASE_ORIGIN} />

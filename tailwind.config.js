@@ -22,13 +22,14 @@ module.exports = {
         },
         // Paleta editorial de la portada: tinta verdosa, bosque profundo,
         // arena cálida y brasa (naranja camper).
-        ink: { DEFAULT: '#0B1410', 900: '#0B1410', 800: '#111D17', 700: '#18281F', 600: '#233529' },
+        ink: { DEFAULT: '#0A0D0C', 900: '#0A0D0C', 800: '#111614', 700: '#181F1C', 600: '#242D29' },
         forest: { DEFAULT: '#12372A', 700: '#184A39', 500: '#2F6B52', 300: '#8FB5A1' },
-        sand: { DEFAULT: '#F4EFE6', 50: '#FAF7F1', 100: '#F4EFE6', 200: '#E9E1D2', 300: '#D8CDB8' },
+        sand: { DEFAULT: '#ECE9E1', 50: '#F5F3EE', 100: '#ECE9E1', 200: '#DEDACF', 300: '#C9C4B6' },
         ember: { DEFAULT: '#E8590C', 600: '#CF4B05', 300: '#FF9A5C' },
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-geist)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-geist-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
         display: ['var(--font-display)', 'Georgia', 'serif'],
       },
       transitionTimingFunction: {

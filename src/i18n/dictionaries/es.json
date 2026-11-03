@@ -1199,12 +1199,12 @@
   "landing": {
     "hero": {
       "eyebrow": "Marketplace camper · Toda España",
+      "live": "{count} anuncios activos en toda España",
       "line1": "Tu casa sobre ruedas,",
       "line2": "sin sorpresas.",
       "sub": "Furgonetas camper y autocaravanas de ocasión con ficha técnica completa, homologación revisada y cero comisiones.",
       "ctaBuy": "Ver campers en venta",
       "ctaSell": "Vender gratis",
-      "scroll": "Descubre",
       "search": {
         "query": "Qué buscas",
         "queryPlaceholder": "Ducato, California, Adria…",
@@ -1218,20 +1218,21 @@
         "submit": "Buscar"
       }
     },
-    "stats": {
-      "listings": "anuncios activos",
-      "territories": "provincias, Ceuta y Melilla",
-      "commission": "comisiones por publicar y vender",
-      "filters": "filtros técnicos reales"
-    },
     "marquee": {
       "label": "Fabricantes y modelos"
+    },
+    "statement": {
+      "eyebrow": "Manifiesto",
+      "text": "Una *camper* no es un coche. Es el sitio donde vas a *despertar*, *cocinar* y volver a *casa* cada noche. Por eso aquí se compra con ficha técnica completa, expediente *verificado* y cero comisiones.",
+      "listings": "anuncios activos",
+      "territories": "provincias, Ceuta y Melilla",
+      "commission": "de comisión por publicar y vender",
+      "filters": "filtros técnicos reales"
     },
     "families": {
       "eyebrow": "Elige tu forma de viajar",
       "title1": "Tres maneras de",
       "title2": "vivir el camino",
-      "intro": "Furgonetas camperizadas, autocaravanas y vehículos overland. Entra por el mundo que va contigo y afina por tipo.",
       "all": "Ver todo el catálogo",
       "explore": "Explorar"
     },
@@ -1246,61 +1247,47 @@
       "viewAll": "Ver todas",
       "empty": "Aún no hay campers en esta sección",
       "emptyCta": "Publica la primera",
-      "prev": "Anterior",
-      "next": "Siguiente",
       "featured": "Destacado",
-      "isNew": "Nuevo"
+      "isNew": "Nuevo",
+      "open": "Abrir anuncio"
     },
-    "trust": {
+    "journey": {
       "eyebrow": "Compra con garantías",
-      "title1": "Comprar de segunda mano",
-      "title2": "no debería dar miedo.",
-      "text": "Papeles, homologación, impuestos, transferencia: lo que suele convertir una buena compra en una pesadilla, aquí es una herramienta a un clic.",
-      "cta": "Cómo comprar sin riesgos",
-      "dossier": {
-        "label": "Expediente del vehículo",
-        "example": "Ejemplo ilustrativo",
-        "sheet": "Ficha técnica",
-        "sheetState": "Aportada",
-        "itv": "ITV en vigor",
-        "itvState": "Aportada",
-        "homologation": "Proyecto de homologación",
-        "homologationState": "Revisado",
-        "seal": "Homologación verificada",
-        "sealDesc": "Revisada por el equipo de CamperOcasión"
+      "title": "De la primera búsqueda a las llaves en la mano.",
+      "s1": {
+        "title": "Busca por lo que importa",
+        "desc": "Distintivo DGT, plazas, homologación, autonomía, mecánica… hasta 16 filtros técnicos para dar con la camper exacta.",
+        "l1": "Abrir el catálogo"
       },
-      "steps": {
-        "s1": {
-          "title": "Filtra por ficha técnica",
-          "desc": "Distintivo DGT, plazas, homologación, autonomía, mecánica… hasta 16 filtros técnicos para dar con la camper exacta.",
-          "cta": "Abrir el catálogo"
-        },
-        "s2": {
-          "title": "Comprueba el expediente",
-          "desc": "Los anuncios con sello tienen la documentación revisada. Y una guía de compra segura para llegar a la visita preparado.",
-          "cta": "Guía de compra segura"
-        },
-        "s3": {
-          "title": "Calcula el ITP exacto",
-          "desc": "El impuesto de transmisiones de tu comunidad autónoma con la depreciación oficial, antes de negociar el precio.",
-          "cta": "Calculadora de ITP"
-        },
-        "s4": {
-          "title": "Cierra con contrato y gestoría",
-          "desc": "Genera el contrato de compraventa y delega el cambio de nombre. Sin colas y sin papeleos.",
-          "cta": "Contrato y gestoría"
-        }
-      }
+      "s2": {
+        "title": "Comprueba el expediente",
+        "desc": "Ficha técnica, ITV y proyecto de homologación revisados por el equipo. Verás el sello en cada anuncio verificado.",
+        "l1": "Guía de compra segura"
+      },
+      "s3": {
+        "title": "Cierra sin papeleos",
+        "desc": "Calcula el ITP exacto de tu comunidad, genera el contrato de compraventa y delega el cambio de nombre.",
+        "l1": "Calculadora de ITP",
+        "l2": "Contrato",
+        "l3": "Gestoría"
+      },
+      "s4": {
+        "title": "Y a viajar",
+        "desc": "Con todo en regla, solo queda elegir el primer destino. Tu casa sobre ruedas te espera.",
+        "l1": "Ver campers en venta"
+      },
+      "alt1": "Interior de una camper con cocina de madera y cama al atardecer",
+      "alt2": "Carpeta con la documentación del vehículo, llaves y sello sobre una mesa de nogal",
+      "alt3": "Entrega de llaves de una camper en una calle blanca andaluza",
+      "alt4": "Camper recorriendo una carretera de montaña al amanecer"
     },
     "sell": {
       "eyebrow": "Para vendedores",
-      "title1": "Vende tu camper.",
-      "title2": "Sin comisiones",
-      "title3": ", sin intermediarios.",
+      "zero": "de comisión.",
+      "title": "Vende tu camper sin intermediarios.",
       "text": "Publica en cinco minutos, habla directamente con los compradores y quédate con el 100 % del precio.",
       "ctaPublish": "Publicar gratis",
       "ctaValue": "¿Cuánto vale mi camper?",
-      "stepLabel": "Paso",
       "audiencesTitle": "Un mercado abierto a todos los que viven el mundo camper"
     },
     "guides": {
@@ -1313,7 +1300,8 @@
       "eyebrow": "Cerca de ti",
       "title1": "Camper en cada",
       "title2": "rincón de España",
-      "label": "Camper en"
+      "label": "Camper en",
+      "all": "Todas las provincias"
     },
     "cta": {
       "title1": "¿Vendes una camper?",

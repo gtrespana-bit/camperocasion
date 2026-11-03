@@ -376,15 +376,27 @@ a:focus-visible {
 .fade-up { opacity: 0; transform: translateY(18px); animation: fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: var(--d, 0s); }
 @keyframes fade-up { to { opacity: 1; transform: none; } }
 
-/* Zoom lento de la fotografía al cargar + paralaje al hacer scroll */
-.hero-photo { animation: hero-settle 2.6s cubic-bezier(0.22, 1, 0.36, 1) both; will-change: transform; }
-@keyframes hero-settle { from { transform: scale(1.12); } to { transform: scale(1.0); } }
-@supports (animation-timeline: scroll()) {
-  .hero-parallax { animation: hero-drift linear both; animation-timeline: scroll(root block); animation-range: 0 100vh; }
-  @keyframes hero-drift { to { transform: translateY(14vh) scale(1.06); } }
-  .hero-fade { animation: hero-out linear both; animation-timeline: scroll(root block); animation-range: 0 70vh; }
-  @keyframes hero-out { to { opacity: 0; transform: translateY(-40px); } }
-}
+/* Hero: marco que se recoge al hacer scroll, paralaje con el puntero y
+   texto que se retira. Las variables --hp (scroll), --mx/--my (puntero) las
+   escribe HeroFx; sin JS el hero queda en su estado inicial. */
+.hero-frame { transform: scale(calc(1 - var(--hp, 0) * 0.07)); border-radius: calc(var(--hp, 0) * 40px); transform-origin: 50% 0; will-change: transform; }
+.hero-media { transform: translate3d(calc(var(--mx, 0) * -16px), calc(var(--my, 0) * -10px + var(--hp, 0) * 9vh), 0) scale(1.04); will-change: transform; }
+.hero-photo { animation: hero-settle 2.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes hero-settle { from { transform: scale(1.14); } to { transform: scale(1); } }
+.hero-copy { transform: translate3d(0, calc(var(--hp, 0) * -9vh), 0); opacity: calc(1 - var(--hp, 0) * 1.5); }
+.hero-bar { opacity: calc(1 - var(--hp, 0) * 2.2); }
+
+/* Panel de familias que se expande */
+.panel-grow { transition: flex-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* Lenis (scroll suave) */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+/* Texto que se enciende palabra a palabra */
+.sw[data-js] .sw-w { opacity: 0.14; }
 
 /* Revelado al hacer scroll */
 .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1); transition-delay: var(--d, 0s); }
@@ -409,7 +421,9 @@ a:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .mask-line > span, .fade-up { animation: none; transform: none; opacity: 1; }
-  .hero-photo, .hero-parallax, .hero-fade { animation: none !important; }
+  .hero-photo { animation: none !important; }
+  .hero-frame, .hero-media, .hero-copy, .hero-bar { transform: none !important; opacity: 1 !important; border-radius: 0 !important; }
+  .sw[data-js] .sw-w { opacity: 1; }
   .reveal { opacity: 1; transform: none; transition: none; }
   .marquee { animation: none; }
 }

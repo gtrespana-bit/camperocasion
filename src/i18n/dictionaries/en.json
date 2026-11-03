@@ -1199,12 +1199,12 @@
   "landing": {
     "hero": {
       "eyebrow": "Camper marketplace · All of Spain",
+      "live": "{count} active listings across Spain",
       "line1": "Your home on wheels,",
       "line2": "no surprises.",
       "sub": "Used camper vans and motorhomes in Spain with full technical specs, reviewed homologation and zero commission.",
       "ctaBuy": "Browse campers for sale",
       "ctaSell": "Sell for free",
-      "scroll": "Discover",
       "search": {
         "query": "What are you after",
         "queryPlaceholder": "Ducato, California, Adria…",
@@ -1218,20 +1218,21 @@
         "submit": "Search"
       }
     },
-    "stats": {
+    "marquee": {
+      "label": "Makes and models"
+    },
+    "statement": {
+      "eyebrow": "Manifesto",
+      "text": "A *camper* is not a car. It is the place where you will *wake* up, *cook* and come back *home* every night. That is why here you buy with full technical specs, a *verified* file and zero commission.",
       "listings": "active listings",
       "territories": "provinces, Ceuta and Melilla",
       "commission": "commission to list and sell",
       "filters": "real technical filters"
     },
-    "marquee": {
-      "label": "Makes and models"
-    },
     "families": {
       "eyebrow": "Choose how you travel",
       "title1": "Three ways to",
       "title2": "live the road",
-      "intro": "Converted vans, motorhomes and overland vehicles. Enter through the world that suits you, then refine by type.",
       "all": "View the full catalogue",
       "explore": "Explore"
     },
@@ -1246,62 +1247,48 @@
       "viewAll": "View all",
       "empty": "No campers in this section yet",
       "emptyCta": "List the first one",
-      "prev": "Previous",
-      "next": "Next",
       "featured": "Featured",
-      "isNew": "New"
+      "isNew": "New",
+      "open": "Open listing"
     },
-    "trust": {
+    "journey": {
       "eyebrow": "Buy with confidence",
-      "title1": "Buying second-hand",
-      "title2": "shouldn't be scary.",
-      "text": "Paperwork, homologation, taxes, transfer: the things that turn a good purchase into a nightmare are one click away here.",
-      "cta": "How to buy safely",
-      "dossier": {
-        "label": "Vehicle file",
-        "example": "Illustrative example",
-        "sheet": "Technical sheet",
-        "sheetState": "Provided",
-        "itv": "Valid ITV",
-        "itvState": "Provided",
-        "homologation": "Homologation project",
-        "homologationState": "Reviewed",
-        "seal": "Verified homologation",
-        "sealDesc": "Reviewed by the CamperOcasión team"
+      "title": "From the first search to keys in hand.",
+      "s1": {
+        "title": "Search by what matters",
+        "desc": "DGT label, seats, homologation, autonomy, mechanics… up to 16 technical filters to find the exact camper.",
+        "l1": "Open the catalogue"
       },
-      "steps": {
-        "s1": {
-          "title": "Filter by technical spec",
-          "desc": "DGT label, seats, homologation, autonomy, mechanics… up to 16 technical filters to find the exact camper.",
-          "cta": "Open the catalogue"
-        },
-        "s2": {
-          "title": "Check the file",
-          "desc": "Listings with the seal have reviewed documentation. Plus a safe-buying guide so you arrive at the viewing prepared.",
-          "cta": "Safe-buying guide"
-        },
-        "s3": {
-          "title": "Calculate the exact ITP",
-          "desc": "Your region's transfer tax with the official depreciation, before you negotiate the price.",
-          "cta": "ITP calculator"
-        },
-        "s4": {
-          "title": "Close with contract and agency",
-          "desc": "Generate the sales contract and delegate the name change. No queues, no paperwork.",
-          "cta": "Contract and agency"
-        }
-      }
+      "s2": {
+        "title": "Check the file",
+        "desc": "Technical sheet, ITV and homologation project reviewed by our team. You will see the seal on every verified listing.",
+        "l1": "Safe-buying guide"
+      },
+      "s3": {
+        "title": "Close with no paperwork",
+        "desc": "Calculate the exact ITP for your region, generate the sales contract and delegate the name change.",
+        "l1": "ITP calculator",
+        "l2": "Contract",
+        "l3": "Agency"
+      },
+      "s4": {
+        "title": "And off you go",
+        "desc": "With everything in order, all that is left is choosing the first destination. Your home on wheels awaits.",
+        "l1": "Browse campers for sale"
+      },
+      "alt1": "Camper interior with wooden kitchen and bed at sunset",
+      "alt2": "Folder with vehicle documents, keys and a stamp on a walnut table",
+      "alt3": "Camper key handover on a white Andalusian street",
+      "alt4": "Camper driving along a mountain road at sunrise"
     },
     "sell": {
       "eyebrow": "For sellers",
-      "title1": "Sell your camper.",
-      "title2": "No commission",
-      "title3": ", no middlemen.",
+      "zero": "commission.",
+      "title": "Sell your camper with no middlemen.",
       "text": "List it in five minutes, talk directly with buyers and keep 100% of the price.",
       "ctaPublish": "List for free",
       "ctaValue": "How much is my camper worth?",
-      "stepLabel": "Step",
-      "audiencesTitle": "A market open to everyone in the camper world"
+      "audiencesTitle": "A market open to everyone living the camper world"
     },
     "guides": {
       "eyebrow": "Guides",
@@ -1313,7 +1300,8 @@
       "eyebrow": "Close to you",
       "title1": "Campers in every",
       "title2": "corner of Spain",
-      "label": "Campers in"
+      "label": "Campers in",
+      "all": "All provinces"
     },
     "cta": {
       "title1": "Selling a camper?",
