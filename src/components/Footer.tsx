@@ -4,6 +4,7 @@ import BrandLogo from '@/components/BrandLogo'
 import LocalLink from '@/components/LocalLink'
 import { hayDatosTitular } from '@/lib/datos-legales'
 import { useTranslations } from 'next-intl'
+import { usePathname } from 'next/navigation'
 import { categoriasData, FAMILIAS } from '@/lib/categorias'
 import { ArrowUpRight } from 'lucide-react'
 import { CIUDADES_SEO } from '@/lib/ubicaciones-seo'
@@ -28,6 +29,8 @@ const PROVINCIAS_FOOTER = ['madrid', 'barcelona', 'valencia', 'sevilla', 'malaga
 
 export function Footer() {
   const t = useTranslations()
+  const pathname = usePathname()
+  const isHome = pathname === "/" || pathname === "/en"
   const info: [string, string][] = [
     [t('footer.brands'), '/marcas'],
     ['¿Cuánto vale mi camper?', '/cuanto-vale-mi-camper'],
@@ -47,20 +50,23 @@ export function Footer() {
   const a = 'text-[14.5px] text-sand-50/75 transition-colors duration-300 hover:text-white'
 
   return (
-    <footer className="relative mt-auto overflow-hidden bg-night pb-24 text-sand-50 md:pb-0">
-      <div className="mx-auto w-full max-w-[1360px] px-5 pt-20 sm:px-8 lg:pt-28">
+    <footer style={{ '--ay': '100%', '--ax': '15%', '--ag': 0.16, '--bx': '100%', '--by': '0%' } as React.CSSProperties}
+      className="aura topo relative mt-auto overflow-hidden bg-night pb-24 text-sand-50 md:pb-0">
+      <div className="mx-auto w-full max-w-[1360px] px-5 pt-12 sm:px-8 lg:pt-16">
         {/* Remate */}
-        <div className="grid gap-10 border-b border-white/12 pb-16 lg:grid-cols-12 lg:items-end">
+        {!isHome && (
+        <div className="grid gap-10 border-b border-white/12 pb-16 pt-8 lg:grid-cols-12 lg:items-end lg:pt-12">
           <h2 className="t-mega text-[clamp(3rem,8vw,8rem)] lg:col-span-8">
             {t('footer.tagline')}
           </h2>
           <div className="lg:col-span-4 lg:text-right">
-            <LocalLink href="/publicar" className="btn btn-light">
+            <LocalLink href="/publicar" className="btn btn-green">
               {t('landing.cta.publish')}
               <ArrowUpRight size={18} className="btn-ico" aria-hidden="true" />
             </LocalLink>
           </div>
         </div>
+        )}
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-12 py-16 md:grid-cols-12">
           <div className="col-span-2 md:col-span-4">
@@ -123,8 +129,8 @@ export function Footer() {
 
       {/* Marca monumental, recortada por el borde inferior */}
       <div className="pointer-events-none select-none overflow-hidden" aria-hidden="true">
-        <p className="t-mega whitespace-nowrap px-4 text-center text-[14vw] leading-[0.8] text-white/[0.06]">
-          CamperOcasión
+        <p className="t-mega whitespace-nowrap px-4 pt-[0.1em] text-center text-[14vw] leading-[0.86] text-white/[0.06]">
+          Camper<span className="text-leaf/[0.16]">Ocasión</span>
         </p>
       </div>
     </footer>

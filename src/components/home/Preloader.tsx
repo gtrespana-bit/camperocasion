@@ -40,7 +40,7 @@ export default function Preloader({ label }: { label: string }) {
         <div className="absolute inset-x-0 bottom-0 px-5 pb-8 sm:px-8">
           <p className="t-mega flex items-end text-[clamp(8rem,30vw,28rem)] leading-[0.76]">
             <span className="pre-count tabular-nums" />
-            <span className="mb-[0.08em] ml-[0.04em] text-[0.32em] text-flare">%</span>
+            <span className="mb-[0.08em] ml-[0.04em] text-[0.32em] text-leaf-300">%</span>
           </p>
           <div className="mt-6 h-px w-full bg-white/15">
             <div className="pre-bar h-px w-full bg-white" />

@@ -28,7 +28,7 @@ export default function BottomTabNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-sand-50/90 backdrop-blur-xl border-t border-ink/10 md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-night/95 backdrop-blur-xl border-t border-white/10 md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}
       role="navigation"
     >
@@ -45,18 +45,18 @@ export default function BottomTabNav() {
               }`}
             >
               {item.highlight ? (
-                <div className="w-14 h-14 bg-ember rounded-full flex items-center justify-center shadow-[0_10px_24px_-6px_rgba(232,89,12,0.6)] active:scale-95 transition-transform">
+                <div className="w-14 h-14 bg-leaf rounded-full flex items-center justify-center shadow-[0_10px_24px_-6px_rgba(22,163,74,0.55)] active:scale-95 transition-transform">
                   <Icon size={26} className="text-white" />
                 </div>
               ) : (
                 <div className="flex flex-col items-center">
                   <Icon
                     size={22}
-                    className={isActive ? 'text-ink' : 'text-ink/45'}
+                    className={isActive ? 'text-white' : 'text-white/50'}
                   />
                   <span
                     className={`text-[10px] mt-0.5 font-medium ${
-                      isActive ? 'text-ink' : 'text-ink/45'
+                      isActive ? 'text-white' : 'text-white/50'
                     }`}
                   >
                     {item.label}

@@ -98,7 +98,7 @@ export default function HeroSearch({
           <ChevronDown size={15} className={chevron} aria-hidden="true" />
         </label>
 
-        <button type="submit" className="btn btn-light h-14 w-full justify-center gap-3 lg:h-auto lg:w-[168px]">
+        <button type="submit" className="btn btn-green h-14 w-full justify-center gap-3 lg:h-auto lg:w-[168px]">
           {labels.submit}
           <ArrowUpRight size={17} className="btn-ico" aria-hidden="true" />
         </button>

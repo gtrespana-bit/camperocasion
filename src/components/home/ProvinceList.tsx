@@ -38,24 +38,24 @@ export default function ProvinceList({ items, label }: { items: Province[]; labe
 
   return (
     <>
-      <ul className="border-t border-white/15" onMouseLeave={() => setActive(-1)}>
+      <ul className="border-b border-white/15 lg:grid lg:grid-flow-col lg:grid-rows-6 lg:gap-x-16 lg:border-b-0" onMouseLeave={() => setActive(-1)}>
         {items.map((p, i) => (
-          <li key={p.slug} className="border-b border-white/15">
+          <li key={p.slug} className="border-t border-white/15 last:border-b lg:[&:nth-child(6)]:border-b">
             <LocalLink
               href={`/${p.slug}`}
               aria-label={`${label} ${p.name}`}
               onMouseEnter={() => setActive(i)}
               onFocus={() => setActive(i)}
               onBlur={() => setActive(-1)}
-              className={`group flex items-center justify-between gap-6 py-4 transition-opacity duration-500 sm:py-5 ${active === -1 || active === i ? 'opacity-100' : 'opacity-25'}`}
+              className={`group flex items-center justify-between gap-6 py-3.5 transition-opacity duration-500 sm:py-4 ${active === -1 || active === i ? 'opacity-100' : 'opacity-25'}`}
             >
               <span className="flex items-baseline gap-5 sm:gap-8">
                 <span className="t-num w-6 text-[13px] text-white/40">{String(i + 1).padStart(2, '0')}</span>
-                <span className="t-mega text-[clamp(2.6rem,7vw,7.4rem)] transition-transform duration-700 ease-out group-hover:translate-x-4">{p.name}</span>
+                <span className="t-mega text-[clamp(2.4rem,4.6vw,4.9rem)] transition-[transform,color] duration-700 ease-out group-hover:translate-x-3 group-hover:text-leaf-300">{p.name}</span>
               </span>
               <span className="flex items-center gap-5">
-                <span className="micro hidden text-white/45 md:block">{p.coord}</span>
-                <ArrowUpRight size={30} className="shrink-0 -translate-x-3 translate-y-2 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100 max-sm:hidden" aria-hidden="true" />
+                <span className="micro hidden text-white/45 xl:block">{p.coord}</span>
+                <ArrowUpRight size={26} className="shrink-0 -translate-x-3 translate-y-2 opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100 max-sm:hidden" aria-hidden="true" />
               </span>
             </LocalLink>
           </li>

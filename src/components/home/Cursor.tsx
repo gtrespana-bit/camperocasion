@@ -68,7 +68,7 @@ export default function Cursor() {
       style={{ opacity: 0 }}
       className="group/c pointer-events-none fixed left-0 top-0 z-[90] hidden transition-opacity duration-300 [@media(pointer:fine)]:block"
     >
-      <div className="flex h-3 w-3 items-center justify-center rounded-full bg-white mix-blend-difference transition-[width,height,background-color] duration-500 ease-out group-data-[state=link]/c:h-10 group-data-[state=link]/c:w-10 group-data-[state=label]/c:h-[104px] group-data-[state=label]/c:w-[104px] group-data-[state=label]/c:bg-flare group-data-[state=label]/c:mix-blend-normal">
+      <div className="flex h-3 w-3 items-center justify-center rounded-full bg-white mix-blend-difference transition-[width,height,background-color] duration-500 ease-out group-data-[state=link]/c:h-10 group-data-[state=link]/c:w-10 group-data-[state=label]/c:h-[104px] group-data-[state=label]/c:w-[104px] group-data-[state=label]/c:bg-leaf-300 group-data-[state=label]/c:mix-blend-normal">
         <span ref={label} className="micro text-night opacity-0 transition-opacity duration-300 group-data-[state=label]/c:opacity-100" />
       </div>
     </div>

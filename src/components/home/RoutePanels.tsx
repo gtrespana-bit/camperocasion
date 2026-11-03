@@ -87,7 +87,7 @@ export default function RoutePanels({ panels, explore, kicker }: { panels: Route
 
             <div className="relative mx-auto flex h-full w-full max-w-[1360px] flex-col justify-between px-5 pb-8 pt-28 sm:px-8 lg:pb-12">
               <div className="flex items-start justify-between">
-                <p className="micro text-white/70">{kicker}</p>
+                <p className="micro flex items-center gap-3 text-white/80"><span className="h-2 w-2 rounded-full bg-leaf-300" aria-hidden="true" />{kicker}</p>
                 <p className="t-num text-[15px] text-white/80">
                   <span className="text-white">0{i + 1}</span>
                   <span className="mx-2 opacity-40">—</span>
@@ -104,7 +104,7 @@ export default function RoutePanels({ panels, explore, kicker }: { panels: Route
                       <li key={tp.label}>
                         <LocalLink
                           href={tp.href}
-                          className="inline-flex h-10 items-center border border-white/30 px-4 text-[12px] font-semibold uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-colors duration-300 hover:border-white hover:bg-white hover:text-night"
+                          className="inline-flex h-10 items-center border border-white/30 px-4 text-[12px] font-semibold uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-colors duration-300 hover:border-leaf hover:bg-leaf hover:text-[#04140A]"
                         >
                           {tp.label}
                         </LocalLink>
@@ -112,7 +112,7 @@ export default function RoutePanels({ panels, explore, kicker }: { panels: Route
                     ))}
                   </ul>
                   <div className="lg:col-span-3 lg:text-right">
-                    <LocalLink href={p.href} data-cursor={explore} className="btn btn-light w-full sm:w-auto">
+                    <LocalLink href={p.href} data-cursor={explore} className="btn btn-green w-full sm:w-auto">
                       {explore}
                       <ArrowUpRight size={18} className="btn-ico" aria-hidden="true" />
                     </LocalLink>

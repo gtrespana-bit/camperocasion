@@ -123,19 +123,19 @@ export default function RoadJourney({ steps }: { steps: RoadStep[] }) {
     <div ref={root} className="relative">
       <svg ref={svg} aria-hidden="true" className="pointer-events-none absolute left-0 top-0 hidden lg:block" fill="none">
         <path ref={base} stroke="rgba(255,255,255,0.14)" strokeWidth="2" strokeDasharray="2 10" strokeLinecap="round" />
-        <path ref={prog} stroke="#FF5A1F" strokeWidth="3" strokeLinecap="round" />
+        <path ref={prog} stroke="#16A34A" strokeWidth="3" strokeLinecap="round" />
         {steps.map((s, i) => (
-          <circle key={s.key} data-mile r="7" fill="#0A0B0A" stroke="rgba(255,255,255,0.6)" strokeWidth="2" cx="-50" cy="-50" />
+          <circle key={s.key} data-mile r="7" fill="#0B1120" stroke="#4ADE80" strokeWidth="2" cx="-50" cy="-50" />
         ))}
-        <circle ref={dot} r="9" fill="#FF5A1F" cx="-50" cy="-50" />
+        <circle ref={dot} r="9" fill="#EA580C" stroke="rgba(234,88,12,0.35)" strokeWidth="8" cx="-50" cy="-50" />
       </svg>
 
       {steps.map((s, i) => {
         const imgLeft = i % 2 === 0
         return (
-          <article key={s.key} data-step className="relative mx-auto grid w-full max-w-[1360px] items-center gap-8 px-5 py-14 sm:px-8 lg:min-h-[96vh] lg:grid-cols-12 lg:gap-0 lg:py-20">
-            <div className={`lg:col-span-5 ${imgLeft ? 'lg:col-start-1' : 'lg:col-start-8 lg:row-start-1'}`}>
-              <div data-mask className="relative aspect-[4/5] overflow-hidden bg-night-700">
+          <article key={s.key} data-step className="relative mx-auto grid w-full max-w-[1360px] items-center gap-8 px-5 py-14 sm:px-8 lg:grid-cols-12 lg:gap-0 lg:py-16">
+            <div className={`lg:col-span-6 ${imgLeft ? 'lg:col-start-1' : 'lg:col-start-7 lg:row-start-1'}`}>
+              <div data-mask className="relative aspect-[5/4] overflow-hidden bg-night-700">
                 <div data-rimg className="absolute -inset-[8%] will-change-transform">
                   <Image src={s.image} alt={s.alt} fill sizes="(max-width: 1024px) 92vw, 40vw" quality={80} className="object-cover" />
                 </div>
@@ -150,7 +150,7 @@ export default function RoadJourney({ steps }: { steps: RoadStep[] }) {
                       {s.sheet.rows.map((r) => (
                         <li key={r.label} className="flex items-center justify-between gap-4 py-2.5 text-[14px]">
                           <span>{r.label}</span>
-                          <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-flare">
+                          <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-leaf-300">
                             <Check size={14} strokeWidth={2.6} aria-hidden="true" /> {r.state}
                           </span>
                         </li>
@@ -162,15 +162,15 @@ export default function RoadJourney({ steps }: { steps: RoadStep[] }) {
             </div>
 
             <div data-rtext className={`lg:col-span-5 ${imgLeft ? 'lg:col-start-8' : 'lg:col-start-1 lg:row-start-1'}`}>
-              <p className="t-mega text-[clamp(5rem,12vw,11rem)] text-transparent [-webkit-text-stroke:1.5px_rgba(255,255,255,0.55)]">0{i + 1}</p>
-              <h3 className="t-wide mt-6 text-[clamp(1.9rem,3.4vw,3.2rem)] leading-[0.98]">{s.title}</h3>
-              <p className="mt-5 max-w-md text-[16px] leading-relaxed text-white/65">{s.desc}</p>
+              <p className="t-mega text-[clamp(4.5rem,9vw,8.5rem)] text-transparent [-webkit-text-stroke:1.5px_rgba(74,222,128,0.7)]">0{i + 1}</p>
+              <h3 className="t-wide mt-6 text-[clamp(2rem,3.8vw,3.6rem)] leading-[0.98]">{s.title}</h3>
+              <p className="mt-5 max-w-md text-[17px] leading-relaxed text-white/70">{s.desc}</p>
               <div className="mt-7 flex flex-wrap gap-2.5">
                 {s.links.map((l) => (
                   <LocalLink
                     key={l.href}
                     href={l.href}
-                    className="group inline-flex h-11 items-center gap-2 border border-white/30 px-4 text-[12px] font-semibold uppercase tracking-[0.1em] transition-colors duration-300 hover:border-white hover:bg-white hover:text-night"
+                    className="group inline-flex h-11 items-center gap-2 border border-white/30 px-4 text-[12px] font-semibold uppercase tracking-[0.1em] transition-colors duration-300 hover:border-leaf hover:bg-leaf hover:text-[#04140A]"
                   >
                     {l.label}
                     <ArrowUpRight size={15} className="transition-transform duration-500 group-hover:rotate-45" aria-hidden="true" />

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import LocalLink from '@/components/LocalLink'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, MapPin } from 'lucide-react'
 
 export type GalleryItem = {
   id: string
@@ -79,7 +79,7 @@ export default function Gallery({ items, labels, header }: { items: GalleryItem[
   }, [items.length])
 
   return (
-    <section ref={section} className="relative overflow-hidden bg-bone py-20 text-night [--stroke:#0A0B0A] lg:flex lg:h-[100svh] lg:flex-col lg:justify-center lg:py-0">
+    <section ref={section} className="relative overflow-hidden bg-gradient-to-b from-bone to-[#E6ECF3] py-20 text-night [--stroke:#0B1120] lg:flex lg:h-[100svh] lg:flex-col lg:justify-center lg:py-0">
       <div className="mx-auto w-full max-w-[1360px] px-5 sm:px-8">{header}</div>
 
       {items.length === 0 ? (
@@ -101,35 +101,41 @@ export default function Gallery({ items, labels, header }: { items: GalleryItem[
                   href={it.href}
                   data-card
                   data-cursor={labels.see}
-                  className="group block w-[72vw] shrink-0 sm:w-[44vw] lg:w-[clamp(240px,min(24vw,calc((100svh-470px)*0.8)),400px)]"
+                  className="group flex w-[76vw] shrink-0 flex-col border border-night/10 bg-white shadow-[0_1px_0_rgba(15,23,42,0.04),0_24px_48px_-32px_rgba(15,23,42,0.35)] transition-[transform,box-shadow] duration-500 hover:-translate-y-1.5 hover:shadow-[0_1px_0_rgba(15,23,42,0.04),0_36px_60px_-28px_rgba(15,23,42,0.45)] sm:w-[46vw] lg:w-[clamp(260px,min(28vw,calc((100svh-430px)*1.25)),460px)]"
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-night/10">
+                  <div className="relative aspect-[5/4] overflow-hidden bg-night/10">
                     <div data-gimg className="absolute inset-y-0 -inset-x-[10%] will-change-transform">
                       <Image
                         src={it.image}
                         alt={it.title}
                         fill
-                        sizes="(max-width: 1024px) 72vw, 460px"
+                        sizes="(max-width: 1024px) 76vw, 460px"
                         quality={75}
                         loading={i < 3 ? 'eager' : 'lazy'}
                         className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]"
                       />
                     </div>
-                    <span className="t-num absolute left-4 top-4 text-[13px] text-white mix-blend-difference">{String(i + 1).padStart(2, '0')}</span>
+                    <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-night/45 to-transparent" aria-hidden="true" />
+                    <span className="t-num absolute bottom-3 left-4 text-[13px] text-white">{String(i + 1).padStart(2, '0')}</span>
                     {it.badge && (
-                      <span className={`micro absolute right-4 top-4 px-2.5 py-1.5 ${it.badge === 'featured' ? 'bg-flare text-night' : 'bg-night text-white'}`}>
+                      <span className={`micro absolute left-0 top-4 px-3 py-1.5 ${it.badge === 'featured' ? 'bg-flare text-white' : 'bg-leaf text-[#04140A]'}`}>
                         {it.badge === 'featured' ? labels.featured : labels.isNew}
                       </span>
                     )}
                   </div>
-                  <div className="mt-4 flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <h3 className="truncate text-[17px] font-semibold leading-tight">{it.title}</h3>
-                      <p className="micro mt-2 truncate !text-[10.5px] !tracking-[0.12em] text-night/55">
-                        {[it.place, it.condition, it.ago].filter(Boolean).join(' · ')}
-                      </p>
+                  <div className="flex flex-1 flex-col p-4 lg:p-5">
+                    <h3 className="truncate text-[16.5px] font-semibold leading-tight">{it.title}</h3>
+                    <p className="mt-2 flex items-center gap-2 truncate text-[12.5px] text-night/55">
+                      {it.place && <><MapPin size={13} aria-hidden="true" className="shrink-0 text-leaf" />{it.place}</>}
+                      {it.condition && <><span className="h-1 w-1 shrink-0 rounded-full bg-night/25" aria-hidden="true" />{it.condition}</>}
+                      {it.ago && <><span className="h-1 w-1 shrink-0 rounded-full bg-night/25" aria-hidden="true" />{it.ago}</>}
+                    </p>
+                    <div className="mt-auto flex items-end justify-between border-t border-night/10 pt-4 mt-4">
+                      <p className="t-num text-[28px] leading-none">{it.price}</p>
+                      <span className="flex h-9 w-9 items-center justify-center bg-night text-white transition-colors duration-500 group-hover:bg-leaf group-hover:text-[#04140A]">
+                        <ArrowUpRight size={17} aria-hidden="true" />
+                      </span>
                     </div>
-                    <p className="t-num shrink-0 text-[26px] leading-none">{it.price}</p>
                   </div>
                 </LocalLink>
               ))}
@@ -138,7 +144,7 @@ export default function Gallery({ items, labels, header }: { items: GalleryItem[
 
           <div className="mx-auto mt-10 hidden w-full max-w-[1360px] items-center gap-6 px-5 sm:px-8 lg:flex">
             <p className="t-num text-[15px]"><span ref={count}>01</span><span className="mx-2 opacity-35">/</span><span className="opacity-55">{String(items.length).padStart(2, '0')}</span></p>
-            <div className="h-px flex-1 bg-night/20"><div ref={bar} className="h-px origin-left scale-x-0 bg-night" /></div>
+            <div className="h-px flex-1 bg-night/20"><div ref={bar} className="h-[3px] -translate-y-px origin-left scale-x-0 bg-leaf" /></div>
             <p className="micro text-night/55">{labels.progress}</p>
           </div>
         </>

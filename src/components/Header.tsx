@@ -186,15 +186,15 @@ export function Header() {
     megaTimer.current = setTimeout(() => setMegaOpen(false), 140)
   }
 
-  const onDark = overlay || mobileOpen || homeDark
+  const onDark = true // cabecera siempre sobre pizarra: coherente con el logo y el resto de la marca
   const linkTone = onDark
     ? 'text-white/85 hover:text-white'
     : 'text-ink/70 hover:text-ink'
   const navLink = `relative px-3.5 py-2 text-[14.5px] font-medium transition-colors duration-300 ${linkTone}`
   const iconBtn = `flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300 ${onDark ? 'text-white hover:bg-white/15' : 'text-ink hover:bg-ink/8'}`
   const pill = isHome
-    ? 'inline-flex h-10 items-center gap-2 bg-[#EDEBE4] px-5 text-[12px] font-semibold uppercase tracking-[0.12em] text-night transition-colors duration-500 hover:bg-flare'
-    : `inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold transition-colors duration-500 ${onDark ? 'bg-white text-ink hover:bg-ember hover:text-white' : 'bg-ink text-white hover:bg-ember'}`
+    ? 'inline-flex h-10 items-center gap-2 bg-leaf px-5 text-[12px] font-bold uppercase tracking-[0.12em] text-[#04140A] transition-colors duration-500 hover:bg-leaf-300'
+    : 'inline-flex items-center gap-2 rounded-lg bg-leaf px-5 py-2.5 text-[14px] font-bold text-[#04140A] transition-colors duration-500 hover:bg-leaf-300'
 
   const mobileLinks = [
     { href: '/catalogo', label: t('header.megaAll') },
@@ -218,7 +218,7 @@ export function Header() {
             ? 'bg-gradient-to-b from-night/55 to-transparent text-white'
             : homeDark
             ? 'bg-night/70 text-white shadow-[0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl'
-            : 'bg-sand-50/85 text-ink shadow-[0_1px_0_rgba(11,20,16,0.08)] backdrop-blur-xl'
+            : 'bg-night/90 text-white shadow-[0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl'
         }`}
         onMouseLeave={closeMega}
       >
@@ -334,7 +334,7 @@ export function Header() {
               <div className="col-span-8 grid grid-cols-3 gap-8">
                 {familiasNav.map((f) => (
                   <div key={f.key}>
-                    <p className="font-display text-[26px] leading-none">{f.nombre}</p>
+                    <p className="t-wide text-[24px] leading-none">{f.nombre}</p>
                     <ul className="mt-5 space-y-1">
                       {f.tipos.map((tp) => (
                         <li key={tp.id}>
@@ -357,7 +357,7 @@ export function Header() {
                     <li><LocalLink href="/marcas" className="link-draw">{t('header.navBrands')}</LocalLink></li>
                   </ul>
                 </div>
-                <LocalLink href="/catalogo" className="group mt-8 inline-flex items-center justify-between gap-3 rounded-full bg-ember px-6 py-3.5 text-[14px] font-semibold text-white transition-colors hover:bg-white hover:text-ink">
+                <LocalLink href="/catalogo" className="group mt-8 inline-flex items-center justify-between gap-3 rounded-lg bg-leaf px-6 py-3.5 text-[14px] font-bold text-[#04140A] transition-colors hover:bg-leaf-300">
                   {t('header.megaAll')}
                   <ArrowUpRight size={16} className="transition-transform duration-500 group-hover:rotate-45" aria-hidden="true" />
                 </LocalLink>
@@ -402,7 +402,7 @@ export function Header() {
                   name="q"
                   autoComplete="off"
                   placeholder={t('header.searchTitle')}
-                  className="font-display w-full bg-transparent text-[clamp(1.8rem,5vw,3.6rem)] leading-none text-ink placeholder:text-ink/30 focus:outline-none focus:shadow-none"
+                  className="t-wide w-full bg-transparent text-[clamp(1.8rem,5vw,3.6rem)] leading-none text-ink placeholder:text-ink/30 focus:outline-none focus:shadow-none"
                 />
                 <button type="submit" className="hidden h-12 shrink-0 items-center gap-2 rounded-full bg-ink px-6 text-[14px] font-semibold text-white transition-colors hover:bg-ember sm:inline-flex">
                   {t('header.navSearch')} <ArrowRight size={16} aria-hidden="true" />
@@ -435,7 +435,7 @@ export function Header() {
                   <LocalLink
                     href={l.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center justify-between py-4 ${(l as any).sub ? 'pl-4 text-[17px] text-sand-50/70' : 'font-display text-[30px] leading-none'}`}
+                    className={`flex items-center justify-between py-4 ${(l as any).sub ? 'pl-4 text-[17px] text-sand-50/70' : 't-wide text-[32px] leading-none'}`}
                     style={{ transitionDelay: `${i * 25}ms` }}
                   >
                     {l.label}
@@ -446,7 +446,7 @@ export function Header() {
             </ul>
 
             <div className="mt-8 flex flex-col gap-3">
-              <LocalLink href="/publicar" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 rounded-full bg-ember py-4 text-[16px] font-semibold text-white">
+              <LocalLink href="/publicar" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 rounded-lg bg-leaf py-4 text-[16px] font-bold text-[#04140A]">
                 {t('header.publishFree')} <ArrowUpRight size={17} aria-hidden="true" />
               </LocalLink>
               {!user ? (

@@ -24,9 +24,9 @@ type BrandLogoProps = {
 }
 
 const SIZES = {
-  sm: { px: 32, img: 'h-8 w-8', text: 'text-[22px]', gap: 'gap-2' },
-  md: { px: 44, img: 'h-10 w-10', text: 'text-[28px]', gap: 'gap-2.5' },
-  lg: { px: 56, img: 'h-14 w-14', text: 'text-[40px]', gap: 'gap-3' },
+  sm: { px: 32, img: 'h-8 w-8', text: 'text-base', gap: 'gap-2' },
+  md: { px: 44, img: 'h-11 w-11', text: 'text-xl', gap: 'gap-3' },
+  lg: { px: 56, img: 'h-14 w-14', text: 'text-3xl', gap: 'gap-3' },
 } as const
 
 export default function BrandLogo({
@@ -49,17 +49,21 @@ export default function BrandLogo({
         height={s.px}
         priority={priority}
         decoding="async"
-        // El icono es un cuadrado redondeado con fondo propio (grafito): se
-        // lee igual sobre fondo claro y oscuro, sin marcos añadidos.
-        className={`${s.img} w-auto shrink-0 object-contain rounded-[10px] ${isLight ? 'ring-1 ring-white/25' : 'ring-1 ring-ink/10'}`}
+        // El icono es cuadrado con fondo propio: se le da un marco sutil para
+        // que se lea igual sobre fondo claro y sobre el header grafito.
+        className={`${s.img} w-auto object-contain rounded-lg ${
+          isLight
+            ? 'drop-shadow-[0_0_6px_rgba(255,255,255,0.45)] bg-white/10 p-0.5'
+            : 'drop-shadow-[0_1px_2px_rgba(15,23,42,0.15)] bg-white p-0.5 border border-gray-100'
+        }`}
       />
       {showText !== false && (
         <span
-          className={`font-display leading-none tracking-[-0.01em] ${s.text} ${isLight ? 'text-white' : 'text-ink'} ${
+          className={`font-black tracking-tight ${s.text} ${isLight ? 'text-white' : 'text-brand-primary'} ${
             showText === 'sm' ? 'hidden sm:block' : ''
           }`}
         >
-          Camper<em className={`italic ${isLight ? 'text-[#FFD2B0]' : 'text-ember'}`}>Ocasión</em>
+          Camper<span className={isLight ? 'text-brand-accent-light' : 'text-brand-accent'}>Ocasión</span>
         </span>
       )}
     </>

@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, type ElementType } from 'react'
 
 const useIso = typeof window === 'undefined' ? useEffect : useLayoutEffect
 
-export type RevealLine = { t: string; outline?: boolean }
+export type RevealLine = { t: string; outline?: boolean; cls?: string }
 
 /**
  * Titular dividido en palabras que suben desde una máscara al entrar en
@@ -47,7 +47,7 @@ export default function TextReveal({
   return (
     <Tag ref={ref} className={`tr ${className}`}>
       {lines.map((line, li) => (
-        <span key={li} className={`${inline ? 'inline' : 'block'} ${line.outline ? 'outline-text' : ''}`}>
+        <span key={li} className={`${inline ? 'inline' : 'block'} ${line.outline ? 'outline-text' : ''} ${line.cls || ''}`}>
           {line.t.split(' ').map((w, wi) => (
             <span key={wi} className="tr-w" style={{ '--i': n++ } as React.CSSProperties}>
               <span>{w}</span>
