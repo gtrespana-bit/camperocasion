@@ -272,7 +272,26 @@
       "capuchina": "Overcab",
       "integral": "Integrated",
       "overland": "Cell & 4x4 Overland"
-    }
+    },
+    "navBuy": "Buy",
+    "navSell": "Sell",
+    "navValue": "What's it worth?",
+    "navGuides": "Guides",
+    "navPros": "Professionals",
+    "navBrands": "Makes and models",
+    "navSearch": "Search",
+    "megaAll": "View all listings",
+    "megaTools": "Tools",
+    "megaItp": "ITP calculator",
+    "megaSafe": "Safe buying",
+    "megaIntro": "Choose by vehicle type",
+    "publishFree": "List for free",
+    "menu": "Menu",
+    "searchTitle": "What camper are you after?",
+    "searchHint": "Press Enter to search or Esc to close",
+    "searchClose": "Close search",
+    "signInShort": "Sign in",
+    "popular": "Popular searches"
   },
   "footer": {
     "description": "The specialised marketplace for used camper vans and motorhomes in Spain.",
@@ -289,7 +308,8 @@
     "classifiedsIn": "Campers in {city}",
     "brands": "Brands & models",
     "cookies": "Cookies",
-    "legalNotice": "Legal notice"
+    "legalNotice": "Legal notice",
+    "tagline": "Your next camper is one click away."
   },
   "familias": {
     "campers": {
@@ -1175,5 +1195,132 @@
     "confirmar": "Request inspection",
     "avisoSinPago": "You pay nothing now: you’ll get a quote first.",
     "errorGenerico": "The request could not be sent. Please try again."
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "Camper marketplace · All of Spain",
+      "line1": "Your home on wheels,",
+      "line2": "no surprises.",
+      "sub": "Used camper vans and motorhomes in Spain with full technical specs, reviewed homologation and zero commission.",
+      "ctaBuy": "Browse campers for sale",
+      "ctaSell": "Sell for free",
+      "scroll": "Discover",
+      "search": {
+        "query": "What are you after",
+        "queryPlaceholder": "Ducato, California, Adria…",
+        "type": "Type",
+        "allTypes": "All types",
+        "province": "Where",
+        "allProvinces": "All of Spain",
+        "budget": "Budget",
+        "anyBudget": "No limit",
+        "upTo": "Up to",
+        "submit": "Search"
+      }
+    },
+    "stats": {
+      "listings": "active listings",
+      "territories": "provinces, Ceuta and Melilla",
+      "commission": "commission to list and sell",
+      "filters": "real technical filters"
+    },
+    "marquee": {
+      "label": "Makes and models"
+    },
+    "families": {
+      "eyebrow": "Choose how you travel",
+      "title1": "Three ways to",
+      "title2": "live the road",
+      "intro": "Converted vans, motorhomes and overland vehicles. Enter through the world that suits you, then refine by type.",
+      "all": "View the full catalogue",
+      "explore": "Explore"
+    },
+    "listings": {
+      "eyebrow": "On the market now",
+      "title1": "Just",
+      "title2": "arrived",
+      "all": "All",
+      "granVolumen": "Large vans",
+      "medianas": "Mid-size and compact",
+      "autocaravanas": "Motorhomes",
+      "viewAll": "View all",
+      "empty": "No campers in this section yet",
+      "emptyCta": "List the first one",
+      "prev": "Previous",
+      "next": "Next",
+      "featured": "Featured",
+      "isNew": "New"
+    },
+    "trust": {
+      "eyebrow": "Buy with confidence",
+      "title1": "Buying second-hand",
+      "title2": "shouldn't be scary.",
+      "text": "Paperwork, homologation, taxes, transfer: the things that turn a good purchase into a nightmare are one click away here.",
+      "cta": "How to buy safely",
+      "dossier": {
+        "label": "Vehicle file",
+        "example": "Illustrative example",
+        "sheet": "Technical sheet",
+        "sheetState": "Provided",
+        "itv": "Valid ITV",
+        "itvState": "Provided",
+        "homologation": "Homologation project",
+        "homologationState": "Reviewed",
+        "seal": "Verified homologation",
+        "sealDesc": "Reviewed by the CamperOcasión team"
+      },
+      "steps": {
+        "s1": {
+          "title": "Filter by technical spec",
+          "desc": "DGT label, seats, homologation, autonomy, mechanics… up to 16 technical filters to find the exact camper.",
+          "cta": "Open the catalogue"
+        },
+        "s2": {
+          "title": "Check the file",
+          "desc": "Listings with the seal have reviewed documentation. Plus a safe-buying guide so you arrive at the viewing prepared.",
+          "cta": "Safe-buying guide"
+        },
+        "s3": {
+          "title": "Calculate the exact ITP",
+          "desc": "Your region's transfer tax with the official depreciation, before you negotiate the price.",
+          "cta": "ITP calculator"
+        },
+        "s4": {
+          "title": "Close with contract and agency",
+          "desc": "Generate the sales contract and delegate the name change. No queues, no paperwork.",
+          "cta": "Contract and agency"
+        }
+      }
+    },
+    "sell": {
+      "eyebrow": "For sellers",
+      "title1": "Sell your camper.",
+      "title2": "No commission",
+      "title3": ", no middlemen.",
+      "text": "List it in five minutes, talk directly with buyers and keep 100% of the price.",
+      "ctaPublish": "List for free",
+      "ctaValue": "How much is my camper worth?",
+      "stepLabel": "Step",
+      "audiencesTitle": "A market open to everyone in the camper world"
+    },
+    "guides": {
+      "eyebrow": "Guides",
+      "title1": "Before you buy,",
+      "title2": "read this",
+      "min": "min"
+    },
+    "provinces": {
+      "eyebrow": "Close to you",
+      "title1": "Campers in every",
+      "title2": "corner of Spain",
+      "label": "Campers in"
+    },
+    "cta": {
+      "title1": "Selling a camper?",
+      "title2": "Someone is looking for it.",
+      "sub": "Private seller, converter or professional: list for free in under five minutes and reach buyers across Spain.",
+      "publish": "List for free",
+      "value": "Value my camper"
+    }
   }
 }
