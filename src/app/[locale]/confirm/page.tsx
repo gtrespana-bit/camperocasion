@@ -141,21 +141,21 @@ export default function ConfirmEmailPage() {
   }, [router, t])
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-[80vh] flex items-center justify-center px-5 py-12 bg-bone">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <BrandLogo href="/" size="lg" className="justify-center" priority />
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        <div className="account-card p-6 sm:p-8">
           {status === 'loading' && (
             <>
               <div className="flex justify-center mb-6">
                 <Loader2 className="text-brand-primary animate-spin" size={48} />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+              <h1 className="work-title work-title--account mb-4 text-center">
                 {t('loading')}
-              </h2>
+              </h1>
               <p className="text-gray-500 text-center">{t('loadingDesc')}</p>
             </>
           )}
@@ -167,9 +167,9 @@ export default function ConfirmEmailPage() {
                   <CheckCircle className="text-green-600" size={48} />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+              <h1 className="work-title work-title--account mb-4 text-center">
                 {t('success')}
-              </h2>
+              </h1>
               <p className="text-green-700 text-center mb-6">
                 {yaLogueado ? t('successDescDashboard') : t('successDesc')}
               </p>
@@ -189,9 +189,9 @@ export default function ConfirmEmailPage() {
                   <XCircle className="text-red-600" size={48} />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+              <h1 className="work-title work-title--account mb-4 text-center">
                 {t('error')}
-              </h2>
+              </h1>
               <p className="text-red-600 text-center mb-6 text-sm">
                 {errorMsg || t('errorDefault')}
               </p>

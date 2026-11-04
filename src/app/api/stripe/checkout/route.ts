@@ -47,6 +47,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Paquete no válido' }, { status: 400 })
   }
   const paquete = getPaqueteByCreditos(creditos)!
+  // Locale is display-only; the authenticated user, price and package still
+  // come from the server. Never build a redirect path from arbitrary input.
+  const english = body?.locale === 'en'
+  const localePrefix = english ? '/en' : ''
 
   // El mismo `stripe_customer_id` que usan las suscripciones. Si existe, el
   // cobro va contra ese cliente: el portal de Stripe enseña juntas las
@@ -81,7 +85,7 @@ export async function POST(req: NextRequest) {
       ...(customerId
         ? { customer: customerId }
         : { customer_email: user.email || undefined }),
-      locale: 'es',
+      locale: english ? 'en' : 'es',
       // Esta web cobra solo en euros. Adaptive Pricing de Stripe convierte a la
       // divisa por defecto de la CUENTA (si las claves son de otro proyecto,
       // p. ej. PAB) y enseña «Elige divisa» + comisión. Lo apagamos.
@@ -96,9 +100,10 @@ export async function POST(req: NextRequest) {
             unit_amount: Math.round(paquete.precio * 100),
             tax_behavior: 'inclusive',
             product_data: {
-              name: `${paquete.creditos} créditos CamperOcasión`,
-              description:
-                'Créditos para destacar y subir tus anuncios en CamperOcasión. Uso inmediato tras el pago.',
+              name: english ? `${paquete.creditos} CamperOcasión credits` : `${paquete.creditos} créditos CamperOcasión`,
+              description: english
+                ? 'Credits for featuring and boosting listings on CamperOcasión. Available immediately after payment.'
+                : 'Créditos para destacar y subir tus anuncios en CamperOcasión. Uso inmediato tras el pago.',
             },
           },
         },
@@ -115,8 +120,8 @@ export async function POST(req: NextRequest) {
       // Recibo/factura automática de Stripe: cumple con lo que hay que
       // entregar al comprador y evita emitirla a mano.
       invoice_creation: { enabled: true },
-      success_url: `${site}/creditos?pago=ok&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${site}/creditos?pago=cancelado`,
+      success_url: `${site}${localePrefix}/creditos?pago=ok&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${site}${localePrefix}/creditos?pago=cancelado`,
     })
 
     if (!session.url) {

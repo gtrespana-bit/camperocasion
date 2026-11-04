@@ -25,6 +25,10 @@ function supabaseHost() {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = withNextIntl({
+  // La vista previa de Arena utiliza un subdominio distinto al del servidor.
+  // Solo afecta a los recursos de desarrollo (HMR), no a los hosts de producción.
+  allowedDevOrigins: ['*.e2b.app'],
+
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn'],
@@ -125,10 +129,10 @@ const nextConfig = withNextIntl({
         key: 'X-Content-Type-Options',
         value: 'nosniff',
       },
-      {
+      ...(process.env.NODE_ENV === 'production' ? [{
         key: 'X-Frame-Options',
         value: 'DENY',
-      },
+      }] : []),
       {
         key: 'X-XSS-Protection',
         value: '0', // Desactivar auditor XSS legacy (CSP es la protección moderna)
@@ -160,7 +164,9 @@ const nextConfig = withNextIntl({
           "media-src 'self' blob: https://*.supabase.co https://*.r2.dev https://*.r2.cloudflarestorage.com",
           "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.r2.dev https://pub-d212837165c545e3956251da001fa37a.r2.dev https://*.r2.cloudflarestorage.com https://vercel.live https://*.vercel-analytics.com https://*.vercel-scripts.com https://va.vercel-scripts.com https://*.sentry.io https://*.ingest.sentry.io https://api.telegram.org https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
           "frame-src 'self'",
-          "frame-ancestors 'none'",
+          // La protección de embebido permanece en producción; en desarrollo
+          // la vista previa se muestra dentro de un iframe de Arena.
+          ...(process.env.NODE_ENV === 'production' ? ["frame-ancestors 'none'"] : []),
           "base-uri 'self'",
           "form-action 'self'",
           "object-src 'none'",

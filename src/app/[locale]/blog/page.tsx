@@ -1,6 +1,7 @@
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import LocalLink from '@/components/LocalLink'
+import PublicHero from '@/components/editorial/PublicHero'
 import fs from 'fs'
 import path from 'path'
 import { Calendar, ArrowRight, Clock, TrendingUp } from 'lucide-react'
@@ -132,34 +133,24 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(graphJsonLd) }} />
-      <div className="min-h-screen bg-white">
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-brand-primary to-brand-dark py-12 md:py-16">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-5xl font-black text-white mb-4">
-            {t('title')} <span className="text-brand-accent">CamperOcasión</span>
-          </h1>
-          <p className="text-lg text-blue-200 max-w-2xl mx-auto">
-            {t('subtitle')}
-          </p>
-        </div>
-      </section>
+      <div className="public-page min-h-screen">
+        <PublicHero eyebrow="CamperOcasión" title={t('title')} description={t('subtitle')} />
 
       {/* Featured Posts */}
       {featured.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 py-8">
+        <section className="public-shell py-12 lg:py-20">
           <div className="flex items-center gap-2 mb-6">
             <TrendingUp size={20} className="text-brand-primary" />
-            <h2 className="text-xl font-bold text-gray-800">{t('featured')}</h2>
+            <h2 className="public-section-title text-night">{t('featured')}</h2>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {featured.map(post => (
-              <LocalLink key={post.slug} href={`/blog/${post.slug}`} className="group block bg-gradient-to-br from-brand-primary/5 to-brand-accent/5 rounded-2xl border-2 border-brand-accent/20 p-6 hover:border-brand-accent/40 transition shadow-sm hover:shadow-lg">
+              <LocalLink key={post.slug} href={`/blog/${post.slug}`} className="group block public-card p-7 sm:p-8 transition duration-300 hover:-translate-y-1 hover:border-leaf hover:shadow-xl">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-sm">{categoryIcons[post.category] || '📝'}</span>
                   <span className="text-xs font-semibold text-brand-primary bg-brand-accent/20 px-2 py-0.5 rounded-full">{post.category}</span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 group-hover:text-brand-primary transition mb-2">{post.title}</h3>
+                <h3 className="public-card-title text-night group-hover:text-leaf-600 transition mb-3">{post.title}</h3>
                 <p className="text-sm text-gray-600 mb-4">{post.excerpt}</p>
                 <div className="flex items-center gap-4 text-xs text-gray-500">
                   <span className="flex items-center gap-1"><Calendar size={12} /> {post.date}</span>
@@ -172,9 +163,9 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
       )}
 
       {/* All Posts */}
-      <section className="max-w-7xl mx-auto px-4 py-8 pb-16">
+      <section className="public-shell py-12 lg:py-20 pb-16">
         {featured.length > 0 && (
-          <h2 className="text-xl font-bold text-gray-800 mb-6">{t('allArticles')}</h2>
+          <h2 className="public-section-title text-night mb-8">{t('allArticles')}</h2>
         )}
         {regular.length === 0 && featured.length === 0 && (
           <div className="text-center py-12">
@@ -183,12 +174,12 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
         )}
         <div className="grid md:grid-cols-3 gap-6">
           {regular.map(post => (
-            <LocalLink key={post.slug} href={`/blog/${post.slug}`} className="group block bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition hover:border-brand-accent/30">
+            <LocalLink key={post.slug} href={`/blog/${post.slug}`} className="group block public-card p-6 transition duration-300 hover:-translate-y-1 hover:border-leaf hover:shadow-xl">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-sm">{categoryIcons[post.category] || '📝'}</span>
                 <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">{post.category}</span>
               </div>
-              <h3 className="text-lg font-bold text-gray-800 group-hover:text-brand-primary transition mb-2">{post.title}</h3>
+              <h3 className="public-card-title text-night group-hover:text-leaf-600 transition mb-3">{post.title}</h3>
               <p className="text-sm text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <span className="flex items-center gap-1"><Calendar size={12} /> {post.date}</span>
@@ -203,11 +194,11 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* CTA */}
-      <section className="bg-brand-dark py-12">
+      <section className="bg-night py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-2xl font-black text-white mb-3">{t('ctaTitle')}</h2>
-          <p className="text-gray-500 mb-6">{t('ctaDesc')}</p>
-          <LocalLink href="/publicar" className="inline-flex items-center gap-2 bg-brand-accent text-white px-8 py-3 rounded-xl font-bold text-lg hover:bg-accent/90 transition shadow-lg">
+          <h2 className="public-section-title text-white mb-4">{t('ctaTitle')}</h2>
+          <p className="text-white/75 mb-8">{t('ctaDesc')}</p>
+          <LocalLink href="/publicar" className="btn btn-green">
             {t('ctaButton')} <ArrowRight size={20} />
           </LocalLink>
         </div>

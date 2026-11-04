@@ -16,7 +16,8 @@ const USUARIO = {
   email: 'taller@example.com',
   tipo_vendedor: 'profesional',
   plan_anuncios: 'plus',
-  plan_hasta: '2026-10-29T10:00:00.000Z',
+  // El test debe seguir representando un pack vigente después de octubre de 2026.
+  plan_hasta: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
 }
 
 describe('RegalarPlanModal', () => {

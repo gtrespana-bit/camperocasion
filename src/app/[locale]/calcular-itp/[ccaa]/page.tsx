@@ -1,3 +1,4 @@
+import WorkHeader from '@/components/editorial/WorkHeader'
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -7,6 +8,9 @@ import Breadcrumbs from '@/components/Breadcrumbs'
 import LocalLink from '@/components/LocalLink'
 import CalculadoraITP from '../CalculadoraITP'
 import { faqComunidad } from '../contenido'
+import { faqComunidadEn, plazoITPEn } from '../contenido-en'
+import { CHECKLIST_COMPRA_SEGURA_EN } from '../checklist-en'
+import { vehicleScope } from '../mensajes-en'
 import { CHECKLIST_COMPRA_SEGURA, REVISADO_EN, TIPOS_ITP, getComunidadITP } from '@/lib/itp'
 import { getTranslations } from 'next-intl/server'
 import { descripcionSeo, tituloSeo } from '@/lib/seo'
@@ -28,20 +32,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: t('title'), description: t('description') }
   }
 
-  const canonical = `https://camperocasion.online/calcular-itp/${comunidad.slug}`
-  const titulo = `ITP camper en ${comunidad.nombre} (${new Date().getFullYear()})`
+  const english = locale === 'en'
+  const canonicalEs = `https://camperocasion.online/calcular-itp/${comunidad.slug}`
+  const canonical = english ? `https://camperocasion.online/en/calcular-itp/${comunidad.slug}` : canonicalEs
+  const titulo = english
+    ? `Used campervan transfer tax (ITP) in ${comunidad.nombre} (${new Date().getFullYear()})`
+    : `ITP camper en ${comunidad.nombre} (${new Date().getFullYear()})`
   const description = `Cuánto se paga de ITP al comprar una camper o autocaravana de ocasión en ${comunidad.nombre}: tipo` +
     ` general del ${comunidad.tipo} %${comunidad.tipoIncrementado ? `, ${comunidad.tipoIncrementado.tipo} % para ${comunidad.tipoIncrementado.aplica}` : ''}` +
     `${comunidad.cuotaFija ? `, cuota fija desde ${comunidad.cuotaFija.minAnios} años` : ''}` +
     `${comunidad.exencionPorAntiguedad ? `, exento desde ${comunidad.exencionPorAntiguedad.minAnios} años` : ''}` +
     `. Plazo: ${comunidad.plazoDias} ${comunidad.plazoDiasHabiles ? 'días hábiles' : 'días'}. Calculadora gratuita y checklist de compra segura.`
 
-  const descriptionSeo = descripcionSeo(description)
+  const descriptionSeo = descripcionSeo(english
+    ? `Estimate ITP on a used campervan in ${comunidad.nombre}: general rate ${comunidad.tipo}%, form ${comunidad.modelo}, and a filing period of ${plazoITPEn(comunidad)}. Verify the rules with the regional tax authority.`
+    : description)
 
   return {
     title: tituloSeo(titulo),
     description: descriptionSeo,
-    keywords: [
+    robots: { index: !english, follow: true },
+    keywords: english ? ['campervan transfer tax Spain', `ITP ${comunidad.nombre}`, 'used camper tax calculator'] : [
       `impuesto comprar camper segunda mano ${comunidad.nombre.toLowerCase()}`,
       `ITP camper ${comunidad.nombre.toLowerCase()}`,
       `ITP autocaravana segunda mano ${comunidad.nombre.toLowerCase()}`,
@@ -51,19 +62,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ],
     alternates: {
       canonical,
-      languages: { 'es-ES': canonical, 'x-default': canonical },
+      languages: { 'es-ES': canonicalEs, 'x-default': canonicalEs },
     },
-    openGraph: { title: titulo, description: descriptionSeo, type: 'website', locale: 'es_ES', url: canonical, images: [{ url: 'https://camperocasion.online/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: titulo }] },
+    openGraph: { title: titulo, description: descriptionSeo, type: 'website', locale: english ? 'en_US' : 'es_ES', url: canonical, images: [{ url: 'https://camperocasion.online/api/og/catalog?categoria=camper', width: 1200, height: 630, alt: titulo }] },
     twitter: { card: 'summary_large_image', title: titulo, description: descriptionSeo, images: ['https://camperocasion.online/api/og/catalog?categoria=camper'] },
   }
 }
 
 export default async function ITPComunidadPage({ params }: Props) {
-  const { ccaa } = await params
+  const { ccaa, locale } = await params
+  const english = locale === 'en'
   const comunidad = getComunidadITP(ccaa)
   if (!comunidad) notFound()
 
-  const faq = faqComunidad(comunidad.slug)
+  const faq = english ? faqComunidadEn(comunidad.slug) : faqComunidad(comunidad.slug)
+  const checklist = english ? CHECKLIST_COMPRA_SEGURA_EN : CHECKLIST_COMPRA_SEGURA
+  const notesEn = [
+    `General rate: ${comunidad.tipo}% on the higher of the agreed price and depreciated official value.`,
+    ...(comunidad.tipoIncrementado ? [`Higher rate: ${comunidad.tipoIncrementado.tipo}% for ${vehicleScope(comunidad.tipoIncrementado.aplica)}.`] : []),
+    ...(comunidad.cuotaFija ? [`An age-based flat fee may apply from ${comunidad.cuotaFija.minAnios} years for ${vehicleScope(comunidad.cuotaFija.aplicaA)}. Confirm whether your camper's registration classification qualifies.`] : []),
+    ...(comunidad.exencionPorAntiguedad ? [`An age-based exemption may apply from ${comunidad.exencionPorAntiguedad.minAnios} years for ${vehicleScope(comunidad.exencionPorAntiguedad.aplicaA)}${comunidad.exencionPorAntiguedad.valorMaximo ? ` below €${comunidad.exencionPorAntiguedad.valorMaximo}` : ''}.`] : []),
+    ...(comunidad.tipoCeroEmisiones != null ? [`Zero-emissions label: ${comunidad.tipoCeroEmisiones}%${comunidad.tipoEco != null ? `; ECO label: ${comunidad.tipoEco}%` : ''}.`] : []),
+    `Form ${comunidad.modelo}; listed filing period: ${plazoITPEn(comunidad)} from the contract.`,
+  ]
   const otras = TIPOS_ITP.filter(c => c.slug !== comunidad.slug)
 
   const SITIO = 'https://camperocasion.online'
@@ -71,9 +92,9 @@ export default async function ITPComunidadPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
-      { '@type': 'ListItem', position: 2, name: 'Calculadora de ITP', item: SITIO + '/calcular-itp' },
-      { '@type': 'ListItem', position: 3, name: comunidad.nombre, item: SITIO + '/calcular-itp/' + comunidad.slug },
+      { '@type': 'ListItem', position: 1, name: english ? 'Home' : 'Inicio', item: SITIO + (english ? '/en' : '/') },
+      { '@type': 'ListItem', position: 2, name: english ? 'ITP calculator' : 'Calculadora de ITP', item: SITIO + (english ? '/en' : '') + '/calcular-itp' },
+      { '@type': 'ListItem', position: 3, name: comunidad.nombre, item: SITIO + (english ? '/en' : '') + '/calcular-itp/' + comunidad.slug },
     ],
   }
   const jsonLd = {
@@ -82,7 +103,7 @@ export default async function ITPComunidadPage({ params }: Props) {
       breadcrumbJsonLd,
       {
         '@type': 'FAQPage',
-        '@id': SITIO + '/calcular-itp/' + comunidad.slug + '#faq',
+        '@id': SITIO + (english ? '/en' : '') + '/calcular-itp/' + comunidad.slug + '#faq',
         mainEntity: faq.map(f => ({
           '@type': 'Question',
           name: f.pregunta,
@@ -96,62 +117,60 @@ export default async function ITPComunidadPage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <Breadcrumbs items={[
-        { label: 'Calculadora de ITP', href: '/calcular-itp' },
+        { label: english ? 'ITP calculator' : 'Calculadora de ITP', href: '/calcular-itp' },
         { label: comunidad.nombre, href: `/calcular-itp/${comunidad.slug}` },
       ]} />
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-          ITP de una camper de segunda mano en {comunidad.nombre}
-        </h1>
-        <p className="text-lg text-gray-600 max-w-3xl mb-6">
-          Si compras una furgoneta camper o una autocaravana de ocasión a un particular y resides en{' '}
-          {comunidad.nombre}, el impuesto lo pagas tú y se autoliquida aquí. Este es el tipo que aplica, las
-          especialidades de la comunidad y la estimación para tu operación.
-        </p>
+      <div className="public-shell max-w-6xl py-10 md:py-14">
+        <WorkHeader
+          title={english ? `Used campervan ITP in ${comunidad.nombre}` : `ITP de una camper de segunda mano en ${comunidad.nombre}`}
+          description={english
+            ? `If you live in ${comunidad.nombre} and buy a used camper from a private seller, estimate the transfer tax and review your region’s rules before filing.`
+            : `Si compras una camper o autocaravana de ocasión a un particular y resides en ${comunidad.nombre}, aquí puedes estimar el impuesto que pagarás y consultar las especialidades de tu comunidad.`}
+        />
 
         {/* Datos de la comunidad */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Tipo general</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">{english ? 'General rate' : 'Tipo general'}</p>
             <p className="text-2xl font-black text-brand-primary">{comunidad.tipo} %</p>
             {comunidad.tipoIncrementado && (
               <p className="text-xs text-gray-600 mt-1">
-                {comunidad.tipoIncrementado.tipo} % para {comunidad.tipoIncrementado.aplica}
+                {comunidad.tipoIncrementado.tipo} % {english ? `for ${vehicleScope(comunidad.tipoIncrementado.aplica)}` : `para ${comunidad.tipoIncrementado.aplica}`}
               </p>
             )}
           </div>
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Vehículos antiguos</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">{english ? 'Older vehicles' : 'Vehículos antiguos'}</p>
             <p className="text-sm font-semibold text-gray-900 mt-1">
               {comunidad.cuotaFija
-                ? `Cuota fija desde ${comunidad.cuotaFija.minAnios} años (${comunidad.cuotaFija.tramos.filter(t => t.cuota > 0 || t.sinAutoliquidar).map(t => `${t.cuota} €`).join(' / ')})`
+                ? `${english ? 'Flat fee from' : 'Cuota fija desde'} ${comunidad.cuotaFija.minAnios} ${english ? 'years' : 'años'} (${comunidad.cuotaFija.tramos.filter(t => t.cuota > 0 || t.sinAutoliquidar).map(t => `${t.cuota} €`).join(' / ')})`
                 : comunidad.exencionPorAntiguedad
-                  ? `Exento desde ${comunidad.exencionPorAntiguedad.minAnios} años`
-                  : 'Sin cuota fija ni exención por antigüedad'}
+                  ? `${english ? 'Exempt from' : 'Exento desde'} ${comunidad.exencionPorAntiguedad.minAnios} ${english ? 'years' : 'años'}`
+                  : (english ? 'No age-based flat fee or exemption' : 'Sin cuota fija ni exención por antigüedad')}
             </p>
             {comunidad.tipoCeroEmisiones != null && (
-              <p className="text-xs text-gray-600 mt-1">Cero emisiones: {comunidad.tipoCeroEmisiones} %</p>
+              <p className="text-xs text-gray-600 mt-1">{english ? 'Zero emissions' : 'Cero emisiones'}: {comunidad.tipoCeroEmisiones} %</p>
             )}
           </div>
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Plazo</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">{english ? 'Filing period' : 'Plazo'}</p>
             <p className="text-sm font-semibold text-gray-900 mt-1">
-              {comunidad.plazoDias} {comunidad.plazoDiasHabiles ? 'días hábiles' : 'días'} desde el contrato
+              {english ? plazoITPEn(comunidad) : `${comunidad.plazoDias} ${comunidad.plazoDiasHabiles ? 'días hábiles' : 'días'}`} {english ? 'from the contract' : 'desde el contrato'}
             </p>
-            <p className="text-xs text-gray-600 mt-1">Modelo {comunidad.modelo}</p>
+            <p className="text-xs text-gray-600 mt-1">{english ? 'Form' : 'Modelo'} {comunidad.modelo}</p>
           </div>
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Fuente oficial</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">{english ? 'Official source' : 'Fuente oficial'}</p>
             <a
               href={comunidad.fuente}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-semibold text-brand-primary hover:underline inline-flex items-center gap-1 mt-1"
             >
-              Sede de {comunidad.nombre} <ExternalLink size={12} />
+              {english ? `${comunidad.nombre} tax authority` : `Sede de ${comunidad.nombre}`} <ExternalLink size={12} />
             </a>
-            <p className="text-xs text-gray-500 mt-1">Revisado en {REVISADO_EN}</p>
+            <p className="text-xs text-gray-500 mt-1">{english ? 'Last reviewed' : 'Revisado en'} {REVISADO_EN}</p>
           </div>
         </div>
 
@@ -161,33 +180,38 @@ export default async function ITPComunidadPage({ params }: Props) {
 
         <section className="mt-10 grid md:grid-cols-2 gap-6">
           <article className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-bold text-gray-900 mb-3">Lo que hay que saber en {comunidad.nombre}</h2>
+            <h2 className="font-bold text-gray-900 mb-3">{english ? `What to know in ${comunidad.nombre}` : `Lo que hay que saber en ${comunidad.nombre}`}</h2>
             <ul className="space-y-2 text-sm text-gray-600 list-disc list-inside">
-              {comunidad.notas.map(nota => <li key={nota}>{nota}</li>)}
+              {(english ? notesEn : comunidad.notas).map(nota => <li key={nota}>{nota}</li>)}
             </ul>
             <p className="text-xs text-gray-500 mt-3">
-              Los tipos cambian por norma autonómica: verifica siempre el importe en la sede oficial antes de
-              presentar la autoliquidación.
+              {english
+                ? 'Regional tax rules can change. Check the amount and vehicle classification with the official authority before filing.'
+                : 'Los tipos cambian por norma autonómica: verifica siempre el importe en la sede oficial antes de presentar la autoliquidación.'}
             </p>
+            {english && <details className="mt-4 text-xs text-gray-600">
+              <summary className="cursor-pointer font-semibold">Original detailed notes (Spanish)</summary>
+              <ul className="mt-2 list-disc pl-4 space-y-1">{comunidad.notas.map(nota => <li key={nota}>{nota}</li>)}</ul>
+            </details>}
           </article>
 
           <article className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-bold text-gray-900 mb-3">Documentación a revisar antes de firmar</h2>
+            <h2 className="font-bold text-gray-900 mb-3">{english ? 'Documents to check before signing' : 'Documentación a revisar antes de firmar'}</h2>
             <ul className="space-y-2 text-sm text-gray-600">
-              {CHECKLIST_COMPRA_SEGURA.slice(0, 5).map(item => (
+              {checklist.slice(0, 5).map(item => (
                 <li key={item.titulo}>
                   <span className="font-semibold text-gray-800">{item.titulo}.</span> {item.detalle}
                 </li>
               ))}
             </ul>
             <LocalLink href="/compra-segura-camper" className="mt-3 inline-block text-xs font-bold text-brand-primary hover:underline">
-              Ver el checklist completo →
+              {english ? 'View the full checklist →' : 'Ver el checklist completo →'}
             </LocalLink>
           </article>
         </section>
 
         <section className="mt-10">
-          <h2 className="text-2xl font-black text-gray-900 mb-4">Preguntas frecuentes en {comunidad.nombre}</h2>
+          <h2 className="text-2xl font-black text-gray-900 mb-4">{english ? `Frequently asked questions in ${comunidad.nombre}` : `Preguntas frecuentes en ${comunidad.nombre}`}</h2>
           <div className="space-y-3">
             {faq.map(f => (
               <details key={f.pregunta} className="bg-white rounded-xl border border-gray-100 shadow-sm">
@@ -202,7 +226,7 @@ export default async function ITPComunidadPage({ params }: Props) {
 
         {/* Enlazado interno entre landings (SEO + navegación útil) */}
         <section className="mt-10">
-          <h2 className="font-bold text-gray-900 mb-3">ITP en otras comunidades</h2>
+          <h2 className="font-bold text-gray-900 mb-3">{english ? 'ITP in other communities' : 'ITP en otras comunidades'}</h2>
           <div className="flex flex-wrap gap-2">
             {otras.map(c => (
               <LocalLink
@@ -217,17 +241,18 @@ export default async function ITPComunidadPage({ params }: Props) {
         </section>
 
         <section className="mt-10 bg-gray-50 border border-gray-200 rounded-2xl p-6">
-          <h2 className="font-bold text-gray-900 mb-2">¿Buscando camper en {comunidad.nombre}?</h2>
+          <h2 className="font-bold text-gray-900 mb-2">{english ? `Looking for a camper in ${comunidad.nombre}?` : `¿Buscando camper en ${comunidad.nombre}?`}</h2>
           <p className="text-sm text-gray-600 mb-4">
-            En el catálogo puedes filtrar por provincia y por ficha técnica (plazas para dormir, baño, MMA, medidas)
-            y quedarte solo con los anuncios que ya tienen la documentación del vehículo revisada.
+            {english
+              ? 'Filter listings by province and vehicle details, and explore campers whose documentation has already been reviewed.'
+              : 'En el catálogo puedes filtrar por provincia y por ficha técnica (plazas para dormir, baño, MMA, medidas) y quedarte solo con los anuncios que ya tienen la documentación del vehículo revisada.'}
           </p>
           <div className="flex flex-wrap gap-3">
             <LocalLink href="/catalogo?verificada=1" className="bg-brand-accent text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-brand-accent-dark transition">
-              Campers con homologación verificada
+              {english ? 'Campers with verified homologation' : 'Campers con homologación verificada'}
             </LocalLink>
             <LocalLink href="/catalogo" className="bg-white border border-gray-300 text-gray-800 text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-gray-100 transition">
-              Ver todo el catálogo
+              {english ? 'View the full catalog' : 'Ver todo el catálogo'}
             </LocalLink>
           </div>
         </section>

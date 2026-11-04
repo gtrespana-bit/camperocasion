@@ -6,10 +6,11 @@ import LocalLink from '@/components/LocalLink'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { AlertCircle } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 export default function ResetPasswordPage() {
   const t = useTranslations('resetPassword')
+  const locale = useLocale()
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirmedPassword, setConfirmedPassword] = useState('')
@@ -72,7 +73,7 @@ export default function ResetPasswordPage() {
       setError(error.message)
     } else {
       setSuccess(true)
-      setTimeout(() => router.push('/login'), 3000)
+      setTimeout(() => router.push(`${locale === 'en' ? '/en' : ''}/login`), 3000)
     }
 
     setLoading(false)
@@ -81,8 +82,9 @@ export default function ResetPasswordPage() {
   if (checkingSession) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-brand-primary border-t-transparent mx-auto mb-4"></div>
+        <div role="status" className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-brand-primary border-t-transparent mx-auto mb-4" aria-hidden="true"></div>
+          <h1 className="work-title work-title--account mb-3">{t('title')}</h1>
           <p className="text-gray-500">{t('checking')}</p>
         </div>
       </div>
@@ -90,23 +92,23 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-[80vh] flex items-center justify-center px-5 py-12 bg-bone">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <BrandLogo href="/" size="lg" className="justify-center" priority />
-          <h1 className="text-2xl font-bold text-gray-800 mt-4">
+          <h1 className="work-title work-title--account mt-6">
             {success ? t('titleSuccess') : t('title')}
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="work-description mx-auto mt-2">
             {success
-              ? 'Serás redirigido al login en unos segundos...'
-              : 'Crea una nueva contraseña para tu cuenta'}
+              ? t('subtitleSuccess')
+              : t('subtitle')}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+        <div className="account-card p-6 sm:p-8">
           {error && (
-            <div className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">
+            <div role="alert" className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">
               <AlertCircle size={18} />
               {error}
             </div>
@@ -120,14 +122,15 @@ export default function ResetPasswordPage() {
                 href="/login"
                 className="inline-block mt-6 bg-brand-primary text-white px-8 py-3 rounded-lg font-bold hover:bg-brand-dark transition"
               >
-                Ir al login
+                {t('goLogin')}
               </LocalLink>
             </div>
           ) : (
             <form onSubmit={handleReset} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('newPw')}</label>
+                <label htmlFor="reset-new-password" className="block text-sm font-medium text-gray-700 mb-1.5">{t('newPw')}</label>
                 <input
+                  id="reset-new-password"
                   type="password" autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -139,8 +142,9 @@ export default function ResetPasswordPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('repeatPw')}</label>
+                <label htmlFor="reset-confirm-password" className="block text-sm font-medium text-gray-700 mb-1.5">{t('repeatPw')}</label>
                 <input
+                  id="reset-confirm-password"
                   type="password" autoComplete="new-password"
                   value={confirmedPassword}
                   onChange={(e) => setConfirmedPassword(e.target.value)}
@@ -161,7 +165,7 @@ export default function ResetPasswordPage() {
 
               <p className="text-center text-sm text-gray-500 mt-4">
                 <LocalLink href="/login" className="text-brand-primary font-semibold hover:underline">
-                  Volver al login
+                  {t('backToLogin')}
                 </LocalLink>
               </p>
             </form>

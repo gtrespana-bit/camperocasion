@@ -1,9 +1,11 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
 import BuscarClient from './BuscarClient'
 import { Loader2 } from 'lucide-react'
 
 interface PageProps {
+  params: Promise<{ locale: string }>
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
@@ -11,16 +13,13 @@ interface PageProps {
 // follow (Google descubre productos) + noindex (evita thin/duplicate content
 // por URLs de búsqueda infinitas: ?q= cualquier cosa).
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
-  const searchParams = await props.searchParams
+  const [searchParams, { locale }] = await Promise.all([props.searchParams, props.params])
+  const t = await getTranslations({ locale, namespace: 'search.page' })
   const q = typeof searchParams.q === 'string' ? searchParams.q.trim() : ''
 
   return {
-    title: q
-      ? `${q} en España — Búsqueda | CamperOcasión`
-      : 'Buscar productos — CamperOcasión España',
-    description: q
-      ? `Resultados de búsqueda para "${q}" en CamperOcasión, el marketplace de clasificados de España.`
-      : 'Busca y encuentra los mejores clasificados en España. Compra y vende productos nuevos y usados.',
+    title: q ? t('metaQueryTitle', { query: q }) : t('metaDefaultTitle'),
+    description: q ? t('metaQueryDesc', { query: q }) : t('metaDefaultDesc'),
     robots: {
       index: false,
       follow: true,

@@ -1,3 +1,4 @@
+import PublicHero from '@/components/editorial/PublicHero'
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { FileCheck2, ShieldAlert, ShieldCheck } from 'lucide-react'
@@ -86,17 +87,9 @@ export default function CompraSeguraCamperPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <Breadcrumbs items={[{ label: 'Compra segura', href: '/compra-segura-camper' }]} />
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-          Checklist para comprar una camper de segunda mano sin sustos
-        </h1>
-        <p className="text-lg text-gray-600 mb-8">
-          Comprar una camper entre particulares tiene un riesgo que no existe en un coche: la camperización. Una
-          ventanilla sin legalizar, unas plazas que la ficha técnica no recoge o un techo elevable sin certificado
-          convierten una buena compra en un problema en la siguiente ITV. Esta es la lista que revisamos nosotros y
-          la que recomendamos seguir paso a paso.
-        </p>
-
+      <div className="public-page min-h-screen">
+        <PublicHero compact eyebrow="CamperOcasión · Compra segura" title="Checklist para comprar una camper de segunda mano sin sustos" description={<>Comprar una camper entre particulares tiene un riesgo que no existe en un coche: la camperización. Una ventanilla sin legalizar, unas plazas que la ficha técnica no recoge o un techo elevable sin certificado pueden complicar la siguiente ITV. Esta es la lista que recomendamos revisar paso a paso.</>} />
+        <div className="max-w-4xl mx-auto px-5 sm:px-8 py-12 lg:py-16">
         <section className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-8">
           <h2 className="font-bold text-amber-900 flex items-center gap-2 mb-2">
             <ShieldAlert size={18} aria-hidden="true" />
@@ -189,6 +182,7 @@ export default function CompraSeguraCamperPage() {
           Contenido informativo. No es asesoramiento legal ni fiscal: para una operación concreta, contrasta la
           documentación con la DGT y la hacienda de tu comunidad autónoma.
         </p>
+        </div>
       </div>
     </>
   )

@@ -4,6 +4,7 @@ import { useEffect, useState, lazy, Suspense } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { useTranslations } from 'next-intl'
+import WorkHeader from '@/components/editorial/WorkHeader'
 import { X } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { routing } from '@/i18n/routing'
@@ -215,7 +216,8 @@ export default function DashboardPage() {
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
-          <p className="text-gray-500">Cargando...</p>
+          <h1 className="work-title work-title--sm mb-3">{t('workspaceTitle')}</h1>
+          <p className="text-gray-500">{t('loading')}</p>
         </div>
       </div>
     )
@@ -225,7 +227,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('loginRequired')}</h2>
+          <h1 className="work-title work-title--sm mb-4">{t('loginRequired')}</h1>
           <p className="text-gray-500 mb-6">{t('loginRequiredDesc')}</p>
           <LocalLink href="/login" className="inline-block bg-brand-primary text-white px-8 py-3 rounded-lg font-bold hover:bg-brand-dark transition">{t('loginButton')}</LocalLink>
         </div>
@@ -236,7 +238,7 @@ export default function DashboardPage() {
   const numPubsVendidas = data.productos.filter((p: any) => !p.activo && p.estado_moderacion !== 'rechazado').length
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="dashboard-space max-w-7xl mx-auto px-5 py-8 md:py-12">
       {/* Toast */}
       {data.toast && (
         <div className="fixed top-4 right-4 z-50 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl text-sm font-medium animate-bounce max-w-xs">
@@ -265,6 +267,8 @@ export default function DashboardPage() {
         <PasswordModal user={user} setToast={data.setToast} onClose={() => setCambiarPw(false)} />
       )}
 
+      <WorkHeader title={t('workspaceTitle')} description={t('workspaceDescription')} eyebrow={t('workspaceEyebrow')} />
+
       {/* Header */}
       <DashboardHeader
         user={user}
@@ -288,32 +292,32 @@ export default function DashboardPage() {
       <PlanBar onAbrirPlan={setActiveTab} />
 
       {/* Resumen */}
-      <div className="bg-gradient-to-r from-brand-primary to-blue-800 rounded-xl p-5 text-white mb-6">
+      <div className="bg-night rounded-md p-5 text-white mb-6">
         <h3 className="font-bold text-lg mb-3 flex items-center gap-2">{t('performance')}</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
           <div>
             <p className="text-2xl font-black">{data.visitasTotales}</p>
-            <p className="text-xs text-blue-200">{t('totalViews')}</p>
+            <p className="text-xs text-white/70">{t('totalViews')}</p>
           </div>
           <div>
             <p className="text-2xl font-black">{data.productos.length ? Math.round(data.visitasTotales / data.productos.length) : 0}</p>
-            <p className="text-xs text-blue-200">{t('avgPerProduct')}</p>
+            <p className="text-xs text-white/70">{t('avgPerProduct')}</p>
           </div>
           <div>
             <p className="text-2xl font-black">{data.pubCount}</p>
-            <p className="text-xs text-blue-200">{t('activeProducts')}</p>
+            <p className="text-xs text-white/70">{t('activeProducts')}</p>
           </div>
           <div>
             <p className="text-2xl font-black">{data.productos.filter((p: any) => p.boosteado_en || (p.destacado && p.destacado_hasta > new Date().toISOString())).length}</p>
-            <p className="text-xs text-blue-200">{t('promotedNow')}</p>
+            <p className="text-xs text-white/70">{t('promotedNow')}</p>
           </div>
           <div>
             <p className="text-2xl font-black">{data.favoritosCount}</p>
-            <p className="text-xs text-blue-200">{t('favorites')}</p>
+            <p className="text-xs text-white/70">{t('favorites')}</p>
           </div>
           <div>
             <p className="text-2xl font-black">{data.creditos}</p>
-            <p className="text-xs text-blue-200">{t('creditsLabel')}</p>
+            <p className="text-xs text-white/70">{t('creditsLabel')}</p>
           </div>
         </div>
         <div className="mt-4 pt-4 border-t border-white/20">
@@ -332,7 +336,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="lg:flex lg:gap-8">
-        <DashboardNav active={activeTab} onChange={setActiveTab} onLogout={handleLogout} />
+        <DashboardNav active={activeTab} onChange={setActiveTab} onLogout={handleLogout} translate={key => t(`nav.${key}`)} />
         <div className="flex-1 min-w-0">
           {/* Tab Content */}
           {activeTab === 'resumen' && <TabResumen userId={user!.id} />}
@@ -347,7 +351,7 @@ export default function DashboardPage() {
             </Suspense>
           )}
           {activeTab === 'rendimiento' && (
-            <Suspense fallback={<div className="p-12 text-center text-gray-500">Calculando tus métricas…</div>}>
+            <Suspense fallback={<div className="p-12 text-center text-gray-500">{t('calculating')}</div>}>
               <TabRendimiento />
             </Suspense>
           )}
@@ -372,7 +376,7 @@ export default function DashboardPage() {
           )}
           {activeTab === 'favoritos' && <TabFavoritos favoritos={data.favoritos} />}
           {activeTab === 'plan' && (
-            <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">Cargando tu plan…</div>}>
+            <Suspense fallback={<div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">{t('loadingPlan')}</div>}>
               <TabPlan onRefresh={data.refreshAll} />
             </Suspense>
           )}

@@ -76,10 +76,12 @@ export default function DashboardNav({
   active,
   onChange,
   onLogout,
+  translate,
 }: {
   active: DashboardTab
   onChange: (tab: DashboardTab) => void
   onLogout: () => void
+  translate?: (key: string) => string
 }) {
   const boton = (item: { id: DashboardTab; label: string; icon: LucideIcon }) => {
     const Icon = item.icon
@@ -98,7 +100,7 @@ export default function DashboardNav({
           }`}
       >
         <Icon size={17} aria-hidden="true" />
-        {item.label}
+        {translate?.(`items.${item.id}`) ?? item.label}
       </button>
     )
   }
@@ -107,7 +109,7 @@ export default function DashboardNav({
     <>
       {/* Móvil: chips en una sola fila, agrupados visualmente por color no por 10 tabs. */}
       <nav
-        aria-label="Secciones del panel"
+        aria-label={translate?.('sections') ?? 'Secciones del panel'}
         className="lg:hidden mb-6 -mx-4 px-4 overflow-x-auto hide-scrollbar"
       >
         <div className="flex gap-1.5 min-w-min pb-1">
@@ -125,7 +127,7 @@ export default function DashboardNav({
                   ${on ? 'bg-brand-primary text-white' : 'bg-white text-slate-600 border border-slate-200'}`}
               >
                 <Icon size={15} aria-hidden="true" />
-                {item.label}
+                {translate?.(`items.${item.id}`) ?? item.label}
               </button>
             )
           })}
@@ -135,19 +137,19 @@ export default function DashboardNav({
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap text-slate-600 border border-slate-200 hover:text-red-600 hover:bg-red-50"
           >
             <LogOut size={15} aria-hidden="true" />
-            Cerrar sesión
+            {translate?.('logout') ?? 'Cerrar sesión'}
           </button>
         </div>
       </nav>
 
       {/* Escritorio: menú lateral fijo, el patrón de un panel profesional. */}
       <aside className="hidden lg:flex flex-col w-56 shrink-0 sticky top-24 self-start">
-        <nav aria-label="Secciones del panel" className="space-y-5">
+        <nav aria-label={translate?.('sections') ?? 'Secciones del panel'} className="space-y-5">
           {GRUPOS.map((grupo, i) => (
             <div key={grupo.titulo || 'inicio'}>
               {grupo.titulo ? (
                 <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  {grupo.titulo}
+                  {translate?.(`groups.${grupo.titulo}`) ?? grupo.titulo}
                 </p>
               ) : null}
               <div className="space-y-0.5">{grupo.items.map(boton)}</div>
@@ -161,7 +163,7 @@ export default function DashboardNav({
           className="mt-8 flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 transition"
         >
           <LogOut size={16} aria-hidden="true" />
-          Cerrar sesión
+          {translate?.('logout') ?? 'Cerrar sesión'}
         </button>
       </aside>
     </>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Mail, MessageCircle, CheckCircle, AlertCircle, Send, Loader2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import PublicHero from '@/components/editorial/PublicHero'
 const ASUNTOS = [
   'Pregunta general',
   'Reportar un anuncio',
@@ -56,8 +57,10 @@ export default function ContactPage() {
 
   if (estado === 'success') {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-md mx-auto text-center">
+      <div className="public-page min-h-screen">
+        <PublicHero compact eyebrow="CamperOcasión" title={t('title')} description={t('desc')} />
+        <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
+        <div className="public-card p-8 max-w-md mx-auto text-center">
           <CheckCircle size={56} className="text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('sent')}</h2>
           <p className="text-gray-500 mb-6">
@@ -70,20 +73,19 @@ export default function ContactPage() {
             Enviar otro mensaje
           </button>
         </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-black text-gray-800 mb-2 text-center">{t('title')}</h1>
-      <p className="text-center text-gray-500 mb-10 max-w-lg mx-auto">
-        {t('desc')}
-      </p>
+    <div className="public-page min-h-screen">
+      <PublicHero compact eyebrow="CamperOcasión" title={t('title')} description={t('desc')} />
+      <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8 lg:py-20">
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Formulario */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="public-card p-6 sm:p-8">
           <h2 className="text-xl font-bold text-gray-800 mb-6">{t('sendMessage')}</h2>
 
           {estado === 'error' && (
@@ -161,7 +163,7 @@ export default function ContactPage() {
 
         {/* Info de contacto */}
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="public-card p-6">
             <h3 className="font-bold text-gray-800 mb-4">{t('otherContact')}</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -193,6 +195,7 @@ export default function ContactPage() {
             </p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

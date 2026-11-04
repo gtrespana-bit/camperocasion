@@ -1,3 +1,4 @@
+import WorkHeader from '@/components/editorial/WorkHeader'
 import LocalLink from '@/components/LocalLink'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase-server-client'
@@ -11,6 +12,7 @@ import { estadisticasCiudad } from '@/lib/seo-landings'
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 
 interface Props {
+  locale: string
   ciudadSlug: string
   ciudadNombre: string
   ciudadMunicipio?: string
@@ -97,11 +99,13 @@ function ProductosGrid({ productos, categoriaNombre, ciudadNombre, t }: { produc
   )
 }
 
-export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciudadMunicipio, estado, categoriaSlug, categoriaNombre }: Props) {
+export default async function LandingCategoria({ locale, ciudadSlug, ciudadNombre, ciudadMunicipio, estado, categoriaSlug, categoriaNombre: categoriaOriginal }: Props) {
   // getTranslations (API server de next-intl) en vez de useTranslations:
   // useTranslations dentro de un Server Component async bajo <Suspense>
   // lanzaba "Expected a suspended thenable" en Next 16 → 500.
   const t = await getTranslations('catLanding')
+  const tCatalog = await getTranslations('catalog')
+  const categoriaNombre = locale === 'en' ? tCatalog(`subcategories.${categoriaOriginal}`) : categoriaOriginal
   const subLabel = CATEGORIA_MAP[categoriaSlug]
   const [productos, stats] = await Promise.all([
     getProductos(ciudadNombre, ciudadMunicipio, categoriaSlug),
@@ -114,7 +118,10 @@ export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciuda
   // Categorias relacionadas para la ciudad
   const categoriasRelacionadas = Object.entries(CATEGORIA_MAP)
     .filter(([k]) => k !== categoriaSlug)
-    .map(([k, v]) => ({ slug: k, nombre: CATEGORIA_NAMES[k] || k }))
+    .map(([k]) => ({
+      slug: k,
+      nombre: locale === 'en' ? tCatalog(`subcategories.${CATEGORIA_NAMES[k]}`) : (CATEGORIA_NAMES[k] || k),
+    }))
 
   // FAQ: la de la categoría (ya redactada) + 2 específicas de
   // provincia con datos reales de precio → contenido único por URL.
@@ -127,25 +134,38 @@ export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciuda
       ? formatRango(stats.precioMin, stats.precioMax)
       : null
 
-  const faqs = [
-    ...(seoCat?.faq || []),
-    {
-      pregunta: `¿Cuánto cuesta una ${categoriaNombre.toLowerCase()} en ${ciudadNombre}?`,
-      respuesta:
-        precioTexto && rangoTexto
-          ? `En ${ciudadNombre} (${estado}) el precio medio de una ${categoriaNombre.toLowerCase()} de ocasión es ${precioTexto}, con anuncios que van ${rangoTexto} según año, kilometraje y equipamiento. Filtra el catálogo por rango de precio para ajustar la búsqueda y calcula el ITP de tu comunidad antes de comprar.`
-          : `El precio de una ${categoriaNombre.toLowerCase()} de ocasión en ${ciudadNombre} depende del año, los kilómetros y el equipamiento. Filtra el catálogo por rango de precio para ajustar la búsqueda y calcula el ITP de tu comunidad antes de comprar.`,
-    },
-    {
-      pregunta: `¿Dónde veo todas las ${categoriaNombre.toLowerCase()} de ${ciudadNombre}?`,
-      respuesta: `Esta landing muestra las ${stats.total > 0 ? stats.total : 'principales'} ${categoriaNombre.toLowerCase()} de ocasión en ${ciudadNombre}. Para ver el listado completo con todos los filtros (precio, kilómetros, año, homologación verificada), entra al catálogo filtrado por ${ciudadNombre}.`,
-    },
-  ]
+  const faqs = locale === 'en'
+    ? [
+        {
+          pregunta: t('faqPriceQuestion', { category: categoriaNombre, city: ciudadNombre }),
+          respuesta: precioTexto && rangoTexto
+            ? t('faqPriceWithData', { category: categoriaNombre, city: ciudadNombre, average: formatPrecio(stats.precioMedio), range: rangoTexto })
+            : t('faqPriceWithoutData', { category: categoriaNombre, city: ciudadNombre }),
+        },
+        {
+          pregunta: t('faqAllQuestion', { category: categoriaNombre, city: ciudadNombre }),
+          respuesta: t('faqAllAnswer', { category: categoriaNombre, city: ciudadNombre }),
+        },
+      ]
+    : [
+        ...(seoCat?.faq || []),
+        {
+          pregunta: `¿Cuánto cuesta una ${categoriaNombre.toLowerCase()} en ${ciudadNombre}?`,
+          respuesta:
+            precioTexto && rangoTexto
+              ? `En ${ciudadNombre} (${estado}) el precio medio de una ${categoriaNombre.toLowerCase()} de ocasión es ${precioTexto}, con anuncios que van ${rangoTexto} según año, kilometraje y equipamiento. Filtra el catálogo por rango de precio para ajustar la búsqueda y calcula el ITP de tu comunidad antes de comprar.`
+              : `El precio de una ${categoriaNombre.toLowerCase()} de ocasión en ${ciudadNombre} depende del año, los kilómetros y el equipamiento. Filtra el catálogo por rango de precio para ajustar la búsqueda y calcula el ITP de tu comunidad antes de comprar.`,
+        },
+        {
+          pregunta: `¿Dónde veo todas las ${categoriaNombre.toLowerCase()} de ${ciudadNombre}?`,
+          respuesta: `Esta landing muestra las ${stats.total > 0 ? stats.total : 'principales'} ${categoriaNombre.toLowerCase()} de ocasión en ${ciudadNombre}. Para ver el listado completo con todos los filtros (precio, kilómetros, año, homologación verificada), entra al catálogo filtrado por ${ciudadNombre}.`,
+        },
+      ]
 
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    '@id': `https://camperocasion.online/${ciudadSlug}/${categoriaSlug}#faq`,
+    '@id': `https://camperocasion.online/${locale === 'en' ? 'en/' : ''}${ciudadSlug}/${categoriaSlug}#faq`,
     mainEntity: faqs.map(f => ({
       '@type': 'Question',
       name: f.pregunta,
@@ -157,7 +177,7 @@ export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciuda
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="public-shell py-10 md:py-14">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqJsonLd) }}
@@ -170,12 +190,10 @@ export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciuda
         <span className="text-gray-800 font-medium">{categoriaNombre}</span>
       </nav>
 
-      <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">
-        {categoriaNombre} en {ciudadNombre}
-      </h1>
-      <p className="text-gray-500 mb-6">
-        {t('desc', { category: categoriaNombre.toLowerCase(), city: ciudadNombre })}
-      </p>
+      <WorkHeader
+        title={t('title', { category: categoriaNombre, city: ciudadNombre })}
+        description={t('desc', { category: categoriaNombre.toLowerCase(), city: ciudadNombre })}
+      />
 
       {/* Categorias en esta ciudad */}
       <div className="flex flex-wrap gap-2 mb-8">
@@ -187,21 +205,32 @@ export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciuda
       </div>
 
       {/* ── Contenido único por ciudad + categoría ── */}
-      {(stats.total > 0 || seoCat?.introduccion) && (
-        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 mb-8">
-          {stats.total > 0 && (
-            <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>{stats.total} {stats.total === 1 ? 'anuncio' : 'anuncios'} de {categoriaNombre.toLowerCase()}</strong> de ocasión en {ciudadNombre} ({estado})
-              {precioTexto ? <> con un precio medio de <strong>{formatPrecio(stats.precioMedio)}</strong></> : ''}
-              {rangoTexto ? <> (rango {rangoTexto})</> : ''}.
-              {stats.porMarca.length > 0 && (
-                <> Las marcas más habituales en {ciudadNombre} para esta categoría: {stats.porMarca.slice(0, 4).map(m => m.marca).join(', ')}.</>
-              )}
+      {(stats.total > 0 || (locale === 'es' && seoCat?.introduccion)) && (
+        <section className="public-card p-6 md:p-8 mb-8">
+          {locale === 'en' ? (
+            <p className="text-gray-700 leading-relaxed">
+              {t('intro', { category: categoriaNombre, city: ciudadNombre, state: estado })}
+              {stats.total > 0 && <> {t('listingCount', { count: stats.total })}</>}
+              {stats.precioMedio !== null && <> {t('averagePrice', { price: formatPrecio(stats.precioMedio) })}</>}
+              {stats.porMarca.length > 0 && <> {t('popularBrands', { brands: stats.porMarca.slice(0, 4).map(m => m.marca).join(', ') })}</>}
             </p>
+          ) : (
+            <>
+              {stats.total > 0 && (
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  <strong>{stats.total} {stats.total === 1 ? 'anuncio' : 'anuncios'} de {categoriaNombre.toLowerCase()}</strong> de ocasión en {ciudadNombre} ({estado})
+                  {precioTexto ? <> con un precio medio de <strong>{formatPrecio(stats.precioMedio)}</strong></> : ''}
+                  {rangoTexto ? <> (rango {rangoTexto})</> : ''}.
+                  {stats.porMarca.length > 0 && (
+                    <> Las marcas más habituales en {ciudadNombre} para esta categoría: {stats.porMarca.slice(0, 4).map(m => m.marca).join(', ')}.</>
+                  )}
+                </p>
+              )}
+              {seoCat?.introduccion?.map((parrafo, i) => (
+                <p key={i} className="text-gray-700 leading-relaxed mb-4">{parrafo}</p>
+              ))}
+            </>
           )}
-          {seoCat?.introduccion?.map((parrafo, i) => (
-            <p key={i} className="text-gray-700 leading-relaxed mb-4">{parrafo}</p>
-          ))}
         </section>
       )}
 
@@ -213,7 +242,7 @@ export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciuda
       {/* ── FAQ (La gente también pregunta) ── */}
       <section className="mt-12">
         <h2 className="text-xl md:text-2xl font-black text-gray-900 mb-4">
-          Preguntas frecuentes: {categoriaNombre} en {ciudadNombre}
+          {t('faqTitle', { category: categoriaNombre, city: ciudadNombre })}
         </h2>
         <div className="space-y-3">
           {faqs.map((f, i) => (
@@ -231,10 +260,10 @@ export default async function LandingCategoria({ ciudadSlug, ciudadNombre, ciuda
       {/* ── Enlazado interno: volver a la provincia y al catálogo ── */}
       <section className="mt-10 flex flex-wrap gap-3">
         <LocalLink href={`/${ciudadSlug}`} className="inline-flex items-center gap-1.5 text-sm font-bold text-brand-primary hover:underline">
-          <ArrowRight size={14} className="rotate-180" /> Todas las campers de ocasión en {ciudadNombre}
+          <ArrowRight size={14} className="rotate-180" /> {t('allCity', { city: ciudadNombre })}
         </LocalLink>
         <LocalLink href={`/catalogo?subcategoria=${encodeURIComponent(subLabel || categoriaNombre)}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-brand-primary">
-          Ver todas las {categoriaNombre.toLowerCase()} de España <ArrowRight size={14} />
+          {t('allSpain', { category: categoriaNombre })} <ArrowRight size={14} />
         </LocalLink>
       </section>
     </div>

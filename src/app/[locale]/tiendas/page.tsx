@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { setRequestLocale } from 'next-intl/server'
 import LocalLink from '@/components/LocalLink'
+import PublicHero from '@/components/editorial/PublicHero'
 import { supabase } from '@/lib/supabase-server-client'
 import BadgeVerificado from '@/components/BadgeVerificado'
 import { Store, MapPin } from 'lucide-react'
@@ -19,18 +20,24 @@ export const revalidate = 600
 
 const SITIO = 'https://camperocasion.online'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const title = 'Camperizadores y profesionales en España'
-  const description =
-    'Directorio de talleres y profesionales de campers y autocaravanas en España. Consulta stock, ubicación y valoraciones.'
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  const english = locale === 'en'
+  const title = english ? 'Camper converters and professional sellers in Spain' : 'Camperizadores y profesionales en España'
+  const description = english
+    ? 'Browse campervan converters, workshops and professional sellers in Spain. Explore their listings and locations.'
+    : 'Directorio de talleres y profesionales de campers y autocaravanas en España. Consulta stock, ubicación y valoraciones.'
+  const canonicalEs = `${SITIO}/tiendas`
+  const canonical = english ? `${SITIO}/en/tiendas` : canonicalEs
   return {
     title,
     description,
     alternates: {
-      canonical: `${SITIO}/tiendas`,
-      languages: { 'es-ES': `${SITIO}/tiendas`, 'x-default': `${SITIO}/tiendas` },
+      canonical,
+      languages: { 'es-ES': canonicalEs, 'x-default': canonicalEs },
     },
-    openGraph: { title, description, url: `${SITIO}/tiendas`, siteName: 'CamperOcasión', locale: 'es_ES' },
+    robots: { index: !english, follow: true },
+    openGraph: { title, description, url: canonical, siteName: 'CamperOcasión', locale: english ? 'en_US' : 'es_ES' },
   }
 }
 
@@ -53,6 +60,23 @@ async function getTiendas() {
 export default async function TiendasPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   setRequestLocale(locale)
+  const english = locale === 'en'
+  const copy = english ? {
+    home: 'Home', directory: 'Shops', name: 'Camper converters and professional sellers in Spain',
+    description: 'Browse campervan converters, workshops and professional sellers in Spain.',
+    heroTitle: 'Camper converters and professional sellers', heroDesc: 'Explore workshops and professional sellers with active listings on CamperOcasión. Browse their inventory and location.',
+    emptyTitle: 'No shops are published yet', emptyDesc: 'Are you a converter or professional seller? Open your own shopfront with the Professional plan and show your inventory on a branded page.',
+    openShop: 'Explore plans and open my shop', shop: 'Shop', converter: 'Camper converter', professional: 'Professional seller',
+    ctaTitle: 'Selling campers professionally?', ctaDesc: 'Open your own shopfront: a page with your logo, inventory and a shareable link for your website or social media.', viewPlans: 'View plans',
+  } : {
+    home: 'Inicio', directory: 'Tiendas', name: 'Camperizadores y concesionarios de camper en España',
+    description: 'Directorio de talleres de camperización y vendedores profesionales de furgonetas camper y autocaravanas en España.',
+    heroTitle: 'Camperizadores y profesionales', heroDesc: 'Talleres de camperización y vendedores profesionales con stock en CamperOcasión. Consulta su catálogo, ubicación y opiniones.',
+    emptyTitle: 'Todavía no hay tiendas publicadas', emptyDesc: '¿Eres camperizador o vendedor profesional? Abre tu escaparate con el plan Profesional por 19 €/mes y enseña todo tu stock en una página propia.',
+    openShop: 'Ver planes y abrir mi tienda', shop: 'Tienda', converter: 'Camperizador', professional: 'Profesional',
+    ctaTitle: '¿Vendes campers de forma profesional?', ctaDesc: 'Abre tu escaparate con un pack: una página con tu logo, tu stock completo y tu dirección web propia que puedes enlazar desde tu Instagram.', viewPlans: 'Ver planes',
+  }
+  const prefix = english ? '/en' : ''
 
   const tiendas = await getTiendas()
 
@@ -60,32 +84,32 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITIO + '/' },
-      { '@type': 'ListItem', position: 2, name: 'Tiendas', item: SITIO + '/tiendas' },
+      { '@type': 'ListItem', position: 1, name: copy.home, item: SITIO + (english ? '/en' : '/') },
+      { '@type': 'ListItem', position: 2, name: copy.directory, item: SITIO + prefix + '/tiendas' },
     ],
   }
   const collectionJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    '@id': SITIO + '/tiendas#collection',
-    name: 'Camperizadores y concesionarios de camper en España',
-    description: 'Directorio de talleres de camperización y vendedores profesionales de furgonetas camper y autocaravanas en España.',
-    url: SITIO + '/tiendas',
+    '@id': SITIO + prefix + '/tiendas#collection',
+    name: copy.name,
+    description: copy.description,
+    url: SITIO + prefix + '/tiendas',
     isPartOf: { '@id': SITIO + '/#website' },
-    breadcrumb: { '@id': SITIO + '/tiendas#breadcrumb' },
-    ...(tiendas.length > 0 ? { mainEntity: { '@id': SITIO + '/tiendas#itemlist' } } : {}),
+    breadcrumb: { '@id': SITIO + prefix + '/tiendas#breadcrumb' },
+    ...(tiendas.length > 0 ? { mainEntity: { '@id': SITIO + prefix + '/tiendas#itemlist' } } : {}),
   }
   const itemListJsonLd = tiendas.length > 0 ? {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    '@id': SITIO + '/tiendas#itemlist',
-    name: 'Camperizadores y profesionales',
+    '@id': SITIO + prefix + '/tiendas#itemlist',
+    name: copy.heroTitle,
     numberOfItems: tiendas.length,
     itemListElement: tiendas.slice(0, 30).map((t: any, i: number) => ({
       '@type': 'ListItem',
       position: i + 1,
-      url: SITIO + '/tienda/' + t.slug,
-      name: t.nombre || 'Tienda',
+      url: SITIO + prefix + '/tienda/' + t.slug,
+      name: t.nombre || copy.shop,
     })),
   } : null
   const graphJsonLd = {
@@ -96,30 +120,22 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(graphJsonLd) }} />
-      <div className="max-w-6xl mx-auto px-4 py-12">
-      <div className="text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-black text-gray-800 mb-3">
-          Camperizadores y <span className="text-brand-accent">profesionales</span>
-        </h1>
-        <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-          Talleres de camperización y vendedores profesionales con stock en CamperOcasión.
-          Mira su catálogo completo, dónde están y qué dicen sus clientes.
-        </p>
-      </div>
+      <div className="public-page min-h-screen">
+        <PublicHero eyebrow="CamperOcasión" title={copy.heroTitle} description={copy.heroDesc} compact />
+        <div className="public-shell py-12 lg:py-20">
 
       {tiendas.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
+        <div className="public-card p-10 text-center">
           <Store size={36} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-700 font-semibold mb-1">Todavía no hay tiendas publicadas</p>
+          <p className="text-gray-700 font-semibold mb-1">{copy.emptyTitle}</p>
           <p className="text-sm text-gray-500 mb-5">
-            ¿Eres camperizador o vendedor profesional? Abre tu escaparate con el plan Profesional por 19 €/mes
-            y enseña todo tu stock en una página propia.
+            {copy.emptyDesc}
           </p>
           <LocalLink
             href="/para-profesionales"
             className="inline-block bg-brand-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-dark transition"
           >
-            Ver planes y abrir mi tienda
+            {copy.openShop}
           </LocalLink>
         </div>
       ) : (
@@ -137,7 +153,7 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
                     {t.foto_perfil_url ? (
                       <Image
                         src={t.foto_perfil_url}
-                        alt={t.nombre || 'Tienda'}
+                        alt={t.nombre || copy.shop}
                         width={64}
                         height={64}
                         className="w-full h-full object-cover"
@@ -152,7 +168,7 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
                       {t.verificado && <BadgeVerificado size="sm" />}
                     </div>
                     <p className="text-xs text-gray-500 mb-1">
-                      {t.tipo_vendedor === 'camperizador' ? 'Camperizador' : 'Profesional'}
+                      {t.tipo_vendedor === 'camperizador' ? copy.converter : copy.professional}
                     </p>
                     {ubicacion && (
                       <p className="text-sm text-gray-600 inline-flex items-center gap-1">
@@ -170,21 +186,21 @@ export default async function TiendasPage({ params }: { params: Promise<{ locale
           </div>
 
           <div className="bg-gradient-to-br from-brand-primary to-brand-dark text-white rounded-2xl p-8 mt-10 text-center">
-            <h2 className="text-2xl font-bold mb-2">¿Vendes campers de forma profesional?</h2>
+            <h2 className="text-2xl font-bold mb-2">{copy.ctaTitle}</h2>
             <p className="opacity-90 mb-5 max-w-xl mx-auto">
-              Abre tu escaparate con un pack: una página con tu logo, tu stock completo y tu
-              dirección web propia que puedes enlazar desde tu Instagram.
+              {copy.ctaDesc}
             </p>
             <LocalLink
               href="/para-profesionales"
               className="inline-block bg-white text-brand-primary px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition"
             >
-              Ver planes
+              {copy.viewPlans}
             </LocalLink>
           </div>
         </>
       )}
-    </div>
+        </div>
+      </div>
     </>
   )
 }

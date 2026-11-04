@@ -2,6 +2,7 @@ import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { alternatesSeo } from '@/lib/seo'
 import LocalLink from '@/components/LocalLink'
+import PublicHero from '@/components/editorial/PublicHero'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 export const metadata: Metadata = {
@@ -51,29 +52,24 @@ export default async function SobreNosotrosPage({ params }: { params: Promise<{ 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-gradient-to-r from-brand-primary to-brand-dark text-white py-16 px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-black mb-4">{t('title')}</h1>
-            <p className="text-xl text-white/80">{t('subtitle')}</p>
-          </div>
-        </div>
+      <div className="public-page min-h-screen">
+        <PublicHero eyebrow="CamperOcasión" title={t('title')} description={t('subtitle')} />
 
-        <div className="max-w-3xl mx-auto px-4 py-12 space-y-10">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8 py-16 lg:py-24 space-y-16">
           <section>
-            <h2 className="text-2xl font-black text-gray-900 mb-4">{t('whoTitle')}</h2>
-            <p className="text-gray-600 leading-relaxed">{t('whoP1')}</p>
-            <p className="text-gray-600 leading-relaxed mt-4">{t('whoP2')}</p>
+            <h2 className="public-section-title text-night mb-5">{t('whoTitle')}</h2>
+            <p className="text-slate-700 leading-[1.75] text-[17px]">{t('whoP1')}</p>
+            <p className="text-slate-700 leading-[1.75] text-[17px] mt-4">{t('whoP2')}</p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-black text-gray-900 mb-4">{t('missionTitle')}</h2>
-            <p className="text-gray-600 leading-relaxed">{t('missionP1')}</p>
-            <p className="text-gray-600 leading-relaxed mt-4">{t('missionP2')}</p>
+            <h2 className="public-section-title text-night mb-5">{t('missionTitle')}</h2>
+            <p className="text-slate-700 leading-[1.75] text-[17px]">{t('missionP1')}</p>
+            <p className="text-slate-700 leading-[1.75] text-[17px] mt-4">{t('missionP2')}</p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-black text-gray-900 mb-4">{t('whyTitle')}</h2>
+            <h2 className="public-section-title text-night mb-5">{t('whyTitle')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
                 { titulo: t('why1_title'), desc: t('why1_desc'), icon: '💰' },
@@ -81,23 +77,23 @@ export default async function SobreNosotrosPage({ params }: { params: Promise<{ 
                 { titulo: t('why3_title'), desc: t('why3_desc'), icon: '🌎' },
                 { titulo: t('why4_title'), desc: t('why4_desc'), icon: '🆓' },
               ].map((item, i) => (
-                <div key={i} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+                <div key={i} className="public-card p-6">
                   <div className="text-2xl mb-2">{item.icon}</div>
-                  <h3 className="font-bold text-gray-900 mb-1">{item.titulo}</h3>
+                  <h3 className="public-card-title text-night mb-2">{item.titulo}</h3>
                   <p className="text-gray-600 text-sm">{item.desc}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="bg-white rounded-xl p-8 border border-gray-100 text-center shadow-sm">
-            <h2 className="text-2xl font-black text-gray-900 mb-3">{t('ctaTitle')}</h2>
-            <p className="text-gray-600 mb-6">{t('ctaDesc')}</p>
+          <section className="bg-night p-8 sm:p-12 text-white">
+            <h2 className="public-section-title mb-4">{t('ctaTitle')}</h2>
+            <p className="text-white/75 mb-8">{t('ctaDesc')}</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <LocalLink href="/register" className="bg-brand-accent text-white px-8 py-3 rounded-lg font-bold hover:bg-accent/90 transition inline-block">
+              <LocalLink href="/register" className="btn btn-green">
                 {t('ctaRegister')}
               </LocalLink>
-              <LocalLink href="/catalogo" className="bg-white border-2 border-brand-primary text-brand-primary px-8 py-3 rounded-lg font-bold hover:bg-brand-primary hover:text-white transition inline-block">
+              <LocalLink href="/catalogo" className="btn btn-ghost">
                 {t('ctaBrowse')}
               </LocalLink>
             </div>

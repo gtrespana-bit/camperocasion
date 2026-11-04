@@ -63,7 +63,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.error === 'Invalid login credentials'
-          ? 'Email o contraseña incorrectos. Verifica tus datos.'
+          ? t('login.invalidCredentials')
           : data.error)
         setLoading(false)
         return
@@ -85,7 +85,7 @@ export default function LoginPage() {
       const destination = getSafeRedirectPath(searchParams.get('redirect')) || '/dashboard'
       router.push(redirectPath(destination))
     } catch (err) {
-      setError('Error de conexión. Intenta de nuevo.')
+      setError(t('login.connectionError'))
     }
     setLoading(false)
   }
@@ -109,14 +109,14 @@ export default function LoginPage() {
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
-        setError(data.error || 'No se pudo reenviar el email. Inténtalo de nuevo.')
+        setError(data.error || t('login.resendError'))
         setResendSuccess(false)
       } else {
         setResendYaConfirmado(data.yaRegistrado === true)
         setResendSuccess(true)
       }
     } catch {
-      setError('Error de conexión. Intenta de nuevo.')
+      setError(t('login.connectionError'))
       setResendSuccess(false)
     }
     setResendLoading(false)
@@ -137,38 +137,39 @@ export default function LoginPage() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setResetError(data.error || 'No se pudo enviar el correo. Inténtalo de nuevo.')
+        setResetError(data.error || t('login.resetError'))
       } else {
         setResetSent(true)
       }
     } catch {
-      setResetError('Error de conexión. Intenta de nuevo.')
+      setResetError(t('login.connectionError'))
     }
     setResetLoading(false)
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-[80vh] flex items-center justify-center px-5 py-12 bg-bone">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <BrandLogo href="/" size="lg" className="justify-center" priority />
-          <h1 className="text-2xl font-bold text-gray-800 mt-5">{t('login.title')}</h1>
-          <p className="text-gray-500 mt-1">{t('login.subtitle')}</p>
+          <h1 className="work-title work-title--account mt-6">{t('login.title')}</h1>
+          <p className="work-description mx-auto mt-2">{t('login.subtitle')}</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+        <div className="account-card p-6 sm:p-8">
           {error && (
-            <div className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">
+            <div role="alert" className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-lg mb-6 text-sm">
               <AlertCircle size={18} />
               {error}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          {!showReset && <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('login.email')}</label>
+              <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1.5">{t('login.email')}</label>
               <input
                 type="email"
+                id="login-email"
                 name="email"
                 autoComplete="email"
                 inputMode="email"
@@ -176,21 +177,22 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
                 required
-                className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-accent text-gray-900 bg-white"
+                className="w-full border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-leaf text-night bg-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('login.password')}</label>
+              <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1.5">{t('login.password')}</label>
               <input
                 type="password"
+                id="login-password"
                 name="password"
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Tu contraseña"
                 required
-                className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-accent text-gray-900 bg-white"
+                className="w-full border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-leaf text-night bg-white"
               />
             </div>
 
@@ -204,15 +206,24 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {showReset && !resetSent ? (
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full min-h-12 bg-night text-white px-5 py-3 font-semibold hover:bg-leaf hover:text-night transition-colors disabled:opacity-50"
+            >
+              {loading ? t('login.submitting') : t('login.submit')}
+            </button>
+          </form>}
+          {showReset && !resetSent ? (
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 animate-fadeIn">
                 <p className="text-sm text-yellow-800 mb-3 font-medium">{t('login.reset_title')}</p>
                 {resetError && (
-                  <p className="text-sm text-red-600 mb-3">{resetError}</p>
+                  <p role="alert" className="text-sm text-red-600 mb-3">{resetError}</p>
                 )}
                 <form onSubmit={handleResetPassword} className="space-y-3">
                   <input
                     type="email"
+                    aria-label={t('login.email')}
                     name="email"
                     autoComplete="email"
                     inputMode="email"
@@ -220,7 +231,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="tu@email.com"
                     required
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent bg-white"
+                    className="w-full border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-leaf bg-white"
                   />
                   <button
                     type="submit"
@@ -253,15 +264,6 @@ export default function LoginPage() {
                 </button>
               </div>
             ) : null}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-brand-primary text-white py-3 rounded-lg font-bold hover:bg-brand-dark transition disabled:opacity-50"
-            >
-              {loading ? t('login.submitting') : t('login.submit')}
-            </button>
-          </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
             {t('login.no_account')}{' '}

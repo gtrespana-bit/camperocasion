@@ -1,29 +1,30 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { CheckCircle, Mail, ExternalLink, ArrowRight, RefreshCw } from 'lucide-react'
 import LocalLink from '@/components/LocalLink'
 import { useRouter } from 'next/navigation'
 
 function ConfirmacionContent() {
   const t = useTranslations('auth')
+  const locale = useLocale()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [resending, setResending] = useState(false)
   const [resendStatus, setResendStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
   useEffect(() => {
-    setEmail(sessionStorage.getItem('tempEmail') || 'tu correo electrónico')
-  }, [])
+    setEmail(sessionStorage.getItem('tempEmail') || t('confirmacion.emailPlaceholder'))
+  }, [t])
 
   const handleConfirmClick = () => {
     sessionStorage.removeItem('tempEmail')
-    router.push('/login')
+    router.push(`${locale === 'en' ? '/en' : ''}/login`)
   }
 
   const handleResend = async () => {
-    if (!email || email === 'tu correo electrónico') return
+    if (!email || email === t('confirmacion.emailPlaceholder')) return
     setResending(true)
     setResendStatus('idle')
 
@@ -52,15 +53,13 @@ function ConfirmacionContent() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-[80vh] flex items-center justify-center px-5 py-12 bg-bone">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-brand-primary">
-            CamperOcasión
-          </h1>
+          <p className="t-wide text-2xl text-night">CamperOcasión</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        <div className="account-card p-6 sm:p-8">
           {/* Icono de éxito */}
           <div className="flex justify-center mb-6">
             <div className="bg-green-100 rounded-full p-4">
@@ -69,9 +68,9 @@ function ConfirmacionContent() {
           </div>
 
           {/* Mensaje principal */}
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          <h1 className="work-title work-title--account mb-5">
             {t('confirmacion.title')}
-          </h2>
+          </h1>
 
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-6">
             <div className="flex items-start gap-3">
@@ -103,29 +102,29 @@ function ConfirmacionContent() {
             </p>
             <button
               onClick={handleResend}
-              disabled={resending || !email || email === 'tu correo electrónico'}
+              disabled={resending || !email || email === t('confirmacion.emailPlaceholder')}
               className="w-full bg-yellow-500 text-brand-dark font-bold py-3 rounded-lg hover:bg-accent/90 transition flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {resending ? (
                 <>
                   <RefreshCw size={16} className="animate-spin" />
-                  Enviando...
+                  {t('confirmacion.resending')}
                 </>
               ) : resendStatus === 'success' ? (
                 <>
                   <CheckCircle size={16} />
-                  ¡Email reenviado!
+                  {t('confirmacion.resent')}
                 </>
               ) : (
                 <>
                   <RefreshCw size={16} />
-                  Reenviar email de confirmación
+                  {t('confirmacion.resend')}
                 </>
               )}
             </button>
             {resendStatus === 'error' && (
               <p className="text-xs text-red-600 mt-2">
-                Error al reenviar. Verifica que el email sea correcto.
+                {t('confirmacion.resendError')}
               </p>
             )}
           </div>

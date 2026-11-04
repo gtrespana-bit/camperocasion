@@ -358,3 +358,262 @@ a:focus-visible {
     animation: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTADA EDITORIAL — movimiento y utilidades
+   Todo lo que se anima respeta prefers-reduced-motion y, si JS no carga,
+   el contenido queda visible (los estados ocultos solo existen con .js).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.font-display { font-feature-settings: 'liga' 1, 'kern' 1; letter-spacing: -0.015em; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Entrada del hero: cada línea sube desde una máscara */
+.mask-line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.mask-line > span { display: block; transform: translateY(105%); animation: line-up 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: var(--d, 0s); }
+@keyframes line-up { to { transform: translateY(0); } }
+
+.fade-up { opacity: 0; transform: translateY(18px); animation: fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: var(--d, 0s); }
+@keyframes fade-up { to { opacity: 1; transform: none; } }
+
+/* Revelado al hacer scroll */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1); transition-delay: var(--d, 0s); }
+.reveal.is-in { opacity: 1; transform: none; }
+
+/* Marquee de fabricantes */
+.marquee { display: flex; width: max-content; animation: marquee 60s linear infinite; }
+.marquee:hover { animation-play-state: paused; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* Carriles horizontales con snap */
+.rail { scroll-snap-type: x mandatory; scrollbar-width: none; }
+.rail::-webkit-scrollbar { display: none; }
+.rail > * { scroll-snap-align: start; }
+
+/* Subrayado que se dibuja */
+.link-draw { background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px; background-repeat: no-repeat; background-position: 0 100%; transition: background-size 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+.link-draw:hover, a:hover > .link-draw, .group:hover .link-draw { background-size: 100% 1px; }
+
+/* Grano de película sutil sobre fotografía */
+.grain::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.07; mix-blend-mode: overlay; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mask-line > span, .fade-up { animation: none; transform: none; opacity: 1; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .marquee { animation: none; }
+}
+
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+.spin-slow { animation: spin-slow 28s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .spin-slow { animation: none; } }
+@keyframes scroll-cue { 0% { transform: translateY(-100%); } 100% { transform: translateY(300%); } }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTADA v3 — «Nocturno». Grotesca de anchura variable, WebGL, scroll
+   narrativo. Sin JS todo el contenido queda visible y legible.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Tipografía de acento: la portada reserva la escala expresiva para el primer impacto. */
+.t-mega { font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 62, 'wght' 800; text-transform: uppercase; letter-spacing: -0.012em; line-height: 0.84; font-synthesis: none; }
+.t-wide { font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 88, 'wght' 700; text-transform: uppercase; letter-spacing: -0.01em; line-height: 0.9; }
+.t-num { font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 75, 'wght' 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.outline-text { color: transparent; -webkit-text-stroke: 1.5px var(--stroke, #F5F7FA); }
+.micro { font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
+
+
+/* Cursor propio (solo puntero fino) */
+html.has-cursor, html.has-cursor a, html.has-cursor button, html.has-cursor [data-cursor], html.has-cursor label { cursor: none; }
+html.has-cursor input, html.has-cursor textarea, html.has-cursor select { cursor: auto; }
+
+/* Botones angulares con barrido de color */
+.btn { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: space-between; gap: 1.75rem; height: 3.5rem; padding: 0 1.25rem 0 1.6rem; overflow: hidden; font-family: var(--font-geist), sans-serif; font-size: 12.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; transition: color 0.5s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.5s; }
+.btn::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--sweep, #EA580C); transform: translateY(101%); transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+.btn:hover::before, .btn:focus-visible::before { transform: translateY(0); }
+.btn-light { background: #F5F7FA; color: #0B1120; --sweep: #4ADE80; }
+.btn-green { background: #16A34A; color: #04140A; --sweep: #4ADE80; }
+.btn-green:hover { color: #04140A; }
+.btn-light:hover { color: #0B1120; }
+.btn-ghost { border: 1px solid rgba(255, 255, 255, 0.32); color: #fff; --sweep: #fff; }
+.btn-ghost:hover { color: #0B1120; border-color: #fff; }
+.btn-ink { background: #0B1120; color: #F5F7FA; --sweep: #F5F7FA; }
+.btn-ink:hover { color: #0B1120; }
+.btn-ico { transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+.btn:hover .btn-ico { transform: translate(3px, -3px); }
+
+/* Titulares que suben desde una máscara al entrar en pantalla */
+.tr-w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0.14em 0 0.08em; margin: -0.14em 0 -0.08em; }
+.tr-w > span { display: inline-block; }
+.tr[data-armed] .tr-w > span { transform: translateY(112%); }
+.tr[data-armed].is-in .tr-w > span { transform: none; transition: transform 1.05s cubic-bezier(0.22, 1, 0.36, 1); transition-delay: calc(var(--i, 0) * 60ms); }
+
+/* Letras del titular cinético */
+.kc { display: inline-block; will-change: font-variation-settings; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tr[data-armed] .tr-w > span { transform: none; }
+}
+
+
+/* ═══ Textura y profundidad (v3.1) ═══ */
+/* Curvas de nivel: mapa topográfico muy sutil, hilo conductor del «viaje». */
+.topo { position: relative; isolation: isolate; }
+.topo::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: url('/home/topo.svg') center / cover no-repeat; opacity: var(--topo, 1); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent); }
+/* Halos de color de marca */
+.aura::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 50% at var(--ax, 85%) var(--ay, 0%), rgba(22, 163, 74, var(--ag, 0.22)), transparent 70%), radial-gradient(45% 40% at var(--bx, 0%) var(--by, 100%), rgba(234, 88, 12, var(--bg, 0.10)), transparent 70%); }
+/* Marcas de registro en las esquinas (detalle de «plano técnico») */
+.ticks { position: relative; }
+.ticks > i { position: absolute; width: 10px; height: 10px; border-color: rgba(255,255,255,0.55); pointer-events: none; }
+.ticks > i:nth-of-type(1) { top: -1px; left: -1px; border-top: 1px solid; border-left: 1px solid; }
+.ticks > i:nth-of-type(2) { top: -1px; right: -1px; border-top: 1px solid; border-right: 1px solid; }
+.ticks > i:nth-of-type(3) { bottom: -1px; left: -1px; border-bottom: 1px solid; border-left: 1px solid; }
+.ticks > i:nth-of-type(4) { bottom: -1px; right: -1px; border-bottom: 1px solid; border-right: 1px solid; }
+.glass { background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03)); border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); }
+
+/* Jerarquía editorial: una entrada con carácter y títulos de contenido
+   contenidos. Los anuncios y las acciones vuelven a ser el foco del recorrido. */
+.landing-home .home-title-hero {
+  font-size: clamp(3rem, 7.2vw, 7rem);
+  line-height: 0.97;
+  font-variation-settings: 'wdth' 74, 'wght' 760;
+}
+.landing-home .home-title-section {
+  font-size: clamp(2rem, 3.6vw, 3.8rem);
+  line-height: 1.1;
+  font-variation-settings: 'wdth' 86, 'wght' 680;
+  text-transform: none;
+  letter-spacing: -0.025em;
+}
+/* El texto delineado en bloques informativos era difícil de leer; ahora es
+   secundario por tono, no por pérdida de relleno ni de contraste. */
+.landing-home .home-title-section .outline-text {
+  color: inherit;
+  -webkit-text-stroke: 0;
+  opacity: 0.82;
+}
+.landing-home .home-title-cta {
+  font-size: clamp(2.8rem, 5.4vw, 5.5rem);
+  line-height: 1.02;
+  font-variation-settings: 'wdth' 82, 'wght' 700;
+  text-transform: none;
+}
+.landing-home .home-title-subsection {
+  font-size: clamp(1.65rem, 2.4vw, 2.4rem);
+  line-height: 1.16;
+  text-transform: none;
+}
+.landing-home .home-title-card {
+  font-size: clamp(1.4rem, 1.7vw, 1.7rem);
+  line-height: 1.17;
+  text-transform: none;
+}
+.landing-home .micro { font-size: 12px; letter-spacing: 0.11em; line-height: 1.5; }
+@media (max-width: 639px) {
+  .landing-home .home-title-hero { font-size: clamp(2.75rem, 11vw, 4.25rem); }
+}
+.landing-home .home-title-step {
+  font-size: clamp(1.8rem, 2.6vw, 2.5rem);
+  line-height: 1.12;
+}
+.landing-home .home-province-name {
+  font-size: clamp(1.55rem, 2.5vw, 2.5rem);
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+.landing-home .home-title-column {
+  font-size: clamp(2rem, 3.2vw, 3.5rem);
+  line-height: 1.1;
+  font-variation-settings: 'wdth' 86, 'wght' 680;
+  text-transform: none;
+  letter-spacing: -0.02em;
+}
+
+/* ═══ Sistema editorial de páginas públicas ═══
+   Un mismo lienzo, escala y ritmo que la portada; las áreas de formularios y
+   la administración conservan su semántica y sus controles propios. */
+.public-page { background: #F5F7FA; color: #0B1120; }
+.public-shell { width: 100%; max-width: 1360px; margin-inline: auto; padding-inline: clamp(1.25rem, 3vw, 2rem); }
+.public-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-block: clamp(3.5rem, 5vw, 5.5rem);
+  background: #0B1120;
+  color: #F5F7FA;
+}
+.public-hero--compact { padding-block: clamp(2.75rem, 4vw, 4rem); }
+.public-hero::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: url('/home/topo.svg') center / cover no-repeat;
+  opacity: 0.35;
+  mask-image: linear-gradient(90deg, transparent, #000 35%, #000 90%);
+}
+.public-hero::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse at 95% 10%, rgba(22,163,74,0.24), transparent 60%),
+              radial-gradient(ellipse at 5% 100%, rgba(234,88,12,0.09), transparent 55%);
+}
+.public-eyebrow {
+  display: flex; align-items: center; gap: 1rem;
+  color: #86EFAC; font-size: 0.75rem; font-weight: 700;
+  line-height: 1.5; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.public-eyebrow-line { display: inline-block; width: 2.5rem; height: 1px; flex: none; background: currentColor; }
+.public-hero-title {
+  max-width: 27ch;
+  margin-top: clamp(1.2rem, 2vw, 1.75rem);
+  font-size: clamp(2rem, 4vw, 4.1rem);
+  font-variation-settings: 'wdth' 86, 'wght' 700;
+  text-transform: none;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.public-hero-description { max-width: 43rem; margin-top: 1.15rem; color: rgba(255,255,255,0.78); font-size: clamp(1rem, 1.5vw, 1.2rem); line-height: 1.65; }
+.public-hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+.public-section { padding-block: clamp(3.5rem, 7vw, 7rem); }
+.public-section-title {
+  font-family: var(--font-grotesk), var(--font-geist), sans-serif;
+  font-variation-settings: 'wdth' 88, 'wght' 700;
+  text-transform: none;
+  letter-spacing: -0.015em;
+  font-size: clamp(1.65rem, 2.4vw, 2.6rem);
+  line-height: 1.16;
+}
+.public-card { background: #fff; border: 1px solid #CBD5E1; box-shadow: 0 16px 45px -35px rgba(11,17,32,0.3); }
+.public-card-title { font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 88, 'wght' 700; font-size: clamp(1.25rem, 1.8vw, 1.65rem); line-height: 1.15; }
+.public-muted { color: #475569; }
+@media (max-width: 639px) {
+  .public-hero { padding-block: 3rem; }
+  .public-hero--compact { padding-block: 2.75rem; }
+  .public-hero-title { font-size: clamp(2rem, 8vw, 3rem); }
+}
+/* Fundamentos transversales sin alterar la distribución ni el comportamiento
+   de formularios, fichas, cuenta o administración. */
+.site-interior :is(h1, h2, h3) { text-wrap: balance; }
+@media (max-width: 767px) { .site-interior :is(input, select, textarea) { font-size: 16px; } }
+.site-interior :is(a, button, summary):focus-visible { outline: 2px solid #16A34A; outline-offset: 3px; }
+/* Lectura larga del blog: las clases de utilidades del Markdown no deben
+   devolver el artículo a una escala visual distinta de la cabecera. */
+.public-page .prose { color: #334155; font-size: 1.05rem; line-height: 1.75; }
+.public-page .prose :is(h2, h3) {
+  color: #0B1120;
+  font-family: var(--font-grotesk), var(--font-geist), sans-serif;
+  font-variation-settings: 'wdth' 88, 'wght' 700;
+  line-height: 1.16;
+  text-wrap: balance;
+}
+.public-page .prose h2 { font-size: clamp(1.65rem, 2.5vw, 2.5rem); }
+.public-page .prose h3 { font-size: clamp(1.3rem, 1.8vw, 1.85rem); }
+
+/* Pantallas de trabajo: misma marca que la portada, escala más contenida.
+   Compartido por cuenta, catálogo avanzado, créditos y área privada. */
+.work-header { margin-bottom: clamp(1.5rem, 4vw, 2.75rem); padding-bottom: clamp(1.5rem, 3vw, 2rem); border-bottom: 1px solid #CBD5E1; }
+.work-eyebrow { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; color: #15803D; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; line-height: 1.4; }
+.work-eyebrow-line { width: 2rem; height: 2px; flex: none; background: currentColor; }
+.work-title { color: #0B1120; font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 88, 'wght' 700; font-size: clamp(1.85rem, 3vw, 2.9rem); line-height: 1.15; letter-spacing: -0.02em; text-transform: none; overflow-wrap: anywhere; }
+.work-title--sm { font-size: clamp(1.6rem, 2.6vw, 2.4rem); }
+.work-title--account { font-size: clamp(2rem, 5vw, 2.7rem); }
+.work-description { max-width: 43rem; margin-top: 0.7rem; color: #475569; font-size: clamp(0.95rem, 1.4vw, 1.08rem); line-height: 1.65; }
+.work-card { background: #fff; border: 1px solid #CBD5E1; box-shadow: 0 18px 46px -36px rgba(11,17,32,0.35); }
+.account-card { background: #fff; border: 1px solid #CBD5E1; border-top: 4px solid #16A34A; box-shadow: 0 26px 70px -45px rgba(11,17,32,0.35); }

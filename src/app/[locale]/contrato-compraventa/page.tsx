@@ -1,3 +1,4 @@
+import PublicHero from '@/components/editorial/PublicHero'
 import { serializeJsonLd } from '@/lib/serialize-json-ld'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
@@ -93,22 +94,9 @@ export default function ContratoCompraventaPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <Breadcrumbs items={[{ label: 'Contrato de compraventa', href: '/contrato-compraventa' }]} />
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-3">
-          <span className="w-11 h-11 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
-            <FileSignature size={22} aria-hidden="true" />
-          </span>
-          <h1 className="text-3xl md:text-4xl font-black text-gray-900">
-            Contrato de compraventa de camper
-          </h1>
-        </div>
-        <p className="text-lg text-gray-600 mb-8">
-          Rellena los datos de las partes y del vehículo, imprime el contrato en dos ejemplares y
-          firmadlo el día de la entrega. Si llegas desde un anuncio de CamperOcasión, los datos del
-          vehículo van precargados. <strong>Nada se guarda en ningún servidor</strong>: el
-          documento se genera en tu navegador.
-        </p>
-
+      <div className="public-page min-h-screen">
+        <PublicHero compact eyebrow="CamperOcasión · Herramientas" title="Contrato de compraventa de camper" description={<>Rellena los datos de las partes y del vehículo e imprime el contrato en dos ejemplares. Si llegas desde un anuncio, los datos del vehículo van precargados. <strong>Nada se guarda en ningún servidor</strong>: el documento se genera en tu navegador.</>} />
+        <div className="max-w-4xl mx-auto px-5 sm:px-8 py-12 lg:py-16">
         <Suspense
           fallback={
             <div className="bg-white border border-gray-100 rounded-2xl p-10 text-center text-gray-500 text-sm">
@@ -198,6 +186,7 @@ export default function ContratoCompraventaPage() {
             <ShieldCheck size={18} className="text-brand-primary" aria-hidden="true" />
             <span className="text-sm font-bold text-gray-900">Tramitar el cambio de nombre con gestoría</span>
           </LocalLink>
+        </div>
         </div>
       </div>
     </>

@@ -206,7 +206,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="admin-workspace min-h-screen bg-bone">
       {toast && (
         <div role="status" aria-live="polite" aria-atomic="true" className="fixed right-4 top-4 z-[100] rounded-xl bg-gray-900 px-5 py-3 text-sm font-medium text-white shadow-2xl">
           {toast}
@@ -214,7 +214,7 @@ export default function AdminPage() {
       )}
 
       {/* mobile top bar */}
-      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white px-4 py-2 lg:hidden">
+      <div className="sticky top-0 z-40 border-b border-night/10 bg-white px-4 py-2 lg:hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => setMobileOpen(!mobileOpen)} className="rounded-lg p-2 text-gray-600 hover:bg-gray-100" aria-label="Abrir navegación">
@@ -231,7 +231,7 @@ export default function AdminPage() {
                 key={n.id}
                 type="button"
                 onClick={() => navigate(n.id)}
-                className={`flex items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold transition ${tab === n.id ? 'bg-brand-primary text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
+                className={`flex items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold transition ${tab === n.id ? 'bg-night text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
               >
                 <n.icon size={15} /> {n.label}
               </button>
@@ -248,10 +248,10 @@ export default function AdminPage() {
             if (!nav || nav.contains(e.target as Node)) return
             nav.scrollTop += e.deltaY
           }}
-          className="sticky top-0 hidden h-screen max-h-screen w-64 flex-shrink-0 self-start flex-col overflow-y-auto overscroll-contain border-r border-gray-200 bg-white px-3 py-5 lg:flex"
+          className="sticky top-0 hidden h-screen max-h-screen w-64 flex-shrink-0 self-start flex-col overflow-y-auto overscroll-contain border-r border-night/10 bg-white px-3 py-5 lg:flex"
         >
           <div className="mb-6 flex shrink-0 items-center gap-3 px-2">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-primary text-white"><Sparkles size={20} /></span>
+            <span className="flex h-11 w-11 items-center justify-center rounded-md bg-night text-leaf"><Sparkles size={20} /></span>
             <div>
               <p className="text-sm font-black text-gray-900">Admin CamperOcasión</p>
               <p className="text-xs text-gray-500">Control total</p>
@@ -270,7 +270,7 @@ export default function AdminPage() {
                 data-active={tab === n.id ? 'true' : undefined}
                 aria-current={tab === n.id ? 'page' : undefined}
                 onClick={() => navigate(n.id)}
-                className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${tab === n.id ? 'bg-brand-primary text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
+                className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${tab === n.id ? 'bg-night text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
               >
                 <n.icon size={17} />
                 <span className="flex-1">
@@ -299,10 +299,10 @@ export default function AdminPage() {
         </aside>
 
         {/* content */}
-        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <section aria-label="Contenido del panel" className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <div className="mb-6 hidden items-center justify-between lg:flex">
             <div>
-              <h1 className="text-2xl font-black text-gray-900">{activeNav.label}</h1>
+              <h1 className="work-title work-title--sm">{activeNav.label}</h1>
               <p className="text-sm text-gray-500">{activeNav.description} · {user.email}</p>
             </div>
             <LocalLink href="/" className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50">
@@ -329,7 +329,7 @@ export default function AdminPage() {
             {tab === 'exportar' && <AdminExportar notify={notify} />}
             {tab === 'ajustes' && <AdminAjustes notify={notify} />}
           </div>
-        </main>
+        </section>
       </div>
     </div>
   )

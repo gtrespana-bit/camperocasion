@@ -77,9 +77,9 @@ export default function TiendaClient({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="public-page min-h-screen">
       {/* Portada */}
-      <div className="relative h-40 md:h-60 bg-gradient-to-br from-brand-primary to-brand-dark">
+      <div className="relative h-44 md:h-64 bg-night">
         {perfil.portada_url && (
           <Image
             src={perfil.portada_url}
@@ -92,9 +92,9 @@ export default function TiendaClient({
         )}
       </div>
 
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="public-shell">
         {/* Cabecera */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 -mt-12 md:-mt-16 relative p-6 mb-8">
+        <div className="public-card -mt-12 md:-mt-16 relative p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-start gap-5">
             <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-100 border-4 border-white shadow-md shrink-0 -mt-16 md:-mt-20">
               {perfil.foto_perfil_url ? (
@@ -114,7 +114,7 @@ export default function TiendaClient({
 
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="text-2xl md:text-3xl font-black text-gray-900">
+                <h1 className="font-grotesk text-[clamp(2rem,3.5vw,3.5rem)] font-bold leading-[1.06] text-night">
                   {perfil.nombre || 'Tienda'}
                 </h1>
                 {perfil.verificado && <BadgeVerificado size="md" />}

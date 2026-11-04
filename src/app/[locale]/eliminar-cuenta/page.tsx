@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
+import WorkHeader from '@/components/editorial/WorkHeader'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
-export const metadata: Metadata = {
-  title: 'Eliminar tu cuenta',
-  description: 'Solicita la eliminación de tu cuenta y datos asociados en CamperOcasión.',
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'deleteAccount' })
+  return { title: t('title'), description: t('subtitle') }
 }
 
 export default async function EliminarCuentaPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -11,14 +13,13 @@ export default async function EliminarCuentaPage({ params }: { params: Promise<{
   setRequestLocale(locale)
   const t = await getTranslations({ locale, namespace: 'deleteAccount' })
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-black text-gray-800 mb-2">{t('title')}</h1>
-      <p className="text-gray-500 mb-10">{t('subtitle')}</p>
+    <div className="public-shell max-w-3xl py-10 md:py-14">
+      <WorkHeader title={t('title')} description={t('subtitle')} />
       <div className="space-y-8">
         <section>
           <h2 className="text-2xl font-bold text-gray-800 mb-3">{t('howTitle')}</h2>
           <p className="text-gray-600 mb-4">
-            <a href="mailto:privacidad@camperocasion.online?subject=Solicitud%20de%20eliminaci%C3%B3n%20de%20cuenta%20%E2%80%94%20CamperOcasión" className="text-blue-600 underline font-medium">
+            <a href="mailto:privacidad@camperocasion.online?subject=Solicitud%20de%20eliminaci%C3%B3n%20de%20cuenta%20%E2%80%94%20CamperOcasión" className="text-leaf underline font-medium">
               privacidad@camperocasion.online
             </a> — {t('howP1')}
           </p>
@@ -43,10 +44,10 @@ export default async function EliminarCuentaPage({ params }: { params: Promise<{
           <h2 className="text-2xl font-bold text-gray-800 mb-3">{t('keptTitle')}</h2>
           <p className="text-gray-600">{t('keptText')}</p>
         </section>
-        <section className="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+        <section className="work-card p-6 border-l-4 border-l-leaf">
           <h3 className="font-bold text-gray-800 mb-2">{t('contactTitle')}</h3>
           <p className="text-gray-600">
-            <a href="mailto:privacidad@camperocasion.online" className="text-blue-600 underline font-medium">privacidad@camperocasion.online</a>
+            <a href="mailto:privacidad@camperocasion.online" className="text-leaf underline font-medium">privacidad@camperocasion.online</a>
           </p>
           <p className="text-gray-500 text-sm mt-2">{t('tagline')}</p>
         </section>

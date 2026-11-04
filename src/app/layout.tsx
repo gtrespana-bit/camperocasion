@@ -11,21 +11,39 @@ import GoogleAnalyticsScript from '@/components/GoogleAnalyticsScript'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 import CookieConsent from '@/components/CookieConsent'
 
-// Fuente Inter autohospedada (woff2 locales) en lugar de next/font/google.
-const inter = localFont({
+// Tipografía de interfaz: Geist (variable, autohospedada). Las fuentes Inter
+// siguen en /fonts solo porque las usa la generación de imágenes OG.
+const geist = localFont({
+  src: [{ path: './fonts/geist-latin-wght-normal.woff2', weight: '100 900', style: 'normal' }],
+  variable: '--font-geist',
+  display: 'swap',
+  preload: true,
+})
+
+// Monoespaciada para etiquetas técnicas, cifras y metadatos (aire de ficha).
+const geistMono = localFont({
+  src: [{ path: './fonts/geist-mono-latin-wght-normal.woff2', weight: '100 900', style: 'normal' }],
+  variable: '--font-geist-mono',
+  display: 'swap',
+  preload: false,
+})
+
+// Grotesca de anchura variable (eje wdth 62–125): titulares monumentales de la
+// portada. La anchura de cada letra responde al puntero.
+const grotesk = localFont({
+  src: [{ path: './fonts/archivo-latin-standard-normal.woff2', weight: '100 900', style: 'normal' }],
+  variable: '--font-grotesk',
+  display: 'swap',
+  preload: true,
+})
+
+// Tipografía display de la portada y de los titulares editoriales.
+const display = localFont({
   src: [
-    { path: './fonts/inter-latin-400-normal.woff2', weight: '400', style: 'normal' },
-    { path: './fonts/inter-latin-400-italic.woff2', weight: '400', style: 'italic' },
-    { path: './fonts/inter-latin-500-normal.woff2', weight: '500', style: 'normal' },
-    { path: './fonts/inter-latin-500-italic.woff2', weight: '500', style: 'italic' },
-    { path: './fonts/inter-latin-600-normal.woff2', weight: '600', style: 'normal' },
-    { path: './fonts/inter-latin-600-italic.woff2', weight: '600', style: 'italic' },
-    { path: './fonts/inter-latin-700-normal.woff2', weight: '700', style: 'normal' },
-    { path: './fonts/inter-latin-700-italic.woff2', weight: '700', style: 'italic' },
-    { path: './fonts/inter-latin-900-normal.woff2', weight: '900', style: 'normal' },
-    { path: './fonts/inter-latin-900-italic.woff2', weight: '900', style: 'italic' },
+    { path: './fonts/instrument-serif-latin-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/instrument-serif-latin-400-italic.woff2', weight: '400', style: 'italic' },
   ],
-  variable: '--font-inter',
+  variable: '--font-display',
   display: 'swap',
   preload: true,
 })
@@ -131,7 +149,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={inter.variable} suppressHydrationWarning>
+    <html lang="es" className={`${geist.variable} ${geistMono.variable} ${grotesk.variable} ${display.variable}`} suppressHydrationWarning>
       <head>
         <GoogleAnalyticsScript />
         <link rel="preconnect" href={SUPABASE_ORIGIN} />
