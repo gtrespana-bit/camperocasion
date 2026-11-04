@@ -1,9 +1,4 @@
-'use client'
-
-import { useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import LocalLink from '@/components/LocalLink'
 import { ArrowUpRight, MapPin } from 'lucide-react'
 
@@ -21,71 +16,17 @@ export type GalleryItem = {
 
 type Labels = { featured: string; isNew: string; see: string; empty: string; emptyCta: string; progress: string }
 
-/**
- * Galería horizontal fijada: el scroll vertical desplaza la tira de anuncios.
- * En móvil (o con reducir movimiento) es un carril nativo con snap.
- */
+/** Anuncios visibles antes que la narrativa: carril nativo en móvil y
+ * cuadrícula comparable en escritorio. Sin secuestro del scroll vertical. */
 export default function Gallery({ items, labels, header }: { items: GalleryItem[]; labels: Labels; header: React.ReactNode }) {
-  const section = useRef<HTMLElement>(null)
-  const track = useRef<HTMLDivElement>(null)
-  const bar = useRef<HTMLDivElement>(null)
-  const count = useRef<HTMLSpanElement>(null)
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger)
-    const sec = section.current
-    const tr = track.current
-    if (!sec || !tr || items.length === 0) return
-
-    const mm = gsap.matchMedia()
-    mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
-      const viewport = tr.parentElement as HTMLElement
-      viewport.style.overflow = 'hidden'
-      const dist = () => Math.max(0, tr.scrollWidth - viewport.clientWidth)
-      const cards = Array.from(tr.querySelectorAll<HTMLElement>('[data-card]'))
-      const total = cards.length
-
-      const tween = gsap.to(tr, {
-        x: () => -dist(),
-        ease: 'none',
-        scrollTrigger: {
-          trigger: sec,
-          start: 'top top',
-          end: () => `+=${dist() + window.innerHeight * 0.25}`,
-          pin: true,
-          scrub: 0.6,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            if (bar.current) bar.current.style.transform = `scaleX(${self.progress})`
-            if (count.current) count.current.textContent = String(Math.min(total, Math.max(1, Math.round(self.progress * (total - 1)) + 1))).padStart(2, '0')
-          },
-        },
-      })
-
-      // Paralaje interior de cada fotografía respecto a la tira
-      cards.forEach((card) => {
-        const img = card.querySelector('[data-gimg]')
-        if (img) {
-          gsap.fromTo(img, { xPercent: -9 }, {
-            xPercent: 9, ease: 'none',
-            scrollTrigger: { trigger: card, containerAnimation: tween, start: 'left right', end: 'right left', scrub: true },
-          })
-        }
-      })
-      return () => { viewport.style.overflow = '' }
-    })
-    return () => mm.revert()
-  }, [items.length])
-
   return (
-    <section ref={section} className="relative overflow-hidden bg-gradient-to-b from-bone to-[#E6ECF3] py-20 text-night [--stroke:#0B1120] lg:flex lg:h-[100svh] lg:flex-col lg:justify-center lg:py-0">
+    <section className="relative overflow-hidden bg-gradient-to-b from-bone to-[#E6ECF3] py-16 text-night lg:py-20">
       <div className="mx-auto w-full max-w-[1360px] px-5 sm:px-8">{header}</div>
 
       {items.length === 0 ? (
         <div className="mx-auto mt-14 w-full max-w-[1360px] px-5 sm:px-8">
           <div className="flex flex-col items-start gap-6 border border-night/20 p-10">
-            <p className="t-mega text-[clamp(2.4rem,6vw,5rem)]">{labels.empty}</p>
+            <p className="font-grotesk text-[clamp(1.8rem,3vw,2.8rem)] font-bold leading-tight">{labels.empty}</p>
             <LocalLink href="/publicar" className="btn btn-ink">
               {labels.emptyCta} <ArrowUpRight size={18} className="btn-ico" aria-hidden="true" />
             </LocalLink>
@@ -94,25 +35,23 @@ export default function Gallery({ items, labels, header }: { items: GalleryItem[
       ) : (
         <>
           <p className="micro mx-auto mt-8 max-w-[1360px] px-5 text-night/75 sm:px-8 lg:hidden">{labels.progress} →</p>
-          <div className="mt-4 overflow-x-auto snap-x snap-mandatory px-5 pb-4 [scrollbar-width:none] sm:px-8 lg:mt-14 lg:overflow-visible lg:pb-0 lg:pl-[max(2rem,calc((100vw-1360px)/2+2rem))] [&::-webkit-scrollbar]:hidden">
-            <div ref={track} className="flex w-max gap-4 lg:gap-6 lg:pr-[10vw]">
+          <div className="mt-4 overflow-x-auto snap-x snap-mandatory px-5 pb-4 [scrollbar-width:none] sm:px-8 lg:mx-auto lg:mt-10 lg:max-w-[1360px] lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
+            <div className="flex w-max gap-4 lg:grid lg:w-full lg:grid-cols-3 lg:gap-5 xl:grid-cols-4">
               {items.map((it, i) => (
                 <LocalLink
                   key={it.id}
                   href={it.href}
-                  data-card
                   data-cursor={labels.see}
-                  className="group flex w-[76vw] shrink-0 snap-start flex-col border border-night/10 bg-white shadow-[0_1px_0_rgba(15,23,42,0.04),0_24px_48px_-32px_rgba(15,23,42,0.35)] transition-[transform,box-shadow] duration-500 hover:-translate-y-1.5 hover:shadow-[0_1px_0_rgba(15,23,42,0.04),0_36px_60px_-28px_rgba(15,23,42,0.45)] sm:w-[46vw] lg:w-[clamp(260px,min(28vw,calc((100svh-430px)*1.25)),460px)]"
+                  className="group flex w-[76vw] shrink-0 snap-start flex-col border border-night/10 bg-white shadow-[0_1px_0_rgba(15,23,42,0.04),0_24px_48px_-32px_rgba(15,23,42,0.35)] transition-[transform,box-shadow] duration-500 hover:-translate-y-1.5 hover:shadow-[0_1px_0_rgba(15,23,42,0.04),0_36px_60px_-28px_rgba(15,23,42,0.45)] sm:w-[46vw] lg:w-full"
                 >
                   <div className="relative aspect-[5/4] overflow-hidden bg-night/10">
-                    <div data-gimg className="absolute inset-y-0 -inset-x-[10%] will-change-transform">
+                    <div className="absolute inset-0">
                       <Image
                         src={it.image}
                         alt={it.title}
                         fill
                         sizes="(max-width: 1024px) 76vw, 460px"
                         quality={75}
-                        loading={i < 3 ? 'eager' : 'lazy'}
                         className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]"
                       />
                     </div>
@@ -143,11 +82,6 @@ export default function Gallery({ items, labels, header }: { items: GalleryItem[
             </div>
           </div>
 
-          <div className="mx-auto mt-10 hidden w-full max-w-[1360px] items-center gap-6 px-5 sm:px-8 lg:flex">
-            <p className="t-num text-[15px]"><span ref={count}>01</span><span className="mx-2 opacity-35">/</span><span className="opacity-55">{String(items.length).padStart(2, '0')}</span></p>
-            <div className="h-px flex-1 bg-night/20"><div ref={bar} className="h-[3px] -translate-y-px origin-left scale-x-0 bg-leaf" /></div>
-            <p className="micro text-night/55">{labels.progress}</p>
-          </div>
         </>
       )}
     </section>

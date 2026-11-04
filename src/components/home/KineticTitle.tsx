@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 
-const BASE = 62
+const BASE = 74
 const PEAK = 112
 const RADIUS = 260
 
@@ -39,7 +39,7 @@ export default function KineticTitle({ lines, className = '' }: { lines: string[
         const diff = goal[i] - cur[i]
         if (Math.abs(diff) > 0.15) {
           cur[i] += diff * 0.14
-          chars[i].style.fontVariationSettings = `'wdth' ${cur[i].toFixed(1)}, 'wght' 800`
+          chars[i].style.fontVariationSettings = `'wdth' ${cur[i].toFixed(1)}, 'wght' 760`
           moving = true
         }
       }

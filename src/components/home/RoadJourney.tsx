@@ -133,7 +133,7 @@ export default function RoadJourney({ steps }: { steps: RoadStep[] }) {
       {steps.map((s, i) => {
         const imgLeft = i % 2 === 0
         return (
-          <article key={s.key} data-step className="relative mx-auto grid w-full max-w-[1360px] items-center gap-8 px-5 py-14 sm:px-8 lg:grid-cols-12 lg:gap-0 lg:py-16">
+          <article key={s.key} data-step className="relative mx-auto grid w-full max-w-[1360px] items-center gap-8 px-5 py-10 sm:px-8 lg:grid-cols-12 lg:gap-0 lg:py-12">
             <div className={`lg:col-span-6 ${imgLeft ? 'lg:col-start-1' : 'lg:col-start-7 lg:row-start-1'}`}>
               <div data-mask className="relative aspect-[5/4] overflow-hidden bg-night-700">
                 <div data-rimg className="absolute -inset-[8%] will-change-transform">
@@ -162,8 +162,8 @@ export default function RoadJourney({ steps }: { steps: RoadStep[] }) {
             </div>
 
             <div data-rtext className={`lg:col-span-5 ${imgLeft ? 'lg:col-start-8' : 'lg:col-start-1 lg:row-start-1'}`}>
-              <p className="t-mega text-[clamp(4.5rem,9vw,8.5rem)] text-transparent [-webkit-text-stroke:1.5px_rgba(74,222,128,0.7)]">0{i + 1}</p>
-              <h3 className="t-wide home-title-step mt-6">{s.title}</h3>
+              <p className="t-num text-[clamp(1.75rem,2.5vw,2.5rem)] text-leaf-300/80">0{i + 1}</p>
+              <h3 className="t-wide home-title-step mt-3">{s.title}</h3>
               <p className="mt-5 max-w-md text-[17px] leading-relaxed text-white/70">{s.desc}</p>
               <div className="mt-7 flex flex-wrap gap-2.5">
                 {s.links.map((l) => (

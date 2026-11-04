@@ -1,9 +1,4 @@
-'use client'
-
-import { useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import LocalLink from '@/components/LocalLink'
 import { ArrowUpRight } from 'lucide-react'
 
@@ -17,112 +12,55 @@ export type RoutePanel = {
   tipos: { label: string; href: string }[]
 }
 
-/**
- * Tres «rutas» a pantalla completa que se apilan: cada una queda fijada y la
- * siguiente la cubre mientras la anterior se aleja y se oscurece.
- */
+/** Las tres familias se comparan de un vistazo, sin fijar pantallas ni ocultar
+ * el catálogo que viene después. Cada enlace conserva su filtro original. */
 export default function RoutePanels({ panels, explore, kicker }: { panels: RoutePanel[]; explore: string; kicker: string }) {
-  const root = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger)
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const el = root.current
-    if (!el) return
-
-    const ctx = gsap.context(() => {
-      const items = gsap.utils.toArray<HTMLElement>('[data-panel]')
-      items.forEach((panel, i) => {
-        const img = panel.querySelector('[data-pimg]')
-        const inner = panel.querySelector('[data-pinner]')
-        const veil = panel.querySelector('[data-pveil]')
-        // Paralaje de la fotografía mientras el panel cruza la pantalla
-        if (img) {
-          gsap.fromTo(img, { yPercent: -7, scale: 1.14 }, {
-            yPercent: 7, scale: 1.04, ease: 'none',
-            scrollTrigger: { trigger: panel, start: 'top bottom', end: 'bottom top', scrub: true },
-          })
-        }
-        // El panel anterior se aleja al llegar el siguiente
-        const next = items[i + 1]
-        if (next && inner && veil) {
-          gsap.to(inner, {
-            scale: 0.9, ease: 'none',
-            scrollTrigger: { trigger: next, start: 'top bottom', end: 'top top', scrub: true },
-          })
-          gsap.to(veil, {
-            opacity: 0.78, ease: 'none',
-            scrollTrigger: { trigger: next, start: 'top bottom', end: 'top top', scrub: true },
-          })
-        }
-      })
-    }, el)
-    return () => ctx.revert()
-  }, [])
-
   return (
-    <div ref={root}>
-      {panels.map((p, i) => (
-        <section
-          key={p.key}
-          data-panel
-          className="sticky top-0 h-[100svh] min-h-[700px] overflow-hidden bg-night"
-          style={{ zIndex: i + 1 }}
-        >
-          <div data-pinner className="absolute inset-0 origin-top overflow-hidden will-change-transform">
-            <div data-pimg className="absolute -inset-y-[8%] inset-x-0 will-change-transform">
+    <section className="bg-[#F5F7FA] py-14 text-night lg:py-20" aria-label={kicker}>
+      <div className="mx-auto w-full max-w-[1360px] px-5 sm:px-8">
+        <p className="micro mb-6 flex items-center gap-3 text-night/75">
+          <span className="t-num text-leaf-700">03</span><span className="h-px w-8 bg-night/45" aria-hidden="true" />{kicker}
+        </p>
+        <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
+          {panels.map((p, i) => (
+            <article key={p.key} className="relative isolate flex min-h-[460px] flex-col overflow-hidden bg-night px-6 pb-6 pt-6 text-white sm:min-h-[490px] lg:min-h-[540px] lg:px-7 lg:pb-7">
               <Image
                 src={p.image}
                 alt={p.alt}
                 fill
-                sizes="100vw"
-                quality={80}
-                className="object-cover"
-                loading={i === 0 ? 'eager' : 'lazy'}
+                sizes="(max-width: 1023px) 100vw, 33vw"
+                quality={75}
+                className="-z-20 object-cover transition-transform duration-700 motion-safe:hover:scale-[1.035]"
               />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-night/90 via-night/15 to-night/40" aria-hidden="true" />
-            <div className="absolute inset-0 bg-gradient-to-r from-night/55 to-transparent" aria-hidden="true" />
-            <div data-pveil className="absolute inset-0 bg-night opacity-0" aria-hidden="true" />
-
-            <div className="relative mx-auto flex h-full w-full max-w-[1360px] flex-col justify-between px-5 pb-8 pt-28 sm:px-8 lg:pb-12">
-              <div className="flex items-start justify-between">
-                <p className="micro flex items-center gap-3 text-white/80"><span className="h-2 w-2 rounded-full bg-leaf-300" aria-hidden="true" />{kicker}</p>
-                <p className="t-num text-[15px] text-white/80">
-                  <span className="text-white">0{i + 1}</span>
-                  <span className="mx-2 opacity-40">—</span>
-                  <span className="opacity-60">0{panels.length}</span>
-                </p>
-              </div>
-
-              <div>
-                <h2 className="t-mega home-title-panel max-w-[14ch] text-white">{p.label}</h2>
-                <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:items-end">
-                  <p className="max-w-md text-[16px] leading-relaxed text-white/75 lg:col-span-4">{p.desc}</p>
-                  <ul className="flex flex-wrap gap-2 lg:col-span-5">
+              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-night via-night/65 to-night/20" aria-hidden="true" />
+              <p className="t-num text-sm text-white/85">0{i + 1} <span className="text-white/55">/ 0{panels.length}</span></p>
+              {/* El título empieza a la misma altura en las tres tarjetas.
+                  Los chips ocupan una banda inferior común: 1 o 3 opciones no
+                  desplazan ni el título ni el CTA de las tarjetas vecinas. */}
+              <div className="mt-10 flex flex-1 flex-col lg:mt-12">
+                <div>
+                  <h2 className="min-h-[4.75rem] max-w-[17ch] font-grotesk text-[clamp(1.85rem,2.4vw,2.45rem)] font-bold leading-[1.1] tracking-tight [text-wrap:balance]">{p.label}</h2>
+                  <p className="mt-3 min-h-[4.75rem] max-w-[34ch] text-sm leading-relaxed text-white/85">{p.desc}</p>
+                </div>
+                <div className="mt-auto">
+                  <ul className="flex min-h-[9rem] flex-wrap content-end items-end gap-2 border-t border-white/30 pt-4">
                     {p.tipos.map((tp) => (
                       <li key={tp.label}>
-                        <LocalLink
-                          href={tp.href}
-                          className="inline-flex h-10 items-center border border-white/30 px-4 text-[12px] font-semibold uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-colors duration-300 hover:border-leaf hover:bg-leaf hover:text-[#04140A]"
-                        >
+                        <LocalLink href={tp.href} className="inline-flex min-h-10 items-center border border-white/45 bg-night/35 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:border-white hover:bg-white hover:text-night focus-visible:bg-white focus-visible:text-night">
                           {tp.label}
                         </LocalLink>
                       </li>
                     ))}
                   </ul>
-                  <div className="lg:col-span-3 lg:text-right">
-                    <LocalLink href={p.href} data-cursor={explore} className="btn btn-green w-full sm:w-auto">
-                      {explore}
-                      <ArrowUpRight size={18} className="btn-ico" aria-hidden="true" />
-                    </LocalLink>
-                  </div>
+                  <LocalLink href={p.href} className="mt-5 inline-flex min-h-11 items-center gap-2 border-b border-leaf-300 pb-1 text-sm font-semibold text-white transition-colors hover:text-leaf-300">
+                    {explore} <ArrowUpRight size={17} aria-hidden="true" />
+                  </LocalLink>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-      ))}
-    </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }

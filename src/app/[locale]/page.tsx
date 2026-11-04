@@ -15,9 +15,7 @@ import { CIUDADES_SEO } from '@/lib/ubicaciones-seo'
 import { aplicarOrdenCatalogo, ordenarProductosCatalogo } from '@/lib/catalog-consulta'
 import Reveal from '@/components/home/Reveal'
 import HeroSearch from '@/components/home/HeroSearch'
-import SmoothScroll from '@/components/home/SmoothScroll'
 import Cursor from '@/components/home/Cursor'
-import Preloader from '@/components/home/Preloader'
 import HeroGL from '@/components/home/HeroGL'
 import KineticTitle from '@/components/home/KineticTitle'
 import TextReveal from '@/components/home/TextReveal'
@@ -26,7 +24,6 @@ import Odometer from '@/components/home/Odometer'
 import RoutePanels, { type RoutePanel } from '@/components/home/RoutePanels'
 import Gallery, { type GalleryItem } from '@/components/home/Gallery'
 import RoadJourney, { type RoadStep } from '@/components/home/RoadJourney'
-import BigMarquee from '@/components/home/BigMarquee'
 import ProvinceList, { type Province } from '@/components/home/ProvinceList'
 import fs from 'fs'
 import path from 'path'
@@ -394,15 +391,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <div className="landing-home bg-night text-white">
-      <Preloader label={t('landing.pre.label')} locale={locale} />
-      <SmoothScroll />
       <Cursor />
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       )}
 
       {/* ═══════════ HERO ═══════════ */}
-      <section className="relative isolate flex min-h-[700px] flex-col overflow-hidden lg:min-h-[100svh] bg-night">
+      <section className="relative isolate flex min-h-[640px] flex-col overflow-hidden bg-night lg:min-h-[min(88svh,860px)]">
         <Image
           src="/home/hero.webp"
           alt={t('home.hero.heroImageAlt')}
@@ -472,7 +467,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <ul key={dup} className="flex shrink-0 items-center" aria-hidden={dup === 1}>
               {fabricantes.map((f) => (
                 <li key={f} className="flex items-center">
-                  <LocalLink href="/marcas" tabIndex={dup === 1 ? -1 : undefined} className="t-wide whitespace-nowrap px-7 text-[15px] tracking-[0.04em] text-white/45 transition-colors duration-300 hover:text-white">
+                  <LocalLink href="/marcas" tabIndex={dup === 1 ? -1 : undefined} className="t-wide whitespace-nowrap px-7 text-[15px] tracking-[0.04em] text-white/75 transition-colors duration-300 hover:text-white">
                     {f}
                   </LocalLink>
                   <span className="h-1.5 w-1.5 rotate-45 bg-leaf-300" aria-hidden="true" />
@@ -482,52 +477,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           ))}
         </div>
       </section>
-
-      {/* ═══════════ MANIFIESTO ═══════════ */}
-      <section
-        className="aura topo relative overflow-hidden bg-night-800 py-24 lg:py-36"
-        style={{ '--ax': '100%', '--ay': '0%', '--bx': '0%', '--by': '100%' } as React.CSSProperties}
-      >
-        <div className={CONTAINER}>
-          <div className="grid gap-14 lg:grid-cols-12 lg:gap-12">
-            <div className="lg:col-span-8">
-              <Eyebrow n="01">{t('landing.statement.eyebrow')}</Eyebrow>
-              <TextReveal
-                className="t-mega home-title-section mt-10"
-                lines={[{ t: t('landing.statement.l1') }, { t: t('landing.statement.l2') }, { t: t('landing.statement.l3'), outline: true }]}
-              />
-              <Reveal>
-                <p className="mt-10 max-w-xl text-[18px] leading-relaxed text-white/70">{t('landing.statement.text')}</p>
-              </Reveal>
-            </div>
-            <Reveal className="lg:col-span-4" delay={0.1}>
-              <figure className="ticks relative mx-auto max-w-[420px] lg:ml-auto">
-                <i /><i /><i /><i />
-                <div className="relative aspect-[4/5] overflow-hidden bg-night-700">
-                  <Image src="/home/campers.webp" alt={FAMILIA_FOTO.campers.alt} fill sizes="(max-width: 1024px) 80vw, 420px" quality={80} className="object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-night/60 via-transparent to-night/10" aria-hidden="true" />
-                  <span className="micro absolute left-4 top-4 bg-night/70 px-2.5 py-1.5 text-white backdrop-blur">{t('landing.statement.fig')}</span>
-                </div>
-              </figure>
-            </Reveal>
-          </div>
-
-          <dl className="mt-20 grid grid-cols-2 border-y border-white/12 lg:mt-28 lg:grid-cols-4">
-            {stats.map((s, i) => (
-              <div key={s.label} className={`relative flex flex-col px-5 py-9 lg:px-8 lg:py-12 ${i > 0 ? 'lg:border-l lg:border-white/12' : ''} ${i % 2 === 1 ? 'border-l border-white/12 lg:border-l' : ''} ${i > 1 ? 'border-t border-white/12 lg:border-t-0' : ''}`}>
-                <span className="absolute left-0 top-0 h-[3px] w-10 bg-leaf lg:left-8" aria-hidden="true" />
-                <dd className="t-num order-1 text-[clamp(3.4rem,6vw,6.2rem)] leading-none">
-                  <Odometer value={s.value} suffix={s.suffix} />
-                </dd>
-                <dt className="micro order-2 mt-4 max-w-[190px] !text-[12px] !leading-[1.5] text-white/70">{s.label}</dt>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
-
-      {/* ═══════════ RUTAS (familias) ═══════════ */}
-      <RoutePanels panels={rutas} explore={t('landing.families.explore')} kicker={t('landing.families.kicker')} />
 
       {/* ═══════════ EN EL MERCADO AHORA ═══════════ */}
       <div className="relative z-10">
@@ -544,7 +493,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           header={
             <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <Eyebrow tone="dark" n="03">{t('landing.listings.eyebrow')}</Eyebrow>
+                <Eyebrow tone="dark" n="01">{t('landing.listings.eyebrow')}</Eyebrow>
                 <TextReveal
                   inline
                   className="t-mega home-title-section mt-6 block"
@@ -561,8 +510,54 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         />
       </div>
 
+      {/* ═══════════ MANIFIESTO ═══════════ */}
+      <section
+        className="aura topo relative overflow-hidden bg-night-800 py-16 lg:py-24"
+        style={{ '--ax': '100%', '--ay': '0%', '--bx': '0%', '--by': '100%' } as React.CSSProperties}
+      >
+        <div className={CONTAINER}>
+          <div className="grid gap-14 lg:grid-cols-12 lg:gap-12">
+            <div className="lg:col-span-8">
+              <Eyebrow n="02">{t('landing.statement.eyebrow')}</Eyebrow>
+              <TextReveal
+                className="t-mega home-title-section mt-7"
+                lines={[{ t: t('landing.statement.l1') }, { t: t('landing.statement.l2') }, { t: t('landing.statement.l3'), outline: true }]}
+              />
+              <Reveal>
+                <p className="mt-7 max-w-xl text-[17px] leading-relaxed text-white/80">{t('landing.statement.text')}</p>
+              </Reveal>
+            </div>
+            <Reveal className="lg:col-span-4" delay={0.1}>
+              <figure className="ticks relative mx-auto max-w-[420px] lg:ml-auto">
+                <i /><i /><i /><i />
+                <div className="relative aspect-[4/5] overflow-hidden bg-night-700">
+                  <Image src="/home/campers.webp" alt={FAMILIA_FOTO.campers.alt} fill sizes="(max-width: 1024px) 80vw, 420px" quality={80} className="object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-night/60 via-transparent to-night/10" aria-hidden="true" />
+                  <span className="micro absolute left-4 top-4 bg-night/70 px-2.5 py-1.5 text-white backdrop-blur">{t('landing.statement.fig')}</span>
+                </div>
+              </figure>
+            </Reveal>
+          </div>
+
+          <dl className="mt-12 grid grid-cols-2 border-y border-white/12 lg:mt-16 lg:grid-cols-4">
+            {stats.map((s, i) => (
+              <div key={s.label} className={`relative flex flex-col px-5 py-9 lg:px-8 lg:py-12 ${i > 0 ? 'lg:border-l lg:border-white/12' : ''} ${i % 2 === 1 ? 'border-l border-white/12 lg:border-l' : ''} ${i > 1 ? 'border-t border-white/12 lg:border-t-0' : ''}`}>
+                <span className="absolute left-0 top-0 h-[3px] w-10 bg-leaf lg:left-8" aria-hidden="true" />
+                <dd className="t-num order-1 text-[clamp(2.7rem,4vw,4.3rem)] leading-none">
+                  <Odometer value={s.value} suffix={s.suffix} />
+                </dd>
+                <dt className="micro order-2 mt-4 max-w-[190px] !text-[12px] !leading-[1.5] text-white/70">{s.label}</dt>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* ═══════════ RUTAS (familias) ═══════════ */}
+      <RoutePanels panels={rutas} explore={t('landing.families.explore')} kicker={t('landing.families.kicker')} />
+
       {/* ═══════════ RECORRIDO DE COMPRA ═══════════ */}
-      <section className="aura topo relative overflow-hidden bg-night py-24 lg:py-36" style={{ '--ax': '0%', '--ay': '40%', '--bx': '100%', '--by': '80%' } as React.CSSProperties}>
+      <section className="aura topo relative overflow-hidden bg-night py-16 lg:py-24" style={{ '--ax': '0%', '--ay': '40%', '--bx': '100%', '--by': '80%' } as React.CSSProperties}>
         <div className={CONTAINER}>
           <Eyebrow n="04">{t('landing.journey.eyebrow')}</Eyebrow>
           <TextReveal
@@ -576,9 +571,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ═══════════ VENDE ═══════════ */}
-      <section className="relative overflow-hidden bg-flare py-20 text-night [--stroke:#0B1120] lg:py-32">
-        <BigMarquee words={[t('landing.sell.m1'), t('landing.sell.m2'), t('landing.sell.m3'), t('landing.sell.m4')]} />
-        <div className={`${CONTAINER} mt-20 lg:mt-32`}>
+      <section className="relative overflow-hidden bg-flare py-16 text-night lg:py-24">
+        <div className={`${CONTAINER} flex flex-wrap gap-x-5 gap-y-2 border-b border-night/25 pb-4 text-xs font-semibold uppercase tracking-[0.1em] text-night/75`} aria-hidden="true">
+          {['m1', 'm2', 'm3', 'm4'].map(key => <span key={key}>{t(`landing.sell.${key}`)}</span>)}
+        </div>
+        <div className={`${CONTAINER} mt-12 lg:mt-16`}>
           <div className="grid gap-12 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <Eyebrow tone="dark" n="05" nClass="text-night">{t('landing.sell.eyebrow')}</Eyebrow>
@@ -600,7 +597,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </Reveal>
           </div>
 
-          <h3 className="t-wide home-title-subsection mt-20 max-w-3xl lg:mt-28">{t('landing.sell.audiencesTitle')}</h3>
+          <h3 className="t-wide home-title-subsection mt-12 max-w-3xl lg:mt-16">{t('landing.sell.audiencesTitle')}</h3>
           <div className="mt-8 grid border-t border-night/30 lg:grid-cols-3">
             {audiencias.map((a, i) => (
               <Reveal key={a.key} delay={i * 0.08} className={`py-9 ${i > 0 ? 'border-t border-night/30 lg:border-l lg:border-t-0 lg:pl-9' : ''} ${i < 2 ? 'lg:pr-9' : ''}`}>
@@ -625,7 +622,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* ═══════════ GUÍAS ═══════════ */}
       {guias.length > 0 && (
         <section className="aura topo relative overflow-hidden bg-night-800" style={{ '--ax': '100%', '--ay': '0%', '--bx': '0%', '--by': '100%' } as React.CSSProperties}>
-          <div className={`${CONTAINER} grid gap-14 py-24 lg:grid-cols-12 lg:py-36`}>
+          <div className={`${CONTAINER} grid gap-14 py-16 lg:grid-cols-12 lg:py-24`}>
             <div className="lg:col-span-5">
               <Eyebrow n="06">{t('landing.guides.eyebrow')}</Eyebrow>
               <TextReveal
@@ -655,19 +652,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       )}
 
       {/* ═══════════ PROVINCIAS ═══════════ */}
-      <section className="relative overflow-hidden bg-night"><div className={`${CONTAINER} pb-24 pt-24 lg:pb-40 lg:pt-36`}>
+      <section className="relative overflow-hidden bg-night"><div className={`${CONTAINER} py-16 lg:py-24`}>
         <Eyebrow n="07">{t('landing.provinces.eyebrow')}</Eyebrow>
         <TextReveal
           className="t-mega home-title-section mt-8"
           lines={[{ t: t('landing.provinces.l1') }, { t: t('landing.provinces.l2'), outline: true }]}
         />
-        <div className="mt-16 lg:mt-24">
+        <div className="mt-10 lg:mt-14">
           <ProvinceList items={listaProvincias} label={t('landing.provinces.label')} />
         </div>
       </div></section>
 
       {/* ═══════════ CTA FINAL ═══════════ */}
-      <section className="relative isolate flex min-h-[100svh] items-end overflow-hidden bg-night">
+      <section className="relative isolate flex min-h-[65svh] items-end overflow-hidden bg-night">
         <Image src="/home/cta.webp" alt="" fill sizes="100vw" className="-z-10 object-cover" quality={80} />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-night/90 via-night/30 to-night/40" aria-hidden="true" />
         <div className="grain absolute inset-0 -z-10" aria-hidden="true" />

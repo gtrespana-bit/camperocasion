@@ -370,17 +370,11 @@ a:focus-visible {
 
 /* Entrada del hero: cada línea sube desde una máscara */
 .mask-line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
-.mask-line > span { display: block; transform: translateY(105%); animation: line-up 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: calc(var(--d, 0s) + var(--pre, 0s)); }
+.mask-line > span { display: block; transform: translateY(105%); animation: line-up 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: var(--d, 0s); }
 @keyframes line-up { to { transform: translateY(0); } }
 
-.fade-up { opacity: 0; transform: translateY(18px); animation: fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: calc(var(--d, 0s) + var(--pre, 0s)); }
+.fade-up { opacity: 0; transform: translateY(18px); animation: fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: var(--d, 0s); }
 @keyframes fade-up { to { opacity: 1; transform: none; } }
-
-/* Lenis (scroll suave) */
-html.lenis, html.lenis body { height: auto; }
-.lenis.lenis-smooth { scroll-behavior: auto !important; }
-.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
-.lenis.lenis-stopped { overflow: hidden; }
 
 /* Revelado al hacer scroll */
 .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1); transition-delay: var(--d, 0s); }
@@ -420,26 +414,13 @@ html.lenis, html.lenis body { height: auto; }
    narrativo. Sin JS todo el contenido queda visible y legible.
    ═══════════════════════════════════════════════════════════════════════ */
 
-:root { --pre: 0s; }
-html[data-pre="1"] { --pre: 1.55s; }
-
-/* Tipografía monumental (Archivo, eje de anchura 62–125) */
+/* Tipografía de acento: la portada reserva la escala expresiva para el primer impacto. */
 .t-mega { font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 62, 'wght' 800; text-transform: uppercase; letter-spacing: -0.012em; line-height: 0.84; font-synthesis: none; }
 .t-wide { font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 88, 'wght' 700; text-transform: uppercase; letter-spacing: -0.01em; line-height: 0.9; }
 .t-num { font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 75, 'wght' 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 .outline-text { color: transparent; -webkit-text-stroke: 1.5px var(--stroke, #F5F7FA); }
 .micro { font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
 
-/* Preloader: cortina con contador. Solo existe con data-pre="1" (primera visita de la sesión). */
-@property --pre-n { syntax: '<integer>'; inherits: false; initial-value: 0; }
-#co-pre { position: fixed; inset: 0; z-index: 100; display: none; background: #0B1120; color: #F5F7FA; animation: pre-out 0.55s cubic-bezier(0.76, 0, 0.24, 1) 1.05s forwards; }
-html[data-pre="1"] #co-pre { display: block; }
-@keyframes pre-out { to { transform: translateY(-100%); visibility: hidden; } }
-.pre-count { counter-reset: pre-n var(--pre-n); animation: pre-count 1s cubic-bezier(0.65, 0, 0.35, 1) forwards; }
-.pre-count::after { content: counter(pre-n); }
-@keyframes pre-count { to { --pre-n: 100; } }
-.pre-bar { transform-origin: 0 50%; transform: scaleX(0); animation: pre-bar 1s cubic-bezier(0.65, 0, 0.35, 1) forwards; }
-@keyframes pre-bar { to { transform: scaleX(1); } }
 
 /* Cursor propio (solo puntero fino) */
 html.has-cursor, html.has-cursor a, html.has-cursor button, html.has-cursor [data-cursor], html.has-cursor label { cursor: none; }
@@ -469,14 +450,8 @@ html.has-cursor input, html.has-cursor textarea, html.has-cursor select { cursor
 /* Letras del titular cinético */
 .kc { display: inline-block; will-change: font-variation-settings; }
 
-/* Velocidad de scroll sobre los marquees */
-.marquee-fast { display: flex; width: max-content; animation: marquee 38s linear infinite; }
-.marquee-fast.rev { animation-direction: reverse; }
-
 @media (prefers-reduced-motion: reduce) {
-  #co-pre { display: none !important; }
   .tr[data-armed] .tr-w > span { transform: none; }
-  .marquee-fast { animation: none; }
 }
 
 
@@ -495,53 +470,62 @@ html.has-cursor input, html.has-cursor textarea, html.has-cursor select { cursor
 .ticks > i:nth-of-type(4) { bottom: -1px; right: -1px; border-bottom: 1px solid; border-right: 1px solid; }
 .glass { background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03)); border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); }
 
-/* Escala editorial de la portada: una sola jerarquía para todos los bloques.
-   Los máximos limitan los titulares largos en ES/EN y evitan saltos de escala
-   entre secciones; las líneas pueden partirse sin quedar recortadas. */
+/* Jerarquía editorial: una entrada con carácter y títulos de contenido
+   contenidos. Los anuncios y las acciones vuelven a ser el foco del recorrido. */
 .landing-home .home-title-hero {
-  font-size: clamp(2.6rem, 11vw, 9.5rem);
-  line-height: 0.91;
+  font-size: clamp(3rem, 7.2vw, 7rem);
+  line-height: 0.97;
+  font-variation-settings: 'wdth' 74, 'wght' 760;
 }
 .landing-home .home-title-section {
-  font-size: clamp(2.65rem, 6vw, 6rem);
-  line-height: 0.98;
+  font-size: clamp(2rem, 3.6vw, 3.8rem);
+  line-height: 1.1;
+  font-variation-settings: 'wdth' 86, 'wght' 680;
+  text-transform: none;
+  letter-spacing: -0.025em;
+}
+/* El texto delineado en bloques informativos era difícil de leer; ahora es
+   secundario por tono, no por pérdida de relleno ni de contraste. */
+.landing-home .home-title-section .outline-text {
+  color: inherit;
+  -webkit-text-stroke: 0;
+  opacity: 0.82;
 }
 .landing-home .home-title-cta {
-  font-size: clamp(3.1rem, 9vw, 9rem);
-  line-height: 0.94;
+  font-size: clamp(2.8rem, 5.4vw, 5.5rem);
+  line-height: 1.02;
+  font-variation-settings: 'wdth' 82, 'wght' 700;
+  text-transform: none;
 }
 .landing-home .home-title-subsection {
-  font-size: clamp(1.8rem, 3vw, 2.8rem);
-  line-height: 1.06;
+  font-size: clamp(1.65rem, 2.4vw, 2.4rem);
+  line-height: 1.16;
+  text-transform: none;
 }
 .landing-home .home-title-card {
-  font-size: clamp(1.5rem, 2.1vw, 2rem);
-  line-height: 1.08;
+  font-size: clamp(1.4rem, 1.7vw, 1.7rem);
+  line-height: 1.17;
+  text-transform: none;
 }
-/* El verde solo acentúa los enlaces/CTA: sobre fotografía el texto necesita
-   contraste suficiente también en pantallas móviles y a brillo bajo. */
-.landing-home .micro { font-size: 12px; letter-spacing: 0.14em; line-height: 1.5; }
+.landing-home .micro { font-size: 12px; letter-spacing: 0.11em; line-height: 1.5; }
 @media (max-width: 639px) {
-  .landing-home .home-title-hero { font-size: clamp(2.55rem, 10vw, 3.75rem); }
-}
-.landing-home .home-title-panel {
-  font-size: clamp(2.6rem, 8vw, 7.5rem);
-  line-height: 0.96;
-  overflow-wrap: anywhere;
+  .landing-home .home-title-hero { font-size: clamp(2.75rem, 11vw, 4.25rem); }
 }
 .landing-home .home-title-step {
-  font-size: clamp(2rem, 3vw, 3rem);
-  line-height: 1.05;
+  font-size: clamp(1.8rem, 2.6vw, 2.5rem);
+  line-height: 1.12;
 }
 .landing-home .home-province-name {
-  font-size: clamp(1.7rem, 3.5vw, 3.2rem);
-  line-height: 1.02;
+  font-size: clamp(1.55rem, 2.5vw, 2.5rem);
+  line-height: 1.12;
   overflow-wrap: anywhere;
 }
-/* Los títulos dentro de columnas de 5–7/12 no heredan la escala de ancho completo. */
 .landing-home .home-title-column {
-  font-size: clamp(2.6rem, 4.2vw, 4.5rem);
-  line-height: 1;
+  font-size: clamp(2rem, 3.2vw, 3.5rem);
+  line-height: 1.1;
+  font-variation-settings: 'wdth' 86, 'wght' 680;
+  text-transform: none;
+  letter-spacing: -0.02em;
 }
 
 /* ═══ Sistema editorial de páginas públicas ═══
@@ -553,11 +537,11 @@ html.has-cursor input, html.has-cursor textarea, html.has-cursor select { cursor
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding-block: clamp(5rem, 9vw, 8rem) clamp(4rem, 7vw, 7rem);
+  padding-block: clamp(3.5rem, 5vw, 5.5rem);
   background: #0B1120;
   color: #F5F7FA;
 }
-.public-hero--compact { padding-block: clamp(4rem, 7vw, 6rem); }
+.public-hero--compact { padding-block: clamp(2.75rem, 4vw, 4rem); }
 .public-hero::before {
   content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background: url('/home/topo.svg') center / cover no-repeat;
@@ -576,29 +560,33 @@ html.has-cursor input, html.has-cursor textarea, html.has-cursor select { cursor
 }
 .public-eyebrow-line { display: inline-block; width: 2.5rem; height: 1px; flex: none; background: currentColor; }
 .public-hero-title {
-  max-width: 22ch;
-  margin-top: clamp(1.5rem, 3vw, 2.5rem);
-  font-size: clamp(2.7rem, 6vw, 6.5rem);
-  line-height: 0.98;
+  max-width: 27ch;
+  margin-top: clamp(1.2rem, 2vw, 1.75rem);
+  font-size: clamp(2rem, 4vw, 4.1rem);
+  font-variation-settings: 'wdth' 86, 'wght' 700;
+  text-transform: none;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
   overflow-wrap: anywhere;
 }
-.public-hero-description { max-width: 40rem; margin-top: 1.75rem; color: rgba(255,255,255,0.78); font-size: clamp(1rem, 1.5vw, 1.2rem); line-height: 1.65; }
+.public-hero-description { max-width: 43rem; margin-top: 1.15rem; color: rgba(255,255,255,0.78); font-size: clamp(1rem, 1.5vw, 1.2rem); line-height: 1.65; }
 .public-hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
 .public-section { padding-block: clamp(3.5rem, 7vw, 7rem); }
 .public-section-title {
   font-family: var(--font-grotesk), var(--font-geist), sans-serif;
   font-variation-settings: 'wdth' 88, 'wght' 700;
-  text-transform: uppercase;
-  letter-spacing: -0.01em;
-  font-size: clamp(1.85rem, 3vw, 3.25rem);
-  line-height: 1.07;
+  text-transform: none;
+  letter-spacing: -0.015em;
+  font-size: clamp(1.65rem, 2.4vw, 2.6rem);
+  line-height: 1.16;
 }
 .public-card { background: #fff; border: 1px solid #CBD5E1; box-shadow: 0 16px 45px -35px rgba(11,17,32,0.3); }
 .public-card-title { font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 88, 'wght' 700; font-size: clamp(1.25rem, 1.8vw, 1.65rem); line-height: 1.15; }
 .public-muted { color: #475569; }
 @media (max-width: 639px) {
-  .public-hero { padding-block: 4rem; }
-  .public-hero-title { font-size: clamp(2.55rem, 9vw, 3.75rem); }
+  .public-hero { padding-block: 3rem; }
+  .public-hero--compact { padding-block: 2.75rem; }
+  .public-hero-title { font-size: clamp(2rem, 8vw, 3rem); }
 }
 /* Fundamentos transversales sin alterar la distribución ni el comportamiento
    de formularios, fichas, cuenta o administración. */
@@ -623,7 +611,7 @@ html.has-cursor input, html.has-cursor textarea, html.has-cursor select { cursor
 .work-header { margin-bottom: clamp(1.5rem, 4vw, 2.75rem); padding-bottom: clamp(1.5rem, 3vw, 2rem); border-bottom: 1px solid #CBD5E1; }
 .work-eyebrow { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; color: #15803D; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; line-height: 1.4; }
 .work-eyebrow-line { width: 2rem; height: 2px; flex: none; background: currentColor; }
-.work-title { color: #0B1120; font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 88, 'wght' 700; font-size: clamp(2rem, 4vw, 3.7rem); line-height: 1.08; letter-spacing: -0.015em; text-transform: uppercase; overflow-wrap: anywhere; }
+.work-title { color: #0B1120; font-family: var(--font-grotesk), var(--font-geist), sans-serif; font-variation-settings: 'wdth' 88, 'wght' 700; font-size: clamp(1.85rem, 3vw, 2.9rem); line-height: 1.15; letter-spacing: -0.02em; text-transform: none; overflow-wrap: anywhere; }
 .work-title--sm { font-size: clamp(1.6rem, 2.6vw, 2.4rem); }
 .work-title--account { font-size: clamp(2rem, 5vw, 2.7rem); }
 .work-description { max-width: 43rem; margin-top: 0.7rem; color: #475569; font-size: clamp(0.95rem, 1.4vw, 1.08rem); line-height: 1.65; }

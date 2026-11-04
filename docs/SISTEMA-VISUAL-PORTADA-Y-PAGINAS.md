@@ -3,14 +3,14 @@
 ## Principios
 
 - Paleta de la portada: noche `#0B1120`, pizarra `#0F172A`, verde `#16A34A`, naranja `#EA580C`, fondo claro `#F5F7FA`.
-- Titulares: Archivo (variable); texto y controles: Geist. Hero de interior: máximo 6,5 rem, secciones: máximo 3,25 rem. Nunca heredar tamaños monumentales de la portada en columnas estrechas.
+- Titulares: Archivo (variable); texto y controles: Geist. Un solo gesto expresivo en el hero inicial (máximo 7 rem); interiores hasta 4,1 rem, secciones hasta 3,8 rem en portada y 2,6 rem en interiores. El resto utiliza caja natural y jerarquía sobria, especialmente en columnas estrechas.
 - Contenedores: hasta 1360 px, padding horizontal 20–32 px. Fondo claro para lectura y formularios, oscuro para introducción y llamadas a la acción. Etiquetas con contraste suficiente; botones y enlaces con estados de teclado y móviles.
-- La portada usa composiciones inmersivas; las pantallas de trabajo (catálogo, producto, publicación, cuenta) conservan navegación, formularios y datos visibles antes que animaciones.
+- La portada reserva la composición inmersiva para su entrada; los anuncios aparecen inmediatamente después del buscador, y las familias y tarjetas no secuestran el desplazamiento. Las pantallas de trabajo (catálogo, producto, publicación, cuenta) conservan navegación, formularios y datos visibles antes que animaciones. La auditoría y el plan priorizado están en `docs/AUDITORIA-UX-MARKETPLACE-CAMPERO-2026.md`.
 - Componentes: `PublicHero` para introducciones de páginas públicas; `WorkHeader` para encabezados compactos de búsqueda, créditos, panel, edición y páginas de cuenta; `public-shell`, `public-section-title`, `public-card` y `account-card` para ritmo y superficies compartidos. `SiteChrome` distingue portada, interiores y administración sin alterar las herramientas.
 
 ## Avance
 
-- [x] Portada y cabecera/pie globales (incluido buscador separado del carrusel).
+- [x] Portada y cabecera/pie globales (incluido buscador separado del carrusel). Segunda pasada: se eliminan la cortina inicial, el scroll artificial, el rótulo móvil gigante y los paneles fijados; los anuncios pasan inmediatamente después del buscador/marcas y las familias se presentan como tarjetas comparables. Se conserva la fotografía y un hero distintivo, con títulos de contenido y de páginas interiores de escala más contenida.
 - [x] Catálogo, ficha de producto (tipografía y superficies), publicación, familias/categorías, landings provinciales, marcas, tiendas.
 - [x] Blog (índice y artículos), sobre nosotros, cómo funciona, FAQ, contacto, instalación de app, profesionales.
 - [x] Compra segura, ITP, contrato, gestoría, valoración; las 4 páginas legales comparten `DocumentoLegal`.
@@ -21,7 +21,8 @@
 - [x] En móvil el panel de filtros del buscador es desplegable (sin tapar los resultados) y conserva sus controles; las etiquetas principales y metadata de búsqueda se traducen.
 - [x] Landings de ciudad y ciudad/tipo, y páginas de modelo: estadísticas y preguntas con datos reales en español; contenido legible en inglés sin mezclar párrafos SEO españoles. Navegación global de familias traducida sin alterar los filtros de URL; páginas inglesas dinámicas con metadata localizada y noindex conforme a la configuración del sitio.
 - [x] Estados 404, error general, error de ficha y ficha sin producto alineados con el sistema visual; los errores inesperados no enseñan mensajes internos del servidor.
-- [ ] Revisar todas las combinaciones de filtros del buscador avanzado y estados excepcionales de fichas con contenido real.
+- [x] Recuperación inicial de búsquedas sin resultados: condiciones activas visibles y retirables individualmente, botón para limpiar filtros y copy orientado a compradores; sin condiciones se mantiene el CTA de publicar. Ficha móvil: galería, título y estado, precio/vendedor/contacto antes de la descripción extensa, con prestaciones secundarias después; sin duplicar controles ni ofrecer contactos de demostración inventados. Tarjetas de las tres familias con título a la misma altura, zona inferior de subcategorías y CTA alineados aunque una tenga menos opciones.
+- [ ] Revisar todas las combinaciones de filtros del buscador avanzado y estados excepcionales de fichas con contenido real; las pruebas de usuarios y viewports se harán al final. Los anuncios de demostración se mantienen deliberadamente por ahora a petición del propietario.
 - [x] Calculadora de ITP y landings autonómicas con interfaz, explicaciones de cálculo, FAQ visibles y estructuradas, checklists y metadata inglesa localizadas. El motor de cifras queda intacto: las advertencias EN se derivan de sus reglas y se comprueba la paridad en una matriz de combinaciones; los apuntes regulatorios originales de cada comunidad siguen disponibles en español bajo un desplegable claramente rotulado. Plazo de dos meses expresado como meses (no como 60 días naturales) en Andalucía y Navarra.
 - [x] Página para profesionales y flujo cliente de contratación: contenido ES/EN, comparación y FAQ/JSON-LD localizados, checkout y portal de Stripe con retorno al idioma del usuario, y confirmación pendiente hasta que el plan esté activo de verdad. Corregidas promesas inconsistentes de fotos y del efecto de bajar el cupo.
 - [x] Directorio de tiendas y marcas/modelos con interfaz, FAQ visibles/estructuradas y metadata localizada. Los slugs y filtros de catálogo conservan sus valores originales; las descripciones editoriales de modelos que solo existen en español no se muestran erróneamente como texto traducido.
@@ -31,7 +32,8 @@
 
 ## Verificaciones automáticas
 
-- Última comprobación (Node 24): TypeScript, ESLint de archivos TS/TSX modificados sin avisos, `git diff --check`, 80 suites / 824 tests, diccionarios ES/EN con claves y parámetros `planTab` equivalentes, 79 mensajes ICU de cada idioma renderizados y build Next de 384 páginas correctos. Smoke HTTP ES/EN anterior de portada, créditos, modelos, ciudad/categoría, ITP, profesionales, tiendas y marcas: 200; producto inexistente: 404. La vista previa de Next necesitó limpiar `.next/dev` tras un build anterior para recuperar las rutas dinámicas (caché de desarrollo, no código de aplicación).
+- Auditoría de presentación (3 nov 2026): 81 suites / 826 tests, TypeScript, ESLint de los componentes modificados y `git diff --check` sin errores; build Next de 384 páginas. Se mantienen pendientes la inspección visual real y las decisiones sobre anuncios de demostración documentadas en la auditoría.
+- Comprobación anterior (Node 24): TypeScript, ESLint de archivos TS/TSX modificados sin avisos, `git diff --check`, 80 suites / 824 tests, diccionarios ES/EN con claves y parámetros `planTab` equivalentes, 79 mensajes ICU de cada idioma renderizados y build Next de 384 páginas correctos. Smoke HTTP ES/EN anterior de portada, créditos, modelos, ciudad/categoría, ITP, profesionales, tiendas y marcas: 200; producto inexistente: 404. La vista previa de Next necesitó limpiar `.next/dev` tras un build anterior para recuperar las rutas dinámicas (caché de desarrollo, no código de aplicación).
 - Smoke HTTP ES/EN en rutas de cuenta, búsqueda, créditos y landings de ciudad/categoría e ITP; semántica HTML revisada en rutas accesibles sin autenticación.
 - La comprobación visual automatizada con Chromium queda bloqueada en este entorno por bibliotecas de sistema ausentes (`libnspr4.so`, `libnss3.so`, `libnssutil3.so`). No marcar la revisión responsive como hecha.
 

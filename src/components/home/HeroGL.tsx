@@ -73,7 +73,9 @@ export default function HeroGL({ src, focus = [0.9, 0.5] }: { src: string; focus
   useEffect(() => {
     const canvas = ref.current
     if (!canvas) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    // En móvil o con movimiento reducido queda la fotografía HTML: evita
+    // descargarla otra vez como textura y mantener un canvas activo por estética.
+    if (window.matchMedia('(prefers-reduced-motion: reduce), (pointer: coarse)').matches) return
     const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' })
     if (!gl) return
 
